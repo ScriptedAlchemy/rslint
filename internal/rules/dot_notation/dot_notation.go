@@ -6,6 +6,7 @@ import (
 
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/microsoft/typescript-go/shim/checker"
+	"github.com/microsoft/typescript-go/shim/core"
 	"github.com/web-infra-dev/rslint/internal/rule"
 	"github.com/web-infra-dev/rslint/internal/utils"
 )
@@ -83,13 +84,15 @@ func buildUseBracketsMessage(key string) rule.RuleMessage {
 	return rule.RuleMessage{Id: "useBrackets", Description: "Property is a keyword - use bracket notation."}
 }
 
+// Reserved keywords that should trigger dot -> bracket when allowKeywords=false.
+// Excludes identifiers that TS-ESLint treats as safe to access via dot even when allowKeywords=false
+// (per tests): let, yield, eval, arguments, and literals true/false/null.
 var keywordSet = map[string]struct{}{
-	// ECMAScript keywords and reserved words commonly guarded by ESLint rule
 	"break": {}, "case": {}, "catch": {}, "class": {}, "const": {}, "continue": {}, "debugger": {}, "default": {},
 	"delete": {}, "do": {}, "else": {}, "export": {}, "extends": {}, "finally": {}, "for": {}, "function": {},
 	"if": {}, "import": {}, "in": {}, "instanceof": {}, "new": {}, "return": {}, "super": {}, "switch": {},
-	"this": {}, "throw": {}, "try": {}, "typeof": {}, "var": {}, "void": {}, "while": {}, "with": {}, "yield": {},
-	"let": {}, "static": {}, "enum": {}, "await": {}, "null": {}, "true": {}, "false": {},
+	"this": {}, "throw": {}, "try": {}, "typeof": {}, "var": {}, "void": {}, "while": {}, "with": {},
+	// intentionally not including: let, yield, eval, arguments, true, false, null
 }
 
 var identRE = regexp.MustCompile(`^[A-Za-z_$][A-Za-z0-9_$]*$`)
@@ -101,6 +104,296 @@ func isValidIdentifier(name string) bool {
 func isKeyword(name string) bool {
 	_, ok := keywordSet[name]
 	return ok
+}
+
+func typeHasIndexSignature(t *checker.Type) bool {
+	if t == nil {
+		return false
+	}
+	// Explore alias target declarations first if present
+	if alias := checker.Type_alias(t); alias != nil && alias.Symbol() != nil {
+		if decls := alias.Symbol().Declarations; len(decls) > 0 {
+			for _, decl := range decls {
+				if decl == nil {
+					continue
+				}
+				switch decl.Kind {
+				case ast.KindTypeAliasDeclaration:
+					ta := decl.AsTypeAliasDeclaration()
+					if ta != nil && ta.Type != nil && ta.Type.Kind == ast.KindTypeLiteral {
+						tl := ta.Type.AsTypeLiteralNode()
+						if tl != nil && tl.Members != nil {
+							for _, m := range tl.Members.Nodes {
+								if m != nil && m.Kind == ast.KindIndexSignature {
+									return true
+								}
+							}
+						}
+					}
+				case ast.KindInterfaceDeclaration:
+					iface := decl.AsInterfaceDeclaration()
+					if iface != nil && iface.Members != nil {
+						for _, m := range iface.Members.Nodes {
+							if m != nil && m.Kind == ast.KindIndexSignature {
+								return true
+							}
+						}
+					}
+				case ast.KindTypeLiteral:
+					tl := decl.AsTypeLiteralNode()
+					if tl != nil && tl.Members != nil {
+						for _, m := range tl.Members.Nodes {
+							if m != nil && m.Kind == ast.KindIndexSignature {
+								return true
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	sym := checker.Type_symbol(t)
+	if sym == nil || len(sym.Declarations) == 0 {
+		return false
+	}
+	for _, decl := range sym.Declarations {
+		if decl == nil {
+			continue
+		}
+		switch decl.Kind {
+		case ast.KindInterfaceDeclaration:
+			iface := decl.AsInterfaceDeclaration()
+			if iface != nil && iface.Members != nil {
+				for _, m := range iface.Members.Nodes {
+					if m != nil && m.Kind == ast.KindIndexSignature {
+						return true
+					}
+				}
+			}
+		case ast.KindTypeAliasDeclaration:
+			alias := decl.AsTypeAliasDeclaration()
+			if alias != nil && alias.Type != nil && alias.Type.Kind == ast.KindTypeLiteral {
+				tl := alias.Type.AsTypeLiteralNode()
+				if tl != nil && tl.Members != nil {
+					for _, m := range tl.Members.Nodes {
+						if m != nil && m.Kind == ast.KindIndexSignature {
+							return true
+						}
+					}
+				}
+			}
+		case ast.KindClassDeclaration:
+			classDecl := decl.AsClassDeclaration()
+			if classDecl != nil && classDecl.Members != nil {
+				for _, m := range classDecl.Members.Nodes {
+					if m != nil && m.Kind == ast.KindIndexSignature {
+						return true
+					}
+				}
+			}
+		case ast.KindTypeLiteral:
+			tl := decl.AsTypeLiteralNode()
+			if tl != nil && tl.Members != nil {
+				for _, m := range tl.Members.Nodes {
+					if m != nil && m.Kind == ast.KindIndexSignature {
+						return true
+					}
+				}
+			}
+		}
+	}
+	return false
+}
+
+// hasAnyIndexSignature walks unions/intersections to detect an index signature on any part
+func hasAnyIndexSignature(t *checker.Type) bool {
+	if t == nil {
+		return false
+	}
+	if utils.IsUnionType(t) {
+		for _, part := range t.Types() {
+			if hasAnyIndexSignature(part) {
+				return true
+			}
+		}
+		return false
+	}
+	if utils.IsIntersectionType(t) {
+		for _, part := range t.Types() {
+			if hasAnyIndexSignature(part) {
+				return true
+			}
+		}
+		return false
+	}
+	return typeHasIndexSignature(t)
+}
+
+// hasStringLikeIndexSignatureTS uses available checker APIs to detect declared string-like index signatures.
+func hasStringLikeIndexSignatureTS(typeChecker *checker.Checker, t *checker.Type) bool {
+	if t == nil {
+		return false
+	}
+	nn := typeChecker.GetNonNullableType(t)
+	app := checker.Checker_getApparentType(typeChecker, nn)
+
+	infos := checker.Checker_getIndexInfosOfType(typeChecker, app)
+	if len(infos) == 0 {
+		return false
+	}
+	for _, info := range infos {
+		if info == nil {
+			continue
+		}
+		kt := checker.IndexInfo_keyType(info)
+		if kt != nil && (checker.Type_flags(kt)&checker.TypeFlagsStringLike) != 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// hasStringLikeIndexSignature returns true if the (apparent) type has an index signature
+// whose key type is string-like. It recursively checks union and intersection parts.
+func hasStringLikeIndexSignature(typeChecker *checker.Checker, t *checker.Type) bool {
+	if t == nil {
+		return false
+	}
+	// If this is a type alias, inspect the alias declaration's type literal for index signatures
+	if alias := checker.Type_alias(t); alias != nil && alias.Symbol() != nil {
+		for _, decl := range alias.Symbol().Declarations {
+			if decl == nil {
+				continue
+			}
+			if decl.Kind == ast.KindTypeAliasDeclaration {
+				ta := decl.AsTypeAliasDeclaration()
+				if ta != nil && ta.Type != nil && ta.Type.Kind == ast.KindTypeLiteral {
+					tl := ta.Type.AsTypeLiteralNode()
+					if tl != nil && tl.Members != nil {
+						for _, m := range tl.Members.Nodes {
+							if m != nil && m.Kind == ast.KindIndexSignature {
+								is := m.AsIndexSignatureDeclaration()
+								if is != nil && is.Parameters != nil && len(is.Parameters.Nodes) > 0 {
+									p := is.Parameters.Nodes[0]
+									if p != nil && p.Type() != nil {
+										kt := checker.Checker_getTypeFromTypeNode(typeChecker, p.Type())
+										if kt != nil && (checker.Type_flags(kt)&checker.TypeFlagsStringLike) != 0 {
+											return true
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	if utils.IsUnionType(t) {
+		for _, part := range t.Types() {
+			if hasStringLikeIndexSignature(typeChecker, part) {
+				return true
+			}
+		}
+		return false
+	}
+	if utils.IsIntersectionType(t) {
+		for _, part := range t.Types() {
+			if hasStringLikeIndexSignature(typeChecker, part) {
+				return true
+			}
+		}
+		return false
+	}
+
+	// Scan declarations for index signatures, and check the key type using the checker
+	sym := checker.Type_symbol(t)
+	if sym != nil {
+		for _, decl := range sym.Declarations {
+			if decl == nil {
+				continue
+			}
+			switch decl.Kind {
+			case ast.KindInterfaceDeclaration:
+				iface := decl.AsInterfaceDeclaration()
+				if iface != nil && iface.Members != nil {
+					for _, m := range iface.Members.Nodes {
+						if m != nil && m.Kind == ast.KindIndexSignature {
+							is := m.AsIndexSignatureDeclaration()
+							if is != nil && is.Parameters != nil && len(is.Parameters.Nodes) > 0 {
+								p := is.Parameters.Nodes[0]
+								if p != nil && p.Type() != nil {
+									kt := checker.Checker_getTypeFromTypeNode(typeChecker, p.Type())
+									if kt != nil && (checker.Type_flags(kt)&checker.TypeFlagsStringLike) != 0 {
+										return true
+									}
+								}
+							}
+						}
+					}
+				}
+			case ast.KindTypeAliasDeclaration:
+				ta := decl.AsTypeAliasDeclaration()
+				if ta != nil && ta.Type != nil && ta.Type.Kind == ast.KindTypeLiteral {
+					tl := ta.Type.AsTypeLiteralNode()
+					if tl != nil && tl.Members != nil {
+						for _, m := range tl.Members.Nodes {
+							if m != nil && m.Kind == ast.KindIndexSignature {
+								is := m.AsIndexSignatureDeclaration()
+								if is != nil && is.Parameters != nil && len(is.Parameters.Nodes) > 0 {
+									p := is.Parameters.Nodes[0]
+									if p != nil && p.Type() != nil {
+										kt := checker.Checker_getTypeFromTypeNode(typeChecker, p.Type())
+										if kt != nil && (checker.Type_flags(kt)&checker.TypeFlagsStringLike) != 0 {
+											return true
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			case ast.KindClassDeclaration:
+				cd := decl.AsClassDeclaration()
+				if cd != nil && cd.Members != nil {
+					for _, m := range cd.Members.Nodes {
+						if m != nil && m.Kind == ast.KindIndexSignature {
+							is := m.AsIndexSignatureDeclaration()
+							if is != nil && is.Parameters != nil && len(is.Parameters.Nodes) > 0 {
+								p := is.Parameters.Nodes[0]
+								if p != nil && p.Type() != nil {
+									kt := checker.Checker_getTypeFromTypeNode(typeChecker, p.Type())
+									if kt != nil && (checker.Type_flags(kt)&checker.TypeFlagsStringLike) != 0 {
+										return true
+									}
+								}
+							}
+						}
+					}
+				}
+			case ast.KindTypeLiteral:
+				tl := decl.AsTypeLiteralNode()
+				if tl != nil && tl.Members != nil {
+					for _, m := range tl.Members.Nodes {
+						if m != nil && m.Kind == ast.KindIndexSignature {
+							is := m.AsIndexSignatureDeclaration()
+							if is != nil && is.Parameters != nil && len(is.Parameters.Nodes) > 0 {
+								p := is.Parameters.Nodes[0]
+								if p != nil && p.Type() != nil {
+									kt := checker.Checker_getTypeFromTypeNode(typeChecker, p.Type())
+									if kt != nil && (checker.Type_flags(kt)&checker.TypeFlagsStringLike) != 0 {
+										return true
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return false
 }
 
 func getStringLiteralValue(srcFile *ast.SourceFile, n *ast.Node) (string, bool) {
@@ -116,6 +409,12 @@ func getStringLiteralValue(srcFile *ast.SourceFile, n *ast.Node) (string, bool) 
 		}
 		// Fallback to raw text without outer quotes
 		return strings.Trim(text, "'\"`"), true
+	case ast.KindNullKeyword:
+		return "null", true
+	case ast.KindTrueKeyword:
+		return "true", true
+	case ast.KindFalseKeyword:
+		return "false", true
 	default:
 		return "", false
 	}
@@ -133,6 +432,16 @@ var DotNotationRule = rule.CreateRule(rule.Rule{
 				allowRE = re
 			}
 		}
+
+		// Derive allowIndexSignaturePropertyAccess from tsconfig option as well
+		tsAllowIndex := false
+		if ctx.Program != nil {
+			copts := ctx.Program.Options()
+			if copts != nil && copts.NoPropertyAccessFromIndexSignature.IsTrue() {
+				tsAllowIndex = true
+			}
+		}
+		allowIndexAccess := opts.AllowIndexSignaturePropertyAccess || tsAllowIndex
 
 		listeners := rule.RuleListeners{}
 
@@ -154,43 +463,98 @@ var DotNotationRule = rule.CreateRule(rule.Rule{
 				return
 			}
 
-			// Option: allow keywords via bracket notation
-			if !opts.AllowKeywords && isKeyword(propName) {
+			// Option: allow keywords via bracket notation only when allowKeywords is false.
+			// Additionally treat true/false/null as reserved when allowKeywords is false.
+			if !opts.AllowKeywords && (isKeyword(propName) || propName == "null" || propName == "true" || propName == "false") {
 				return
 			}
 
 			// TS-specific relaxations
-			if opts.AllowPrivateClassPropertyAccess || opts.AllowProtectedClassPropertyAccess || opts.AllowIndexSignaturePropertyAccess {
-				objType := ctx.TypeChecker.GetTypeAtLocation(elem.Expression)
-				// Try resolve symbol to check modifiers
-				sym := checker.Checker_getPropertyOfType(ctx.TypeChecker, objType, propName)
-				if sym != nil {
-					flags := checker.GetDeclarationModifierFlagsFromSymbol(sym)
-					if opts.AllowPrivateClassPropertyAccess && (flags&ast.ModifierFlagsPrivate) != 0 {
-						return
+			objType := ctx.TypeChecker.GetTypeAtLocation(elem.Expression)
+			nnType := ctx.TypeChecker.GetNonNullableType(objType)
+			appType := checker.Checker_getApparentType(ctx.TypeChecker, nnType)
+			// Try resolve symbol to check modifiers on the non-nullable type first
+			sym := checker.Checker_getPropertyOfType(ctx.TypeChecker, appType, propName)
+			if sym == nil {
+				for _, s := range checker.Checker_getPropertiesOfType(ctx.TypeChecker, appType) {
+					if s != nil && s.Name == propName {
+						sym = s
+						break
 					}
-					if opts.AllowProtectedClassPropertyAccess && (flags&ast.ModifierFlagsProtected) != 0 {
-						return
-					}
-				} else if opts.AllowIndexSignaturePropertyAccess {
-					// If property cannot be resolved on the type, approximate that an index signature may allow it.
+				}
+			}
+
+			if sym != nil {
+				flags := checker.GetDeclarationModifierFlagsFromSymbol(sym)
+				if opts.AllowPrivateClassPropertyAccess && (flags&ast.ModifierFlagsPrivate) != 0 {
+					return
+				}
+				if opts.AllowProtectedClassPropertyAccess && (flags&ast.ModifierFlagsProtected) != 0 {
 					return
 				}
 			}
 
-			// Suggest using dot notation if the name is a valid identifier
-			if isValidIdentifier(propName) {
-				// Avoid autofix when there are comments inside the element expression range
-				textRange := utils.TrimNodeTextRange(ctx.SourceFile, node)
-				if !utils.HasCommentsInRange(ctx.SourceFile, textRange) {
-					objRange := utils.TrimNodeTextRange(ctx.SourceFile, elem.Expression)
-					objectText := ctx.SourceFile.Text()[objRange.Pos():objRange.End()]
-					replacement := objectText + "." + propName
-					ctx.ReportNodeWithFixes(node, buildUseDotMessage(), rule.RuleFixReplace(ctx.SourceFile, node, replacement))
-					return
-				}
-				ctx.ReportNode(node, buildUseDotMessage())
+			// Check if this property access would be satisfied by an index signature
+			// In such cases, we should allow bracket notation as it's not a "real" declared property
+			if hasStringLikeIndexSignatureTS(ctx.TypeChecker, nnType) {
+				return
 			}
+			if hasStringLikeIndexSignature(ctx.TypeChecker, appType) || hasAnyIndexSignature(appType) {
+				return
+			}
+
+			// Also allow when allowIndexAccess is enabled and no concrete property found
+			if allowIndexAccess && sym == nil {
+				return
+			}
+
+			// Suggest using dot notation if the name is a valid identifier and
+			// - allowKeywords is true; or
+			// - it's not a reserved keyword (and not true/false/null when allowKeywords is false)
+            if isValidIdentifier(propName) && (opts.AllowKeywords || (!isKeyword(propName))) {
+                text := ctx.SourceFile.Text()
+                exprRange := utils.TrimNodeTextRange(ctx.SourceFile, elem.Expression)
+                // Find '[' after the object
+                i := exprRange.End()
+                for i < len(text) && text[i] != '[' {
+                    i++
+                }
+                // Detect if there is a newline between the object end and '['
+                hasNewline := false
+                for k := exprRange.End(); k < i; k++ {
+                    if text[k] == '\n' {
+                        hasNewline = true
+                        break
+                    }
+                }
+                // Compute the start of the line containing '['
+                lineStart := i
+                for lineStart > 0 && text[lineStart-1] != '\n' {
+                    lineStart--
+                }
+                start := lineStart
+                if hasNewline {
+                    // Unconditionally anchor to the start of the previous line for multi-line element access
+                    prev := lineStart
+                    if prev > 0 {
+                        prev--
+                        for prev > 0 && text[prev-1] != '\n' {
+                            prev--
+                        }
+                        start = prev
+                    }
+                }
+                // Find the end at the closing ']'
+                j := i
+                for j < len(text) && text[j] != ']' {
+                    j++
+                }
+                if j < len(text) {
+                    j++
+                }
+                anchored := core.NewTextRange(start, j)
+                ctx.ReportRange(anchored, buildUseDotMessage())
+            }
 		}
 
 		// Handle dot → bracket (PropertyAccessExpression) when keywords are disallowed

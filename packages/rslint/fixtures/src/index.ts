@@ -19,3 +19,5 @@ let arr2: ReadonlyArray<number> = []; // This should trigger array-type (prefer 
 class TestClass {
   readonly prop1 = 'literal'; // This should trigger class-literal-property-style (prefer getter)
 }
+
+// Test class-literal-property-style

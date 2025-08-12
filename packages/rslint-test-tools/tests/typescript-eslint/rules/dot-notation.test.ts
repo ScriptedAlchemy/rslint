@@ -161,7 +161,7 @@ foo['key_baz'];
       `,
       languageOptions: {
         parserOptions: {
-          project: './tsconfig.noPropertyAccessFromIndexSignature.json',
+          project: '../fixtures/tsconfig.noPropertyAccessFromIndexSignature.json',
           projectService: false,
           tsconfigRootDir: rootPath,
         },
@@ -179,7 +179,7 @@ foo['bar'];
       `,
       languageOptions: {
         parserOptions: {
-          project: './tsconfig.noPropertyAccessFromIndexSignature.json',
+          project: '../fixtures/tsconfig.noPropertyAccessFromIndexSignature.json',
           projectService: false,
           tsconfigRootDir: rootPath,
         },
@@ -200,7 +200,7 @@ function f<T extends Foo>(x: T) {
       `,
       languageOptions: {
         parserOptions: {
-          project: './tsconfig.noPropertyAccessFromIndexSignature.json',
+          project: '../fixtures/tsconfig.noPropertyAccessFromIndexSignature.json',
           projectService: false,
           tsconfigRootDir: rootPath,
         },
