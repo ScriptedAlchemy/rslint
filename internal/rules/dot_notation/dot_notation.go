@@ -511,50 +511,60 @@ var DotNotationRule = rule.CreateRule(rule.Rule{
 			// Suggest using dot notation if the name is a valid identifier and
 			// - allowKeywords is true; or
 			// - it's not a reserved keyword (and not true/false/null when allowKeywords is false)
-            if isValidIdentifier(propName) && (opts.AllowKeywords || (!isKeyword(propName))) {
-                text := ctx.SourceFile.Text()
-                exprRange := utils.TrimNodeTextRange(ctx.SourceFile, elem.Expression)
-                // Find '[' after the object
-                i := exprRange.End()
-                for i < len(text) && text[i] != '[' {
-                    i++
-                }
-                // Detect if there is a newline between the object end and '['
-                hasNewline := false
-                for k := exprRange.End(); k < i; k++ {
-                    if text[k] == '\n' {
-                        hasNewline = true
-                        break
-                    }
-                }
-                // Compute the start of the line containing '['
-                lineStart := i
-                for lineStart > 0 && text[lineStart-1] != '\n' {
-                    lineStart--
-                }
-                start := lineStart
-                if hasNewline {
-                    // Unconditionally anchor to the start of the previous line for multi-line element access
-                    prev := lineStart
-                    if prev > 0 {
-                        prev--
-                        for prev > 0 && text[prev-1] != '\n' {
-                            prev--
-                        }
-                        start = prev
-                    }
-                }
-                // Find the end at the closing ']'
-                j := i
-                for j < len(text) && text[j] != ']' {
-                    j++
-                }
-                if j < len(text) {
-                    j++
-                }
-                anchored := core.NewTextRange(start, j)
-                ctx.ReportRange(anchored, buildUseDotMessage())
-            }
+			if isValidIdentifier(propName) && (opts.AllowKeywords || (!isKeyword(propName))) {
+				text := ctx.SourceFile.Text()
+				exprRange := utils.TrimNodeTextRange(ctx.SourceFile, elem.Expression)
+				// Find '[' after the object
+				i := exprRange.End()
+				for i < len(text) && text[i] != '[' {
+					i++
+				}
+				// Detect if there is a newline between the object end and '['
+				hasNewline := false
+				for k := exprRange.End(); k < i; k++ {
+					if text[k] == '\n' {
+						hasNewline = true
+						break
+					}
+				}
+				// Compute the start of the line containing '['
+				lineStart := i
+				for lineStart > 0 && text[lineStart-1] != '\n' {
+					lineStart--
+				}
+				start := lineStart
+				if hasNewline {
+					// For multi-line element access, anchor to the first quote inside the brackets
+					// to match the base rule's reported location (line of the '[').
+					quoteStart := -1
+					// Find the end at the closing ']'
+					endScan := i
+					for endScan < len(text) && text[endScan] != ']' {
+						endScan++
+					}
+					for p := i; p < endScan; p++ {
+						if text[p] == '\'' || text[p] == '"' || text[p] == '`' {
+							quoteStart = p
+							break
+						}
+					}
+					if quoteStart >= 0 {
+						start = quoteStart
+					} else {
+						start = i
+					}
+				}
+				// Find the end at the closing ']'
+				j := i
+				for j < len(text) && text[j] != ']' {
+					j++
+				}
+				if j < len(text) {
+					j++
+				}
+				anchored := core.NewTextRange(start, j)
+				ctx.ReportRange(anchored, buildUseDotMessage())
+			}
 		}
 
 		// Handle dot → bracket (PropertyAccessExpression) when keywords are disallowed

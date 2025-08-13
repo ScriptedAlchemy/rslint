@@ -287,6 +287,71 @@ exports[`dot-notation > invalid 12`] = `
           "line": 3,
         },
         "start": {
+          "column": 4,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/dot-notation",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`dot-notation > invalid 13`] = `
+{
+  "diagnostics": [
+    {
+      "message": "Use dot notation instead of bracket notation.",
+      "messageId": "useDot",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 3,
+        },
+        "start": {
+          "column": 6,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/dot-notation",
+    },
+    {
+      "message": "Use dot notation instead of bracket notation.",
+      "messageId": "useDot",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 5,
+        },
+        "start": {
+          "column": 6,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/dot-notation",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`dot-notation > invalid 14`] = `
+{
+  "diagnostics": [
+    {
+      "message": "Property is a keyword - use bracket notation.",
+      "messageId": "useBrackets",
+      "range": {
+        "end": {
+          "column": 9,
+          "line": 3,
+        },
+        "start": {
           "column": 1,
           "line": 2,
         },
@@ -295,6 +360,215 @@ exports[`dot-notation > invalid 12`] = `
     },
   ],
   "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`dot-notation > invalid 15`] = `
+{
+  "diagnostics": [
+    {
+      "message": "Use dot notation instead of bracket notation.",
+      "messageId": "useDot",
+      "range": {
+        "end": {
+          "column": 25,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/dot-notation",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`dot-notation > invalid 16`] = `
+{
+  "diagnostics": [
+    {
+      "message": "Use dot notation instead of bracket notation.",
+      "messageId": "useDot",
+      "range": {
+        "end": {
+          "column": 25,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/dot-notation",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`dot-notation > invalid 17`] = `
+{
+  "diagnostics": [
+    {
+      "message": "Use dot notation instead of bracket notation.",
+      "messageId": "useDot",
+      "range": {
+        "end": {
+          "column": 11,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/dot-notation",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`dot-notation > invalid 18`] = `
+{
+  "diagnostics": [
+    {
+      "message": "Property is a keyword - use bracket notation.",
+      "messageId": "useBrackets",
+      "range": {
+        "end": {
+          "column": 24,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/dot-notation",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`dot-notation > invalid 19`] = `
+{
+  "diagnostics": [
+    {
+      "message": "Use dot notation instead of bracket notation.",
+      "messageId": "useDot",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/dot-notation",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`dot-notation > invalid 20`] = `
+{
+  "diagnostics": [
+    {
+      "message": "Use dot notation instead of bracket notation.",
+      "messageId": "useDot",
+      "range": {
+        "end": {
+          "column": 11,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/dot-notation",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`dot-notation > invalid 21`] = `
+{
+  "diagnostics": [
+    {
+      "message": "Property is a keyword - use bracket notation.",
+      "messageId": "useBrackets",
+      "range": {
+        "end": {
+          "column": 7,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/dot-notation",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`dot-notation > invalid 22`] = `
+{
+  "diagnostics": [
+    {
+      "message": "Use dot notation instead of bracket notation.",
+      "messageId": "useDot",
+      "range": {
+        "end": {
+          "column": 20,
+          "line": 7,
+        },
+        "start": {
+          "column": 1,
+          "line": 7,
+        },
+      },
+      "ruleName": "@typescript-eslint/dot-notation",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`dot-notation > invalid 23`] = `
+{
+  "diagnostics": [],
+  "errorCount": 0,
   "fileCount": 1,
   "ruleCount": 1,
 }
