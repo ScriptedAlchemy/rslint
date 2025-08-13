@@ -491,7 +491,6 @@ func Checker_globalRegExpType(v *checker.Checker) *checker.Type {
 	return ((*extra_Checker)(unsafe.Pointer(v))).globalRegExpType
 }
 
-// Add after Checker_numberType
 func Checker_stringType(v *checker.Checker) *checker.Type {
 	return ((*extra_Checker)(unsafe.Pointer(v))).stringType
 }
