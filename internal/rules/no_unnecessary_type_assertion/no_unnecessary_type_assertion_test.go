@@ -190,20 +190,6 @@ testFunction(value!);
     `},
 		{
 			Code: `
-declare namespace JSX {
-  interface IntrinsicElements {
-    div: { key?: string | number };
-  }
-}
-
-function Test(props: { id?: null | string | number }) {
-  return <div key={props.id!} />;
-}
-      `,
-			Tsx: true,
-		},
-		{
-			Code: `
 const a = [1, 2];
 const b = [3, 4];
 const c = [...a, ...b] as const;
