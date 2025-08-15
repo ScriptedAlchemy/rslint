@@ -110,3 +110,13 @@ unwinded
 variabledeclaration
 visitchildren
 GOEXE
+stub
+llms
+unstub
+USERPROFILE
+LOGNAME
+errgroup
+Unwatch
+Unregistration
+Unregisterations
+jakebailey
