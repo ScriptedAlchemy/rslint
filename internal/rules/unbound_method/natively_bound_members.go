@@ -34,6 +34,7 @@ var nativelyBoundMembers = map[string](map[string]struct{}){
 		"entries":                   struct{}{},
 		"fromEntries":               struct{}{},
 		"values":                    struct{}{},
+		"groupBy":                   struct{}{},
 	},
 	"String": {
 		"fromCharCode":  struct{}{},
@@ -46,9 +47,10 @@ var nativelyBoundMembers = map[string](map[string]struct{}){
 		"keyFor": struct{}{},
 	},
 	"Array": {
-		"isArray": struct{}{},
-		"from":    struct{}{},
-		"of":      struct{}{},
+		"isArray":   struct{}{},
+		"from":      struct{}{},
+		"of":        struct{}{},
+		"fromAsync": struct{}{},
 	},
 	"Proxy": {
 		"revocable": struct{}{},
@@ -90,7 +92,10 @@ var nativelyBoundMembers = map[string](map[string]struct{}){
 	},
 	"console": {
 		"log":            struct{}{},
+		"info":           struct{}{},
+		"debug":          struct{}{},
 		"warn":           struct{}{},
+		"error":          struct{}{},
 		"dir":            struct{}{},
 		"time":           struct{}{},
 		"timeEnd":        struct{}{},
@@ -103,10 +108,7 @@ var nativelyBoundMembers = map[string](map[string]struct{}){
 		"group":          struct{}{},
 		"groupEnd":       struct{}{},
 		"table":          struct{}{},
-		"debug":          struct{}{},
-		"info":           struct{}{},
 		"dirxml":         struct{}{},
-		"error":          struct{}{},
 		"groupCollapsed": struct{}{},
 		"Console":        struct{}{},
 		"profile":        struct{}{},
@@ -155,6 +157,8 @@ var nativelyBoundMembers = map[string](map[string]struct{}){
 	"JSON": {
 		"parse":     struct{}{},
 		"stringify": struct{}{},
+		"rawJSON":   struct{}{},
+		"isRawJSON": struct{}{},
 	},
 	"Intl": {
 		"getCanonicalLocales": struct{}{},

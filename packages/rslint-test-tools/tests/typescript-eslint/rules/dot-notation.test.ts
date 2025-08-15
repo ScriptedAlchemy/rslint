@@ -166,7 +166,6 @@ foo['key_baz'];
           tsconfigRootDir: rootPath,
         },
       },
-      options: [{ allowIndexSignaturePropertyAccess: true }],
     },
     {
       code: `
@@ -185,7 +184,6 @@ foo['bar'];
           tsconfigRootDir: rootPath,
         },
       },
-      options: [{ allowIndexSignaturePropertyAccess: true }],
     },
     {
       code: `
@@ -207,7 +205,6 @@ function f<T extends Foo>(x: T) {
           tsconfigRootDir: rootPath,
         },
       },
-      options: [{ allowIndexSignaturePropertyAccess: true }],
     },
   ],
   invalid: [

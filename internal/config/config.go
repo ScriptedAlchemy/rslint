@@ -1,20 +1,17 @@
 package config
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/bmatcuk/doublestar/v4"
-	"github.com/microsoft/typescript-go/shim/tspath"
 	importPlugin "github.com/web-infra-dev/rslint/internal/plugins/import"
 	"github.com/web-infra-dev/rslint/internal/rule"
 	"github.com/web-infra-dev/rslint/internal/rules/adjacent_overload_signatures"
 	"github.com/web-infra-dev/rslint/internal/rules/array_type"
 	"github.com/web-infra-dev/rslint/internal/rules/await_thenable"
 	"github.com/web-infra-dev/rslint/internal/rules/class_literal_property_style"
-	"github.com/web-infra-dev/rslint/internal/rules/dot_notation"
 	"github.com/web-infra-dev/rslint/internal/rules/no_array_delete"
 	"github.com/web-infra-dev/rslint/internal/rules/no_base_to_string"
 	"github.com/web-infra-dev/rslint/internal/rules/no_confusing_void_expression"
@@ -131,31 +128,6 @@ type RuleConfig struct {
 	Level   string                 `json:"level,omitempty"`   // "error", "warn", "off"
 	Options map[string]interface{} `json:"options,omitempty"` // Rule-specific options
 }
-
-const defaultJsonc = `
-[
-  {
-    // ignore files and folders for linting
-    "ignores": [],
-    "languageOptions": {
-      "parserOptions": {
-        // Rslint will lint all files included in your typescript projects defined here
-        // support lint multi packages in monorepo
-        "project": ["./tsconfig.json"]
-      }
-    },
-    // same configuration as https://typescript-eslint.io/rules/
-    "rules": {
-      "@typescript-eslint/require-await": "off",
-      "@typescript-eslint/no-unnecessary-type-assertion": "warn",
-      "@typescript-eslint/array-type": ["warn", { "default": "array-simple" }]
-    },
-    "plugins": [
-      "@typescript-eslint" // will enable all implemented @typescript-eslint rules by default
-    ]
-  }
-]
-`
 
 // IsEnabled returns true if the rule is enabled (not "off")
 func (rc *RuleConfig) IsEnabled() bool {
@@ -358,7 +330,6 @@ func registerAllTypeScriptEslintPluginRules() {
 	GlobalRuleRegistry.Register("@typescript-eslint/switch-exhaustiveness-check", switch_exhaustiveness_check.SwitchExhaustivenessCheckRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/unbound-method", unbound_method.UnboundMethodRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/use-unknown-in-catch-callback-variable", use_unknown_in_catch_callback_variable.UseUnknownInCatchCallbackVariableRule)
-	GlobalRuleRegistry.Register("@typescript-eslint/dot-notation", dot_notation.DotNotationRule)
 }
 
 func registerAllEslintImportPluginRules() {
@@ -391,13 +362,13 @@ func isFileIgnored(filePath string, ignorePatterns []string) bool {
 
 	for _, pattern := range ignorePatterns {
 		// Try matching against normalized path
-		if matched, err := doublestar.Match(pattern, normalizedPath); err == nil && matched {
+		if matched, err := doublestar.PathMatch(pattern, normalizedPath); err == nil && matched {
 			return true
 		}
 
 		// Also try matching against original path for absolute patterns
 		if normalizedPath != filePath {
-			if matched, err := doublestar.Match(pattern, filePath); err == nil && matched {
+			if matched, err := doublestar.PathMatch(pattern, filePath); err == nil && matched {
 				return true
 			}
 		}
@@ -405,7 +376,7 @@ func isFileIgnored(filePath string, ignorePatterns []string) bool {
 		// Try Unix-style path for cross-platform compatibility
 		unixPath := strings.ReplaceAll(normalizedPath, "\\", "/")
 		if unixPath != normalizedPath {
-			if matched, err := doublestar.Match(pattern, unixPath); err == nil && matched {
+			if matched, err := doublestar.PathMatch(pattern, unixPath); err == nil && matched {
 				return true
 			}
 		}
@@ -415,36 +386,27 @@ func isFileIgnored(filePath string, ignorePatterns []string) bool {
 
 // normalizePath converts file path to be relative to cwd for consistent matching
 func normalizePath(filePath, cwd string) string {
-	return tspath.NormalizePath(tspath.ConvertToRelativePath(filePath, tspath.ComparePathsOptions{
-		UseCaseSensitiveFileNames: true,
-		CurrentDirectory:          cwd,
-	}))
+	cleanPath := filepath.Clean(filePath)
+
+	// If absolute path, try to make it relative to working directory
+	if filepath.IsAbs(cleanPath) {
+		if relPath, err := filepath.Rel(cwd, cleanPath); err == nil {
+			// Only use relative path if it doesn't go outside the working directory
+			if !strings.HasPrefix(relPath, "..") {
+				return relPath
+			}
+		}
+	}
+
+	return cleanPath
 }
 
 // isFileIgnoredSimple provides fallback matching when cwd is unavailable
 func isFileIgnoredSimple(filePath string, ignorePatterns []string) bool {
 	for _, pattern := range ignorePatterns {
-		if matched, err := doublestar.Match(pattern, filePath); err == nil && matched {
+		if matched, err := doublestar.PathMatch(pattern, filePath); err == nil && matched {
 			return true
 		}
 	}
 	return false
-}
-
-// initialize a default config in the directory
-func InitDefaultConfig(directory string) error {
-	configPath := filepath.Join(directory, "rslint.jsonc")
-
-	// if the config exists
-	if _, err := os.Stat(configPath); err == nil {
-		return fmt.Errorf("rslint.json already exists in %s", directory)
-	}
-
-	// write file content
-	err := os.WriteFile(configPath, []byte(defaultJsonc), 0644)
-	if err != nil {
-		return fmt.Errorf("failed to create rslint.json: %w", err)
-	}
-
-	return nil
 }

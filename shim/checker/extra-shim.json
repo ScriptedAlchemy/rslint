@@ -26,9 +26,7 @@
       "getBaseTypeOfLiteralType",
       "getWidenedType",
       "isTypeAssignableTo",
-      "isTypeStrictSubtypeOf",
-      "getIndexInfoOfType",
-      "getIndexInfosOfType"
+      "isTypeStrictSubtypeOf"
     ]
   },
   "ExtraFields": {
@@ -36,7 +34,6 @@
     "TupleType": ["combinedFlags"],
     "Signature": ["parameters", "declaration"],
     "Checker": ["numberType", "booleanType", "globalRegExpType"],
-    "InterfaceType": ["thisType"],
-    "IndexInfo": ["keyType", "valueType", "isReadonly", "declaration"]
+    "InterfaceType": ["thisType"]
   }
 }
