@@ -212,6 +212,9 @@
         "@typescript-eslint/prefer-as-const": {
           "$ref": "#/definitions/RuleValue"
         },
+        "@typescript-eslint/prefer-includes": {
+          "$ref": "#/definitions/RuleValue"
+        },
         "@typescript-eslint/prefer-promise-reject-errors": {
           "$ref": "#/definitions/RuleValue"
         },

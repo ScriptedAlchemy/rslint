@@ -250,6 +250,12 @@
       "failing_case": []
     },
     {
+      "name": "prefer-includes",
+      "group": "@typescript-eslint",
+      "status": "partial-test",
+      "failing_case": []
+    },
+    {
       "name": "prefer-promise-reject-errors",
       "group": "@typescript-eslint",
       "status": "partial-test",

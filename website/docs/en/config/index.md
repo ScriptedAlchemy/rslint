@@ -287,6 +287,7 @@ Here's a comprehensive configuration example for a typical TypeScript project:
       ],
       "@typescript-eslint/no-empty-interface": "error",
       "@typescript-eslint/prefer-as-const": "error",
+      "@typescript-eslint/prefer-includes": "error",
     },
   },
 ]
