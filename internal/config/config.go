@@ -80,6 +80,7 @@ import (
 	// "github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_readonly_parameter_types" // Temporarily disabled - incomplete implementation
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_reduce_type_parameter"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_return_this_type"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_namespace_keyword"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_ts_expect_error"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/promise_function_async"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/related_getter_setter_pairs"
@@ -451,6 +452,7 @@ func registerAllTypeScriptEslintPluginRules() {
 	// GlobalRuleRegistry.Register("@typescript-eslint/prefer-readonly-parameter-types", prefer_readonly_parameter_types.PreferReadonlyParameterTypesRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/prefer-reduce-type-parameter", prefer_reduce_type_parameter.PreferReduceTypeParameterRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/prefer-return-this-type", prefer_return_this_type.PreferReturnThisTypeRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/prefer-namespace-keyword", prefer_namespace_keyword.PreferNamespaceKeywordRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/prefer-ts-expect-error", prefer_ts_expect_error.PreferTsExpectErrorRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/promise-function-async", promise_function_async.PromiseFunctionAsyncRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/related-getter-setter-pairs", related_getter_setter_pairs.RelatedGetterSetterPairsRule)
