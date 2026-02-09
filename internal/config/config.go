@@ -61,13 +61,16 @@ import (
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_non_null_asserted_nullish_coalescing"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_non_null_asserted_optional_chain"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_non_null_assertion"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_redeclare"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_redundant_type_constituents"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_require_imports"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_restricted_imports"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_shadow"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_this_alias"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_type_alias"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unnecessary_boolean_literal_compare"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unnecessary_condition"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unnecessary_parameter_property_assignment"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unnecessary_template_expression"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unnecessary_type_arguments"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unnecessary_type_assertion"
@@ -75,13 +78,17 @@ import (
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unsafe_argument"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unsafe_assignment"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unsafe_call"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unsafe_declaration_merging"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unsafe_enum_comparison"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unsafe_function_type"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unsafe_member_access"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unsafe_return"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unsafe_type_assertion"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unsafe_unary_minus"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unused_expressions"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unused_private_class_members"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unused_vars"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_use_before_define"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_useless_constructor"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_useless_empty_export"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_var_requires"
@@ -457,8 +464,10 @@ func registerAllTypeScriptEslintPluginRules() {
 	GlobalRuleRegistry.Register("@typescript-eslint/no-non-null-asserted-nullish-coalescing", no_non_null_asserted_nullish_coalescing.NoNonNullAssertedNullishCoalescingRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-non-null-asserted-optional-chain", no_non_null_asserted_optional_chain.NoNonNullAssertedOptionalChainRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-non-null-assertion", no_non_null_assertion.NoNonNullAssertionRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/no-redeclare", no_redeclare.NoRedeclareRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-redundant-type-constituents", no_redundant_type_constituents.NoRedundantTypeConstituentsRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-restricted-imports", no_restricted_imports.NoRestrictedImportsRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/no-shadow", no_shadow.NoShadowRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-this-alias", no_this_alias.NoThisAliasRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-type-alias", no_type_alias.NoTypeAliasRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-require-imports", no_require_imports.NoRequireImportsRule)
@@ -468,16 +477,21 @@ func registerAllTypeScriptEslintPluginRules() {
 	GlobalRuleRegistry.Register("@typescript-eslint/no-unnecessary-type-constraint", no_unnecessary_type_constraint.NoUnnecessaryTypeConstraintRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-unnecessary-type-arguments", no_unnecessary_type_arguments.NoUnnecessaryTypeArgumentsRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-unnecessary-type-assertion", no_unnecessary_type_assertion.NoUnnecessaryTypeAssertionRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/no-unnecessary-parameter-property-assignment", no_unnecessary_parameter_property_assignment.NoUnnecessaryParameterPropertyAssignmentRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-unsafe-argument", no_unsafe_argument.NoUnsafeArgumentRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-unsafe-assignment", no_unsafe_assignment.NoUnsafeAssignmentRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-unsafe-call", no_unsafe_call.NoUnsafeCallRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-unsafe-enum-comparison", no_unsafe_enum_comparison.NoUnsafeEnumComparisonRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-unsafe-member-access", no_unsafe_member_access.NoUnsafeMemberAccessRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-unsafe-return", no_unsafe_return.NoUnsafeReturnRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/no-unsafe-declaration-merging", no_unsafe_declaration_merging.NoUnsafeDeclarationMergingRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/no-unsafe-function-type", no_unsafe_function_type.NoUnsafeFunctionTypeRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-unsafe-type-assertion", no_unsafe_type_assertion.NoUnsafeTypeAssertionRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-unsafe-unary-minus", no_unsafe_unary_minus.NoUnsafeUnaryMinusRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-unused-vars", no_unused_vars.NoUnusedVarsRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-unused-expressions", no_unused_expressions.NoUnusedExpressionsRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/no-unused-private-class-members", no_unused_private_class_members.NoUnusedPrivateClassMembersRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/no-use-before-define", no_use_before_define.NoUseBeforeDefineRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-useless-empty-export", no_useless_empty_export.NoUselessEmptyExportRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-useless-constructor", no_useless_constructor.NoUselessConstructorRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-var-requires", no_var_requires.NoVarRequiresRule)
