@@ -1,6 +1,10 @@
 package prefer_find
 
 import (
+	"math"
+	"strconv"
+	"strings"
+
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/microsoft/typescript-go/shim/checker"
 	"github.com/web-infra-dev/rslint/internal/rule"
@@ -65,39 +69,112 @@ func unwrapExpression(node *ast.Node) *ast.Node {
 }
 
 func isStaticZeroValue(ctx rule.RuleContext, node *ast.Node, seen map[string]bool) bool {
-	node = unwrapExpression(node)
-	if isZeroNode(node) {
+	numberValue, ok := staticNumberValue(ctx, node, seen)
+	if !ok {
+		return false
+	}
+	if math.IsNaN(numberValue) {
 		return true
 	}
-	if node == nil || node.Kind != ast.KindIdentifier || ctx.TypeChecker == nil {
-		return false
-	}
-	ident := node.AsIdentifier()
-	if ident == nil {
-		return false
-	}
-	if seen[ident.Text] {
-		return false
-	}
-	seen[ident.Text] = true
+	return math.Trunc(numberValue) == 0
+}
 
-	symbol := ctx.TypeChecker.GetSymbolAtLocation(node)
-	if symbol == nil || symbol.Declarations == nil {
-		return false
+func parseNumberFromString(str string) float64 {
+	trimmed := strings.TrimSpace(str)
+	if trimmed == "" {
+		return 0
 	}
-	for _, decl := range symbol.Declarations {
-		if decl == nil || decl.Kind != ast.KindVariableDeclaration {
-			continue
+	if value, err := strconv.ParseFloat(trimmed, 64); err == nil {
+		return value
+	}
+	return math.NaN()
+}
+
+func staticNumberValue(ctx rule.RuleContext, node *ast.Node, seen map[string]bool) (float64, bool) {
+	node = unwrapExpression(node)
+	if node == nil {
+		return 0, false
+	}
+	switch node.Kind {
+	case ast.KindNumericLiteral:
+		value, err := strconv.ParseFloat(node.AsNumericLiteral().Text, 64)
+		if err != nil {
+			return 0, false
 		}
-		varDecl := decl.AsVariableDeclaration()
-		if varDecl == nil || varDecl.Initializer == nil {
-			continue
+		return value, true
+	case ast.KindStringLiteral:
+		return parseNumberFromString(node.AsStringLiteral().Text), true
+	case ast.KindNoSubstitutionTemplateLiteral:
+		return parseNumberFromString(node.AsNoSubstitutionTemplateLiteral().Text), true
+	case ast.KindBigIntLiteral:
+		bigint := node.AsBigIntLiteral()
+		if bigint == nil {
+			return 0, false
 		}
-		if isStaticZeroValue(ctx, varDecl.Initializer, seen) {
-			return true
+		text := strings.TrimSuffix(bigint.Text, "n")
+		text = strings.ReplaceAll(text, "_", "")
+		if text == "" {
+			return 0, false
+		}
+		value, err := strconv.ParseFloat(text, 64)
+		if err != nil {
+			return 0, false
+		}
+		return value, true
+	case ast.KindTrueKeyword:
+		return 1, true
+	case ast.KindFalseKeyword, ast.KindNullKeyword:
+		return 0, true
+	case ast.KindPrefixUnaryExpression:
+		expr := node.AsPrefixUnaryExpression()
+		if expr == nil {
+			return 0, false
+		}
+		value, ok := staticNumberValue(ctx, expr.Operand, seen)
+		if !ok {
+			return 0, false
+		}
+		switch expr.Operator {
+		case ast.KindPlusToken:
+			return value, true
+		case ast.KindMinusToken:
+			return -value, true
+		default:
+			return 0, false
+		}
+	case ast.KindIdentifier:
+		ident := node.AsIdentifier()
+		if ident == nil {
+			return 0, false
+		}
+		switch ident.Text {
+		case "NaN", "undefined":
+			return math.NaN(), true
+		case "Infinity":
+			return math.Inf(1), true
+		}
+		if seen[ident.Text] || ctx.TypeChecker == nil {
+			return 0, false
+		}
+		seen[ident.Text] = true
+		symbol := ctx.TypeChecker.GetSymbolAtLocation(node)
+		if symbol == nil || symbol.Declarations == nil {
+			return 0, false
+		}
+		for _, decl := range symbol.Declarations {
+			if decl == nil || decl.Kind != ast.KindVariableDeclaration {
+				continue
+			}
+			varDecl := decl.AsVariableDeclaration()
+			if varDecl == nil || varDecl.Initializer == nil {
+				continue
+			}
+			if value, ok := staticNumberValue(ctx, varDecl.Initializer, seen); ok {
+				return value, true
+			}
 		}
 	}
-	return false
+	return 0, false
 }
 
 func staticStringValue(ctx rule.RuleContext, node *ast.Node, seen map[string]bool) (string, bool) {
@@ -109,6 +186,12 @@ func staticStringValue(ctx rule.RuleContext, node *ast.Node, seen map[string]boo
 		str := node.AsStringLiteral()
 		if str != nil {
 			return str.Text, true
+		}
+	}
+	if node.Kind == ast.KindNoSubstitutionTemplateLiteral {
+		template := node.AsNoSubstitutionTemplateLiteral()
+		if template != nil {
+			return template.Text, true
 		}
 	}
 	if node.Kind != ast.KindIdentifier || ctx.TypeChecker == nil {
@@ -179,6 +262,26 @@ func isArrayLike(ctx rule.RuleContext, node *ast.Node) bool {
 	if ctx.TypeChecker == nil || node == nil {
 		return false
 	}
+
+	isArrayOrIntersection := func(t *checker.Type) bool {
+		if t == nil {
+			return false
+		}
+		if utils.IsTypeFlagSet(t, checker.TypeFlagsIntersection) {
+			parts := t.Types()
+			if len(parts) == 0 {
+				return false
+			}
+			for _, part := range parts {
+				if !checker.Checker_isArrayOrTupleType(ctx.TypeChecker, part) {
+					return false
+				}
+			}
+			return true
+		}
+		return checker.Checker_isArrayOrTupleType(ctx.TypeChecker, t)
+	}
+
 	t := utils.GetConstrainedTypeAtLocation(ctx.TypeChecker, node)
 	parts := utils.UnionTypeParts(t)
 	if len(parts) == 0 {
@@ -192,7 +295,7 @@ func isArrayLike(ctx rule.RuleContext, node *ast.Node) bool {
 		if utils.IsTypeFlagSet(part, checker.TypeFlagsNull|checker.TypeFlagsUndefined) {
 			continue
 		}
-		if !checker.Checker_isArrayOrTupleType(ctx.TypeChecker, part) {
+		if !isArrayOrIntersection(part) {
 			return false
 		}
 		hasArrayLike = true
@@ -202,7 +305,17 @@ func isArrayLike(ctx rule.RuleContext, node *ast.Node) bool {
 
 func isFilterCallOnArray(ctx rule.RuleContext, node *ast.Node) bool {
 	node = unwrapExpression(node)
-	if node == nil || node.Kind != ast.KindCallExpression {
+	if node == nil {
+		return false
+	}
+	if node.Kind == ast.KindConditionalExpression {
+		conditional := node.AsConditionalExpression()
+		if conditional == nil {
+			return false
+		}
+		return isFilterCallOnArray(ctx, conditional.WhenTrue) && isFilterCallOnArray(ctx, conditional.WhenFalse)
+	}
+	if node.Kind != ast.KindCallExpression {
 		return false
 	}
 	call := node.AsCallExpression()
@@ -232,6 +345,12 @@ var PreferFindRule = rule.CreateRule(rule.Rule{
 				if element == nil || element.ArgumentExpression == nil {
 					return
 				}
+				if node.Parent != nil && node.Parent.Kind == ast.KindCallExpression {
+					parentCall := node.Parent.AsCallExpression()
+					if parentCall != nil && parentCall.Expression == node {
+						return
+					}
+				}
 				if element.QuestionDotToken != nil || hasOptionalChainToken(element.Expression) {
 					return
 				}
@@ -256,14 +375,28 @@ var PreferFindRule = rule.CreateRule(rule.Rule{
 				if !isStaticZeroValue(ctx, call.Arguments.Nodes[0], map[string]bool{}) {
 					return
 				}
-				if call.Expression.Kind != ast.KindPropertyAccessExpression {
-					return
-				}
-				access := call.Expression.AsPropertyAccessExpression()
-				if access == nil || access.Name() == nil || access.Name().Text() != "at" || access.QuestionDotToken != nil {
-					return
-				}
-				if !isFilterCallOnArray(ctx, access.Expression) {
+				switch call.Expression.Kind {
+				case ast.KindPropertyAccessExpression:
+					access := call.Expression.AsPropertyAccessExpression()
+					if access == nil || access.Name() == nil || access.Name().Text() != "at" || access.QuestionDotToken != nil {
+						return
+					}
+					if !isFilterCallOnArray(ctx, access.Expression) {
+						return
+					}
+				case ast.KindElementAccessExpression:
+					access := call.Expression.AsElementAccessExpression()
+					if access == nil || access.Expression == nil || access.ArgumentExpression == nil || access.QuestionDotToken != nil {
+						return
+					}
+					name, ok := staticStringValue(ctx, access.ArgumentExpression, map[string]bool{})
+					if !ok || name != "at" {
+						return
+					}
+					if !isFilterCallOnArray(ctx, access.Expression) {
+						return
+					}
+				default:
 					return
 				}
 				ctx.ReportNode(node, buildPreferFindMessage())
