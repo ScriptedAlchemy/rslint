@@ -67,7 +67,9 @@ import (
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unsafe_argument"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unsafe_assignment"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unsafe_call"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unsafe_declaration_merging"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unsafe_enum_comparison"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unsafe_function_type"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unsafe_member_access"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unsafe_return"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unsafe_type_assertion"
@@ -79,6 +81,7 @@ import (
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/non_nullable_type_assertion_style"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/only_throw_error"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_as_const"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_enum_initializers"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_includes"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_literal_enum_member"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_namespace_keyword"
@@ -444,7 +447,9 @@ func registerAllTypeScriptEslintPluginRules() {
 	GlobalRuleRegistry.Register("@typescript-eslint/no-unsafe-argument", no_unsafe_argument.NoUnsafeArgumentRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-unsafe-assignment", no_unsafe_assignment.NoUnsafeAssignmentRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-unsafe-call", no_unsafe_call.NoUnsafeCallRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/no-unsafe-declaration-merging", no_unsafe_declaration_merging.NoUnsafeDeclarationMergingRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-unsafe-enum-comparison", no_unsafe_enum_comparison.NoUnsafeEnumComparisonRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/no-unsafe-function-type", no_unsafe_function_type.NoUnsafeFunctionTypeRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-unsafe-member-access", no_unsafe_member_access.NoUnsafeMemberAccessRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-unsafe-return", no_unsafe_return.NoUnsafeReturnRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-unsafe-type-assertion", no_unsafe_type_assertion.NoUnsafeTypeAssertionRule)
@@ -456,6 +461,7 @@ func registerAllTypeScriptEslintPluginRules() {
 	GlobalRuleRegistry.Register("@typescript-eslint/non-nullable-type-assertion-style", non_nullable_type_assertion_style.NonNullableTypeAssertionStyleRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/only-throw-error", only_throw_error.OnlyThrowErrorRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/prefer-as-const", prefer_as_const.PreferAsConstRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/prefer-enum-initializers", prefer_enum_initializers.PreferEnumInitializersRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/prefer-includes", prefer_includes.PreferIncludesRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/prefer-literal-enum-member", prefer_literal_enum_member.PreferLiteralEnumMemberRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/prefer-nullish-coalescing", prefer_nullish_coalescing.PreferNullishCoalescingRule)
