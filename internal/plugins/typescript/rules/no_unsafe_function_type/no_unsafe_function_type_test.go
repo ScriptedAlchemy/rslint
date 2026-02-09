@@ -10,6 +10,10 @@ import (
 func TestNoUnsafeFunctionTypeRule(t *testing.T) {
 	rule_tester.RunRuleTester(fixtures.GetRootDir(), "tsconfig.json", t, &NoUnsafeFunctionTypeRule, []rule_tester.ValidTestCase{
 		{Code: `type Fn = () => void;`},
+		{Code: `{
+type Function = () => void;
+const value: Function = () => {};
+}`},
 	}, []rule_tester.InvalidTestCase{
 		{
 			Code:   `type Fn = Function;`,
