@@ -32,9 +32,9 @@ jobs:
       matrix:
         runner:
           [
-            rspack-ubuntu-22.04-large,
-            rspack-windows-2022-large,
-            rspack-darwin-14-medium,
+            ubuntu-latest,
+            windows-latest,
+            macos-latest,
           ]
         go-version: ['1.25.0']
     steps:
@@ -87,7 +87,7 @@ jobs:
         run: go test -parallel 8 ./internal/...
   lint:
     name: Lint&Check
-    runs-on: rspack-ubuntu-22.04-large
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
@@ -124,7 +124,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [rspack-ubuntu-22.04-large, windows-latest]
+        os: [ubuntu-latest, windows-latest]
         go-version: ['1.25.0']
     steps:
       - name: Checkout code
@@ -180,7 +180,7 @@ jobs:
 
   test-wasm:
     name: Test WASM
-    runs-on: rspack-ubuntu-22.04-large
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
