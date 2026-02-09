@@ -1,0 +1,637 @@
+// Rstest Snapshot v1
+
+exports[`no-unused-expressions > invalid 1`] = `
+{
+  "code": "if (0) 0;",
+  "diagnostics": [
+    {
+      "message": "Expected an assignment or function call and instead saw an expression.",
+      "messageId": "unusedExpression",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 1,
+        },
+        "start": {
+          "column": 8,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unused-expressions",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unused-expressions > invalid 2`] = `
+{
+  "code": "f(0), {};",
+  "diagnostics": [
+    {
+      "message": "Expected an assignment or function call and instead saw an expression.",
+      "messageId": "unusedExpression",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unused-expressions",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unused-expressions > invalid 3`] = `
+{
+  "code": "a, b();",
+  "diagnostics": [
+    {
+      "message": "Expected an assignment or function call and instead saw an expression.",
+      "messageId": "unusedExpression",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unused-expressions",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unused-expressions > invalid 4`] = `
+{
+  "code": "
+a() &&
+  function namedFunctionInExpressionContext() {
+    f();
+  };
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected an assignment or function call and instead saw an expression.",
+      "messageId": "unusedExpression",
+      "range": {
+        "end": {
+          "column": 5,
+          "line": 5,
+        },
+        "start": {
+          "column": 1,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unused-expressions",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unused-expressions > invalid 5`] = `
+{
+  "code": "a?.b;",
+  "diagnostics": [
+    {
+      "message": "Expected an assignment or function call and instead saw an expression.",
+      "messageId": "unusedExpression",
+      "range": {
+        "end": {
+          "column": 6,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unused-expressions",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unused-expressions > invalid 6`] = `
+{
+  "code": "(a?.b).c;",
+  "diagnostics": [
+    {
+      "message": "Expected an assignment or function call and instead saw an expression.",
+      "messageId": "unusedExpression",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unused-expressions",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unused-expressions > invalid 7`] = `
+{
+  "code": "a?.['b'];",
+  "diagnostics": [
+    {
+      "message": "Expected an assignment or function call and instead saw an expression.",
+      "messageId": "unusedExpression",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unused-expressions",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unused-expressions > invalid 8`] = `
+{
+  "code": "(a?.['b']).c;",
+  "diagnostics": [
+    {
+      "message": "Expected an assignment or function call and instead saw an expression.",
+      "messageId": "unusedExpression",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unused-expressions",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unused-expressions > invalid 9`] = `
+{
+  "code": "a?.b()?.c;",
+  "diagnostics": [
+    {
+      "message": "Expected an assignment or function call and instead saw an expression.",
+      "messageId": "unusedExpression",
+      "range": {
+        "end": {
+          "column": 11,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unused-expressions",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unused-expressions > invalid 10`] = `
+{
+  "code": "(a?.b()).c;",
+  "diagnostics": [
+    {
+      "message": "Expected an assignment or function call and instead saw an expression.",
+      "messageId": "unusedExpression",
+      "range": {
+        "end": {
+          "column": 12,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unused-expressions",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unused-expressions > invalid 11`] = `
+{
+  "code": "one[2]?.[3][4];",
+  "diagnostics": [
+    {
+      "message": "Expected an assignment or function call and instead saw an expression.",
+      "messageId": "unusedExpression",
+      "range": {
+        "end": {
+          "column": 16,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unused-expressions",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unused-expressions > invalid 12`] = `
+{
+  "code": "one.two?.three.four;",
+  "diagnostics": [
+    {
+      "message": "Expected an assignment or function call and instead saw an expression.",
+      "messageId": "unusedExpression",
+      "range": {
+        "end": {
+          "column": 21,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unused-expressions",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unused-expressions > invalid 13`] = `
+{
+  "code": "
+module Foo {
+  const foo = true;
+  'use strict';
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected an assignment or function call and instead saw an expression.",
+      "messageId": "unusedExpression",
+      "range": {
+        "end": {
+          "column": 16,
+          "line": 4,
+        },
+        "start": {
+          "column": 3,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unused-expressions",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unused-expressions > invalid 14`] = `
+{
+  "code": "
+namespace Foo {
+  export class Foo {}
+  export class Bar {}
+
+  'use strict';
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected an assignment or function call and instead saw an expression.",
+      "messageId": "unusedExpression",
+      "range": {
+        "end": {
+          "column": 16,
+          "line": 6,
+        },
+        "start": {
+          "column": 3,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unused-expressions",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unused-expressions > invalid 15`] = `
+{
+  "code": "
+function foo() {
+  const foo = true;
+
+  ('use strict');
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected an assignment or function call and instead saw an expression.",
+      "messageId": "unusedExpression",
+      "range": {
+        "end": {
+          "column": 18,
+          "line": 5,
+        },
+        "start": {
+          "column": 3,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unused-expressions",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unused-expressions > invalid 16`] = `
+{
+  "code": "foo && foo?.bar;",
+  "diagnostics": [
+    {
+      "message": "Expected an assignment or function call and instead saw an expression.",
+      "messageId": "unusedExpression",
+      "range": {
+        "end": {
+          "column": 17,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unused-expressions",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unused-expressions > invalid 17`] = `
+{
+  "code": "foo ? foo?.bar : bar.baz;",
+  "diagnostics": [
+    {
+      "message": "Expected an assignment or function call and instead saw an expression.",
+      "messageId": "unusedExpression",
+      "range": {
+        "end": {
+          "column": 26,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unused-expressions",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unused-expressions > invalid 18`] = `
+{
+  "code": "
+class Foo<T> {}
+Foo<string>;
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected an assignment or function call and instead saw an expression.",
+      "messageId": "unusedExpression",
+      "range": {
+        "end": {
+          "column": 13,
+          "line": 3,
+        },
+        "start": {
+          "column": 1,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unused-expressions",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unused-expressions > invalid 19`] = `
+{
+  "code": "Map<string, string>;",
+  "diagnostics": [
+    {
+      "message": "Expected an assignment or function call and instead saw an expression.",
+      "messageId": "unusedExpression",
+      "range": {
+        "end": {
+          "column": 21,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unused-expressions",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unused-expressions > invalid 20`] = `
+{
+  "code": "
+declare const foo: number | undefined;
+foo;
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected an assignment or function call and instead saw an expression.",
+      "messageId": "unusedExpression",
+      "range": {
+        "end": {
+          "column": 5,
+          "line": 3,
+        },
+        "start": {
+          "column": 1,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unused-expressions",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unused-expressions > invalid 21`] = `
+{
+  "code": "
+declare const foo: number | undefined;
+foo as any;
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected an assignment or function call and instead saw an expression.",
+      "messageId": "unusedExpression",
+      "range": {
+        "end": {
+          "column": 12,
+          "line": 3,
+        },
+        "start": {
+          "column": 1,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unused-expressions",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unused-expressions > invalid 22`] = `
+{
+  "code": "
+declare const foo: number | undefined;
+<any>foo;
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected an assignment or function call and instead saw an expression.",
+      "messageId": "unusedExpression",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 3,
+        },
+        "start": {
+          "column": 1,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unused-expressions",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unused-expressions > invalid 23`] = `
+{
+  "code": "
+declare const foo: number | undefined;
+foo!;
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected an assignment or function call and instead saw an expression.",
+      "messageId": "unusedExpression",
+      "range": {
+        "end": {
+          "column": 6,
+          "line": 3,
+        },
+        "start": {
+          "column": 1,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unused-expressions",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
