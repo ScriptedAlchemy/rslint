@@ -34,26 +34,173 @@ func parameterPropertyNames(constructor *ast.ConstructorDeclaration) map[string]
 	return names
 }
 
+func assignmentPropertyName(node *ast.Node) string {
+	if node == nil || node.Kind != ast.KindBinaryExpression {
+		return ""
+	}
+	binary := node.AsBinaryExpression()
+	if binary == nil || binary.Left == nil {
+		return ""
+	}
+	left := binary.Left
+	switch left.Kind {
+	case ast.KindPropertyAccessExpression:
+		propAccess := left.AsPropertyAccessExpression()
+		if propAccess == nil || propAccess.Expression == nil || propAccess.Expression.Kind != ast.KindThisKeyword || propAccess.Name() == nil || propAccess.Name().Kind != ast.KindIdentifier {
+			return ""
+		}
+		return propAccess.Name().AsIdentifier().Text
+	case ast.KindElementAccessExpression:
+		elemAccess := left.AsElementAccessExpression()
+		if elemAccess == nil || elemAccess.Expression == nil || elemAccess.Expression.Kind != ast.KindThisKeyword || elemAccess.ArgumentExpression == nil {
+			return ""
+		}
+		if elemAccess.ArgumentExpression.Kind == ast.KindStringLiteral {
+			return elemAccess.ArgumentExpression.AsStringLiteral().Text
+		}
+	}
+	return ""
+}
+
+func unwrapIdentifier(node *ast.Node) *ast.Node {
+	if node == nil {
+		return nil
+	}
+	switch node.Kind {
+	case ast.KindIdentifier:
+		return node
+	case ast.KindAsExpression:
+		return unwrapIdentifier(node.AsAsExpression().Expression)
+	case ast.KindNonNullExpression:
+		return unwrapIdentifier(node.AsNonNullExpression().Expression)
+	default:
+		return nil
+	}
+}
+
+func isUnnecessaryOperator(kind ast.Kind) bool {
+	return kind == ast.KindEqualsToken ||
+		kind == ast.KindBarBarEqualsToken ||
+		kind == ast.KindQuestionQuestionEqualsToken ||
+		kind == ast.KindAmpersandAmpersandEqualsToken
+}
+
+func isFunctionLike(kind ast.Kind) bool {
+	return kind == ast.KindFunctionDeclaration ||
+		kind == ast.KindFunctionExpression ||
+		kind == ast.KindArrowFunction
+}
+
+func findParentFunction(node *ast.Node) *ast.Node {
+	for current := node.Parent; current != nil; current = current.Parent {
+		if isFunctionLike(current.Kind) {
+			return current
+		}
+	}
+	return nil
+}
+
+func findNextParentFunction(node *ast.Node) *ast.Node {
+	for current := node; current != nil; current = current.Parent {
+		if isFunctionLike(current.Kind) {
+			return current
+		}
+	}
+	return nil
+}
+
+func findParentPropertyDeclaration(node *ast.Node) *ast.Node {
+	for current := node.Parent; current != nil; current = current.Parent {
+		if current.Kind == ast.KindPropertyDeclaration {
+			return current
+		}
+	}
+	return nil
+}
+
+func findParentConstructor(node *ast.Node) *ast.Node {
+	for current := node.Parent; current != nil; current = current.Parent {
+		if current.Kind == ast.KindConstructor {
+			return current
+		}
+	}
+	return nil
+}
+
+func arrowIIFECall(node *ast.Node) *ast.Node {
+	if node == nil || node.Kind != ast.KindArrowFunction {
+		return nil
+	}
+	parent := node.Parent
+	if parent != nil && parent.Kind == ast.KindParenthesizedExpression {
+		parent = parent.Parent
+	}
+	if parent != nil && parent.Kind == ast.KindCallExpression {
+		return parent
+	}
+	return nil
+}
+
+func isArrowIIFE(node *ast.Node) bool {
+	return arrowIIFECall(node) != nil
+}
+
+func isInConstructor(node *ast.Node, constructorNode *ast.Node) bool {
+	for current := node.Parent; current != nil; current = current.Parent {
+		if current.Kind == ast.KindConstructor {
+			return current == constructorNode
+		}
+	}
+	return false
+}
+
+func walk(node *ast.Node, visit func(*ast.Node)) {
+	if node == nil {
+		return
+	}
+	visit(node)
+	node.ForEachChild(func(child *ast.Node) bool {
+		walk(child, visit)
+		return false
+	})
+}
+
+func classMembers(classNode *ast.Node) []*ast.Node {
+	if classNode == nil {
+		return nil
+	}
+	switch classNode.Kind {
+	case ast.KindClassDeclaration:
+		decl := classNode.AsClassDeclaration()
+		if decl != nil && decl.Members != nil {
+			return decl.Members.Nodes
+		}
+	case ast.KindClassExpression:
+		decl := classNode.AsClassExpression()
+		if decl != nil && decl.Members != nil {
+			return decl.Members.Nodes
+		}
+	}
+	return nil
+}
+
 func assignmentParamName(node *ast.Node) string {
 	if node == nil || node.Kind != ast.KindBinaryExpression {
 		return ""
 	}
 	binary := node.AsBinaryExpression()
-	if binary == nil || binary.OperatorToken.Kind != ast.KindEqualsToken {
+	if binary == nil {
 		return ""
 	}
-	if binary.Left == nil || binary.Left.Kind != ast.KindPropertyAccessExpression {
+	leftName := assignmentPropertyName(node)
+	if leftName == "" {
 		return ""
 	}
-	left := binary.Left.AsPropertyAccessExpression()
-	if left == nil || left.Expression == nil || left.Expression.Kind != ast.KindThisKeyword || left.Name() == nil {
+	rightNode := unwrapIdentifier(binary.Right)
+	if rightNode == nil || rightNode.Kind != ast.KindIdentifier {
 		return ""
 	}
-	if binary.Right == nil || binary.Right.Kind != ast.KindIdentifier {
-		return ""
-	}
-	rightName := binary.Right.AsIdentifier().Text
-	leftName := left.Name().AsIdentifier().Text
+	rightName := rightNode.AsIdentifier().Text
 	if leftName != rightName {
 		return ""
 	}
@@ -73,20 +220,117 @@ var NoUnnecessaryParameterPropertyAssignmentRule = rule.CreateRule(rule.Rule{
 				if len(propertyParams) == 0 {
 					return
 				}
-				for _, stmt := range constructor.Body.Statements() {
-					if stmt == nil || stmt.Kind != ast.KindExpressionStatement {
-						continue
+				paramDeclNodes := map[*ast.Node]bool{}
+				if ctx.TypeChecker != nil && constructor.Parameters != nil {
+					for _, p := range constructor.Parameters.Nodes {
+						if p == nil || !ast.IsParameter(p) {
+							continue
+						}
+						param := p.AsParameterDeclaration()
+						if param == nil || param.Name() == nil || param.Name().Kind != ast.KindIdentifier {
+							continue
+						}
+						paramDeclNodes[p] = true
 					}
-					exprStmt := stmt.AsExpressionStatement()
-					if exprStmt == nil {
-						continue
-					}
-					name := assignmentParamName(exprStmt.Expression)
-					if name == "" || !propertyParams[name] {
-						continue
-					}
-					ctx.ReportNode(exprStmt.Expression, buildUnnecessaryAssignMessage(name))
 				}
+
+				assignedBeforeConstructor := map[string]bool{}
+				for _, member := range classMembers(node.Parent) {
+					if member == nil || member.Kind != ast.KindPropertyDeclaration {
+						continue
+					}
+					property := member.AsPropertyDeclaration()
+					if property == nil || property.Initializer == nil {
+						continue
+					}
+					walk(property.Initializer, func(current *ast.Node) {
+						if current == nil || current.Kind != ast.KindBinaryExpression {
+							return
+						}
+						name := assignmentPropertyName(current)
+						if name == "" {
+							return
+						}
+						if findParentConstructor(current) != nil {
+							return
+						}
+						parentFn := findParentFunction(current)
+						if parentFn == nil {
+							assignedBeforeConstructor[name] = true
+							return
+						}
+						if isArrowIIFE(parentFn) {
+							parentProperty := findParentPropertyDeclaration(current)
+							if parentProperty == nil {
+								return
+							}
+							parentPropertyDecl := parentProperty.AsPropertyDeclaration()
+							if parentPropertyDecl == nil {
+								return
+							}
+							if parentPropertyDecl.Initializer == arrowIIFECall(parentFn) {
+								assignedBeforeConstructor[name] = true
+							}
+						}
+					})
+				}
+
+				assignedBeforeUnnecessary := map[string]bool{}
+				walk(constructor.Body.AsNode(), func(current *ast.Node) {
+					if current == nil || current.Kind != ast.KindBinaryExpression || !isInConstructor(current, node) {
+						return
+					}
+					name := assignmentPropertyName(current)
+					if name == "" {
+						return
+					}
+					parentFn := findParentFunction(current)
+					if parentFn != nil {
+						if isArrowIIFE(parentFn) {
+							if findNextParentFunction(arrowIIFECall(parentFn)) != nil {
+								return
+							}
+						} else {
+							return
+						}
+					}
+
+					binary := current.AsBinaryExpression()
+					if binary == nil {
+						return
+					}
+					if !isUnnecessaryOperator(binary.OperatorToken.Kind) {
+						assignedBeforeUnnecessary[name] = true
+						return
+					}
+					paramName := assignmentParamName(current)
+					if paramName == "" || !propertyParams[paramName] {
+						return
+					}
+					if ctx.TypeChecker != nil && len(paramDeclNodes) > 0 {
+						rightIdent := unwrapIdentifier(binary.Right)
+						if rightIdent == nil || rightIdent.Kind != ast.KindIdentifier {
+							return
+						}
+						rightSym := ctx.TypeChecker.GetSymbolAtLocation(rightIdent)
+						if rightSym != nil && len(rightSym.Declarations) > 0 {
+							isFromParameter := false
+							for _, decl := range rightSym.Declarations {
+								if paramDeclNodes[decl] || decl.Kind == ast.KindParameter || decl.Kind == ast.KindPropertyDeclaration {
+									isFromParameter = true
+									break
+								}
+							}
+							if !isFromParameter {
+								return
+							}
+						}
+					}
+					if assignedBeforeUnnecessary[paramName] || assignedBeforeConstructor[paramName] {
+						return
+					}
+					ctx.ReportNode(current, buildUnnecessaryAssignMessage(paramName))
+				})
 			},
 		}
 	},
