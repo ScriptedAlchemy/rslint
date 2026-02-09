@@ -3,6 +3,7 @@ package prefer_for_of
 import (
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/web-infra-dev/rslint/internal/rule"
+	"github.com/web-infra-dev/rslint/internal/utils"
 )
 
 func buildPreferForOfMessage() rule.RuleMessage {
@@ -86,6 +87,145 @@ func isIncrement(node *ast.Node, indexName string) bool {
 	return false
 }
 
+func nodeText(sourceFile *ast.SourceFile, node *ast.Node) string {
+	if sourceFile == nil || node == nil {
+		return ""
+	}
+	r := utils.TrimNodeTextRange(sourceFile, node)
+	start := r.Pos()
+	end := r.End()
+	if start < 0 || end > len(sourceFile.Text()) || start >= end {
+		return ""
+	}
+	return sourceFile.Text()[start:end]
+}
+
+func isAssignee(node *ast.Node) bool {
+	if node == nil {
+		return false
+	}
+	if ast.IsAssignmentTarget(node) {
+		return true
+	}
+	target := node
+	for target.Parent != nil {
+		switch target.Parent.Kind {
+		case ast.KindParenthesizedExpression,
+			ast.KindNonNullExpression,
+			ast.KindAsExpression,
+			ast.KindTypeAssertionExpression,
+			ast.KindSatisfiesExpression:
+			target = target.Parent
+		default:
+			goto done
+		}
+	}
+done:
+	if ast.IsAssignmentTarget(target) {
+		return true
+	}
+	return target.Parent != nil && target.Parent.Kind == ast.KindDeleteExpression && target.Parent.AsDeleteExpression().Expression == target
+}
+
+func isDeclarationIdentifier(node *ast.Node) bool {
+	if node == nil || node.Parent == nil {
+		return false
+	}
+	parent := node.Parent
+	switch parent.Kind {
+	case ast.KindVariableDeclaration:
+		decl := parent.AsVariableDeclaration()
+		return decl != nil && decl.Name() == node
+	case ast.KindParameter:
+		decl := parent.AsParameterDeclaration()
+		return decl != nil && decl.Name() == node
+	case ast.KindFunctionDeclaration:
+		decl := parent.AsFunctionDeclaration()
+		return decl != nil && decl.Name() == node
+	case ast.KindClassDeclaration:
+		decl := parent.AsClassDeclaration()
+		return decl != nil && decl.Name() == node
+	}
+	return false
+}
+
+func forDeclaresVariableName(node *ast.Node, name string) bool {
+	if node == nil || node.Kind != ast.KindForStatement || name == "" {
+		return false
+	}
+	loop := node.AsForStatement()
+	if loop == nil || loop.Initializer == nil || loop.Initializer.Kind != ast.KindVariableDeclarationList {
+		return false
+	}
+	declList := loop.Initializer.AsVariableDeclarationList()
+	if declList == nil || declList.Declarations == nil {
+		return false
+	}
+	for _, declNode := range declList.Declarations.Nodes {
+		decl := declNode.AsVariableDeclaration()
+		if decl == nil || decl.Name() == nil || decl.Name().Kind != ast.KindIdentifier {
+			continue
+		}
+		if decl.Name().AsIdentifier().Text == name {
+			return true
+		}
+	}
+	return false
+}
+
+func isIndexOnlyUsedWithArray(sourceFile *ast.SourceFile, body *ast.Node, indexName string, arrayExpr *ast.Node) bool {
+	if sourceFile == nil || body == nil || arrayExpr == nil {
+		return false
+	}
+	arrayText := nodeText(sourceFile, arrayExpr)
+	if arrayText == "" {
+		return false
+	}
+
+	valid := true
+	var visit func(current *ast.Node)
+	visit = func(current *ast.Node) {
+		if !valid || current == nil || current.Kind != ast.KindIdentifier || current.AsIdentifier().Text != indexName {
+			if current != nil && !forDeclaresVariableName(current, indexName) {
+				current.ForEachChild(func(child *ast.Node) bool {
+					visit(child)
+					return false
+				})
+			}
+			return
+		}
+		if isDeclarationIdentifier(current) {
+			return
+		}
+
+		parent := current.Parent
+		if parent == nil || parent.Kind != ast.KindElementAccessExpression {
+			valid = false
+			return
+		}
+		element := parent.AsElementAccessExpression()
+		if element == nil || element.ArgumentExpression != current || element.Expression == nil {
+			valid = false
+			return
+		}
+		if element.Expression.Kind == ast.KindThisKeyword {
+			valid = false
+			return
+		}
+		if isAssignee(parent) {
+			valid = false
+			return
+		}
+		if nodeText(sourceFile, element.Expression) != arrayText {
+			valid = false
+			return
+		}
+	}
+	visit(body)
+
+	return valid
+}
+
 var PreferForOfRule = rule.CreateRule(rule.Rule{
 	Name: "prefer-for-of",
 	Run: func(ctx rule.RuleContext, options any) rule.RuleListeners {
@@ -110,9 +250,10 @@ var PreferForOfRule = rule.CreateRule(rule.Rule{
 					return
 				}
 
-				// Heuristic implementation: for now, report loops that match the canonical
-				// numeric index progression pattern over `.length`.
-				_ = arrayExpr
+				if !isIndexOnlyUsedWithArray(ctx.SourceFile, loop.Statement, indexName, arrayExpr) {
+					return
+				}
+
 				ctx.ReportNode(node, buildPreferForOfMessage())
 			},
 		}
