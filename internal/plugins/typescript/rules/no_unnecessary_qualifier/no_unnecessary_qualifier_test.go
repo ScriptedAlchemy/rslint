@@ -9,11 +9,11 @@ import (
 
 func TestNoUnnecessaryQualifierRule(t *testing.T) {
 	rule_tester.RunRuleTester(fixtures.GetRootDir(), "tsconfig.json", t, &NoUnnecessaryQualifierRule, []rule_tester.ValidTestCase{
-		{Code: `type A = string;`},
+		{Code: `namespace X { export type T = number; } namespace Y { const x: X.T = 3; }`},
 	}, []rule_tester.InvalidTestCase{
 		{
-			Code:   `namespace N { export type A = string; } type B = N.A;`,
-			Errors: []rule_tester.InvalidTestCaseError{{MessageId: "unnecessaryQualifier", Line: 1, Column: 50}},
+			Code:   `namespace A { export type B = number; const x: A.B = 3; }`,
+			Errors: []rule_tester.InvalidTestCaseError{{MessageId: "unnecessaryQualifier", Line: 1, Column: 48}},
 		},
 	})
 }
