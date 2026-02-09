@@ -16,6 +16,7 @@ export default defineConfig({
 
     // typescript-eslint
     './tests/typescript-eslint/rules/adjacent-overload-signatures.test.ts',
+    './tests/typescript-eslint/rules/rslint-newly-ported-smoke.test.ts',
     './tests/typescript-eslint/rules/array-type.test.ts',
     './tests/typescript-eslint/rules/await-thenable.test.ts',
     // './tests/typescript-eslint/rules/ban-ts-comment.test.ts',
