@@ -239,11 +239,11 @@ exports[`no-shadow > invalid 1`] = `
   "code": "const a = 1; function f() { const a = 2; }",
   "diagnostics": [
     {
-      "message": "'a' is already declared in the upper scope.",
+      "message": "'a' is already declared in the upper scope on line 1 column 6.",
       "messageId": "noShadow",
       "range": {
         "end": {
-          "column": 40,
+          "column": 36,
           "line": 1,
         },
         "start": {
