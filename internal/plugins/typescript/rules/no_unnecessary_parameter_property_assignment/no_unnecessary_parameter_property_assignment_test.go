@@ -19,37 +19,37 @@ func TestNoUnnecessaryParameterPropertyAssignmentRule(t *testing.T) {
 		{
 			Code: "class Foo { constructor(public foo: string) { this.foo = foo; } }",
 			Errors: []rule_tester.InvalidTestCaseError{
-				{MessageId: "unnecessaryAssign", Line: 1, Column: 45},
+				{MessageId: "unnecessaryAssign", Line: 1, Column: 47},
 			},
 		},
 		{
 			Code: "class Foo { constructor(public foo?: string) { this.foo = foo!; } }",
 			Errors: []rule_tester.InvalidTestCaseError{
-				{MessageId: "unnecessaryAssign", Line: 1, Column: 46},
+				{MessageId: "unnecessaryAssign", Line: 1, Column: 48},
 			},
 		},
 		{
 			Code: "class Foo { constructor(public foo?: string) { this.foo = foo as any; } }",
 			Errors: []rule_tester.InvalidTestCaseError{
-				{MessageId: "unnecessaryAssign", Line: 1, Column: 46},
+				{MessageId: "unnecessaryAssign", Line: 1, Column: 48},
 			},
 		},
 		{
 			Code: "class Foo { constructor(public foo: string) { this.foo ||= foo; } }",
 			Errors: []rule_tester.InvalidTestCaseError{
-				{MessageId: "unnecessaryAssign", Line: 1, Column: 45},
+				{MessageId: "unnecessaryAssign", Line: 1, Column: 47},
 			},
 		},
 		{
 			Code: "class Foo { constructor(private foo: string) { this['foo'] = foo; } }",
 			Errors: []rule_tester.InvalidTestCaseError{
-				{MessageId: "unnecessaryAssign", Line: 1, Column: 46},
+				{MessageId: "unnecessaryAssign", Line: 1, Column: 48},
 			},
 		},
 		{
 			Code: "class Foo { constructor(private foo: string) { (() => { this.foo = foo; })(); } }",
 			Errors: []rule_tester.InvalidTestCaseError{
-				{MessageId: "unnecessaryAssign", Line: 1, Column: 56},
+				{MessageId: "unnecessaryAssign", Line: 1, Column: 57},
 			},
 		},
 	})
