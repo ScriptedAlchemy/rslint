@@ -102,6 +102,8 @@ func isElementAccessWriteContext(node *ast.Node) bool {
 		case ast.KindPostfixUnaryExpression:
 			unary := parent.AsPostfixUnaryExpression()
 			return unary != nil && (unary.Operator == ast.KindPlusPlusToken || unary.Operator == ast.KindMinusMinusToken)
+		case ast.KindDeleteExpression:
+			return true
 		case ast.KindBinaryExpression:
 			bin := parent.AsBinaryExpression()
 			if bin == nil || !ast.IsAssignmentOperator(bin.OperatorToken.Kind) {
