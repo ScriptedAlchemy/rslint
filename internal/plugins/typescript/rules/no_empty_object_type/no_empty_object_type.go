@@ -88,6 +88,9 @@ var NoEmptyObjectTypeRule = rule.CreateRule(rule.Rule{
 				}
 
 				extendsCount := countExtendsClauses(interfaceDecl)
+				if extendsCount > 1 {
+					return
+				}
 				if opts.AllowInterfaces == "with-single-extends" && extendsCount == 1 {
 					return
 				}
