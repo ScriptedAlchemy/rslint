@@ -172,10 +172,15 @@ var NoUselessConstructorRule = rule.CreateRule(rule.Rule{
 
 				stmts := constructor.Body.Statements()
 				classNode := node.Parent
-				if !hasExtendsClause(classNode) {
+				extendsClass := hasExtendsClause(classNode)
+				if !extendsClass {
 					if len(stmts) == 0 {
 						ctx.ReportNode(node, buildNoUselessConstructorMessage())
 					}
+					return
+				}
+				// Derived constructors with explicit `public` are kept for parity.
+				if ast.HasSyntacticModifier(node, ast.ModifierFlagsPublic) {
 					return
 				}
 
