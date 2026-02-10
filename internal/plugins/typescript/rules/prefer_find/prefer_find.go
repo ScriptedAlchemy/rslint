@@ -241,13 +241,25 @@ func isDefinitelyArrayOrTupleType(typeChecker *checker.Checker, t *checker.Type)
 		return false
 	}
 	flags := checker.Type_flags(t)
+	if flags&(checker.TypeFlagsNull|checker.TypeFlagsUndefined) != 0 {
+		return true
+	}
 	if flags&checker.TypeFlagsUnion != 0 {
+		hasArrayLikePart := false
 		for _, part := range t.Types() {
+			if part == nil {
+				return false
+			}
+			partFlags := checker.Type_flags(part)
+			if partFlags&(checker.TypeFlagsNull|checker.TypeFlagsUndefined) != 0 {
+				continue
+			}
 			if !isDefinitelyArrayOrTupleType(typeChecker, part) {
 				return false
 			}
+			hasArrayLikePart = true
 		}
-		return true
+		return hasArrayLikePart
 	}
 	if flags&checker.TypeFlagsIntersection != 0 {
 		for _, part := range t.Types() {
