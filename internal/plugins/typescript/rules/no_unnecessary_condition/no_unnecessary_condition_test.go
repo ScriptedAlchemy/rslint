@@ -26,6 +26,11 @@ declare const x: boolean;
 if (x) {
 	console.log('true');
 }`},
+			{Code: `
+declare const x: string;
+if (x) {
+	console.log(x);
+}`},
 			// Valid with allowConstantLoopConditions
 			{
 				Code:    `while (true) { break; }`,
@@ -33,10 +38,10 @@ if (x) {
 			},
 		},
 		[]rule_tester.InvalidTestCase{
-			// Always truthy conditions
+			// Always truthy literal conditions
 			{
 				Code: `
-declare const x: string;
+const x = true;
 if (x) {
 	console.log(x);
 }`,

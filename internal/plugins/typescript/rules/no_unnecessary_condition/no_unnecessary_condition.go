@@ -246,29 +246,6 @@ func isAlwaysTruthy(t *checker.Type) bool {
 		return true
 	}
 
-	// For the purpose of this rule, non-nullable primitive types are considered "always truthy"
-	// This is not technically correct from a JavaScript perspective (empty string, 0, NaN are falsy),
-	// but matches the TypeScript ESLint rule behavior which flags these as unnecessary conditions
-	// when they are non-nullable types
-	if flags&checker.TypeFlagsString != 0 {
-		return true
-	}
-
-	// Number type - treat as always truthy for non-nullable numbers
-	if flags&checker.TypeFlagsNumber != 0 {
-		return true
-	}
-
-	// BigInt type - treat as always truthy for non-nullable bigints
-	if flags&checker.TypeFlagsBigInt != 0 {
-		return true
-	}
-
-	// ESSymbol is always truthy
-	if flags&checker.TypeFlagsESSymbol != 0 {
-		return true
-	}
-
 	return false
 }
 
@@ -301,9 +278,62 @@ func isAlwaysFalsy(t *checker.Type) bool {
 	return false
 }
 
+func constBooleanLiteralValue(ctx rule.RuleContext, node *ast.Node) (bool, bool) {
+	if node == nil {
+		return false, false
+	}
+
+	if node.Kind == ast.KindTrueKeyword {
+		return true, true
+	}
+	if node.Kind == ast.KindFalseKeyword {
+		return false, true
+	}
+	if node.Kind != ast.KindIdentifier || ctx.TypeChecker == nil {
+		return false, false
+	}
+
+	symbol := ctx.TypeChecker.GetSymbolAtLocation(node)
+	if symbol == nil || symbol.ValueDeclaration == nil {
+		return false, false
+	}
+
+	decl := symbol.ValueDeclaration
+	if decl.Kind != ast.KindVariableDeclaration || decl.Parent == nil || decl.Parent.Kind != ast.KindVariableDeclarationList {
+		return false, false
+	}
+
+	declList := decl.Parent.AsVariableDeclarationList()
+	if declList == nil || declList.Flags&ast.NodeFlagsConst == 0 {
+		return false, false
+	}
+
+	initializer := decl.AsVariableDeclaration().Initializer
+	if initializer == nil {
+		return false, false
+	}
+	if initializer.Kind == ast.KindTrueKeyword {
+		return true, true
+	}
+	if initializer.Kind == ast.KindFalseKeyword {
+		return false, true
+	}
+
+	return false, false
+}
+
 // checkCondition checks if a condition is unnecessary (always true/false/never)
 func checkCondition(ctx rule.RuleContext, node *ast.Node, isNegated bool) {
 	if node == nil {
+		return
+	}
+
+	if value, ok := constBooleanLiteralValue(ctx, node); ok {
+		if value {
+			ctx.ReportNode(node, buildAlwaysTruthyMessage())
+		} else {
+			ctx.ReportNode(node, buildAlwaysFalsyMessage())
+		}
 		return
 	}
 
@@ -377,20 +407,8 @@ var NoUnnecessaryConditionRule = rule.CreateRule(rule.Rule{
 				if whileStmt != nil && whileStmt.Expression != nil {
 					// Handle constant loop conditions
 					if *opts.AllowConstantLoopConditions != "never" {
-						// Check if it's a constant condition
-						typeOfCondition := ctx.TypeChecker.GetTypeAtLocation(whileStmt.Expression)
-						if typeOfCondition != nil {
-							flags := checker.Type_flags(typeOfCondition)
-							// Check for literal true/false
-							if flags&checker.TypeFlagsBooleanLiteral != 0 {
-								if utils.IsIntrinsicType(typeOfCondition) {
-									intrinsic := typeOfCondition.AsIntrinsicType()
-									if intrinsic != nil && (intrinsic.IntrinsicName() == "true" || intrinsic.IntrinsicName() == "false") {
-										// Skip checking constant boolean literals in loops when allowed
-										return
-									}
-								}
-							}
+						if _, ok := constBooleanLiteralValue(ctx, whileStmt.Expression); ok {
+							return
 						}
 					}
 					checkCondition(ctx, whileStmt.Expression, false)
@@ -401,6 +419,11 @@ var NoUnnecessaryConditionRule = rule.CreateRule(rule.Rule{
 			ast.KindForStatement: func(node *ast.Node) {
 				forStmt := node.AsForStatement()
 				if forStmt != nil && forStmt.Condition != nil {
+					if *opts.AllowConstantLoopConditions != "never" {
+						if _, ok := constBooleanLiteralValue(ctx, forStmt.Condition); ok {
+							return
+						}
+					}
 					checkCondition(ctx, forStmt.Condition, false)
 				}
 			},
@@ -408,7 +431,12 @@ var NoUnnecessaryConditionRule = rule.CreateRule(rule.Rule{
 			// Do-while loop conditions
 			ast.KindDoStatement: func(node *ast.Node) {
 				doStmt := node.AsDoStatement()
-				if doStmt != nil {
+				if doStmt != nil && doStmt.Expression != nil {
+					if *opts.AllowConstantLoopConditions != "never" {
+						if _, ok := constBooleanLiteralValue(ctx, doStmt.Expression); ok {
+							return
+						}
+					}
 					checkCondition(ctx, doStmt.Expression, false)
 				}
 			},
@@ -429,6 +457,7 @@ var NoUnnecessaryConditionRule = rule.CreateRule(rule.Rule{
 					if binExpr.OperatorToken.Kind == ast.KindAmpersandAmpersandToken ||
 						binExpr.OperatorToken.Kind == ast.KindBarBarToken {
 						checkCondition(ctx, binExpr.Left, false)
+						checkCondition(ctx, binExpr.Right, false)
 						return
 					}
 
@@ -464,6 +493,12 @@ var NoUnnecessaryConditionRule = rule.CreateRule(rule.Rule{
 							_, _ = leftType, rightType
 						}
 					}
+				}
+			},
+			ast.KindSwitchStatement: func(node *ast.Node) {
+				switchStmt := node.AsSwitchStatement()
+				if switchStmt != nil && switchStmt.Expression != nil {
+					checkCondition(ctx, switchStmt.Expression, false)
 				}
 			},
 		}
