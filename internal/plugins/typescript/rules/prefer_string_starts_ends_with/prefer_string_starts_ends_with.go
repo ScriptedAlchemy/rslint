@@ -75,7 +75,13 @@ func (h *ruleHelper) getNodeText(node *ast.Node) string {
 		return cached
 	}
 	r := utils.TrimNodeTextRange(h.ctx.SourceFile, node)
-	text := h.ctx.SourceFile.Text()[r.Pos():r.End()]
+	sourceText := h.ctx.SourceFile.Text()
+	start := r.Pos()
+	end := r.End()
+	if start < 0 || end > len(sourceText) || start > end {
+		return ""
+	}
+	text := sourceText[start:end]
 	h.nodeTextCache[node] = text
 	return text
 }
