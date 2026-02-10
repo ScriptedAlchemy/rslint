@@ -108,6 +108,37 @@ export type ValidTestCase<T = any> =
       name?: string;
     };
 
+function mergeLanguageOptions(
+  base?: RuleTesterOptions['languageOptions'],
+  override?: RuleTesterOptions['languageOptions'],
+): RuleTesterOptions['languageOptions'] | undefined {
+  if (!base && !override) {
+    return undefined;
+  }
+
+  const baseParser = base?.parserOptions;
+  const overrideParser = override?.parserOptions;
+
+  return {
+    ...(base ?? {}),
+    ...(override ?? {}),
+    parserOptions:
+      baseParser || overrideParser
+        ? {
+            ...(baseParser ?? {}),
+            ...(overrideParser ?? {}),
+            ecmaFeatures:
+              baseParser?.ecmaFeatures || overrideParser?.ecmaFeatures
+                ? {
+                    ...(baseParser?.ecmaFeatures ?? {}),
+                    ...(overrideParser?.ecmaFeatures ?? {}),
+                  }
+                : undefined,
+          }
+        : undefined,
+  };
+}
+
 function getTypescriptEslintFixturesRootDir(): string {
   return path.resolve(
     '../../packages/rslint-test-tools/tests/typescript-eslint/fixtures',
@@ -173,10 +204,14 @@ export class RuleTester {
           }
           const code =
             typeof validCase === 'string' ? validCase : validCase.code;
-          const languageOptions =
+          const caseLanguageOptions =
             typeof validCase === 'string'
               ? undefined
               : validCase.languageOptions;
+          const languageOptions = mergeLanguageOptions(
+            this.options.languageOptions,
+            caseLanguageOptions,
+          );
           const isJSX = languageOptions?.parserOptions?.ecmaFeatures?.jsx;
 
           const options =
@@ -231,7 +266,10 @@ export class RuleTester {
           if (hasOnly && !only) {
             continue;
           }
-          const languageOptions = item.languageOptions;
+          const languageOptions = mergeLanguageOptions(
+            this.options.languageOptions,
+            item.languageOptions,
+          );
           const isJSX = languageOptions?.parserOptions?.ecmaFeatures?.jsx;
           const test_virtual_entry = path.resolve(
             cwd,
