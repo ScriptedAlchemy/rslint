@@ -160,7 +160,7 @@ var NoUnnecessaryTypeConversionRule = rule.CreateRule(rule.Rule{
 				switch binaryExpr.OperatorToken.Kind {
 				case ast.KindPlusToken:
 					if isEmptyStringLiteral(binaryExpr.Left) && isExpressionMatchingPrimitive(ctx, binaryExpr.Right, primitiveString) {
-						reportStringPlusRange(node, node.Pos(), binaryExpr.Right.Pos())
+						reportStringPlusRange(node, node.Pos(), binaryExpr.Right.Pos()+1)
 						return
 					}
 					if isEmptyStringLiteral(binaryExpr.Right) && isExpressionMatchingPrimitive(ctx, binaryExpr.Left, primitiveString) {
