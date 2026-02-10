@@ -182,23 +182,37 @@ func checkLoopNode(ctx rule.RuleContext, loopNode *ast.Node) {
 	if len(loopVarSymbols) == 0 {
 		return
 	}
+	var body *ast.Node
+	switch loopNode.Kind {
+	case ast.KindForStatement:
+		forStmt := loopNode.AsForStatement()
+		if forStmt != nil {
+			body = forStmt.Statement
+		}
+	case ast.KindForInStatement, ast.KindForOfStatement:
+		forInOrOfStmt := loopNode.AsForInOrOfStatement()
+		if forInOrOfStmt != nil {
+			body = forInOrOfStmt.Statement
+		}
+	}
+	if body == nil {
+		return
+	}
 
-	loopNode.ForEachChild(func(child *ast.Node) bool {
-		if child == nil {
-			return false
+	var visit func(*ast.Node)
+	visit = func(current *ast.Node) {
+		if current == nil {
+			return
 		}
-		if isFunctionLikeNode(child) && functionUsesLoopVar(ctx, child, loopVarSymbols) {
-			ctx.ReportNode(child, buildUnsafeRefsMessage())
-			return false
+		if isFunctionLikeNode(current) && functionUsesLoopVar(ctx, current, loopVarSymbols) {
+			ctx.ReportNode(current, buildUnsafeRefsMessage())
 		}
-		child.ForEachChild(func(grandChild *ast.Node) bool {
-			if isFunctionLikeNode(grandChild) && functionUsesLoopVar(ctx, grandChild, loopVarSymbols) {
-				ctx.ReportNode(grandChild, buildUnsafeRefsMessage())
-			}
+		current.ForEachChild(func(child *ast.Node) bool {
+			visit(child)
 			return false
 		})
-		return false
-	})
+	}
+	visit(body)
 }
 
 var NoLoopFuncRule = rule.CreateRule(rule.Rule{
