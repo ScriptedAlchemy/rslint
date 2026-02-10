@@ -112,6 +112,94 @@ func rhsReferencesParameterProperty(ctx rule.RuleContext, rhs *ast.Node, paramet
 	return false
 }
 
+func classMemberNodes(classNode *ast.Node) []*ast.Node {
+	if classNode == nil {
+		return nil
+	}
+	switch classNode.Kind {
+	case ast.KindClassDeclaration:
+		classDecl := classNode.AsClassDeclaration()
+		if classDecl != nil && classDecl.Members != nil {
+			return classDecl.Members.Nodes
+		}
+	case ast.KindClassExpression:
+		classExpr := classNode.AsClassExpression()
+		if classExpr != nil && classExpr.Members != nil {
+			return classExpr.Members.Nodes
+		}
+	}
+	return nil
+}
+
+func visitEagerlyExecutedNode(
+	node *ast.Node,
+	allowFunctionBody bool,
+	onBinary func(*ast.BinaryExpression),
+	onMutation func(string),
+) {
+	if node == nil {
+		return
+	}
+	if isFunctionLike(node) && !allowFunctionBody {
+		return
+	}
+
+	switch node.Kind {
+	case ast.KindBinaryExpression:
+		bin := node.AsBinaryExpression()
+		if bin != nil {
+			if onBinary != nil {
+				onBinary(bin)
+			}
+			if onMutation != nil && ast.IsAssignmentOperator(bin.OperatorToken.Kind) {
+				if name, ok := getAssignmentTargetName(bin.Left); ok {
+					onMutation(name)
+				}
+			}
+		}
+	case ast.KindPrefixUnaryExpression:
+		unary := node.AsPrefixUnaryExpression()
+		if unary != nil && onMutation != nil && (unary.Operator == ast.KindPlusPlusToken || unary.Operator == ast.KindMinusMinusToken || unary.Operator == ast.KindDeleteKeyword) {
+			if name, ok := getAssignmentTargetName(unary.Operand); ok {
+				onMutation(name)
+			}
+		}
+	case ast.KindPostfixUnaryExpression:
+		unary := node.AsPostfixUnaryExpression()
+		if unary != nil && onMutation != nil && (unary.Operator == ast.KindPlusPlusToken || unary.Operator == ast.KindMinusMinusToken) {
+			if name, ok := getAssignmentTargetName(unary.Operand); ok {
+				onMutation(name)
+			}
+		}
+	case ast.KindDeleteExpression:
+		del := node.AsDeleteExpression()
+		if del != nil && onMutation != nil {
+			if name, ok := getAssignmentTargetName(del.Expression); ok {
+				onMutation(name)
+			}
+		}
+	case ast.KindCallExpression:
+		call := node.AsCallExpression()
+		if call != nil {
+			callee := unwrapRightExpression(call.Expression)
+			if isFunctionLike(callee) {
+				visitEagerlyExecutedNode(callee, true, onBinary, onMutation)
+			}
+			if call.Arguments != nil {
+				for _, arg := range call.Arguments.Nodes {
+					visitEagerlyExecutedNode(arg, false, onBinary, onMutation)
+				}
+			}
+			return
+		}
+	}
+
+	node.ForEachChild(func(child *ast.Node) bool {
+		visitEagerlyExecutedNode(child, false, onBinary, onMutation)
+		return false
+	})
+}
+
 var NoUnnecessaryParameterPropertyAssignmentRule = rule.CreateRule(rule.Rule{
 	Name: "no-unnecessary-parameter-property-assignment",
 	Run: func(ctx rule.RuleContext, options any) rule.RuleListeners {
@@ -140,57 +228,54 @@ var NoUnnecessaryParameterPropertyAssignmentRule = rule.CreateRule(rule.Rule{
 					return
 				}
 
-				var visitNode func(current *ast.Node, allowFunctionBody bool)
-				visitNode = func(current *ast.Node, allowFunctionBody bool) {
-					if current == nil {
-						return
-					}
-					if isFunctionLike(current) && !allowFunctionBody {
-						return
-					}
+				mutated := map[string]bool{}
 
-					if current.Kind == ast.KindBinaryExpression {
-						bin := current.AsBinaryExpression()
-						if bin != nil && isLogicalOrSimpleAssignOperator(bin.OperatorToken.Kind) {
-							targetName, ok := getAssignmentTargetName(bin.Left)
-							if ok {
-								paramDeclNode, isParamProp := parameterProps[targetName]
-								if isParamProp {
-									right := unwrapRightExpression(bin.Right)
-									if right != nil && right.Kind == ast.KindIdentifier && right.AsIdentifier().Text == targetName {
-										if rhsReferencesParameterProperty(ctx, right, paramDeclNode) {
-											ctx.ReportNode(current, buildUnnecessaryAssignMessage())
-										}
-									}
-								}
-							}
+				// Instance field initializers run before constructor body and can
+				// make the direct re-assignment necessary.
+				for _, member := range classMemberNodes(node.Parent) {
+					if member == nil || member.Kind != ast.KindPropertyDeclaration || ast.HasSyntacticModifier(member, ast.ModifierFlagsStatic) {
+						continue
+					}
+					prop := member.AsPropertyDeclaration()
+					if prop == nil || prop.Initializer == nil {
+						continue
+					}
+					visitEagerlyExecutedNode(prop.Initializer, false, nil, func(name string) {
+						if _, ok := parameterProps[name]; ok {
+							mutated[name] = true
 						}
-					}
-
-					if current.Kind == ast.KindCallExpression {
-						call := current.AsCallExpression()
-						if call != nil {
-							callee := unwrapRightExpression(call.Expression)
-							if isFunctionLike(callee) {
-								visitNode(callee, true)
-							}
-							if call.Arguments != nil {
-								for _, arg := range call.Arguments.Nodes {
-									visitNode(arg, false)
-								}
-							}
-							return
-						}
-					}
-
-					current.ForEachChild(func(child *ast.Node) bool {
-						visitNode(child, false)
-						return false
 					})
 				}
 
 				for _, stmt := range constructor.Body.Statements() {
-					visitNode(stmt, false)
+					visitEagerlyExecutedNode(stmt, false, func(bin *ast.BinaryExpression) {
+						if bin == nil || !isLogicalOrSimpleAssignOperator(bin.OperatorToken.Kind) {
+							return
+						}
+						targetName, ok := getAssignmentTargetName(bin.Left)
+						if !ok {
+							return
+						}
+						paramDeclNode, isParamProp := parameterProps[targetName]
+						if !isParamProp {
+							return
+						}
+						right := unwrapRightExpression(bin.Right)
+						if right == nil || right.Kind != ast.KindIdentifier || right.AsIdentifier().Text != targetName {
+							return
+						}
+						if !rhsReferencesParameterProperty(ctx, right, paramDeclNode) {
+							return
+						}
+						if mutated[targetName] {
+							return
+						}
+						ctx.ReportNode(bin.AsNode(), buildUnnecessaryAssignMessage())
+					}, func(name string) {
+						if _, ok := parameterProps[name]; ok {
+							mutated[name] = true
+						}
+					})
 				}
 			},
 		}
