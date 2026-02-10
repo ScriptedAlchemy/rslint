@@ -170,6 +170,15 @@ func isInsideTypeAliasType(node *ast.Node) bool {
 	return false
 }
 
+func isInsideLiteralType(node *ast.Node) bool {
+	for current := node.Parent; current != nil; current = current.Parent {
+		if current.Kind == ast.KindLiteralType {
+			return true
+		}
+	}
+	return false
+}
+
 func buildNoMagicMessage(raw string) rule.RuleMessage {
 	return rule.RuleMessage{
 		Id:          "noMagic",
@@ -194,7 +203,7 @@ func getPrefixUnaryCandidate(node *ast.Node) (candidateLiteral, bool) {
 				return candidateLiteral{}, false
 			}
 			return candidateLiteral{
-				node:   node,
+				node:   operand,
 				raw:    operand.AsNumericLiteral().Text,
 				number: number,
 			}, true
@@ -282,6 +291,13 @@ var NoMagicNumbersRule = rule.CreateRule(rule.Rule{
 		parsedOptions := parseNoMagicNumbersOptions(options)
 
 		reportCandidate := func(candidate candidateLiteral) {
+			relevantContext :=
+				isInsideLiteralType(candidate.node) ||
+					isInsideEnumInitializer(candidate.node) ||
+					isInsideReadonlyClassPropertyInitializer(candidate.node)
+			if !relevantContext {
+				return
+			}
 			if shouldIgnoreCandidate(candidate, parsedOptions) {
 				return
 			}
