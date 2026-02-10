@@ -89,7 +89,35 @@ import (
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_promise_reject_errors"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_readonly"
 	// "github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_readonly_parameter_types" // Temporarily disabled - incomplete implementation
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/explicit_module_boundary_types"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/method_signature_style"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/naming_convention"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_deprecated"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_empty_object_type"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_invalid_this"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_loop_func"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_magic_numbers"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_redeclare"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_restricted_imports"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_restricted_types"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_shadow"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_type_alias"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unnecessary_parameter_property_assignment"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unnecessary_qualifier"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unnecessary_type_conversion"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unnecessary_type_parameters"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unused_expressions"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unused_private_class_members"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_use_before_define"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_useless_constructor"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/parameter_properties"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_destructuring"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_find"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_for_of"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_function_type"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_optional_chain"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_reduce_type_parameter"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_regexp_exec"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_return_this_type"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_string_starts_ends_with"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_ts_expect_error"
@@ -100,8 +128,11 @@ import (
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/restrict_plus_operands"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/restrict_template_expressions"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/return_await"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/sort_type_constituents"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/strict_boolean_expressions"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/switch_exhaustiveness_check"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/triple_slash_reference"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/typedef"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/unbound_method"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/unified_signatures"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/use_unknown_in_catch_callback_variable"
@@ -488,6 +519,37 @@ func registerAllTypeScriptEslintPluginRules() {
 	GlobalRuleRegistry.Register("@typescript-eslint/unbound-method", unbound_method.UnboundMethodRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/unified-signatures", unified_signatures.UnifiedSignaturesRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/use-unknown-in-catch-callback-variable", use_unknown_in_catch_callback_variable.UseUnknownInCatchCallbackVariableRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/explicit-module-boundary-types", explicit_module_boundary_types.ExplicitModuleBoundaryTypesRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/method-signature-style", method_signature_style.MethodSignatureStyleRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/no-empty-object-type", no_empty_object_type.NoEmptyObjectTypeRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/no-magic-numbers", no_magic_numbers.NoMagicNumbersRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/no-restricted-imports", no_restricted_imports.NoRestrictedImportsRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/no-type-alias", no_type_alias.NoTypeAliasRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/no-unused-expressions", no_unused_expressions.NoUnusedExpressionsRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/no-useless-constructor", no_useless_constructor.NoUselessConstructorRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/parameter-properties", parameter_properties.ParameterPropertiesRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/prefer-destructuring", prefer_destructuring.PreferDestructuringRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/prefer-find", prefer_find.PreferFindRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/prefer-for-of", prefer_for_of.PreferForOfRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/prefer-function-type", prefer_function_type.PreferFunctionTypeRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/prefer-regexp-exec", prefer_regexp_exec.PreferRegexpExecRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/sort-type-constituents", sort_type_constituents.SortTypeConstituentsRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/typedef", typedef.TypedefRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/naming-convention", naming_convention.NamingConventionRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/no-invalid-this", no_invalid_this.NoInvalidThisRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/no-loop-func", no_loop_func.NoLoopFuncRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/no-redeclare", no_redeclare.NoRedeclareRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/no-shadow", no_shadow.NoShadowRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/no-unnecessary-parameter-property-assignment", no_unnecessary_parameter_property_assignment.NoUnnecessaryParameterPropertyAssignmentRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/no-unused-private-class-members", no_unused_private_class_members.NoUnusedPrivateClassMembersRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/no-use-before-define", no_use_before_define.NoUseBeforeDefineRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/no-deprecated", no_deprecated.NoDeprecatedRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/no-restricted-types", no_restricted_types.NoRestrictedTypesRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/no-unnecessary-qualifier", no_unnecessary_qualifier.NoUnnecessaryQualifierRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/no-unnecessary-type-conversion", no_unnecessary_type_conversion.NoUnnecessaryTypeConversionRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/no-unnecessary-type-parameters", no_unnecessary_type_parameters.NoUnnecessaryTypeParametersRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/prefer-optional-chain", prefer_optional_chain.PreferOptionalChainRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/strict-boolean-expressions", strict_boolean_expressions.StrictBooleanExpressionsRule)
 }
 
 func registerAllEslintImportPluginRules() {
