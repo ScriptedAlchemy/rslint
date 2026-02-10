@@ -369,8 +369,8 @@ exports[`no-unnecessary-type-parameters > invalid 1`] = `
   "code": "function foo<T>(value: string): string { return value; }",
   "diagnostics": [
     {
-      "message": "Type parameter 'T' is never used.",
-      "messageId": "unnecessaryTypeParameter",
+      "message": "Type parameter 'T' is never used in the function signature.",
+      "messageId": "sole",
       "range": {
         "end": {
           "column": 15,

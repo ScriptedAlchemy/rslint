@@ -231,7 +231,7 @@ ruleTester.run('no-unnecessary-type-parameters', {
   invalid: [
     {
       code: 'function foo<T>(value: string): string { return value; }',
-      errors: [{ messageId: 'unnecessaryTypeParameter' }],
+      errors: [{ messageId: 'sole' }],
     },
   ],
 });
