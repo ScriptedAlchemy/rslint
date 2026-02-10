@@ -132,18 +132,18 @@ exports[`no-loop-func > invalid 1`] = `
 
 exports[`no-magic-numbers > invalid 1`] = `
 {
-  "code": "const value = 42;",
+  "code": "type Value = 42;",
   "diagnostics": [
     {
       "message": "No magic number: 42.",
       "messageId": "noMagic",
       "range": {
         "end": {
-          "column": 17,
+          "column": 16,
           "line": 1,
         },
         "start": {
-          "column": 15,
+          "column": 14,
           "line": 1,
         },
       },

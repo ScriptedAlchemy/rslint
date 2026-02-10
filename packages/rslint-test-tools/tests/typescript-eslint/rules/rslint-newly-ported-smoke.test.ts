@@ -27,7 +27,7 @@ ruleTester.run('no-magic-numbers', {
   valid: [{ code: 'const value = 1;', options: [{ ignore: ['1'] }] }],
   invalid: [
     {
-      code: 'const value = 42;',
+      code: 'type Value = 42;',
       errors: [{ messageId: 'noMagic' }],
     },
   ],
