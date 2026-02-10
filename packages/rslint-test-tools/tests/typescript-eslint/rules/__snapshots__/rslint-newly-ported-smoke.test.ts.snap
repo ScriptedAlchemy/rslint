@@ -544,7 +544,7 @@ exports[`prefer-destructuring > invalid 1`] = `
       "messageId": "preferDestructuring",
       "range": {
         "end": {
-          "column": 10,
+          "column": 20,
           "line": 1,
         },
         "start": {
