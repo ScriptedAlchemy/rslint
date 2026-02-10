@@ -16,7 +16,7 @@ func TestExplicitModuleBoundaryTypesRule(t *testing.T) {
 	}, []rule_tester.InvalidTestCase{
 		{
 			Code:   `export function foo(a: string) { return a.length; }`,
-			Errors: []rule_tester.InvalidTestCaseError{{MessageId: "missingReturnType", Line: 1, Column: 1}},
+			Errors: []rule_tester.InvalidTestCaseError{{MessageId: "missingReturnType", Line: 1, Column: 8}},
 		},
 		{
 			Code:   `export function foo(a): number { return 1; }`,

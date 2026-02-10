@@ -9,11 +9,11 @@ exports[`explicit-module-boundary-types > invalid 1`] = `
       "messageId": "missingReturnType",
       "range": {
         "end": {
-          "column": 45,
+          "column": 20,
           "line": 1,
         },
         "start": {
-          "column": 1,
+          "column": 8,
           "line": 1,
         },
       },
