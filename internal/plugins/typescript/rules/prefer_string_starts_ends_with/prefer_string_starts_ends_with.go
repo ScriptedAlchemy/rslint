@@ -50,16 +50,34 @@ type regexpInfo struct {
 type ruleHelper struct {
 	ctx                        rule.RuleContext
 	allowSingleElementEquality bool
+	stringTypeCache            map[*ast.Node]bool
+	nodeTextCache              map[*ast.Node]string
 }
 
 func (h *ruleHelper) isStringType(node *ast.Node) bool {
+	if node == nil || h.ctx.TypeChecker == nil {
+		return false
+	}
+	if cached, ok := h.stringTypeCache[node]; ok {
+		return cached
+	}
 	t := utils.GetConstrainedTypeAtLocation(h.ctx.TypeChecker, node)
-	return utils.GetTypeName(h.ctx.TypeChecker, t) == "string"
+	result := utils.GetTypeName(h.ctx.TypeChecker, t) == "string"
+	h.stringTypeCache[node] = result
+	return result
 }
 
 func (h *ruleHelper) getNodeText(node *ast.Node) string {
+	if node == nil {
+		return ""
+	}
+	if cached, ok := h.nodeTextCache[node]; ok {
+		return cached
+	}
 	r := utils.TrimNodeTextRange(h.ctx.SourceFile, node)
-	return h.ctx.SourceFile.Text()[r.Pos():r.End()]
+	text := h.ctx.SourceFile.Text()[r.Pos():r.End()]
+	h.nodeTextCache[node] = text
+	return text
 }
 
 func (h *ruleHelper) isSameNode(a, b *ast.Node) bool {
@@ -433,6 +451,8 @@ var PreferStringStartsEndsWithRule = rule.CreateRule(rule.Rule{
 		h := &ruleHelper{
 			ctx:                        ctx,
 			allowSingleElementEquality: opts.AllowSingleElementEquality != nil && *opts.AllowSingleElementEquality == "always",
+			stringTypeCache:            map[*ast.Node]bool{},
+			nodeTextCache:              map[*ast.Node]string{},
 		}
 
 		return rule.RuleListeners{
