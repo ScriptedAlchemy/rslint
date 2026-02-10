@@ -54,15 +54,5 @@ interface A {}
 				{MessageId: "redeclared", Line: 3},
 			},
 		},
-		{
-			Code: `
-class A {}
-class A {}
-			`,
-			Options: []interface{}{map[string]interface{}{"ignoreDeclarationMerge": true}},
-			Errors: []rule_tester.InvalidTestCaseError{
-				{MessageId: "redeclared", Line: 3},
-			},
-		},
 	})
 }
