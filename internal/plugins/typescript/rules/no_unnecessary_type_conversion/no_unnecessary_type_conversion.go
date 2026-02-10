@@ -186,11 +186,17 @@ var NoUnnecessaryTypeConversionRule = rule.CreateRule(rule.Rule{
 						reportOperatorRange(node, 1)
 					}
 				case ast.KindTildeToken:
+					if expr.Operand.Kind != ast.KindPrefixUnaryExpression {
+						return
+					}
 					inner := expr.Operand.AsPrefixUnaryExpression()
 					if inner != nil && inner.Operator == ast.KindTildeToken && inner.Operand != nil && isExpressionMatchingPrimitive(ctx, inner.Operand, primitiveNumber) {
 						reportOperatorRange(node, 2)
 					}
 				case ast.KindExclamationToken:
+					if expr.Operand.Kind != ast.KindPrefixUnaryExpression {
+						return
+					}
 					inner := expr.Operand.AsPrefixUnaryExpression()
 					if inner != nil && inner.Operator == ast.KindExclamationToken && inner.Operand != nil && isExpressionMatchingPrimitive(ctx, inner.Operand, primitiveBoolean) {
 						reportOperatorRange(node, 2)
