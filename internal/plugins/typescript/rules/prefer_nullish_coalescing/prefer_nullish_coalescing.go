@@ -192,9 +192,9 @@ func isTypeEligibleForPreferNullish(t *checker.Type, opts PreferNullishCoalescin
 	}
 
 	// Check if any type constituents match the ignorable flags
-	if utils.IsUnionType(t) {
-		for _, unionType := range t.Types() {
-			typeFlags := checker.Type_flags(unionType)
+	for _, unionType := range utils.UnionTypeParts(t) {
+		for _, intersectionPart := range utils.IntersectionTypeParts(unionType) {
+			typeFlags := checker.Type_flags(intersectionPart)
 			if typeFlags&ignorableFlags != 0 {
 				return false
 			}
@@ -272,12 +272,10 @@ func isBooleanConstructorContext(node *ast.Node) bool {
 
 	// Check parent contexts recursively
 	switch parent.Kind {
+	case ast.KindParenthesizedExpression:
+		return isBooleanConstructorContext(parent)
 	case ast.KindBinaryExpression:
-		binExpr := parent.AsBinaryExpression()
-		if binExpr != nil && (binExpr.OperatorToken.Kind == ast.KindAmpersandAmpersandToken ||
-			binExpr.OperatorToken.Kind == ast.KindBarBarToken) {
-			return isBooleanConstructorContext(parent)
-		}
+		return isBooleanConstructorContext(parent)
 	case ast.KindConditionalExpression:
 		return isBooleanConstructorContext(parent)
 	}
@@ -490,7 +488,7 @@ var PreferNullishCoalescingRule = rule.CreateRule(rule.Rule{
 
 					ctx.ReportRangeWithSuggestions(
 						logicalOperatorRange(ctx.SourceFile, binExpr),
-						buildPreferNullishOverAssignmentMessage(),
+						buildPreferNullishOverOrMessage(),
 						rule.RuleSuggestion{
 							Message:  buildSuggestNullishMessage(),
 							FixesArr: []rule.RuleFix{rule.RuleFixReplace(ctx.SourceFile, node, replacement)},
