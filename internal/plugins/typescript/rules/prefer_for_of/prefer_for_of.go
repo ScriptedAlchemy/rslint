@@ -34,6 +34,8 @@ func unwrapExpression(expr *ast.Node) *ast.Node {
 			expr = expr.AsTypeAssertion().Expression
 		case ast.KindNonNullExpression:
 			expr = expr.AsNonNullExpression().Expression
+		case ast.KindSatisfiesExpression:
+			expr = expr.AsSatisfiesExpression().Expression
 		default:
 			return expr
 		}
@@ -93,7 +95,7 @@ func isElementAccessWriteContext(node *ast.Node) bool {
 	for current.Parent != nil {
 		parent := current.Parent
 		switch parent.Kind {
-		case ast.KindParenthesizedExpression, ast.KindAsExpression, ast.KindTypeAssertionExpression, ast.KindNonNullExpression:
+		case ast.KindParenthesizedExpression, ast.KindAsExpression, ast.KindTypeAssertionExpression, ast.KindNonNullExpression, ast.KindSatisfiesExpression:
 			current = parent
 			continue
 		case ast.KindPrefixUnaryExpression:
