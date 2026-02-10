@@ -1,6 +1,7 @@
 package prefer_regexp_exec
 
 import (
+	"regexp"
 	"strings"
 
 	"github.com/microsoft/typescript-go/shim/ast"
@@ -134,8 +135,13 @@ func isStringLikePatternArg(ctx rule.RuleContext, arg *ast.Node) bool {
 	if arg == nil {
 		return false
 	}
-	if arg.Kind == ast.KindStringLiteral || arg.Kind == ast.KindNoSubstitutionTemplateLiteral {
-		return true
+	if arg.Kind == ast.KindStringLiteral {
+		_, err := regexp.Compile(arg.AsStringLiteral().Text)
+		return err == nil
+	}
+	if arg.Kind == ast.KindNoSubstitutionTemplateLiteral {
+		_, err := regexp.Compile(arg.AsNoSubstitutionTemplateLiteral().Text)
+		return err == nil
 	}
 	if ctx.TypeChecker == nil {
 		return false
