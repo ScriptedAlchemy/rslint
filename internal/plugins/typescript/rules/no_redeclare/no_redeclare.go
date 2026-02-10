@@ -5,74 +5,89 @@ import (
 	"github.com/web-infra-dev/rslint/internal/rule"
 )
 
+type declarationKind string
+
+const (
+	declarationVariable          declarationKind = "variable"
+	declarationFunction          declarationKind = "function"
+	declarationFunctionSignature declarationKind = "function-signature"
+	declarationClass             declarationKind = "class"
+	declarationInterface         declarationKind = "interface"
+	declarationTypeAlias         declarationKind = "type-alias"
+	declarationEnum              declarationKind = "enum"
+	declarationModule            declarationKind = "module"
+	declarationBuiltin           declarationKind = "builtin"
+)
+
+var builtinGlobals = map[string]bool{
+	"Object":     true,
+	"NodeListOf": true,
+	"top":        true,
+}
+
+type declarationInfo struct {
+	name       string
+	kind       declarationKind
+	reportNode *ast.Node
+}
+
 type scope struct {
-	decls map[string]*ast.Node
+	decls map[string][]declarationInfo
 }
 
 func newScope() *scope {
-	return &scope{decls: map[string]*ast.Node{}}
+	return &scope{decls: map[string][]declarationInfo{}}
 }
 
-func buildRedeclaredMessage(name string) rule.RuleMessage {
+type noRedeclareOptions struct {
+	BuiltinGlobals         bool `json:"builtinGlobals"`
+	IgnoreDeclarationMerge bool `json:"ignoreDeclarationMerge"`
+}
+
+func parseOptions(options any) noRedeclareOptions {
+	opts := noRedeclareOptions{
+		BuiltinGlobals:         true,
+		IgnoreDeclarationMerge: true,
+	}
+	if options == nil {
+		return opts
+	}
+	var optsMap map[string]interface{}
+	if arr, ok := options.([]interface{}); ok && len(arr) > 0 {
+		optsMap, _ = arr[0].(map[string]interface{})
+	} else {
+		optsMap, _ = options.(map[string]interface{})
+	}
+	if optsMap == nil {
+		return opts
+	}
+	if v, ok := optsMap["builtinGlobals"].(bool); ok {
+		opts.BuiltinGlobals = v
+	}
+	if v, ok := optsMap["ignoreDeclarationMerge"].(bool); ok {
+		opts.IgnoreDeclarationMerge = v
+	}
+	return opts
+}
+
+func buildRedeclaredMessage(name, messageID string) rule.RuleMessage {
+	description := "'" + name + "' is already defined."
+	if messageID == "redeclaredAsBuiltin" {
+		description = "'" + name + "' is already defined as a built-in global variable."
+	} else if messageID == "redeclaredBySyntax" {
+		description = "'" + name + "' is already defined by a variable declaration."
+	}
 	return rule.RuleMessage{
-		Id:          "redeclared",
-		Description: "'" + name + "' is already defined.",
+		Id:          messageID,
+		Description: description,
 	}
 }
 
-func getDeclarationName(node *ast.Node) string {
-	if node == nil {
-		return ""
+func isVarDeclaration(node *ast.Node) bool {
+	if node == nil || node.Kind != ast.KindVariableDeclaration || node.Parent == nil || node.Parent.Kind != ast.KindVariableDeclarationList {
+		return false
 	}
-	switch node.Kind {
-	case ast.KindVariableDeclaration:
-		decl := node.AsVariableDeclaration()
-		if decl != nil && decl.Name() != nil && decl.Name().Kind == ast.KindIdentifier {
-			return decl.Name().AsIdentifier().Text
-		}
-	case ast.KindFunctionDeclaration:
-		decl := node.AsFunctionDeclaration()
-		if decl != nil && decl.Name() != nil {
-			return decl.Name().Text()
-		}
-	case ast.KindClassDeclaration:
-		decl := node.AsClassDeclaration()
-		if decl != nil && decl.Name() != nil {
-			return decl.Name().Text()
-		}
-	case ast.KindInterfaceDeclaration:
-		decl := node.AsInterfaceDeclaration()
-		if decl != nil && decl.Name() != nil {
-			return decl.Name().Text()
-		}
-	case ast.KindTypeAliasDeclaration:
-		decl := node.AsTypeAliasDeclaration()
-		if decl != nil && decl.Name() != nil {
-			return decl.Name().Text()
-		}
-	case ast.KindEnumDeclaration:
-		decl := node.AsEnumDeclaration()
-		if decl != nil && decl.Name() != nil {
-			return decl.Name().Text()
-		}
-	}
-	return ""
-}
-
-func addDeclaration(ctx rule.RuleContext, node *ast.Node, scopes []*scope) {
-	if len(scopes) == 0 {
-		return
-	}
-	name := getDeclarationName(node)
-	if name == "" {
-		return
-	}
-	current := scopes[len(scopes)-1]
-	if _, exists := current.decls[name]; exists {
-		ctx.ReportNode(node, buildRedeclaredMessage(name))
-		return
-	}
-	current.decls[name] = node
+	return node.Parent.AsVariableDeclarationList().Flags&ast.NodeFlagsBlockScoped == 0
 }
 
 func isScopeKind(kind ast.Kind) bool {
@@ -92,9 +107,215 @@ func nearestScopeNode(node *ast.Node) *ast.Node {
 	return nil
 }
 
+func nearestVarScopeNode(node *ast.Node) *ast.Node {
+	for current := node; current != nil; current = current.Parent {
+		switch current.Kind {
+		case ast.KindSourceFile, ast.KindModuleBlock, ast.KindFunctionDeclaration, ast.KindFunctionExpression, ast.KindArrowFunction, ast.KindConstructor, ast.KindMethodDeclaration:
+			return current
+		}
+	}
+	return nil
+}
+
+func declarationScopeNode(declaration *ast.Node) *ast.Node {
+	if declaration == nil {
+		return nil
+	}
+	if declaration.Kind == ast.KindVariableDeclaration && isVarDeclaration(declaration) {
+		return nearestVarScopeNode(declaration.Parent)
+	}
+	return nearestScopeNode(declaration.Parent)
+}
+
+func declarationNameNodeText(node *ast.Node) (string, bool) {
+	if node == nil {
+		return "", false
+	}
+	switch node.Kind {
+	case ast.KindIdentifier:
+		return node.AsIdentifier().Text, true
+	case ast.KindStringLiteral:
+		return node.AsStringLiteral().Text, true
+	case ast.KindNoSubstitutionTemplateLiteral:
+		return node.AsNoSubstitutionTemplateLiteral().Text, true
+	default:
+		return "", false
+	}
+}
+
+func collectBindingNameNodes(node *ast.Node, out *[]*ast.Node) {
+	if node == nil {
+		return
+	}
+	switch node.Kind {
+	case ast.KindIdentifier:
+		*out = append(*out, node)
+	case ast.KindBindingElement:
+		elem := node.AsBindingElement()
+		if elem != nil {
+			collectBindingNameNodes(elem.Name(), out)
+		}
+	case ast.KindArrayBindingPattern, ast.KindObjectBindingPattern:
+		pattern := node.AsBindingPattern()
+		if pattern == nil || pattern.Elements == nil {
+			return
+		}
+		for _, element := range pattern.Elements.Nodes {
+			if element == nil {
+				continue
+			}
+			collectBindingNameNodes(element, out)
+		}
+	}
+}
+
+func declarationInfos(node *ast.Node) []declarationInfo {
+	if node == nil {
+		return nil
+	}
+	switch node.Kind {
+	case ast.KindVariableDeclaration:
+		decl := node.AsVariableDeclaration()
+		if decl == nil || decl.Name() == nil {
+			return nil
+		}
+		nameNodes := []*ast.Node{}
+		collectBindingNameNodes(decl.Name(), &nameNodes)
+		result := make([]declarationInfo, 0, len(nameNodes))
+		for _, nameNode := range nameNodes {
+			if name, ok := declarationNameNodeText(nameNode); ok {
+				result = append(result, declarationInfo{name: name, kind: declarationVariable, reportNode: nameNode})
+			}
+		}
+		return result
+	case ast.KindFunctionDeclaration:
+		decl := node.AsFunctionDeclaration()
+		if decl == nil || decl.Name() == nil {
+			return nil
+		}
+		nameNode := decl.Name()
+		if nameNode == nil {
+			return nil
+		}
+		kind := declarationFunction
+		if decl.Body == nil {
+			kind = declarationFunctionSignature
+		}
+		return []declarationInfo{{name: nameNode.Text(), kind: kind, reportNode: nameNode.AsNode()}}
+	case ast.KindClassDeclaration:
+		decl := node.AsClassDeclaration()
+		if decl == nil || decl.Name() == nil {
+			return nil
+		}
+		return []declarationInfo{{name: decl.Name().Text(), kind: declarationClass, reportNode: decl.Name().AsNode()}}
+	case ast.KindInterfaceDeclaration:
+		decl := node.AsInterfaceDeclaration()
+		if decl == nil || decl.Name() == nil {
+			return nil
+		}
+		return []declarationInfo{{name: decl.Name().Text(), kind: declarationInterface, reportNode: decl.Name().AsNode()}}
+	case ast.KindTypeAliasDeclaration:
+		decl := node.AsTypeAliasDeclaration()
+		if decl == nil || decl.Name() == nil {
+			return nil
+		}
+		return []declarationInfo{{name: decl.Name().Text(), kind: declarationTypeAlias, reportNode: decl.Name().AsNode()}}
+	case ast.KindEnumDeclaration:
+		decl := node.AsEnumDeclaration()
+		if decl == nil || decl.Name() == nil {
+			return nil
+		}
+		return []declarationInfo{{name: decl.Name().Text(), kind: declarationEnum, reportNode: decl.Name().AsNode()}}
+	case ast.KindModuleDeclaration:
+		decl := node.AsModuleDeclaration()
+		if decl == nil || decl.Name() == nil {
+			return nil
+		}
+		if name, ok := declarationNameNodeText(decl.Name()); ok {
+			return []declarationInfo{{name: name, kind: declarationModule, reportNode: decl.Name()}}
+		}
+	}
+	return nil
+}
+
+func allKindsIn(decls []declarationInfo, allowed map[declarationKind]bool) bool {
+	for _, decl := range decls {
+		if !allowed[decl.kind] {
+			return false
+		}
+	}
+	return true
+}
+
+func countKind(decls []declarationInfo, kind declarationKind) int {
+	count := 0
+	for _, decl := range decls {
+		if decl.kind == kind {
+			count++
+		}
+	}
+	return count
+}
+
+func shouldIgnoreRedeclare(decls []declarationInfo, opts noRedeclareOptions) bool {
+	if len(decls) <= 1 {
+		return true
+	}
+	if !opts.IgnoreDeclarationMerge {
+		return false
+	}
+
+	if allKindsIn(decls, map[declarationKind]bool{declarationInterface: true}) {
+		return true
+	}
+	if allKindsIn(decls, map[declarationKind]bool{declarationModule: true}) {
+		return true
+	}
+	if allKindsIn(decls, map[declarationKind]bool{
+		declarationClass:     true,
+		declarationInterface: true,
+		declarationModule:    true,
+	}) && countKind(decls, declarationClass) <= 1 {
+		return true
+	}
+	if allKindsIn(decls, map[declarationKind]bool{
+		declarationFunction:          true,
+		declarationFunctionSignature: true,
+		declarationModule:            true,
+	}) && countKind(decls, declarationFunction) <= 1 {
+		return true
+	}
+	if allKindsIn(decls, map[declarationKind]bool{
+		declarationEnum:   true,
+		declarationModule: true,
+	}) && countKind(decls, declarationEnum) <= 1 {
+		return true
+	}
+
+	return false
+}
+
+func isTopLevelScriptScope(scopeNode *ast.Node, sourceFile *ast.SourceFile) bool {
+	if scopeNode == nil || scopeNode.Kind != ast.KindSourceFile || sourceFile == nil {
+		return false
+	}
+	return !ast.IsExternalModule(sourceFile)
+}
+
+func isBuiltinRedeclare(name string, scopeNode *ast.Node, sourceFile *ast.SourceFile, opts noRedeclareOptions) bool {
+	if !opts.BuiltinGlobals {
+		return false
+	}
+	if !builtinGlobals[name] {
+		return false
+	}
+	return isTopLevelScriptScope(scopeNode, sourceFile)
+}
+
 var NoRedeclareRule = rule.CreateRule(rule.Rule{
 	Name: "no-redeclare",
 	Run: func(ctx rule.RuleContext, options any) rule.RuleListeners {
+		opts := parseOptions(options)
 		scopesByNode := map[*ast.Node]*scope{}
 		listeners := rule.RuleListeners{}
 
@@ -109,7 +330,11 @@ var NoRedeclareRule = rule.CreateRule(rule.Rule{
 		for _, kind := range declarationKinds {
 			k := kind
 			listeners[k] = func(node *ast.Node) {
-				scopeNode := nearestScopeNode(node.Parent)
+				infos := declarationInfos(node)
+				if len(infos) == 0 {
+					return
+				}
+				scopeNode := declarationScopeNode(node)
 				if scopeNode == nil {
 					return
 				}
@@ -118,15 +343,28 @@ var NoRedeclareRule = rule.CreateRule(rule.Rule{
 					scopeObj = newScope()
 					scopesByNode[scopeNode] = scopeObj
 				}
-				name := getDeclarationName(node)
-				if name == "" {
-					return
+
+				for _, info := range infos {
+					existing := scopeObj.decls[info.name]
+					if len(existing) == 0 && isBuiltinRedeclare(info.name, scopeNode, ctx.SourceFile, opts) {
+						existing = append(existing, declarationInfo{name: info.name, kind: declarationBuiltin})
+					}
+
+					candidate := append(append([]declarationInfo{}, existing...), info)
+					if shouldIgnoreRedeclare(candidate, opts) {
+						scopeObj.decls[info.name] = candidate
+						continue
+					}
+
+					messageID := "redeclared"
+					if len(existing) > 0 && existing[0].kind == declarationBuiltin {
+						messageID = "redeclaredAsBuiltin"
+					}
+					if info.reportNode != nil {
+						ctx.ReportNode(info.reportNode, buildRedeclaredMessage(info.name, messageID))
+					}
+					scopeObj.decls[info.name] = candidate
 				}
-				if _, exists := scopeObj.decls[name]; exists {
-					ctx.ReportNode(node, buildRedeclaredMessage(name))
-					return
-				}
-				scopeObj.decls[name] = node
 			}
 		}
 
