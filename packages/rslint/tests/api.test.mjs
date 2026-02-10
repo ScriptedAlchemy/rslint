@@ -39,6 +39,30 @@ describe('lint api', async t => {
     });
     expect(diags).toMatchSnapshot();
   });
+
+  test('virtual file support with unicode content', async t => {
+    let config = path.resolve(
+      import.meta.dirname,
+      '../fixtures/rslint.virtual.json',
+    );
+    let virtual_entry = path.resolve(cwd, 'src/virtual.ts');
+    const diags = await lint({
+      config,
+      workingDirectory: cwd,
+      fileContents: {
+        [virtual_entry]: `
+          const greeting = 'あ';
+          greeting === 'あ';
+        `,
+      },
+      ruleOptions: {
+        '@typescript-eslint/no-unused-expressions': 'error',
+      },
+    });
+
+    expect(diags.fileCount).toBe(1);
+    expect(diags.errorCount).toBe(1);
+  });
 });
 
 describe('applyFixes api', async t => {
