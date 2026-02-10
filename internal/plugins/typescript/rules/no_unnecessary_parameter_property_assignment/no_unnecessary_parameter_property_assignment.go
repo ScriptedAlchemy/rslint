@@ -143,6 +143,9 @@ func visitEagerlyExecutedNode(
 	if isFunctionLike(node) && !allowFunctionBody {
 		return
 	}
+	if (node.Kind == ast.KindClassDeclaration || node.Kind == ast.KindClassExpression) && !allowFunctionBody {
+		return
+	}
 
 	switch node.Kind {
 	case ast.KindBinaryExpression:
