@@ -10,10 +10,12 @@ import (
 func TestNoLoopFuncRule(t *testing.T) {
 	rule_tester.RunRuleTester(fixtures.GetRootDir(), "tsconfig.json", t, &NoLoopFuncRule, []rule_tester.ValidTestCase{
 		{Code: `const fn = () => 1;`},
+		{Code: `for (let i = 0; i < 1; i++) { const fn = () => i; }`},
+		{Code: `let a = 0; for (let i = 0; i < 1; i++) { const fn = function() { return a; }; }`},
 	}, []rule_tester.InvalidTestCase{
 		{
-			Code:   `for (let i = 0; i < 1; i++) { const fn = () => i; }`,
-			Errors: []rule_tester.InvalidTestCaseError{{MessageId: "unsafeRefs", Line: 1, Column: 42}},
+			Code:   `for (var i = 0; i < 1; i++) { const fn = function() { return i; }; }`,
+			Errors: []rule_tester.InvalidTestCaseError{{MessageId: "unsafeRefs"}},
 		},
 	})
 }

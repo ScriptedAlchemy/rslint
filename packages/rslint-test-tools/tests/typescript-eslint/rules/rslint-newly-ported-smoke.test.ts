@@ -128,7 +128,7 @@ ruleTester.run('no-loop-func', {
   valid: ['const fn = () => 1;'],
   invalid: [
     {
-      code: 'for (let i = 0; i < 1; i++) { const fn = () => i; }',
+      code: 'for (var i = 0; i < 1; i++) { const fn = () => i; }',
       errors: [{ messageId: 'unsafeRefs' }],
     },
   ],

@@ -106,10 +106,10 @@ exports[`no-invalid-this > invalid 1`] = `
 
 exports[`no-loop-func > invalid 1`] = `
 {
-  "code": "for (let i = 0; i < 1; i++) { const fn = () => i; }",
+  "code": "for (var i = 0; i < 1; i++) { const fn = () => i; }",
   "diagnostics": [
     {
-      "message": "Function declared in a loop contains unsafe references to variable(s).",
+      "message": "Function declared in a loop contains unsafe references to variable(s). 'i'",
       "messageId": "unsafeRefs",
       "range": {
         "end": {

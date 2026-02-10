@@ -1,0 +1,713 @@
+// Rstest Snapshot v1
+
+exports[`no-loop-func ESLint tests > invalid 1`] = `
+{
+  "code": "
+for (var i = 0; i < l; i++) {
+  (function () {
+    i;
+  });
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Function declared in a loop contains unsafe references to variable(s). 'i'",
+      "messageId": "unsafeRefs",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 5,
+        },
+        "start": {
+          "column": 4,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-loop-func",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-loop-func ESLint tests > invalid 2`] = `
+{
+  "code": "
+for (var i = 0; i < l; i++) {
+  for (var j = 0; j < m; j++) {
+    (function () {
+      i + j;
+    });
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Function declared in a loop contains unsafe references to variable(s). 'i', 'j'",
+      "messageId": "unsafeRefs",
+      "range": {
+        "end": {
+          "column": 6,
+          "line": 6,
+        },
+        "start": {
+          "column": 6,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-loop-func",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-loop-func ESLint tests > invalid 3`] = `
+{
+  "code": "
+for (var i in {}) {
+  (function () {
+    i;
+  });
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Function declared in a loop contains unsafe references to variable(s). 'i'",
+      "messageId": "unsafeRefs",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 5,
+        },
+        "start": {
+          "column": 4,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-loop-func",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-loop-func ESLint tests > invalid 4`] = `
+{
+  "code": "
+for (var i of {}) {
+  (function () {
+    i;
+  });
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Function declared in a loop contains unsafe references to variable(s). 'i'",
+      "messageId": "unsafeRefs",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 5,
+        },
+        "start": {
+          "column": 4,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-loop-func",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-loop-func ESLint tests > invalid 5`] = `
+{
+  "code": "
+for (var i = 0; i < l; i++) {
+  () => {
+    i;
+  };
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Function declared in a loop contains unsafe references to variable(s). 'i'",
+      "messageId": "unsafeRefs",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 5,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-loop-func",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-loop-func ESLint tests > invalid 6`] = `
+{
+  "code": "
+for (var i = 0; i < l; i++) {
+  var a = function () {
+    i;
+  };
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Function declared in a loop contains unsafe references to variable(s). 'i'",
+      "messageId": "unsafeRefs",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 5,
+        },
+        "start": {
+          "column": 11,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-loop-func",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-loop-func ESLint tests > invalid 7`] = `
+{
+  "code": "
+for (var i = 0; i < l; i++) {
+  function a() {
+    i;
+  }
+  a();
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Function declared in a loop contains unsafe references to variable(s). 'i'",
+      "messageId": "unsafeRefs",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 5,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-loop-func",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-loop-func ESLint tests > invalid 8`] = `
+{
+  "code": "
+let a;
+for (let i = 0; i < l; i++) {
+  a = 1;
+  (function () {
+    a;
+  });
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Function declared in a loop contains unsafe references to variable(s). 'a'",
+      "messageId": "unsafeRefs",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 7,
+        },
+        "start": {
+          "column": 4,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-loop-func",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-loop-func ESLint tests > invalid 9`] = `
+{
+  "code": "
+let a;
+for (let i in {}) {
+  (function () {
+    a;
+  });
+  a = 1;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Function declared in a loop contains unsafe references to variable(s). 'a'",
+      "messageId": "unsafeRefs",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 6,
+        },
+        "start": {
+          "column": 4,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-loop-func",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-loop-func ESLint tests > invalid 10`] = `
+{
+  "code": "
+let a;
+for (let i of {}) {
+  (function () {
+    a;
+  });
+}
+a = 1;
+      ",
+  "diagnostics": [
+    {
+      "message": "Function declared in a loop contains unsafe references to variable(s). 'a'",
+      "messageId": "unsafeRefs",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 6,
+        },
+        "start": {
+          "column": 4,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-loop-func",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-loop-func ESLint tests > invalid 11`] = `
+{
+  "code": "
+let a;
+for (let i = 0; i < l; i++) {
+  (function () {
+    (function () {
+      a;
+    });
+  });
+  a = 1;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Function declared in a loop contains unsafe references to variable(s). 'a'",
+      "messageId": "unsafeRefs",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 8,
+        },
+        "start": {
+          "column": 4,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-loop-func",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-loop-func ESLint tests > invalid 12`] = `
+{
+  "code": "
+let a;
+for (let i in {}) {
+  a = 1;
+  function foo() {
+    (function () {
+      a;
+    });
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Function declared in a loop contains unsafe references to variable(s). 'a'",
+      "messageId": "unsafeRefs",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 9,
+        },
+        "start": {
+          "column": 3,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-loop-func",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-loop-func ESLint tests > invalid 13`] = `
+{
+  "code": "
+let a;
+for (let i of {}) {
+  () => {
+    (function () {
+      a;
+    });
+  };
+}
+a = 1;
+      ",
+  "diagnostics": [
+    {
+      "message": "Function declared in a loop contains unsafe references to variable(s). 'a'",
+      "messageId": "unsafeRefs",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 8,
+        },
+        "start": {
+          "column": 3,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-loop-func",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-loop-func ESLint tests > invalid 14`] = `
+{
+  "code": "
+for (var i = 0; i < 10; ++i) {
+  for (let x in xs.filter(x => x != i)) {
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Function declared in a loop contains unsafe references to variable(s). 'i'",
+      "messageId": "unsafeRefs",
+      "range": {
+        "end": {
+          "column": 38,
+          "line": 3,
+        },
+        "start": {
+          "column": 27,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-loop-func",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-loop-func ESLint tests > invalid 15`] = `
+{
+  "code": "
+for (let x of xs) {
+  let a;
+  for (let y of ys) {
+    a = 1;
+    (function () {
+      a;
+    });
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Function declared in a loop contains unsafe references to variable(s). 'a'",
+      "messageId": "unsafeRefs",
+      "range": {
+        "end": {
+          "column": 6,
+          "line": 8,
+        },
+        "start": {
+          "column": 6,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-loop-func",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-loop-func ESLint tests > invalid 16`] = `
+{
+  "code": "
+for (var x of xs) {
+  for (let y of ys) {
+    (function () {
+      x;
+    });
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Function declared in a loop contains unsafe references to variable(s). 'x'",
+      "messageId": "unsafeRefs",
+      "range": {
+        "end": {
+          "column": 6,
+          "line": 6,
+        },
+        "start": {
+          "column": 6,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-loop-func",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-loop-func ESLint tests > invalid 17`] = `
+{
+  "code": "
+for (var x of xs) {
+  (function () {
+    x;
+  });
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Function declared in a loop contains unsafe references to variable(s). 'x'",
+      "messageId": "unsafeRefs",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 5,
+        },
+        "start": {
+          "column": 4,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-loop-func",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-loop-func ESLint tests > invalid 18`] = `
+{
+  "code": "
+var a;
+for (let x of xs) {
+  a = 1;
+  (function () {
+    a;
+  });
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Function declared in a loop contains unsafe references to variable(s). 'a'",
+      "messageId": "unsafeRefs",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 7,
+        },
+        "start": {
+          "column": 4,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-loop-func",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-loop-func ESLint tests > invalid 19`] = `
+{
+  "code": "
+var a;
+for (let x of xs) {
+  (function () {
+    a;
+  });
+  a = 1;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Function declared in a loop contains unsafe references to variable(s). 'a'",
+      "messageId": "unsafeRefs",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 6,
+        },
+        "start": {
+          "column": 4,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-loop-func",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-loop-func ESLint tests > invalid 20`] = `
+{
+  "code": "
+let a;
+function foo() {
+  a = 10;
+}
+for (let x of xs) {
+  (function () {
+    a;
+  });
+}
+foo();
+      ",
+  "diagnostics": [
+    {
+      "message": "Function declared in a loop contains unsafe references to variable(s). 'a'",
+      "messageId": "unsafeRefs",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 9,
+        },
+        "start": {
+          "column": 4,
+          "line": 7,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-loop-func",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-loop-func ESLint tests > invalid 21`] = `
+{
+  "code": "
+let a;
+function foo() {
+  a = 10;
+  for (let x of xs) {
+    (function () {
+      a;
+    });
+  }
+}
+foo();
+      ",
+  "diagnostics": [
+    {
+      "message": "Function declared in a loop contains unsafe references to variable(s). 'a'",
+      "messageId": "unsafeRefs",
+      "range": {
+        "end": {
+          "column": 6,
+          "line": 8,
+        },
+        "start": {
+          "column": 6,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-loop-func",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
