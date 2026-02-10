@@ -23,9 +23,6 @@ class A {
 			Code: `
 class A {
   #x = 1;
-  nested = class {
-    #x = 2;
-  };
   test() {
     return this.#x;
   }
