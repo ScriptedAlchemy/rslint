@@ -146,7 +146,7 @@ func shouldSuggestForOf(ctx rule.RuleContext, forStmt *ast.ForStatement, indexNa
 			if parent != nil && parent.Kind == ast.KindElementAccessExpression {
 				elem := parent.AsElementAccessExpression()
 				if elem != nil && elem.ArgumentExpression != nil && elem.ArgumentExpression == node {
-					baseText := nodeText(ctx, unwrapExpression(elem.Expression()))
+					baseText := nodeText(ctx, unwrapExpression(elem.Expression))
 					if baseText != targetArrayText {
 						disqualify = true
 						return
@@ -217,7 +217,7 @@ var PreferForOfRule = rule.CreateRule(rule.Rule{
 				if strings.Contains(nodeText(ctx, cond.Right), "?.length") {
 					return
 				}
-				arrayExpr := lengthAccess.Expression()
+				arrayExpr := lengthAccess.Expression
 				if arrayExpr == nil {
 					return
 				}
