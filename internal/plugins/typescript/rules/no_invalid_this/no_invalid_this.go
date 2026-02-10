@@ -14,11 +14,15 @@ func buildUnexpectedThisMessage() rule.RuleMessage {
 	}
 }
 
-func hasExplicitThisParameter(fn *ast.SignatureDeclarationBase) bool {
-	if fn == nil || fn.Parameters == nil || len(fn.Parameters.Nodes) == 0 {
+func hasExplicitThisParameter(fnNode *ast.Node) bool {
+	if fnNode == nil {
 		return false
 	}
-	firstParam := fn.Parameters.Nodes[0]
+	parameters := fnNode.Parameters()
+	if len(parameters) == 0 {
+		return false
+	}
+	firstParam := parameters[0]
 	if firstParam == nil || firstParam.Kind != ast.KindParameter {
 		return false
 	}
@@ -105,16 +109,14 @@ var NoInvalidThisRule = rule.CreateRule(rule.Rule{
 
 				switch fn.Kind {
 				case ast.KindFunctionDeclaration:
-					decl := fn.AsFunctionDeclaration()
-					if decl != nil && hasExplicitThisParameter(&decl.SignatureDeclarationBase) {
+					if hasExplicitThisParameter(fn) {
 						return
 					}
 					if isLikelyConstructorFunction(fn) {
 						return
 					}
 				case ast.KindFunctionExpression:
-					expr := fn.AsFunctionExpression()
-					if expr != nil && hasExplicitThisParameter(&expr.SignatureDeclarationBase) {
+					if hasExplicitThisParameter(fn) {
 						return
 					}
 					if isFunctionExpressionInMethodLikePosition(fn) {
