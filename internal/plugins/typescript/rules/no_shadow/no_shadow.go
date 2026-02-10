@@ -10,10 +10,11 @@ import (
 )
 
 type scopeInfo struct {
-	Parent    *scopeInfo
-	IsVar     bool
-	Decls     map[string][]*declarationInfo
-	ScopeNode *ast.Node
+	Parent         *scopeInfo
+	IsVar          bool
+	IsFunctionType bool
+	Decls          map[string][]*declarationInfo
+	ScopeNode      *ast.Node
 }
 
 type declarationKind int
@@ -36,14 +37,16 @@ const (
 )
 
 type declarationInfo struct {
-	Name        string
-	Identifier  *ast.Node
-	DeclNode    *ast.Node
-	Scope       *scopeInfo
-	Kind        declarationKind
-	IsType      bool
-	IsValue     bool
-	IsThisParam bool
+	Name                    string
+	Identifier              *ast.Node
+	DeclNode                *ast.Node
+	Scope                   *scopeInfo
+	Kind                    declarationKind
+	IsType                  bool
+	IsValue                 bool
+	IsThisParam             bool
+	IsFunctionTypeParameter bool
+	ImportSource            string
 }
 
 type noShadowOptions struct {
@@ -138,12 +141,13 @@ func buildNoShadowMessageFromDecl(name string, decl *declarationInfo, sourceFile
 	return buildNoShadowMessage(name, line+1, column+1)
 }
 
-func newScope(parent *scopeInfo, node *ast.Node, isVar bool) *scopeInfo {
+func newScope(parent *scopeInfo, node *ast.Node, isVar bool, isFunctionType bool) *scopeInfo {
 	return &scopeInfo{
-		Parent:    parent,
-		IsVar:     isVar,
-		Decls:     map[string][]*declarationInfo{},
-		ScopeNode: node,
+		Parent:         parent,
+		IsVar:          isVar,
+		IsFunctionType: isFunctionType,
+		Decls:          map[string][]*declarationInfo{},
+		ScopeNode:      node,
 	}
 }
 
@@ -315,17 +319,41 @@ func isFunctionTypeParameterNameValueShadow(opts noShadowOptions, inner *declara
 	if !opts.IgnoreFunctionTypeParameterNameValueShadow || inner == nil || outer == nil {
 		return false
 	}
-	if inner.Kind != declarationTypeParameter || !outer.IsValue || inner.DeclNode == nil {
+	return inner.IsFunctionTypeParameter && outer.IsValue
+}
+
+func isTypeParameterOfStaticMethod(decl *declarationInfo) bool {
+	if decl == nil || decl.Kind != declarationTypeParameter || decl.DeclNode == nil {
 		return false
 	}
-	for current := inner.DeclNode.Parent; current != nil; current = current.Parent {
+	for current := decl.DeclNode.Parent; current != nil; current = current.Parent {
 		switch current.Kind {
-		case ast.KindFunctionType, ast.KindCallSignature, ast.KindMethodSignature, ast.KindConstructSignature, ast.KindConstructorType:
-			return true
+		case ast.KindMethodDeclaration:
+			return ast.HasSyntacticModifier(current, ast.ModifierFlagsStatic)
+		case ast.KindClassDeclaration, ast.KindClassExpression:
+			return false
 		}
-		return false
 	}
 	return false
+}
+
+func isTypeParameterOfClass(decl *declarationInfo) bool {
+	if decl == nil || decl.Kind != declarationTypeParameter || decl.DeclNode == nil {
+		return false
+	}
+	for current := decl.DeclNode.Parent; current != nil; current = current.Parent {
+		switch current.Kind {
+		case ast.KindClassDeclaration, ast.KindClassExpression:
+			return true
+		case ast.KindMethodDeclaration:
+			return false
+		}
+	}
+	return false
+}
+
+func isGenericOfAStaticMethodShadow(inner *declarationInfo, outer *declarationInfo) bool {
+	return isTypeParameterOfStaticMethod(inner) && isTypeParameterOfClass(outer)
 }
 
 func isOnInitializer(inner *declarationInfo, outer *declarationInfo) bool {
@@ -349,27 +377,87 @@ func isOnInitializer(inner *declarationInfo, outer *declarationInfo) bool {
 	if inner.Kind != declarationFunctionExpressionName && inner.Kind != declarationClassExpressionName {
 		return false
 	}
-	var initializer *ast.Node
-	switch outer.DeclNode.Kind {
-	case ast.KindVariableDeclaration:
-		if decl := outer.DeclNode.AsVariableDeclaration(); decl != nil {
-			initializer = decl.Initializer
-		}
-	case ast.KindParameter:
-		if decl := outer.DeclNode.AsParameterDeclaration(); decl != nil {
-			initializer = decl.Initializer
-		}
-	case ast.KindBindingElement:
-		if decl := outer.DeclNode.AsBindingElement(); decl != nil {
-			initializer = decl.Initializer
-		}
-	}
+	initializer := declarationInitializerNode(outer.DeclNode)
 	return initializer != nil && initializer == inner.DeclNode
 }
 
+func declarationInitializerNode(node *ast.Node) *ast.Node {
+	if node == nil {
+		return nil
+	}
+	switch node.Kind {
+	case ast.KindVariableDeclaration:
+		if decl := node.AsVariableDeclaration(); decl != nil {
+			if decl.Initializer != nil {
+				return decl.Initializer
+			}
+			if node.Parent != nil && node.Parent.Parent != nil {
+				parent := node.Parent.Parent
+				if parent.Kind == ast.KindForInStatement || parent.Kind == ast.KindForOfStatement {
+					forInOrOf := parent.AsForInOrOfStatement()
+					if forInOrOf != nil {
+						return forInOrOf.Expression
+					}
+				}
+			}
+		}
+	case ast.KindParameter:
+		if decl := node.AsParameterDeclaration(); decl != nil {
+			return decl.Initializer
+		}
+	case ast.KindBindingElement:
+		if decl := node.AsBindingElement(); decl != nil {
+			if decl.Initializer != nil {
+				return decl.Initializer
+			}
+			for current := node.Parent; current != nil; current = current.Parent {
+				switch current.Kind {
+				case ast.KindVariableDeclaration, ast.KindParameter:
+					return declarationInitializerNode(current)
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func isInInitializerShadow(inner *declarationInfo, outer *declarationInfo) bool {
+	if inner == nil || outer == nil || inner.Identifier == nil || outer.DeclNode == nil || inner.Scope == nil || outer.Scope == nil {
+		return false
+	}
+	inRange := false
+	if initializer := declarationInitializerNode(outer.DeclNode); initializer != nil {
+		inRange = inner.Identifier.Pos() >= initializer.Pos() && inner.Identifier.End() <= initializer.End()
+	}
+	if !inRange && outer.DeclNode.Kind == ast.KindBindingElement {
+		for current := outer.DeclNode.Parent; current != nil; current = current.Parent {
+			if current.Kind != ast.KindVariableDeclaration && current.Kind != ast.KindParameter {
+				continue
+			}
+			if initializer := declarationInitializerNode(current); initializer != nil {
+				if inner.Identifier.Pos() >= initializer.Pos() && inner.Identifier.End() <= initializer.End() {
+					inRange = true
+					break
+				}
+			}
+		}
+	}
+	if !inRange {
+		return false
+	}
+	for scope := inner.Scope; scope != nil; scope = scope.Parent {
+		if scope == outer.Scope {
+			return true
+		}
+	}
+	return false
+}
+
 func isBuiltinGlobalName(name string, globals map[string]bool) bool {
-	if globals != nil && globals[name] {
-		return true
+	if globals != nil {
+		if _, ok := globals[name]; ok {
+			return true
+		}
 	}
 	_, ok := map[string]bool{
 		"Object":     true,
@@ -392,6 +480,152 @@ func isBuiltinGlobalName(name string, globals map[string]bool) bool {
 		"globalThis": true,
 	}[name]
 	return ok
+}
+
+func importSourceForNode(node *ast.Node) string {
+	for current := node; current != nil; current = current.Parent {
+		if current.Kind != ast.KindImportDeclaration {
+			continue
+		}
+		importDecl := current.AsImportDeclaration()
+		if importDecl == nil || importDecl.ModuleSpecifier == nil {
+			return ""
+		}
+		if importDecl.ModuleSpecifier.Kind == ast.KindStringLiteral {
+			return importDecl.ModuleSpecifier.AsStringLiteral().Text
+		}
+		return importDecl.ModuleSpecifier.Text()
+	}
+	return ""
+}
+
+func enclosingExternalModuleName(node *ast.Node) (string, bool) {
+	for current := node; current != nil; current = current.Parent {
+		if current.Kind != ast.KindModuleDeclaration {
+			continue
+		}
+		moduleDecl := current.AsModuleDeclaration()
+		if moduleDecl == nil || moduleDecl.Name() == nil {
+			continue
+		}
+		if moduleDecl.Name().Kind != ast.KindStringLiteral {
+			continue
+		}
+		return moduleDecl.Name().AsStringLiteral().Text, true
+	}
+	return "", false
+}
+
+func isInsideGlobalAugmentation(node *ast.Node) bool {
+	for current := node; current != nil; current = current.Parent {
+		if current.Kind != ast.KindModuleDeclaration {
+			continue
+		}
+		moduleDecl := current.AsModuleDeclaration()
+		if moduleDecl == nil || moduleDecl.Name() == nil {
+			continue
+		}
+		if moduleDecl.Name().Kind == ast.KindIdentifier && moduleDecl.Name().AsIdentifier().Text == "global" {
+			return true
+		}
+	}
+	return false
+}
+
+func isExternalDeclarationMerging(inner *declarationInfo, outer *declarationInfo) bool {
+	if inner == nil || outer == nil || inner.DeclNode == nil {
+		return false
+	}
+	if outer.Kind != declarationImport || !outer.IsType || outer.IsValue || outer.ImportSource == "" {
+		return false
+	}
+	if inner.Kind != declarationInterface && inner.Kind != declarationTypeAlias {
+		return false
+	}
+	moduleName, ok := enclosingExternalModuleName(inner.DeclNode)
+	return ok && moduleName == outer.ImportSource
+}
+
+func isAmbientDeclarationToIgnore(decl *declarationInfo) bool {
+	if decl == nil || decl.DeclNode == nil {
+		return false
+	}
+	node := decl.DeclNode
+	switch node.Kind {
+	case ast.KindVariableDeclaration:
+		if node.Parent != nil && node.Parent.Parent != nil && node.Parent.Parent.Kind == ast.KindVariableStatement {
+			if !ast.HasSyntacticModifier(node.Parent.Parent, ast.ModifierFlagsAmbient) {
+				return false
+			}
+			return declarationInitializerNode(node) == nil
+		}
+		return false
+	case ast.KindFunctionDeclaration:
+		if !ast.HasSyntacticModifier(node, ast.ModifierFlagsAmbient) {
+			return false
+		}
+		fn := node.AsFunctionDeclaration()
+		return fn != nil && fn.Body == nil
+	case ast.KindClassDeclaration, ast.KindInterfaceDeclaration, ast.KindTypeAliasDeclaration, ast.KindEnumDeclaration, ast.KindModuleDeclaration:
+		return ast.HasSyntacticModifier(node, ast.ModifierFlagsAmbient)
+	default:
+		return false
+	}
+}
+
+func isTypeOnlyImport(node *ast.Node) bool {
+	if node == nil {
+		return false
+	}
+	switch node.Kind {
+	case ast.KindImportClause:
+		decl := node.AsImportClause()
+		return decl != nil && decl.IsTypeOnly()
+	case ast.KindImportSpecifier:
+		decl := node.AsImportSpecifier()
+		if decl == nil {
+			return false
+		}
+		if decl.IsTypeOnly {
+			return true
+		}
+		for current := node.Parent; current != nil; current = current.Parent {
+			if current.Kind == ast.KindImportClause {
+				clause := current.AsImportClause()
+				return clause != nil && clause.IsTypeOnly()
+			}
+		}
+		return false
+	case ast.KindNamespaceImport:
+		for current := node.Parent; current != nil; current = current.Parent {
+			if current.Kind == ast.KindImportClause {
+				decl := current.AsImportClause()
+				return decl != nil && decl.IsTypeOnly()
+			}
+		}
+	}
+	return false
+}
+
+func isTypeOnlyFunctionScopeNode(node *ast.Node) bool {
+	if node == nil {
+		return false
+	}
+	switch node.Kind {
+	case ast.KindFunctionType, ast.KindCallSignature, ast.KindMethodSignature, ast.KindConstructSignature, ast.KindConstructorType:
+		return true
+	case ast.KindFunctionDeclaration:
+		fn := node.AsFunctionDeclaration()
+		return fn != nil && fn.Body == nil
+	case ast.KindMethodDeclaration:
+		method := node.AsMethodDeclaration()
+		return method != nil && method.Body == nil
+	case ast.KindConstructor:
+		ctor := node.AsConstructorDeclaration()
+		return ctor != nil && ctor.Body == nil
+	default:
+		return false
+	}
 }
 
 func findShadowedDeclaration(inner *declarationInfo, opts noShadowOptions) *declarationInfo {
@@ -417,6 +651,15 @@ func findShadowedDeclaration(inner *declarationInfo, opts noShadowOptions) *decl
 			if isFunctionTypeParameterNameValueShadow(opts, inner, outer) {
 				continue
 			}
+			if opts.IgnoreOnInitialization && isInInitializerShadow(inner, outer) {
+				continue
+			}
+			if isGenericOfAStaticMethodShadow(inner, outer) {
+				continue
+			}
+			if isExternalDeclarationMerging(inner, outer) {
+				continue
+			}
 			if !hoistAllowsShadow(opts, inner, outer) {
 				continue
 			}
@@ -434,7 +677,7 @@ var NoShadowRule = rule.CreateRule(rule.Rule{
 			return rule.RuleListeners{}
 		}
 
-		rootScope := newScope(nil, ctx.SourceFile.AsNode(), true)
+		rootScope := newScope(nil, ctx.SourceFile.AsNode(), true, false)
 		currentScope := rootScope
 		declarations := make([]*declarationInfo, 0)
 
@@ -454,8 +697,11 @@ var NoShadowRule = rule.CreateRule(rule.Rule{
 
 			switch node.Kind {
 			case ast.KindFunctionDeclaration:
-				registerDeclaration(variableScope(currentScope), declarationInfoForNode(node, variableScope(currentScope), declarationFunctionDeclaration))
-				nextScope := newScope(currentScope, node, true)
+				functionDecl := node.AsFunctionDeclaration()
+				if functionDecl != nil && functionDecl.Body != nil {
+					registerDeclaration(variableScope(currentScope), declarationInfoForNode(node, variableScope(currentScope), declarationFunctionDeclaration))
+				}
+				nextScope := newScope(currentScope, node, true, isTypeOnlyFunctionScopeNode(node))
 				prev := currentScope
 				currentScope = nextScope
 				node.ForEachChild(func(child *ast.Node) bool {
@@ -466,10 +712,10 @@ var NoShadowRule = rule.CreateRule(rule.Rule{
 				return
 			case ast.KindFunctionExpression:
 				prev := currentScope
-				nameScope := newScope(currentScope, node, false)
+				nameScope := newScope(currentScope, node, false, false)
 				currentScope = nameScope
 				registerDeclaration(currentScope, declarationInfoForNode(node, currentScope, declarationFunctionExpressionName))
-				functionScope := newScope(currentScope, node, true)
+				functionScope := newScope(currentScope, node, true, false)
 				currentScope = functionScope
 				node.ForEachChild(func(child *ast.Node) bool {
 					walk(child)
@@ -477,8 +723,8 @@ var NoShadowRule = rule.CreateRule(rule.Rule{
 				})
 				currentScope = prev
 				return
-			case ast.KindArrowFunction, ast.KindMethodDeclaration, ast.KindConstructor:
-				nextScope := newScope(currentScope, node, true)
+			case ast.KindArrowFunction, ast.KindMethodDeclaration, ast.KindConstructor, ast.KindFunctionType, ast.KindCallSignature, ast.KindMethodSignature, ast.KindConstructSignature, ast.KindConstructorType:
+				nextScope := newScope(currentScope, node, true, isTypeOnlyFunctionScopeNode(node))
 				prev := currentScope
 				currentScope = nextScope
 				node.ForEachChild(func(child *ast.Node) bool {
@@ -488,7 +734,7 @@ var NoShadowRule = rule.CreateRule(rule.Rule{
 				currentScope = prev
 				return
 			case ast.KindClassExpression:
-				nextScope := newScope(currentScope, node, false)
+				nextScope := newScope(currentScope, node, false, false)
 				prev := currentScope
 				currentScope = nextScope
 				registerDeclaration(currentScope, declarationInfoForNode(node, currentScope, declarationClassExpressionName))
@@ -499,7 +745,40 @@ var NoShadowRule = rule.CreateRule(rule.Rule{
 				currentScope = prev
 				return
 			case ast.KindBlock, ast.KindModuleBlock, ast.KindForStatement, ast.KindForInStatement, ast.KindForOfStatement, ast.KindCatchClause:
-				nextScope := newScope(currentScope, node, false)
+				nextScope := newScope(currentScope, node, false, false)
+				prev := currentScope
+				currentScope = nextScope
+				node.ForEachChild(func(child *ast.Node) bool {
+					walk(child)
+					return false
+				})
+				currentScope = prev
+				return
+			case ast.KindClassDeclaration:
+				registerDeclaration(currentScope, declarationInfoForNode(node, currentScope, declarationClassDeclaration))
+				nextScope := newScope(currentScope, node, false, false)
+				prev := currentScope
+				currentScope = nextScope
+				node.ForEachChild(func(child *ast.Node) bool {
+					walk(child)
+					return false
+				})
+				currentScope = prev
+				return
+			case ast.KindTypeAliasDeclaration:
+				registerDeclaration(currentScope, declarationInfoForNode(node, currentScope, declarationTypeAlias))
+				nextScope := newScope(currentScope, node, false, false)
+				prev := currentScope
+				currentScope = nextScope
+				node.ForEachChild(func(child *ast.Node) bool {
+					walk(child)
+					return false
+				})
+				currentScope = prev
+				return
+			case ast.KindInterfaceDeclaration:
+				registerDeclaration(currentScope, declarationInfoForNode(node, currentScope, declarationInterface))
+				nextScope := newScope(currentScope, node, false, false)
 				prev := currentScope
 				currentScope = nextScope
 				node.ForEachChild(func(child *ast.Node) bool {
@@ -551,6 +830,9 @@ var NoShadowRule = rule.CreateRule(rule.Rule{
 						if info != nil && info.Name == "this" {
 							info.IsThisParam = true
 						}
+						if info != nil {
+							info.IsFunctionTypeParameter = currentScope.IsFunctionType
+						}
 						registerDeclaration(currentScope, info)
 					}
 				}
@@ -559,19 +841,28 @@ var NoShadowRule = rule.CreateRule(rule.Rule{
 				if info != nil && info.Name == "this" {
 					info.IsThisParam = true
 				}
+				if info != nil {
+					info.IsFunctionTypeParameter = currentScope.IsFunctionType
+				}
 				registerDeclaration(currentScope, info)
-			case ast.KindClassDeclaration:
-				registerDeclaration(currentScope, declarationInfoForNode(node, currentScope, declarationClassDeclaration))
-			case ast.KindTypeAliasDeclaration:
-				registerDeclaration(currentScope, declarationInfoForNode(node, currentScope, declarationTypeAlias))
-			case ast.KindInterfaceDeclaration:
-				registerDeclaration(currentScope, declarationInfoForNode(node, currentScope, declarationInterface))
 			case ast.KindEnumDeclaration:
 				registerDeclaration(currentScope, declarationInfoForNode(node, currentScope, declarationEnum))
 			case ast.KindTypeParameter:
-				registerDeclaration(currentScope, declarationInfoForNode(node, currentScope, declarationTypeParameter))
+				info := declarationInfoForNode(node, currentScope, declarationTypeParameter)
+				if info != nil {
+					info.IsFunctionTypeParameter = currentScope.IsFunctionType
+				}
+				registerDeclaration(currentScope, info)
 			case ast.KindImportClause, ast.KindImportSpecifier, ast.KindNamespaceImport:
-				registerDeclaration(currentScope, declarationInfoForNode(node, currentScope, declarationImport))
+				info := declarationInfoForNode(node, currentScope, declarationImport)
+				if info != nil {
+					info.ImportSource = importSourceForNode(node)
+					if isTypeOnlyImport(node) {
+						info.IsType = true
+						info.IsValue = false
+					}
+				}
+				registerDeclaration(currentScope, info)
 			}
 
 			node.ForEachChild(func(child *ast.Node) bool {
@@ -593,7 +884,16 @@ var NoShadowRule = rule.CreateRule(rule.Rule{
 			if decl == nil || decl.Identifier == nil || decl.Name == "" {
 				continue
 			}
+			if isInsideGlobalAugmentation(decl.DeclNode) {
+				continue
+			}
+			if isAmbientDeclarationToIgnore(decl) {
+				continue
+			}
 			if decl.IsThisParam || opts.Allow[decl.Name] {
+				continue
+			}
+			if decl.IsFunctionTypeParameter && opts.IgnoreFunctionTypeParameterNameValueShadow {
 				continue
 			}
 

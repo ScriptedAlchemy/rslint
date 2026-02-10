@@ -1,0 +1,1367 @@
+// Rstest Snapshot v1
+
+exports[`no-shadow TS tests > invalid 1`] = `
+{
+  "code": "
+type T = 1;
+{
+  type T = 2;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'T' is already declared in the upper scope on line 2 column 5.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 9,
+          "line": 4,
+        },
+        "start": {
+          "column": 8,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 2`] = `
+{
+  "code": "
+type T = 1;
+function foo<T>(arg: T) {}
+      ",
+  "diagnostics": [
+    {
+      "message": "'T' is already declared in the upper scope on line 2 column 5.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 15,
+          "line": 3,
+        },
+        "start": {
+          "column": 14,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 3`] = `
+{
+  "code": "
+function foo<T>() {
+  return function <T>() {};
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'T' is already declared in the upper scope on line 2 column 14.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 21,
+          "line": 3,
+        },
+        "start": {
+          "column": 20,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 4`] = `
+{
+  "code": "
+type T = string;
+function foo<T extends (arg: any) => void>(arg: T) {}
+      ",
+  "diagnostics": [
+    {
+      "message": "'T' is already declared in the upper scope on line 2 column 5.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 15,
+          "line": 3,
+        },
+        "start": {
+          "column": 14,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 5`] = `
+{
+  "code": "
+const x = 1;
+{
+  type x = string;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'x' is already declared in the upper scope on line 2 column 6.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 9,
+          "line": 4,
+        },
+        "start": {
+          "column": 8,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 6`] = `
+{
+  "code": "
+type Foo = 1;
+      ",
+  "diagnostics": [
+    {
+      "message": "'Foo' is already a global variable.",
+      "messageId": "noShadowGlobal",
+      "range": {
+        "end": {
+          "column": 9,
+          "line": 2,
+        },
+        "start": {
+          "column": 6,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 7`] = `
+{
+  "code": "
+const test = 1;
+type Fn = (test: string) => typeof test;
+      ",
+  "diagnostics": [
+    {
+      "message": "'test' is already declared in the upper scope on line 2 column 6.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 16,
+          "line": 3,
+        },
+        "start": {
+          "column": 12,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 8`] = `
+{
+  "code": "
+type Fn = (Foo: string) => typeof Foo;
+      ",
+  "diagnostics": [
+    {
+      "message": "'Foo' is already a global variable.",
+      "messageId": "noShadowGlobal",
+      "range": {
+        "end": {
+          "column": 15,
+          "line": 2,
+        },
+        "start": {
+          "column": 12,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 9`] = `
+{
+  "code": "
+const arg = 0;
+
+interface Test {
+  (arg: string): typeof arg;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'arg' is already declared in the upper scope on line 2 column 6.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 7,
+          "line": 5,
+        },
+        "start": {
+          "column": 4,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 10`] = `
+{
+  "code": "
+const arg = 0;
+
+interface Test {
+  p1(arg: string): typeof arg;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'arg' is already declared in the upper scope on line 2 column 6.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 9,
+          "line": 5,
+        },
+        "start": {
+          "column": 6,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 11`] = `
+{
+  "code": "
+const arg = 0;
+
+declare function test(arg: string): typeof arg;
+      ",
+  "diagnostics": [
+    {
+      "message": "'arg' is already declared in the upper scope on line 2 column 6.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 26,
+          "line": 4,
+        },
+        "start": {
+          "column": 23,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 12`] = `
+{
+  "code": "
+const arg = 0;
+
+declare const test: (arg: string) => typeof arg;
+      ",
+  "diagnostics": [
+    {
+      "message": "'arg' is already declared in the upper scope on line 2 column 6.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 25,
+          "line": 4,
+        },
+        "start": {
+          "column": 22,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 13`] = `
+{
+  "code": "
+const arg = 0;
+
+declare class Test {
+  p1(arg: string): typeof arg;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'arg' is already declared in the upper scope on line 2 column 6.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 9,
+          "line": 5,
+        },
+        "start": {
+          "column": 6,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 14`] = `
+{
+  "code": "
+const arg = 0;
+
+declare const Test: {
+  new (arg: string): typeof arg;
+};
+      ",
+  "diagnostics": [
+    {
+      "message": "'arg' is already declared in the upper scope on line 2 column 6.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 11,
+          "line": 5,
+        },
+        "start": {
+          "column": 8,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 15`] = `
+{
+  "code": "
+const arg = 0;
+
+type Bar = new (arg: number) => typeof arg;
+      ",
+  "diagnostics": [
+    {
+      "message": "'arg' is already declared in the upper scope on line 2 column 6.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 20,
+          "line": 4,
+        },
+        "start": {
+          "column": 17,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 16`] = `
+{
+  "code": "
+const arg = 0;
+
+declare namespace Lib {
+  function test(arg: string): typeof arg;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'arg' is already declared in the upper scope on line 2 column 6.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 20,
+          "line": 5,
+        },
+        "start": {
+          "column": 17,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 17`] = `
+{
+  "code": "
+import type { foo } from './foo';
+function doThing(foo: number) {}
+      ",
+  "diagnostics": [
+    {
+      "message": "'foo' is already declared in the upper scope on line 2 column 14.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 21,
+          "line": 3,
+        },
+        "start": {
+          "column": 18,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 18`] = `
+{
+  "code": "
+import { type foo } from './foo';
+function doThing(foo: number) {}
+      ",
+  "diagnostics": [
+    {
+      "message": "'foo' is already declared in the upper scope on line 2 column 14.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 21,
+          "line": 3,
+        },
+        "start": {
+          "column": 18,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 19`] = `
+{
+  "code": "
+import { foo } from './foo';
+function doThing(foo: number, bar: number) {}
+      ",
+  "diagnostics": [
+    {
+      "message": "'foo' is already declared in the upper scope on line 2 column 9.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 21,
+          "line": 3,
+        },
+        "start": {
+          "column": 18,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 20`] = `
+{
+  "code": "
+interface Foo {}
+
+declare module 'bar' {
+  export interface Foo {
+    x: string;
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'Foo' is already declared in the upper scope on line 2 column 10.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 23,
+          "line": 5,
+        },
+        "start": {
+          "column": 20,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 21`] = `
+{
+  "code": "
+import type { Foo } from 'bar';
+
+declare module 'baz' {
+  export interface Foo {
+    x: string;
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'Foo' is already declared in the upper scope on line 2 column 14.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 23,
+          "line": 5,
+        },
+        "start": {
+          "column": 20,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 22`] = `
+{
+  "code": "
+import { type Foo } from 'bar';
+
+declare module 'baz' {
+  export interface Foo {
+    x: string;
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'Foo' is already declared in the upper scope on line 2 column 14.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 23,
+          "line": 5,
+        },
+        "start": {
+          "column": 20,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 23`] = `
+{
+  "code": "
+let x = foo((x, y) => {});
+let y;
+      ",
+  "diagnostics": [
+    {
+      "message": "'x' is already declared in the upper scope on line 2 column 4.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 15,
+          "line": 2,
+        },
+        "start": {
+          "column": 14,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+    {
+      "message": "'y' is already declared in the upper scope on line 3 column 4.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 18,
+          "line": 2,
+        },
+        "start": {
+          "column": 17,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 24`] = `
+{
+  "code": "
+let x = foo((x, y) => {});
+let y;
+      ",
+  "diagnostics": [
+    {
+      "message": "'x' is already declared in the upper scope on line 2 column 4.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 15,
+          "line": 2,
+        },
+        "start": {
+          "column": 14,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 25`] = `
+{
+  "code": "
+type Foo<A> = 1;
+type A = 1;
+      ",
+  "diagnostics": [
+    {
+      "message": "'A' is already declared in the upper scope on line 3 column 5.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 11,
+          "line": 2,
+        },
+        "start": {
+          "column": 10,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 26`] = `
+{
+  "code": "
+interface Foo<A> {}
+type A = 1;
+      ",
+  "diagnostics": [
+    {
+      "message": "'A' is already declared in the upper scope on line 3 column 5.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 16,
+          "line": 2,
+        },
+        "start": {
+          "column": 15,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 27`] = `
+{
+  "code": "
+interface Foo<A> {}
+interface A {}
+      ",
+  "diagnostics": [
+    {
+      "message": "'A' is already declared in the upper scope on line 3 column 10.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 16,
+          "line": 2,
+        },
+        "start": {
+          "column": 15,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 28`] = `
+{
+  "code": "
+type Foo<A> = 1;
+interface A {}
+      ",
+  "diagnostics": [
+    {
+      "message": "'A' is already declared in the upper scope on line 3 column 10.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 11,
+          "line": 2,
+        },
+        "start": {
+          "column": 10,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 29`] = `
+{
+  "code": "
+{
+  type A = 1;
+}
+type A = 1;
+      ",
+  "diagnostics": [
+    {
+      "message": "'A' is already declared in the upper scope on line 5 column 5.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 9,
+          "line": 3,
+        },
+        "start": {
+          "column": 8,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 30`] = `
+{
+  "code": "
+{
+  interface A {}
+}
+type A = 1;
+      ",
+  "diagnostics": [
+    {
+      "message": "'A' is already declared in the upper scope on line 5 column 5.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 3,
+        },
+        "start": {
+          "column": 13,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 31`] = `
+{
+  "code": "
+type Foo<A> = 1;
+type A = 1;
+      ",
+  "diagnostics": [
+    {
+      "message": "'A' is already declared in the upper scope on line 3 column 5.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 11,
+          "line": 2,
+        },
+        "start": {
+          "column": 10,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 32`] = `
+{
+  "code": "
+interface Foo<A> {}
+type A = 1;
+      ",
+  "diagnostics": [
+    {
+      "message": "'A' is already declared in the upper scope on line 3 column 5.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 16,
+          "line": 2,
+        },
+        "start": {
+          "column": 15,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 33`] = `
+{
+  "code": "
+interface Foo<A> {}
+interface A {}
+      ",
+  "diagnostics": [
+    {
+      "message": "'A' is already declared in the upper scope on line 3 column 10.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 16,
+          "line": 2,
+        },
+        "start": {
+          "column": 15,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 34`] = `
+{
+  "code": "
+type Foo<A> = 1;
+interface A {}
+      ",
+  "diagnostics": [
+    {
+      "message": "'A' is already declared in the upper scope on line 3 column 10.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 11,
+          "line": 2,
+        },
+        "start": {
+          "column": 10,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 35`] = `
+{
+  "code": "
+{
+  type A = 1;
+}
+type A = 1;
+      ",
+  "diagnostics": [
+    {
+      "message": "'A' is already declared in the upper scope on line 5 column 5.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 9,
+          "line": 3,
+        },
+        "start": {
+          "column": 8,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 36`] = `
+{
+  "code": "
+{
+  interface A {}
+}
+type A = 1;
+      ",
+  "diagnostics": [
+    {
+      "message": "'A' is already declared in the upper scope on line 5 column 5.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 3,
+        },
+        "start": {
+          "column": 13,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 37`] = `
+{
+  "code": "
+type Foo<A> = 1;
+type A = 1;
+      ",
+  "diagnostics": [
+    {
+      "message": "'A' is already declared in the upper scope on line 3 column 5.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 11,
+          "line": 2,
+        },
+        "start": {
+          "column": 10,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 38`] = `
+{
+  "code": "
+interface Foo<A> {}
+type A = 1;
+      ",
+  "diagnostics": [
+    {
+      "message": "'A' is already declared in the upper scope on line 3 column 5.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 16,
+          "line": 2,
+        },
+        "start": {
+          "column": 15,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 39`] = `
+{
+  "code": "
+interface Foo<A> {}
+interface A {}
+      ",
+  "diagnostics": [
+    {
+      "message": "'A' is already declared in the upper scope on line 3 column 10.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 16,
+          "line": 2,
+        },
+        "start": {
+          "column": 15,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 40`] = `
+{
+  "code": "
+type Foo<A> = 1;
+interface A {}
+      ",
+  "diagnostics": [
+    {
+      "message": "'A' is already declared in the upper scope on line 3 column 10.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 11,
+          "line": 2,
+        },
+        "start": {
+          "column": 10,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 41`] = `
+{
+  "code": "
+{
+  type A = 1;
+}
+type A = 1;
+      ",
+  "diagnostics": [
+    {
+      "message": "'A' is already declared in the upper scope on line 5 column 5.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 9,
+          "line": 3,
+        },
+        "start": {
+          "column": 8,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 42`] = `
+{
+  "code": "
+{
+  interface A {}
+}
+type A = 1;
+      ",
+  "diagnostics": [
+    {
+      "message": "'A' is already declared in the upper scope on line 5 column 5.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 3,
+        },
+        "start": {
+          "column": 13,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 43`] = `
+{
+  "code": "
+function foo<T extends (...args: any[]) => any>(fn: T, args: any[]) {}
+      ",
+  "diagnostics": [
+    {
+      "message": "'args' is already a global variable.",
+      "messageId": "noShadowGlobal",
+      "range": {
+        "end": {
+          "column": 60,
+          "line": 2,
+        },
+        "start": {
+          "column": 56,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 44`] = `
+{
+  "code": "
+declare const has = (environment: 'dev' | 'prod' | 'test') => boolean;
+      ",
+  "diagnostics": [
+    {
+      "message": "'has' is already a global variable.",
+      "messageId": "noShadowGlobal",
+      "range": {
+        "end": {
+          "column": 18,
+          "line": 2,
+        },
+        "start": {
+          "column": 15,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow TS tests > invalid 45`] = `
+{
+  "code": "
+declare const has: (environment: 'dev' | 'prod' | 'test') => boolean;
+const fn = (has: string) => {};
+      ",
+  "diagnostics": [
+    {
+      "message": "'has' is already declared in the upper scope on line 2 column 14.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 16,
+          "line": 3,
+        },
+        "start": {
+          "column": 13,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;

@@ -64,9 +64,8 @@ func buildRuleGlobals(languageOptions *api.LanguageOptions) map[string]bool {
 	for name, raw := range languageOptions.Globals {
 		switch v := raw.(type) {
 		case bool:
-			if v {
-				globals[name] = true
-			}
+			// ESLint semantics: both true (writable) and false (readonly) declare a global.
+			globals[name] = true
 		case string:
 			lower := strings.ToLower(v)
 			if lower != "off" && lower != "false" {
