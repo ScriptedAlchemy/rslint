@@ -94,7 +94,7 @@ func collectLoopVariableSymbols(ctx rule.RuleContext, loopNode *ast.Node) map[*a
 			collectFromVarDeclList(forStmt.Initializer)
 		}
 	case ast.KindForInStatement:
-		forInStmt := loopNode.AsForInStatement()
+		forInStmt := loopNode.AsForInOrOfStatement()
 		if forInStmt != nil && forInStmt.Initializer != nil {
 			if forInStmt.Initializer.Kind == ast.KindVariableDeclarationList {
 				collectFromVarDeclList(forInStmt.Initializer)
@@ -103,7 +103,7 @@ func collectLoopVariableSymbols(ctx rule.RuleContext, loopNode *ast.Node) map[*a
 			}
 		}
 	case ast.KindForOfStatement:
-		forOfStmt := loopNode.AsForOfStatement()
+		forOfStmt := loopNode.AsForInOrOfStatement()
 		if forOfStmt != nil && forOfStmt.Initializer != nil {
 			if forOfStmt.Initializer.Kind == ast.KindVariableDeclarationList {
 				collectFromVarDeclList(forOfStmt.Initializer)
