@@ -1,6 +1,8 @@
 package no_unsafe_declaration_merging
 
 import (
+	"slices"
+
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/web-infra-dev/rslint/internal/rule"
 )
@@ -55,6 +57,24 @@ var NoUnsafeDeclarationMergingRule = rule.CreateRule(rule.Rule{
 			ctx.ReportNode(n.Name(), buildUnsafeMergingMessage())
 		}
 
+		reportMergedBucket := func(bucket *declarationBucket) {
+			nodes := make([]*ast.Node, 0, len(bucket.classNodes)+len(bucket.interfaceNodes))
+			nodes = append(nodes, bucket.classNodes...)
+			nodes = append(nodes, bucket.interfaceNodes...)
+			slices.SortFunc(nodes, func(a, b *ast.Node) int {
+				if a.Pos() < b.Pos() {
+					return -1
+				}
+				if a.Pos() > b.Pos() {
+					return 1
+				}
+				return 0
+			})
+			for _, n := range nodes {
+				reportNode(n)
+			}
+		}
+
 		addDeclaration := func(node *ast.Node, isClass bool) {
 			if node == nil || node.Name() == nil || node.Name().Kind != ast.KindIdentifier {
 				return
@@ -70,12 +90,7 @@ var NoUnsafeDeclarationMergingRule = rule.CreateRule(rule.Rule{
 			if len(bucket.classNodes) == 0 || len(bucket.interfaceNodes) == 0 {
 				return
 			}
-			for _, cls := range bucket.classNodes {
-				reportNode(cls)
-			}
-			for _, iface := range bucket.interfaceNodes {
-				reportNode(iface)
-			}
+			reportMergedBucket(bucket)
 		}
 
 		return rule.RuleListeners{
