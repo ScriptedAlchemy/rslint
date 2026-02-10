@@ -91,6 +91,16 @@ func TestAPIParserOptionsUnmarshalJSON(t *testing.T) {
 				}
 			},
 		},
+		{
+			name:     "tsconfig root dir",
+			input:    `{"projectService": false, "project": "./tsconfig.json", "tsconfigRootDir": "/tmp/project"}`,
+			expected: ProjectPaths{"./tsconfig.json"},
+			check: func(t *testing.T, opts ParserOptions) {
+				if opts.TsconfigRootDir != "/tmp/project" {
+					t.Fatalf("expected tsconfigRootDir /tmp/project, got %q", opts.TsconfigRootDir)
+				}
+			},
+		},
 	}
 
 	for _, tt := range tests {

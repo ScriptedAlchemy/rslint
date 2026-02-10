@@ -71,7 +71,11 @@ func (loader *ConfigLoader) LoadTsConfigsFromRslintConfig(rslintConfig RslintCon
 		}
 
 		for _, config := range entry.LanguageOptions.ParserOptions.Project {
-			tsconfigPath := tspath.ResolvePath(configDirectory, config)
+			baseDir := configDirectory
+			if entry.LanguageOptions.ParserOptions.TsconfigRootDir != "" {
+				baseDir = tspath.ResolvePath(configDirectory, entry.LanguageOptions.ParserOptions.TsconfigRootDir)
+			}
+			tsconfigPath := tspath.ResolvePath(baseDir, config)
 
 			if !loader.fs.FileExists(tsconfigPath) {
 				return nil, fmt.Errorf("tsconfig file %q doesn't exist", tsconfigPath)

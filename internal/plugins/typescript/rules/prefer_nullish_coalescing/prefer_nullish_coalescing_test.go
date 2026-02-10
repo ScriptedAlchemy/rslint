@@ -14,7 +14,7 @@ func TestPreferNullishCoalescingRule(t *testing.T) {
 			{Code: `const foo = bar ?? baz;`},
 			{Code: `foo ??= bar;`},
 			// Non-nullable types should not trigger
-			{Code: `const foo = bar || baz;`},
+			{Code: `declare const bar: string; declare const baz: string; const foo = bar || baz;`},
 		},
 		[]rule_tester.InvalidTestCase{
 			// Basic logical OR cases with nullable types
@@ -59,7 +59,7 @@ func TestPreferNullishCoalescingRuleStrictNullChecks(t *testing.T) {
 	rule_tester.RunRuleTester(fixtures.GetRootDir(), "tsconfig.json", t, &PreferNullishCoalescingRule,
 		[]rule_tester.ValidTestCase{
 			{
-				Code:    `const foo = bar || baz;`,
+				Code:    `declare const bar: string; declare const baz: string; const foo = bar || baz;`,
 				Options: map[string]any{"allowRuleToRunWithoutStrictNullChecksIKnowWhatIAmDoing": true},
 			},
 		},

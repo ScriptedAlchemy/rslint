@@ -2,6 +2,7 @@ package prefer_nullish_coalescing
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/microsoft/typescript-go/shim/ast"
@@ -26,6 +27,20 @@ type PreferNullishPrimitivesOption struct {
 	String  *bool `json:"string"`
 	Number  *bool `json:"number"`
 	Bigint  *bool `json:"bigint"`
+}
+
+var propertyStringElementAccessPattern = regexp.MustCompile(`\[['"]([A-Za-z_$][A-Za-z0-9_$]*)['"]\]`)
+
+func unwrapParenthesized(node *ast.Node) *ast.Node {
+	current := node
+	for current != nil && current.Kind == ast.KindParenthesizedExpression {
+		paren := current.AsParenthesizedExpression()
+		if paren == nil {
+			return current
+		}
+		current = paren.Expression
+	}
+	return current
 }
 
 func parseOptions(options any) PreferNullishCoalescingOptions {
@@ -162,10 +177,6 @@ func isNullableType(t *checker.Type) bool {
 
 // isTypeEligibleForPreferNullish checks if a type is eligible for nullish coalescing conversion
 func isTypeEligibleForPreferNullish(t *checker.Type, opts PreferNullishCoalescingOptions) bool {
-	if !isNullableType(t) {
-		return false
-	}
-
 	// Check for ignorable flags based on options
 	var ignorableFlags checker.TypeFlags
 	if opts.IgnorePrimitives.Boolean != nil && *opts.IgnorePrimitives.Boolean {
@@ -181,14 +192,20 @@ func isTypeEligibleForPreferNullish(t *checker.Type, opts PreferNullishCoalescin
 		ignorableFlags |= checker.TypeFlagsBigIntLike
 	}
 
-	if ignorableFlags == 0 {
-		return true // Any types are eligible for conversion
-	}
-
-	// If the type is any or unknown, we can't make assumptions about the value
 	flags := checker.Type_flags(t)
 	if flags&(checker.TypeFlagsAny|checker.TypeFlagsUnknown) != 0 {
+		if utils.IsIntrinsicErrorType(t) {
+			return false
+		}
+		return ignorableFlags == 0
+	}
+
+	if !isNullableType(t) {
 		return false
+	}
+
+	if ignorableFlags == 0 {
+		return true // Any types are eligible for conversion
 	}
 
 	// Check if any type constituents match the ignorable flags
@@ -208,9 +225,33 @@ func isTypeEligibleForPreferNullish(t *checker.Type, opts PreferNullishCoalescin
 func isMemberAccessLike(node *ast.Node) bool {
 	return node.Kind == ast.KindIdentifier ||
 		node.Kind == ast.KindPropertyAccessExpression ||
-		node.Kind == ast.KindElementAccessExpression ||
-		node.Kind == ast.KindCallExpression ||
-		node.Kind == ast.KindNewExpression
+		node.Kind == ast.KindElementAccessExpression
+}
+
+func normalizeOptionalMemberAccessText(text string) string {
+	text = strings.TrimSpace(text)
+	text = strings.ReplaceAll(text, "(", "")
+	text = strings.ReplaceAll(text, ")", "")
+	text = strings.ReplaceAll(text, "?.[", ".[")
+	text = strings.ReplaceAll(text, "?.", ".")
+	text = strings.ReplaceAll(text, ".[", "[")
+	text = strings.ReplaceAll(text, "?", "")
+	text = propertyStringElementAccessPattern.ReplaceAllString(text, ".$1")
+	return text
+}
+
+func areNodesSemanticallySimilar(sourceFile *ast.SourceFile, a, b *ast.Node) bool {
+	a = unwrapParenthesized(a)
+	b = unwrapParenthesized(b)
+	if areNodesTextuallyEqual(sourceFile, a, b) {
+		return true
+	}
+	if sourceFile == nil || a == nil || b == nil {
+		return false
+	}
+	aText := normalizeOptionalMemberAccessText(getNodeText(sourceFile, a))
+	bText := normalizeOptionalMemberAccessText(getNodeText(sourceFile, b))
+	return aText == bText
 }
 
 // isConditionalTest checks if a node is within a conditional test context
@@ -224,12 +265,7 @@ func isConditionalTest(node *ast.Node) bool {
 	case ast.KindParenthesizedExpression:
 		return isConditionalTest(parent)
 	case ast.KindBinaryExpression:
-		// Check if this is part of a logical expression
-		binExpr := parent.AsBinaryExpression()
-		if binExpr != nil && (binExpr.OperatorToken.Kind == ast.KindAmpersandAmpersandToken ||
-			binExpr.OperatorToken.Kind == ast.KindBarBarToken) {
-			return isConditionalTest(parent)
-		}
+		return isConditionalTest(parent)
 	case ast.KindConditionalExpression:
 		condExpr := parent.AsConditionalExpression()
 		if condExpr != nil && condExpr.Condition == node {
@@ -251,6 +287,241 @@ func isConditionalTest(node *ast.Node) bool {
 	}
 
 	return false
+}
+
+func isUndefinedIdentifier(node *ast.Node) bool {
+	if node == nil {
+		return false
+	}
+	if node.Kind == ast.KindUndefinedKeyword {
+		return true
+	}
+	if node.Kind == ast.KindIdentifier {
+		return node.AsIdentifier().Text == "undefined"
+	}
+	return false
+}
+
+func isNullLiteral(node *ast.Node) bool {
+	if node == nil {
+		return false
+	}
+	return node.Kind == ast.KindNullKeyword
+}
+
+func isNullishNode(node *ast.Node) bool {
+	return isNullLiteral(node) || isUndefinedIdentifier(node)
+}
+
+func extractNullishComparedNode(node *ast.Node) (*ast.Node, bool) {
+	if node == nil || node.Kind != ast.KindBinaryExpression {
+		return nil, false
+	}
+
+	binary := node.AsBinaryExpression()
+	if binary == nil {
+		return nil, false
+	}
+
+	switch binary.OperatorToken.Kind {
+	case ast.KindEqualsEqualsToken, ast.KindEqualsEqualsEqualsToken:
+		if isNullishNode(binary.Right) {
+			return binary.Left, true
+		}
+		if isNullishNode(binary.Left) {
+			return binary.Right, true
+		}
+		return nil, false
+	case ast.KindExclamationEqualsToken, ast.KindExclamationEqualsEqualsToken:
+		if isNullishNode(binary.Right) {
+			return binary.Left, true
+		}
+		if isNullishNode(binary.Left) {
+			return binary.Right, true
+		}
+		return nil, false
+	default:
+		return nil, false
+	}
+}
+
+type nullishComparisonKinds struct {
+	hasNull      bool
+	hasUndefined bool
+}
+
+func collectNullishComparisonKinds(sourceFile *ast.SourceFile, node *ast.Node, target *ast.Node) (nullishComparisonKinds, bool) {
+	kinds := nullishComparisonKinds{}
+	if node == nil || target == nil {
+		return kinds, false
+	}
+
+	node = unwrapParenthesized(node)
+	if node == nil {
+		return kinds, false
+	}
+
+	if node.Kind == ast.KindBinaryExpression {
+		binary := node.AsBinaryExpression()
+		if binary == nil {
+			return kinds, false
+		}
+
+		switch binary.OperatorToken.Kind {
+		case ast.KindAmpersandAmpersandToken, ast.KindBarBarToken:
+			leftKinds, leftValid := collectNullishComparisonKinds(sourceFile, binary.Left, target)
+			rightKinds, rightValid := collectNullishComparisonKinds(sourceFile, binary.Right, target)
+			if !leftValid || !rightValid {
+				return kinds, false
+			}
+			return nullishComparisonKinds{
+				hasNull:      leftKinds.hasNull || rightKinds.hasNull,
+				hasUndefined: leftKinds.hasUndefined || rightKinds.hasUndefined,
+			}, true
+		case ast.KindEqualsEqualsToken, ast.KindEqualsEqualsEqualsToken,
+			ast.KindExclamationEqualsToken, ast.KindExclamationEqualsEqualsToken:
+			comparedTarget, ok := extractNullishComparedNode(node)
+			if !ok || !areNodesSemanticallySimilar(sourceFile, comparedTarget, target) {
+				return kinds, false
+			}
+
+			if isNullLiteral(binary.Left) || isNullLiteral(binary.Right) {
+				kinds.hasNull = true
+			}
+			if isUndefinedIdentifier(binary.Left) || isUndefinedIdentifier(binary.Right) {
+				kinds.hasUndefined = true
+			}
+
+			// x == null or x != null matches both null and undefined.
+			if (binary.OperatorToken.Kind == ast.KindEqualsEqualsToken || binary.OperatorToken.Kind == ast.KindExclamationEqualsToken) &&
+				(isNullishNode(binary.Left) || isNullishNode(binary.Right)) {
+				kinds.hasNull = true
+				kinds.hasUndefined = true
+			}
+
+			return kinds, true
+		}
+	}
+
+	return kinds, false
+}
+
+func hasCompleteNullishComparisons(sourceFile *ast.SourceFile, condition *ast.Node, target *ast.Node) bool {
+	kinds, ok := collectNullishComparisonKinds(sourceFile, condition, target)
+	return ok && kinds.hasNull && kinds.hasUndefined
+}
+
+func typeMayContainFlag(t *checker.Type, flag checker.TypeFlags) bool {
+	if t == nil {
+		return false
+	}
+	for _, unionType := range utils.UnionTypeParts(t) {
+		if checker.Type_flags(unionType)&flag != 0 {
+			return true
+		}
+	}
+	return false
+}
+
+func isNonNullishComparison(node *ast.Node) bool {
+	if node == nil || node.Kind != ast.KindBinaryExpression {
+		return false
+	}
+	binary := node.AsBinaryExpression()
+	if binary == nil {
+		return false
+	}
+	switch binary.OperatorToken.Kind {
+	case ast.KindExclamationEqualsToken, ast.KindExclamationEqualsEqualsToken:
+		return (isNullishNode(binary.Right) && !isNullishNode(binary.Left)) ||
+			(isNullishNode(binary.Left) && !isNullishNode(binary.Right))
+	default:
+		return false
+	}
+}
+
+func isNullishComparison(node *ast.Node) bool {
+	if node == nil || node.Kind != ast.KindBinaryExpression {
+		return false
+	}
+	binary := node.AsBinaryExpression()
+	if binary == nil {
+		return false
+	}
+	switch binary.OperatorToken.Kind {
+	case ast.KindEqualsEqualsToken, ast.KindEqualsEqualsEqualsToken:
+		return (isNullishNode(binary.Right) && !isNullishNode(binary.Left)) ||
+			(isNullishNode(binary.Left) && !isNullishNode(binary.Right))
+	default:
+		return false
+	}
+}
+
+func extractNullishTernaryInfo(sourceFile *ast.SourceFile, condition *ast.Node) (target *ast.Node, nonNullishWhenTrue bool, ok bool) {
+	if condition == nil {
+		return nil, false, false
+	}
+
+	condition = unwrapParenthesized(condition)
+	if condition == nil {
+		return nil, false, false
+	}
+
+	if isMemberAccessLike(condition) {
+		return condition, true, true
+	}
+
+	if condition.Kind == ast.KindPrefixUnaryExpression {
+		unary := condition.AsPrefixUnaryExpression()
+		if unary != nil && unary.Operator == ast.KindExclamationToken {
+			operand := unwrapParenthesized(unary.Operand)
+			if isMemberAccessLike(operand) {
+				return operand, false, true
+			}
+		}
+	}
+
+	if condition.Kind == ast.KindBinaryExpression {
+		binary := condition.AsBinaryExpression()
+		if binary == nil {
+			return nil, false, false
+		}
+
+		switch binary.OperatorToken.Kind {
+		case ast.KindEqualsEqualsToken, ast.KindEqualsEqualsEqualsToken:
+			target, ok := extractNullishComparedNode(condition)
+			return target, false, ok
+		case ast.KindExclamationEqualsToken, ast.KindExclamationEqualsEqualsToken:
+			target, ok := extractNullishComparedNode(condition)
+			return target, true, ok
+		case ast.KindAmpersandAmpersandToken, ast.KindBarBarToken:
+			leftTarget, leftNonNullish, leftOK := extractNullishTernaryInfo(sourceFile, binary.Left)
+			rightTarget, rightNonNullish, rightOK := extractNullishTernaryInfo(sourceFile, binary.Right)
+			if !leftOK || !rightOK || !areNodesSemanticallySimilar(sourceFile, leftTarget, rightTarget) {
+				return nil, false, false
+			}
+
+			if binary.OperatorToken.Kind == ast.KindAmpersandAmpersandToken {
+				if isNonNullishComparison(binary.Left) && isNonNullishComparison(binary.Right) {
+					return leftTarget, true, true
+				}
+				if leftNonNullish && rightNonNullish {
+					return leftTarget, true, true
+				}
+			}
+
+			if binary.OperatorToken.Kind == ast.KindBarBarToken {
+				if isNullishComparison(binary.Left) && isNullishComparison(binary.Right) {
+					return leftTarget, false, true
+				}
+				if !leftNonNullish && !rightNonNullish {
+					return leftTarget, false, true
+				}
+			}
+		}
+	}
+
+	return nil, false, false
 }
 
 // isBooleanConstructorContext checks if a node is within a Boolean constructor context
@@ -275,7 +546,13 @@ func isBooleanConstructorContext(node *ast.Node) bool {
 	case ast.KindParenthesizedExpression:
 		return isBooleanConstructorContext(parent)
 	case ast.KindBinaryExpression:
-		return isBooleanConstructorContext(parent)
+		binExpr := parent.AsBinaryExpression()
+		if binExpr != nil && (binExpr.OperatorToken.Kind == ast.KindAmpersandAmpersandToken ||
+			binExpr.OperatorToken.Kind == ast.KindBarBarToken ||
+			binExpr.OperatorToken.Kind == ast.KindQuestionQuestionToken ||
+			binExpr.OperatorToken.Kind == ast.KindCommaToken) {
+			return isBooleanConstructorContext(parent)
+		}
 	case ast.KindConditionalExpression:
 		return isBooleanConstructorContext(parent)
 	}
@@ -352,8 +629,9 @@ func getNodeText(sourceFile *ast.SourceFile, node *ast.Node) string {
 		return ""
 	}
 	text := sourceFile.Text()
-	start := node.Pos()
-	end := node.End()
+	nodeRange := utils.TrimNodeTextRange(sourceFile, node)
+	start := nodeRange.Pos()
+	end := nodeRange.End()
 	if start < 0 || end > len(text) || start > end {
 		return ""
 	}
@@ -383,7 +661,10 @@ func areNodesTextuallyEqual(sourceFile *ast.SourceFile, a, b *ast.Node) bool {
 	if a == nil || b == nil {
 		return false
 	}
-	return getNodeText(sourceFile, a) == getNodeText(sourceFile, b)
+	if sourceFile == nil {
+		return a.Pos() == b.Pos() && a.End() == b.End()
+	}
+	return strings.TrimSpace(getNodeText(sourceFile, a)) == strings.TrimSpace(getNodeText(sourceFile, b))
 }
 
 var PreferNullishCoalescingRule = rule.CreateRule(rule.Rule{
@@ -508,16 +789,40 @@ var PreferNullishCoalescingRule = rule.CreateRule(rule.Rule{
 					return
 				}
 
-				// Check if this is a nullish check pattern
-				// Simple case: a ? a : b (where condition and consequent are the same)
-				if !areNodesTextuallyEqual(ctx.SourceFile, condExpr.Condition, condExpr.WhenTrue) {
+				targetNode, nonNullishWhenTrue, ok := extractNullishTernaryInfo(ctx.SourceFile, condExpr.Condition)
+				if !ok || targetNode == nil {
 					return
 				}
 
-				// Check if condition is eligible for nullish coalescing
-				conditionType := ctx.TypeChecker.GetTypeAtLocation(condExpr.Condition)
-				if !isTypeEligibleForPreferNullish(conditionType, opts) {
+				nonNullishBranch := condExpr.WhenTrue
+				nullishBranch := condExpr.WhenFalse
+				if !nonNullishWhenTrue {
+					nonNullishBranch = condExpr.WhenFalse
+					nullishBranch = condExpr.WhenTrue
+				}
+
+				if !areNodesSemanticallySimilar(ctx.SourceFile, targetNode, nonNullishBranch) {
 					return
+				}
+
+				conditionType := ctx.TypeChecker.GetTypeAtLocation(targetNode)
+				kinds, hasNullishComparisons := collectNullishComparisonKinds(ctx.SourceFile, condExpr.Condition, targetNode)
+				completeNullish := hasNullishComparisons && kinds.hasNull && kinds.hasUndefined
+				if !completeNullish {
+					if hasNullishComparisons {
+						flags := checker.Type_flags(conditionType)
+						if flags&(checker.TypeFlagsAny|checker.TypeFlagsUnknown) != 0 {
+							return
+						}
+						if kinds.hasUndefined && typeMayContainFlag(conditionType, checker.TypeFlagsNull) {
+							return
+						}
+						if kinds.hasNull && typeMayContainFlag(conditionType, checker.TypeFlagsUndefined) {
+							return
+						}
+					} else if !isTypeEligibleForPreferNullish(conditionType, opts) {
+						return
+					}
 				}
 
 				// Check various ignore conditions
@@ -530,11 +835,11 @@ var PreferNullishCoalescingRule = rule.CreateRule(rule.Rule{
 				}
 
 				// Create fix suggestion
-				conditionText := strings.TrimSpace(getNodeText(ctx.SourceFile, condExpr.Condition))
-				alternateText := strings.TrimSpace(getNodeText(ctx.SourceFile, condExpr.WhenFalse))
+				conditionText := strings.TrimSpace(getNodeText(ctx.SourceFile, targetNode))
+				alternateText := strings.TrimSpace(getNodeText(ctx.SourceFile, nullishBranch))
 
 				var fixedAlternateText string
-				if needsParentheses(condExpr.WhenFalse) {
+				if needsParentheses(nullishBranch) {
 					fixedAlternateText = fmt.Sprintf("(%s)", alternateText)
 				} else {
 					fixedAlternateText = alternateText
@@ -566,56 +871,97 @@ var PreferNullishCoalescingRule = rule.CreateRule(rule.Rule{
 				switch ifStmt.ThenStatement.Kind {
 				case ast.KindBlock:
 					block := ifStmt.ThenStatement.AsBlock()
-					if block == nil || block.Statements == nil || len(block.Statements.Nodes) != 1 {
+					if block == nil || block.Statements == nil {
 						return
 					}
-					if block.Statements.Nodes[0].Kind == ast.KindExpressionStatement {
-						exprStmt := block.Statements.Nodes[0].AsExpressionStatement()
-						if exprStmt != nil && exprStmt.Expression.Kind == ast.KindBinaryExpression {
-							binExpr := exprStmt.Expression.AsBinaryExpression()
-							if binExpr != nil && binExpr.OperatorToken.Kind == ast.KindEqualsToken {
-								assignmentExpr = binExpr
-							}
+					for _, stmt := range block.Statements.Nodes {
+						if stmt == nil {
+							continue
 						}
+						if stmt.Kind == ast.KindEmptyStatement || stmt.Kind == ast.KindNotEmittedStatement {
+							continue
+						}
+						if stmt.Kind != ast.KindExpressionStatement {
+							return
+						}
+						exprStmt := stmt.AsExpressionStatement()
+						if exprStmt == nil || exprStmt.Expression == nil {
+							return
+						}
+						expr := unwrapParenthesized(exprStmt.Expression)
+						if expr == nil || expr.Kind != ast.KindBinaryExpression {
+							return
+						}
+						binExpr := expr.AsBinaryExpression()
+						if binExpr != nil && (binExpr.OperatorToken.Kind == ast.KindEqualsToken ||
+							binExpr.OperatorToken.Kind == ast.KindQuestionQuestionEqualsToken ||
+							binExpr.OperatorToken.Kind == ast.KindBarBarEqualsToken) {
+							if assignmentExpr != nil {
+								return
+							}
+							assignmentExpr = binExpr
+						} else {
+							return
+						}
+					}
+					if assignmentExpr == nil {
+						return
 					}
 				case ast.KindExpressionStatement:
 					exprStmt := ifStmt.ThenStatement.AsExpressionStatement()
-					if exprStmt != nil && exprStmt.Expression.Kind == ast.KindBinaryExpression {
-						binExpr := exprStmt.Expression.AsBinaryExpression()
-						if binExpr != nil && binExpr.OperatorToken.Kind == ast.KindEqualsToken {
+					if exprStmt != nil && exprStmt.Expression != nil {
+						expr := unwrapParenthesized(exprStmt.Expression)
+						if expr == nil || expr.Kind != ast.KindBinaryExpression {
+							return
+						}
+						binExpr := expr.AsBinaryExpression()
+						if binExpr != nil && (binExpr.OperatorToken.Kind == ast.KindEqualsToken ||
+							binExpr.OperatorToken.Kind == ast.KindQuestionQuestionEqualsToken ||
+							binExpr.OperatorToken.Kind == ast.KindBarBarEqualsToken) {
 							assignmentExpr = binExpr
 						}
 					}
 				}
 
-				if assignmentExpr == nil || !isMemberAccessLike(assignmentExpr.Left) {
+				if assignmentExpr == nil {
+					return
+				}
+				assignmentLeft := unwrapParenthesized(assignmentExpr.Left)
+				if assignmentLeft == nil || !isMemberAccessLike(assignmentLeft) {
 					return
 				}
 
-				// Check if the condition is a simple nullish check for the same variable
-				var conditionTarget *ast.Node
-				if ifStmt.Expression.Kind == ast.KindPrefixUnaryExpression {
-					prefixExpr := ifStmt.Expression.AsPrefixUnaryExpression()
-					if prefixExpr != nil && prefixExpr.Operator == ast.KindExclamationToken {
-						conditionTarget = prefixExpr.Operand
+				conditionTarget, nonNullishWhenTrue, ok := extractNullishTernaryInfo(ctx.SourceFile, ifStmt.Expression)
+				if !ok || conditionTarget == nil || nonNullishWhenTrue {
+					return
+				}
+
+				if !areNodesSemanticallySimilar(ctx.SourceFile, conditionTarget, assignmentLeft) {
+					return
+				}
+
+				leftType := ctx.TypeChecker.GetTypeAtLocation(assignmentLeft)
+				kinds, hasNullishComparisons := collectNullishComparisonKinds(ctx.SourceFile, ifStmt.Expression, conditionTarget)
+				completeNullish := hasNullishComparisons && kinds.hasNull && kinds.hasUndefined
+				if !completeNullish {
+					if hasNullishComparisons {
+						flags := checker.Type_flags(leftType)
+						if flags&(checker.TypeFlagsAny|checker.TypeFlagsUnknown) != 0 {
+							return
+						}
+						if kinds.hasUndefined && typeMayContainFlag(leftType, checker.TypeFlagsNull) {
+							return
+						}
+						if kinds.hasNull && typeMayContainFlag(leftType, checker.TypeFlagsUndefined) {
+							return
+						}
+					} else if !isTypeEligibleForPreferNullish(leftType, opts) {
+						return
 					}
-				} else {
-					// Handle other nullish check patterns like: if (a == null || a == undefined)
-					conditionTarget = ifStmt.Expression
-				}
-
-				if conditionTarget == nil || !areNodesTextuallyEqual(ctx.SourceFile, conditionTarget, assignmentExpr.Left) {
-					return
-				}
-
-				// Check if left operand is eligible for nullish coalescing
-				leftType := ctx.TypeChecker.GetTypeAtLocation(assignmentExpr.Left)
-				if !isTypeEligibleForPreferNullish(leftType, opts) {
-					return
 				}
 
 				// Create fix suggestion
-				leftText := strings.TrimSpace(getNodeText(ctx.SourceFile, assignmentExpr.Left))
+				leftText := strings.TrimSpace(getNodeText(ctx.SourceFile, assignmentLeft))
 				rightText := strings.TrimSpace(getNodeText(ctx.SourceFile, assignmentExpr.Right))
 				replacement := fmt.Sprintf("%s ??= %s;", leftText, rightText)
 

@@ -134,10 +134,11 @@ func (h *IPCHandler) HandleLint(req api.LintRequest) (*api.LintResponse, error) 
 		}
 		if req.LanguageOptions.ParserOptions != nil {
 			configLanguageOptions.ParserOptions = &rslintconfig.ParserOptions{
-				ProjectService: req.LanguageOptions.ParserOptions.ProjectService,
-				Project:        rslintconfig.ProjectPaths(req.LanguageOptions.ParserOptions.Project),
-				SourceType:     req.LanguageOptions.ParserOptions.SourceType,
-				EcmaVersion:    req.LanguageOptions.ParserOptions.EcmaVersion,
+				ProjectService:  req.LanguageOptions.ParserOptions.ProjectService,
+				Project:         rslintconfig.ProjectPaths(req.LanguageOptions.ParserOptions.Project),
+				TsconfigRootDir: req.LanguageOptions.ParserOptions.TsconfigRootDir,
+				SourceType:      req.LanguageOptions.ParserOptions.SourceType,
+				EcmaVersion:     req.LanguageOptions.ParserOptions.EcmaVersion,
 			}
 			if req.LanguageOptions.ParserOptions.EcmaFeatures != nil {
 				configLanguageOptions.ParserOptions.EcmaFeatures = &rslintconfig.EcmaFeatures{
@@ -154,8 +155,12 @@ func (h *IPCHandler) HandleLint(req api.LintRequest) (*api.LintResponse, error) 
 		overrideTsconfigs := []string{}
 		for _, entry := range rslintConfig {
 			if entry.LanguageOptions != nil && entry.LanguageOptions.ParserOptions != nil {
+				baseDir := configDirectory
+				if entry.LanguageOptions.ParserOptions.TsconfigRootDir != "" {
+					baseDir = tspath.ResolvePath(configDirectory, entry.LanguageOptions.ParserOptions.TsconfigRootDir)
+				}
 				for _, config := range entry.LanguageOptions.ParserOptions.Project {
-					tsconfigPath := tspath.ResolvePath(configDirectory, config)
+					tsconfigPath := tspath.ResolvePath(baseDir, config)
 					if fs.FileExists(tsconfigPath) {
 						overrideTsconfigs = append(overrideTsconfigs, tsconfigPath)
 					}

@@ -215,12 +215,23 @@ export class RuleTester {
             caseLanguageOptions,
           );
           const isJSX = languageOptions?.parserOptions?.ecmaFeatures?.jsx;
+          const caseTsconfigRootDir =
+            languageOptions?.parserOptions?.tsconfigRootDir;
+          const virtualBaseDir = caseTsconfigRootDir || cwd;
+          const useProjectFixtureFile =
+            !!caseTsconfigRootDir && caseTsconfigRootDir !== cwd;
 
           const options =
             typeof validCase === 'string' ? [] : validCase.options || [];
           let virtual_entry = path.resolve(
-            cwd,
-            isJSX ? 'virtual.tsx' : 'virtual.ts',
+            virtualBaseDir,
+            useProjectFixtureFile
+              ? isJSX
+                ? 'react.tsx'
+                : 'file.ts'
+              : isJSX
+                ? 'virtual.tsx'
+                : 'virtual.ts',
           );
           // workaround for this hardcoded path https://github.com/typescript-eslint/typescript-eslint/blob/main/packages/eslint-plugin/tests/rules/no-floating-promises.test.ts#L712
           if (Array.isArray(options)) {
@@ -273,9 +284,20 @@ export class RuleTester {
             item.languageOptions,
           );
           const isJSX = languageOptions?.parserOptions?.ecmaFeatures?.jsx;
+          const caseTsconfigRootDir =
+            languageOptions?.parserOptions?.tsconfigRootDir;
+          const virtualBaseDir = caseTsconfigRootDir || cwd;
+          const useProjectFixtureFile =
+            !!caseTsconfigRootDir && caseTsconfigRootDir !== cwd;
           const test_virtual_entry = path.resolve(
-            cwd,
-            isJSX ? 'virtual.tsx' : 'virtual.ts',
+            virtualBaseDir,
+            useProjectFixtureFile
+              ? isJSX
+                ? 'react.tsx'
+                : 'file.ts'
+              : isJSX
+                ? 'virtual.tsx'
+                : 'virtual.ts',
           );
           const diags = await lint({
             config,
