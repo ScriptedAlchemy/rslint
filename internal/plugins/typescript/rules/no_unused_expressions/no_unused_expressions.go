@@ -106,13 +106,13 @@ func isDirectivePrologue(node *ast.Node) bool {
 		return false
 	}
 
-	stmts := getContainerStatements(node)
-	if len(stmts) == 0 {
+	statements := getContainerStatements(node)
+	if len(statements) == 0 {
 		return false
 	}
 
 	index := -1
-	for i, stmt := range stmts {
+	for i, stmt := range statements {
 		if stmt == node {
 			index = i
 			break
@@ -123,7 +123,7 @@ func isDirectivePrologue(node *ast.Node) bool {
 	}
 
 	for i := 0; i < index; i++ {
-		if !ast.IsPrologueDirective(stmts[i]) {
+		if !ast.IsPrologueDirective(statements[i]) {
 			return false
 		}
 	}
@@ -150,7 +150,7 @@ func isValidExpression(node *ast.Node, opts NoUnusedExpressionsOptions) bool {
 	case ast.KindPostfixUnaryExpression:
 		return true
 	case ast.KindPrefixUnaryExpression:
-		// ++x and --x are side-effectful
+		// ++x and --x have side effects
 		prefix := node.AsPrefixUnaryExpression()
 		if prefix != nil && (prefix.Operator == ast.KindPlusPlusToken || prefix.Operator == ast.KindMinusMinusToken) {
 			return true

@@ -19,7 +19,7 @@ func buildUnexpectedThisOnFunctionOnlyInterfaceMessage(interfaceName string) rul
 	}
 }
 
-func hasDisqualifyingInterfaceSupertypes(node *ast.InterfaceDeclaration) bool {
+func hasDisqualifyingInterfaceExtends(node *ast.InterfaceDeclaration) bool {
 	if node == nil || node.HeritageClauses == nil {
 		return false
 	}
@@ -99,7 +99,7 @@ var PreferFunctionTypeRule = rule.CreateRule(rule.Rule{
 				if iface == nil || iface.Members == nil || len(iface.Members.Nodes) != 1 {
 					return
 				}
-				if hasDisqualifyingInterfaceSupertypes(iface) {
+				if hasDisqualifyingInterfaceExtends(iface) {
 					return
 				}
 				if !isCallableSignatureMember(iface.Members.Nodes[0]) {

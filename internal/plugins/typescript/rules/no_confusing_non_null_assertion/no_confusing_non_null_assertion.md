@@ -15,7 +15,7 @@ Examples of **correct** code for this rule:
 
 ```typescript
 a == b;
-(a!) in b;
+a! in b;
 ```
 
 ## Original Documentation

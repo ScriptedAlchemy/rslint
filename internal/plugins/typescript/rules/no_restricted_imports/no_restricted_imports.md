@@ -7,13 +7,13 @@ Disallow specified modules from being imported.
 Examples of **incorrect** code for this rule:
 
 ```ts
-import x from "legacy-lib";
+import x from 'legacy-lib';
 ```
 
 Examples of **correct** code:
 
 ```ts
-import x from "modern-lib";
+import x from 'modern-lib';
 ```
 
 ## Original Documentation

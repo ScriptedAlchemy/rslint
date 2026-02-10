@@ -56,14 +56,14 @@ func isUselessForwardingSuper(constructor *ast.ConstructorDeclaration) bool {
 		return false
 	}
 
-	stmts := constructor.Body.Statements()
-	if len(stmts) != 1 {
+	statements := constructor.Body.Statements()
+	if len(statements) != 1 {
 		return false
 	}
-	if stmts[0].Kind != ast.KindExpressionStatement {
+	if statements[0].Kind != ast.KindExpressionStatement {
 		return false
 	}
-	exprStmt := stmts[0].AsExpressionStatement()
+	exprStmt := statements[0].AsExpressionStatement()
 	if exprStmt == nil || exprStmt.Expression == nil || exprStmt.Expression.Kind != ast.KindCallExpression {
 		return false
 	}
