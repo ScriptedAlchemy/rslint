@@ -293,6 +293,8 @@ var NoMagicNumbersRule = rule.CreateRule(rule.Rule{
 		reportCandidate := func(candidate candidateLiteral) {
 			relevantContext :=
 				isInsideLiteralType(candidate.node) ||
+					isInsideTypeAliasType(candidate.node) ||
+					isInsideIndexedAccessTypeIndex(candidate.node) ||
 					isInsideEnumInitializer(candidate.node) ||
 					isInsideReadonlyClassPropertyInitializer(candidate.node)
 			if !relevantContext {
