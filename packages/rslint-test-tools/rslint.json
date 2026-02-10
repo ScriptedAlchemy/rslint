@@ -5,7 +5,7 @@
     "languageOptions": {
       "parserOptions": {
         "projectService": false,
-        "project": ["./tsconfig.json"]
+        "project": ["./tsconfig.rslint.json"]
       }
     },
     "rules": {},

@@ -17,6 +17,12 @@ func TestNoUnusedExpressionsRule(t *testing.T) {
 		{Code: "foo ? bar() : baz();", Options: []interface{}{map[string]interface{}{"allowTernary": true}}},
 	}, []rule_tester.InvalidTestCase{
 		{
+			Code: "if (0) 0;",
+			Errors: []rule_tester.InvalidTestCaseError{
+				{MessageId: "unusedExpression", Line: 1, Column: 8},
+			},
+		},
+		{
 			Code: "a?.b;",
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "unusedExpression", Line: 1, Column: 1},
