@@ -57,6 +57,13 @@ jobs:
         with:
           go-version: ${{ matrix.go-version }}
           cache-name: test-go
+      - name: Configure Go temp/cache paths (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p "$RUNNER_TEMP/go-build" "$RUNNER_TEMP/go-cache"
+          echo "GOTMPDIR=$RUNNER_TEMP/go-build" >> "$GITHUB_ENV"
+          echo "GOCACHE=$RUNNER_TEMP/go-cache" >> "$GITHUB_ENV"
+          rm -rf /tmp/go-build*
       - name: Unit Test (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -86,8 +93,30 @@ jobs:
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
 
-      - name: Unit Test
-        if: runner.os != 'Windows'
+      - name: Unit Test (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          batch_size=20
+          batch=()
+
+          while IFS= read -r pkg; do
+            [ -z "$pkg" ] && continue
+            batch+=("$pkg")
+            if [ "${#batch[@]}" -ge "$batch_size" ]; then
+              echo "Running batch of ${#batch[@]} packages..."
+              go test -p 2 -parallel 4 "${batch[@]}"
+              go clean -cache -testcache
+              batch=()
+            fi
+          done < <(go list ./internal/...)
+
+          if [ "${#batch[@]}" -gt 0 ]; then
+            echo "Running final batch of ${#batch[@]} packages..."
+            go test -p 2 -parallel 4 "${batch[@]}"
+          fi
+
+      - name: Unit Test (macOS)
+        if: runner.os == 'macOS'
         run: go test -parallel 4 ./internal/...
   lint:
     name: Lint&Check
@@ -116,11 +145,18 @@ jobs:
           go-version: 1.25.0
           cache-name: go-lint
 
+      - name: Configure Go temp/cache paths
+        run: |
+          mkdir -p "$RUNNER_TEMP/go-build" "$RUNNER_TEMP/go-cache"
+          echo "GOTMPDIR=$RUNNER_TEMP/go-build" >> "$GITHUB_ENV"
+          echo "GOCACHE=$RUNNER_TEMP/go-cache" >> "$GITHUB_ENV"
+          rm -rf /tmp/go-build*
+
       - name: golangci-lint
         uses: golangci/golangci-lint-action@4afd733a84b1f43292c63897423277bb7f4313a9 # v8
         with:
           version: v2.4.0
-          args: --timeout=20m ./cmd/... ./internal/...
+          args: -j 2 --timeout=20m ./cmd/... ./internal/...
 
       - name: go vet
         run: npm run lint:go
