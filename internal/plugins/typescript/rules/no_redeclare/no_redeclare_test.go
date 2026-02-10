@@ -15,5 +15,9 @@ func TestNoRedeclareRule(t *testing.T) {
 			Code:   `const a = 1; const a = 2;`,
 			Errors: []rule_tester.InvalidTestCaseError{{MessageId: "redeclared", Line: 1, Column: 20}},
 		},
+		{
+			Code:   `var a = 3; var a = 10;`,
+			Errors: []rule_tester.InvalidTestCaseError{{MessageId: "redeclared", Line: 1, Column: 16}},
+		},
 	})
 }
