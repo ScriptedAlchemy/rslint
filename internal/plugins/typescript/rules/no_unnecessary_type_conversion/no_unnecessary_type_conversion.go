@@ -107,7 +107,8 @@ var NoUnnecessaryTypeConversionRule = rule.CreateRule(rule.Rule{
 			if node == nil || width <= 0 {
 				return
 			}
-			ctx.ReportRange(core.NewTextRange(node.Pos(), node.Pos()+width), buildUnnecessaryTypeConversionMessage())
+			start := utils.TrimNodeTextRange(ctx.SourceFile, node).Pos()
+			ctx.ReportRange(core.NewTextRange(start, start+width), buildUnnecessaryTypeConversionMessage())
 		}
 
 		reportStringPlusRange := func(node *ast.Node, start, end int) {
