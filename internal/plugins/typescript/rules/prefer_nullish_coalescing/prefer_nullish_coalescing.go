@@ -221,6 +221,8 @@ func isConditionalTest(node *ast.Node) bool {
 	}
 
 	switch parent.Kind {
+	case ast.KindParenthesizedExpression:
+		return isConditionalTest(parent)
 	case ast.KindBinaryExpression:
 		// Check if this is part of a logical expression
 		binExpr := parent.AsBinaryExpression()
@@ -286,7 +288,7 @@ func isBooleanConstructorContext(node *ast.Node) bool {
 // isMixedLogicalExpression checks if a logical expression is mixed with && operators
 func isMixedLogicalExpression(node *ast.Node) bool {
 	seen := make(map[*ast.Node]bool)
-	queue := []*ast.Node{node.Parent}
+	queue := []*ast.Node{node}
 
 	for len(queue) > 0 {
 		current := queue[0]
@@ -311,6 +313,33 @@ func isMixedLogicalExpression(node *ast.Node) bool {
 	}
 
 	return false
+}
+
+func logicalOperatorRange(sourceFile *ast.SourceFile, binExpr *ast.BinaryExpression) core.TextRange {
+	if sourceFile == nil || binExpr == nil || binExpr.Left == nil || binExpr.Right == nil {
+		if binExpr != nil {
+			return binExpr.OperatorToken.Loc
+		}
+		return core.NewTextRange(0, 0)
+	}
+
+	operatorText := "||"
+	if binExpr.OperatorToken.Kind == ast.KindBarBarEqualsToken {
+		operatorText = "||="
+	}
+
+	start := binExpr.Left.End()
+	end := binExpr.Right.Pos()
+	text := sourceFile.Text()
+	if start < 0 || end > len(text) || start >= end {
+		return binExpr.OperatorToken.Loc
+	}
+	segment := text[start:end]
+	index := strings.Index(segment, operatorText)
+	if index < 0 {
+		return binExpr.OperatorToken.Loc
+	}
+	return core.NewTextRange(start+index, start+index+len(operatorText))
 }
 
 // getNodeText extracts the text corresponding to a node from the given source file.
@@ -426,7 +455,9 @@ var PreferNullishCoalescingRule = rule.CreateRule(rule.Rule{
 						}
 					}
 
-					ctx.ReportNodeWithSuggestions(node, buildPreferNullishOverOrMessage(),
+					ctx.ReportRangeWithSuggestions(
+						logicalOperatorRange(ctx.SourceFile, binExpr),
+						buildPreferNullishOverOrMessage(),
 						rule.RuleSuggestion{
 							Message:  buildSuggestNullishMessage(),
 							FixesArr: []rule.RuleFix{rule.RuleFixReplace(ctx.SourceFile, node, replacement)},
@@ -457,7 +488,9 @@ var PreferNullishCoalescingRule = rule.CreateRule(rule.Rule{
 					rightText := strings.TrimSpace(getNodeText(ctx.SourceFile, binExpr.Right))
 					replacement := fmt.Sprintf("%s ??= %s", leftText, rightText)
 
-					ctx.ReportNodeWithSuggestions(node, buildPreferNullishOverAssignmentMessage(),
+					ctx.ReportRangeWithSuggestions(
+						logicalOperatorRange(ctx.SourceFile, binExpr),
+						buildPreferNullishOverAssignmentMessage(),
 						rule.RuleSuggestion{
 							Message:  buildSuggestNullishMessage(),
 							FixesArr: []rule.RuleFix{rule.RuleFixReplace(ctx.SourceFile, node, replacement)},

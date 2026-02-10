@@ -26,9 +26,9 @@ const foo = bar || baz;`,
 				Errors: []rule_tester.InvalidTestCaseError{{
 					MessageId: "preferNullishOverOr",
 					Line:      4,
-					Column:    13,
+					Column:    17,
 					EndLine:   4,
-					EndColumn: 23,
+					EndColumn: 19,
 					Suggestions: []rule_tester.InvalidTestCaseSuggestion{{
 						MessageId: "suggestNullish",
 						Output: `
