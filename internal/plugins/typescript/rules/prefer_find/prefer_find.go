@@ -242,7 +242,7 @@ func isDefinitelyArrayOrTupleType(typeChecker *checker.Checker, t *checker.Type)
 	}
 	flags := checker.Type_flags(t)
 	if flags&(checker.TypeFlagsNull|checker.TypeFlagsUndefined) != 0 {
-		return true
+		return false
 	}
 	if flags&checker.TypeFlagsUnion != 0 {
 		hasArrayLikePart := false
