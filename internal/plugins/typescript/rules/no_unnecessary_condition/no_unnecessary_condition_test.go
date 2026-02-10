@@ -27,6 +27,10 @@ if (x) {
 	console.log('true');
 }`},
 			{Code: `
+function test<T>(a: T) {
+	return a ?? 'default';
+}`},
+			{Code: `
 declare const x: string;
 if (x) {
 	console.log(x);
@@ -48,6 +52,18 @@ if (x) {
 				Errors: []rule_tester.InvalidTestCaseError{{
 					MessageId: "alwaysTruthy",
 					Line:      3,
+					Column:    5,
+				}},
+			},
+			{
+				Code: `
+const x = true;
+const y = false;
+if (x === y) {}
+`,
+				Errors: []rule_tester.InvalidTestCaseError{{
+					MessageId: "comparisonBetweenLiteralTypes",
+					Line:      4,
 					Column:    5,
 				}},
 			},
