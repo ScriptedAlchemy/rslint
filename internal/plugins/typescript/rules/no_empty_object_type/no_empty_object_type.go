@@ -112,6 +112,9 @@ var NoEmptyObjectTypeRule = rule.CreateRule(rule.Rule{
 				if typeLiteral == nil || typeLiteral.Members == nil || len(typeLiteral.Members.Nodes) != 0 {
 					return
 				}
+				if node.Parent != nil && node.Parent.Kind == ast.KindIntersectionType {
+					return
+				}
 				if opts.AllowObjectTypes == "always" {
 					return
 				}
