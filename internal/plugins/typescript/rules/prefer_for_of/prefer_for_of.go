@@ -233,6 +233,9 @@ var PreferForOfRule = rule.CreateRule(rule.Rule{
 				if arrayExpr == nil {
 					return
 				}
+				if unwrapped := unwrapExpression(arrayExpr); unwrapped != nil && unwrapped.Kind == ast.KindThisKeyword {
+					return
+				}
 
 				if !isIncrementorForIndex(forStmt.Incrementor, indexName) {
 					return
