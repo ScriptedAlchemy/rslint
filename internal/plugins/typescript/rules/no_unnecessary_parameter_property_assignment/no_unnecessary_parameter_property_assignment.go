@@ -36,8 +36,16 @@ func isParameterPropertyNode(paramNode *ast.Node) bool {
 	if paramNode == nil || paramNode.Kind != ast.KindParameter {
 		return false
 	}
-	flags := ast.GetCombinedModifierFlags(paramNode)
-	return flags&(ast.ModifierFlagsPublic|ast.ModifierFlagsPrivate|ast.ModifierFlagsProtected|ast.ModifierFlagsReadonly) != 0
+	param := paramNode.AsParameterDeclaration()
+	if param == nil || param.Modifiers() == nil {
+		return false
+	}
+	for _, mod := range param.Modifiers().Nodes {
+		if mod.Kind == ast.KindPublicKeyword || mod.Kind == ast.KindPrivateKeyword || mod.Kind == ast.KindProtectedKeyword || mod.Kind == ast.KindReadonlyKeyword {
+			return true
+		}
+	}
+	return false
 }
 
 func getAssignmentTargetName(node *ast.Node) (string, bool) {
@@ -85,13 +93,23 @@ func isLogicalOrSimpleAssignOperator(kind ast.Kind) bool {
 		kind == ast.KindQuestionQuestionEqualsToken
 }
 
-func symbolsMatch(ctx rule.RuleContext, a *ast.Node, b *ast.Node) bool {
-	if ctx.TypeChecker == nil || a == nil || b == nil {
+func rhsReferencesParameterProperty(ctx rule.RuleContext, rhs *ast.Node, parameterDecl *ast.Node) bool {
+	if rhs == nil || parameterDecl == nil {
 		return false
 	}
-	leftSym := ctx.TypeChecker.GetSymbolAtLocation(a)
-	rightSym := ctx.TypeChecker.GetSymbolAtLocation(b)
-	return leftSym != nil && rightSym != nil && leftSym == rightSym
+	if ctx.TypeChecker == nil {
+		return true
+	}
+	symbol := ctx.TypeChecker.GetSymbolAtLocation(rhs)
+	if symbol == nil {
+		return false
+	}
+	for _, decl := range symbol.Declarations {
+		if decl == parameterDecl {
+			return true
+		}
+	}
+	return false
 }
 
 var NoUnnecessaryParameterPropertyAssignmentRule = rule.CreateRule(rule.Rule{
@@ -116,7 +134,7 @@ var NoUnnecessaryParameterPropertyAssignmentRule = rule.CreateRule(rule.Rule{
 						continue
 					}
 					name := param.Name().AsIdentifier().Text
-					parameterProps[name] = param.Name()
+					parameterProps[name] = p
 				}
 				if len(parameterProps) == 0 {
 					return
@@ -136,11 +154,11 @@ var NoUnnecessaryParameterPropertyAssignmentRule = rule.CreateRule(rule.Rule{
 						if bin != nil && isLogicalOrSimpleAssignOperator(bin.OperatorToken.Kind) {
 							targetName, ok := getAssignmentTargetName(bin.Left)
 							if ok {
-								paramNameNode, isParamProp := parameterProps[targetName]
+								paramDeclNode, isParamProp := parameterProps[targetName]
 								if isParamProp {
 									right := unwrapRightExpression(bin.Right)
 									if right != nil && right.Kind == ast.KindIdentifier && right.AsIdentifier().Text == targetName {
-										if symbolsMatch(ctx, paramNameNode, right) || ctx.TypeChecker == nil {
+										if rhsReferencesParameterProperty(ctx, right, paramDeclNode) {
 											ctx.ReportNode(current, buildUnnecessaryAssignMessage())
 										}
 									}
