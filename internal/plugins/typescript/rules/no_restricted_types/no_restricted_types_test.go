@@ -29,14 +29,14 @@ func TestNoRestrictedTypesRule(t *testing.T) {
 		},
 		{
 			Code:    "let value: NS.Banned;",
-			Options: []interface{}{map[string]interface{}{"types": map[string]interface{}{"NS.Banned": map[string]interface{}{"fixWith": "NS.Ok", "message": "Use NS.Ok instead."}}}},
+			Options: []interface{}{map[string]interface{}{"types": map[string]interface{}{"NS.Banned": "Use NS.Ok instead."}}},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "bannedTypeMessage", Line: 1, Column: 12},
 			},
 		},
 		{
 			Code:    "class Derived implements Banned {}",
-			Options: []interface{}{map[string]interface{}{"types": map[string]interface{}{"Banned": map[string]interface{}{"fixWith": "Ok", "message": "Use Ok instead."}}}},
+			Options: []interface{}{map[string]interface{}{"types": map[string]interface{}{"Banned": "Use Ok instead."}}},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "bannedTypeMessage", Line: 1, Column: 26},
 			},
