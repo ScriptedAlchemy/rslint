@@ -58,6 +58,7 @@ func TestAPIParserOptionsUnmarshalJSON(t *testing.T) {
 		name     string
 		input    string
 		expected ProjectPaths
+		check    func(t *testing.T, opts ParserOptions)
 	}{
 		{
 			name:     "single project string",
@@ -73,6 +74,22 @@ func TestAPIParserOptionsUnmarshalJSON(t *testing.T) {
 			name:     "no project field",
 			input:    `{"projectService": false}`,
 			expected: ProjectPaths{},
+		},
+		{
+			name:     "source type and ecma features",
+			input:    `{"projectService": false, "sourceType": "module", "ecmaVersion": 2020, "ecmaFeatures": {"globalReturn": true, "jsx": true}}`,
+			expected: ProjectPaths{},
+			check: func(t *testing.T, opts ParserOptions) {
+				if opts.SourceType != "module" {
+					t.Fatalf("expected sourceType module, got %q", opts.SourceType)
+				}
+				if opts.EcmaVersion != 2020 {
+					t.Fatalf("expected ecmaVersion 2020, got %d", opts.EcmaVersion)
+				}
+				if opts.EcmaFeatures == nil || !opts.EcmaFeatures.GlobalReturn || !opts.EcmaFeatures.JSX {
+					t.Fatalf("expected ecmaFeatures with globalReturn/jsx true, got %#v", opts.EcmaFeatures)
+				}
+			},
 		},
 	}
 
@@ -96,6 +113,9 @@ func TestAPIParserOptionsUnmarshalJSON(t *testing.T) {
 				if opts.Project[i] != expected {
 					t.Errorf("Expected %s at index %d, got %s", expected, i, opts.Project[i])
 				}
+			}
+			if tt.check != nil {
+				tt.check(t, opts)
 			}
 		})
 	}
