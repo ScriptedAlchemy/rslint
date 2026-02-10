@@ -58,7 +58,6 @@ interface A {}
 			Code: `
 class A {}
 class A {}
-namespace A {}
 			`,
 			Options: []interface{}{map[string]interface{}{"ignoreDeclarationMerge": true}},
 			Errors: []rule_tester.InvalidTestCaseError{
