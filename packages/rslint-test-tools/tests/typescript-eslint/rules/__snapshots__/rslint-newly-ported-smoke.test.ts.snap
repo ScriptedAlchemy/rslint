@@ -671,7 +671,7 @@ exports[`typedef > invalid 1`] = `
   "diagnostics": [
     {
       "message": "Expected foo to have a type annotation.",
-      "messageId": "expectedTypedef",
+      "messageId": "expectedTypedefNamed",
       "range": {
         "end": {
           "column": 18,

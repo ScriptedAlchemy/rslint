@@ -99,7 +99,8 @@ ruleTester.run('typedef', {
   invalid: [
     {
       code: 'const foo = "bar";',
-      errors: [{ messageId: 'expectedTypedef' }],
+      options: [{ variableDeclaration: true }],
+      errors: [{ messageId: 'expectedTypedefNamed' }],
     },
   ],
 });
