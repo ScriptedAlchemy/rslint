@@ -42,11 +42,18 @@ export interface LintOptions {
 
 export interface LanguageOptions {
   parserOptions?: ParserOptions;
+  globals?: Record<string, unknown>;
 }
 
 export interface ParserOptions {
   projectService?: boolean;
   project?: string[] | string;
+  sourceType?: 'module' | 'script';
+  ecmaVersion?: number;
+  ecmaFeatures?: {
+    globalReturn?: boolean;
+    jsx?: boolean;
+  };
 }
 
 export interface ApplyFixesRequest {

@@ -1,6 +1,9 @@
 package no_redeclare
 
 import (
+	"regexp"
+	"strings"
+
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/web-infra-dev/rslint/internal/rule"
 )
@@ -17,12 +20,12 @@ const (
 	declarationEnum              declarationKind = "enum"
 	declarationModule            declarationKind = "module"
 	declarationBuiltin           declarationKind = "builtin"
+	declarationComment           declarationKind = "comment"
 )
 
 var builtinGlobals = map[string]bool{
 	"Object":     true,
 	"NodeListOf": true,
-	"top":        true,
 }
 
 type declarationInfo struct {
@@ -231,7 +234,13 @@ func declarationInfos(node *ast.Node) []declarationInfo {
 		if decl == nil || decl.Name() == nil {
 			return nil
 		}
-		if name, ok := declarationNameNodeText(decl.Name()); ok {
+		name := strings.TrimSpace(decl.Name().Text())
+		if name == "" {
+			if parsedName, ok := declarationNameNodeText(decl.Name()); ok {
+				name = parsedName
+			}
+		}
+		if name != "" {
 			return []declarationInfo{{name: name, kind: declarationModule, reportNode: decl.Name()}}
 		}
 	}
@@ -295,21 +304,86 @@ func shouldIgnoreRedeclare(decls []declarationInfo, opts noRedeclareOptions) boo
 	return false
 }
 
-func isTopLevelScriptScope(scopeNode *ast.Node, sourceFile *ast.SourceFile) bool {
+func shouldSuppressMergeNonPrimary(decls []declarationInfo, current declarationInfo, opts noRedeclareOptions) bool {
+	if !opts.IgnoreDeclarationMerge {
+		return false
+	}
+	if allKindsIn(decls, map[declarationKind]bool{
+		declarationClass:     true,
+		declarationInterface: true,
+		declarationModule:    true,
+	}) && countKind(decls, declarationClass) > 1 && current.kind != declarationClass {
+		return true
+	}
+	if allKindsIn(decls, map[declarationKind]bool{
+		declarationFunction:          true,
+		declarationFunctionSignature: true,
+		declarationModule:            true,
+	}) && countKind(decls, declarationFunction) > 1 && current.kind != declarationFunction {
+		return true
+	}
+	if allKindsIn(decls, map[declarationKind]bool{
+		declarationEnum:   true,
+		declarationModule: true,
+	}) && countKind(decls, declarationEnum) > 1 && current.kind != declarationEnum {
+		return true
+	}
+	return false
+}
+
+func isTopLevelScriptScope(scopeNode *ast.Node, sourceFile *ast.SourceFile, parserOptions *rule.RuleParserOptions) bool {
 	if scopeNode == nil || scopeNode.Kind != ast.KindSourceFile || sourceFile == nil {
 		return false
+	}
+	if parserOptions != nil {
+		if strings.EqualFold(parserOptions.SourceType, "module") {
+			return false
+		}
+		if parserOptions.EcmaFeatures != nil && parserOptions.EcmaFeatures.GlobalReturn {
+			return false
+		}
 	}
 	return !ast.IsExternalModule(sourceFile)
 }
 
-func isBuiltinRedeclare(name string, scopeNode *ast.Node, sourceFile *ast.SourceFile, opts noRedeclareOptions) bool {
+func isBuiltinRedeclare(name string, scopeNode *ast.Node, sourceFile *ast.SourceFile, parserOptions *rule.RuleParserOptions, opts noRedeclareOptions) bool {
 	if !opts.BuiltinGlobals {
 		return false
 	}
 	if !builtinGlobals[name] {
 		return false
 	}
-	return isTopLevelScriptScope(scopeNode, sourceFile)
+	return isTopLevelScriptScope(scopeNode, sourceFile, parserOptions)
+}
+
+var globalDirectiveRegex = regexp.MustCompile(`(?is)/\*\s*globals?\s+([^*]+)\*/`)
+
+func parseGlobalDirectiveNames(sourceText string) map[string]bool {
+	result := map[string]bool{}
+	if sourceText == "" {
+		return result
+	}
+	matches := globalDirectiveRegex.FindAllStringSubmatch(sourceText, -1)
+	for _, match := range matches {
+		if len(match) < 2 {
+			continue
+		}
+		parts := strings.Split(match[1], ",")
+		for _, part := range parts {
+			entry := strings.TrimSpace(part)
+			if entry == "" {
+				continue
+			}
+			name := entry
+			if idx := strings.Index(entry, ":"); idx >= 0 {
+				name = strings.TrimSpace(entry[:idx])
+			}
+			if name != "" {
+				result[name] = true
+			}
+		}
+	}
+	return result
 }
 
 var NoRedeclareRule = rule.CreateRule(rule.Rule{
@@ -317,6 +391,7 @@ var NoRedeclareRule = rule.CreateRule(rule.Rule{
 	Run: func(ctx rule.RuleContext, options any) rule.RuleListeners {
 		opts := parseOptions(options)
 		scopesByNode := map[*ast.Node]*scope{}
+		explicitGlobalNames := parseGlobalDirectiveNames(ctx.SourceFile.Text())
 		listeners := rule.RuleListeners{}
 
 		declarationKinds := []ast.Kind{
@@ -326,6 +401,7 @@ var NoRedeclareRule = rule.CreateRule(rule.Rule{
 			ast.KindInterfaceDeclaration,
 			ast.KindTypeAliasDeclaration,
 			ast.KindEnumDeclaration,
+			ast.KindModuleDeclaration,
 		}
 		for _, kind := range declarationKinds {
 			k := kind
@@ -346,7 +422,13 @@ var NoRedeclareRule = rule.CreateRule(rule.Rule{
 
 				for _, info := range infos {
 					existing := scopeObj.decls[info.name]
-					if len(existing) == 0 && isBuiltinRedeclare(info.name, scopeNode, ctx.SourceFile, opts) {
+					if len(existing) == 0 && explicitGlobalNames[info.name] {
+						existing = append(existing, declarationInfo{name: info.name, kind: declarationComment})
+					}
+					if len(existing) == 0 && ctx.Globals != nil && ctx.Globals[info.name] {
+						existing = append(existing, declarationInfo{name: info.name, kind: declarationBuiltin})
+					}
+					if len(existing) == 0 && isBuiltinRedeclare(info.name, scopeNode, ctx.SourceFile, ctx.ParserOptions, opts) {
 						existing = append(existing, declarationInfo{name: info.name, kind: declarationBuiltin})
 					}
 
@@ -355,10 +437,16 @@ var NoRedeclareRule = rule.CreateRule(rule.Rule{
 						scopeObj.decls[info.name] = candidate
 						continue
 					}
+					if shouldSuppressMergeNonPrimary(candidate, info, opts) {
+						scopeObj.decls[info.name] = candidate
+						continue
+					}
 
 					messageID := "redeclared"
 					if len(existing) > 0 && existing[0].kind == declarationBuiltin {
 						messageID = "redeclaredAsBuiltin"
+					} else if len(existing) > 0 && existing[0].kind == declarationComment {
+						messageID = "redeclaredBySyntax"
 					}
 					if info.reportNode != nil {
 						ctx.ReportNode(info.reportNode, buildRedeclaredMessage(info.name, messageID))

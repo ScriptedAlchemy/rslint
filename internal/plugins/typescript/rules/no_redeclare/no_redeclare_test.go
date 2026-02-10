@@ -35,6 +35,10 @@ interface A {}
 			Errors: []rule_tester.InvalidTestCaseError{{MessageId: "redeclared", Line: 1, Column: 16}},
 		},
 		{
+			Code:   `/*global b:false*/ var b = 1;`,
+			Errors: []rule_tester.InvalidTestCaseError{{MessageId: "redeclaredBySyntax", Line: 1, Column: 24}},
+		},
+		{
 			Code: `
 function a() {}
 function a() {}

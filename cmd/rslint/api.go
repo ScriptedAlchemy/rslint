@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strings"
 	"sync"
 
 	"github.com/microsoft/typescript-go/shim/ast"
@@ -35,6 +36,50 @@ type programCache struct {
 	compilerOptions string // JSON serialized for comparison
 	program         *compiler.Program
 	sourceFile      *ast.SourceFile
+}
+
+func buildRuleParserOptions(languageOptions *api.LanguageOptions) *rule.RuleParserOptions {
+	if languageOptions == nil || languageOptions.ParserOptions == nil {
+		return nil
+	}
+	parserOptions := languageOptions.ParserOptions
+	result := &rule.RuleParserOptions{
+		SourceType:  parserOptions.SourceType,
+		EcmaVersion: parserOptions.EcmaVersion,
+	}
+	if parserOptions.EcmaFeatures != nil {
+		result.EcmaFeatures = &rule.RuleEcmaFeatures{
+			GlobalReturn: parserOptions.EcmaFeatures.GlobalReturn,
+			JSX:          parserOptions.EcmaFeatures.JSX,
+		}
+	}
+	return result
+}
+
+func buildRuleGlobals(languageOptions *api.LanguageOptions) map[string]bool {
+	if languageOptions == nil || len(languageOptions.Globals) == 0 {
+		return nil
+	}
+	globals := map[string]bool{}
+	for name, raw := range languageOptions.Globals {
+		switch v := raw.(type) {
+		case bool:
+			if v {
+				globals[name] = true
+			}
+		case string:
+			lower := strings.ToLower(v)
+			if lower != "off" && lower != "false" {
+				globals[name] = true
+			}
+		default:
+			globals[name] = true
+		}
+	}
+	if len(globals) == 0 {
+		return nil
+	}
+	return globals
 }
 
 // Global program cache for AST info requests
@@ -85,10 +130,21 @@ func (h *IPCHandler) HandleLint(req api.LintRequest) (*api.LintResponse, error) 
 	if req.LanguageOptions != nil && len(rslintConfig) > 0 {
 		// Convert API LanguageOptions to config LanguageOptions
 		configLanguageOptions := &rslintconfig.LanguageOptions{}
+		if len(req.LanguageOptions.Globals) > 0 {
+			configLanguageOptions.Globals = req.LanguageOptions.Globals
+		}
 		if req.LanguageOptions.ParserOptions != nil {
 			configLanguageOptions.ParserOptions = &rslintconfig.ParserOptions{
 				ProjectService: req.LanguageOptions.ParserOptions.ProjectService,
 				Project:        rslintconfig.ProjectPaths(req.LanguageOptions.ParserOptions.Project),
+				SourceType:     req.LanguageOptions.ParserOptions.SourceType,
+				EcmaVersion:    req.LanguageOptions.ParserOptions.EcmaVersion,
+			}
+			if req.LanguageOptions.ParserOptions.EcmaFeatures != nil {
+				configLanguageOptions.ParserOptions.EcmaFeatures = &rslintconfig.EcmaFeatures{
+					GlobalReturn: req.LanguageOptions.ParserOptions.EcmaFeatures.GlobalReturn,
+					JSX:          req.LanguageOptions.ParserOptions.EcmaFeatures.JSX,
+				}
 			}
 		}
 
@@ -206,6 +262,8 @@ func (h *IPCHandler) HandleLint(req api.LintRequest) (*api.LintResponse, error) 
 	}
 
 	// Run linter
+	ruleParserOptions := buildRuleParserOptions(req.LanguageOptions)
+	ruleGlobals := buildRuleGlobals(req.LanguageOptions)
 	lintedFilesCount, err := linter.RunLinter(
 		programs,
 		false, // Don't use single-threaded mode for IPC
@@ -222,6 +280,8 @@ func (h *IPCHandler) HandleLint(req api.LintRequest) (*api.LintResponse, error) 
 				return linter.ConfiguredRule{
 					Name: r.rule.Name,
 					Run: func(ctx rule.RuleContext) rule.RuleListeners {
+						ctx.ParserOptions = ruleParserOptions
+						ctx.Globals = ruleGlobals
 						return r.rule.Run(ctx, r.option)
 					},
 				}

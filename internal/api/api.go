@@ -99,7 +99,13 @@ type LintRequest struct {
 
 // LanguageOptions contains language-specific configuration options
 type LanguageOptions struct {
-	ParserOptions *ParserOptions `json:"parserOptions,omitempty"`
+	ParserOptions *ParserOptions         `json:"parserOptions,omitempty"`
+	Globals       map[string]interface{} `json:"globals,omitempty"`
+}
+
+type EcmaFeatures struct {
+	GlobalReturn bool `json:"globalReturn,omitempty"`
+	JSX          bool `json:"jsx,omitempty"`
 }
 
 // ProjectPaths represents project paths that can be either a single string or an array of strings
@@ -125,8 +131,11 @@ func (p *ProjectPaths) UnmarshalJSON(data []byte) error {
 
 // ParserOptions contains parser-specific configuration
 type ParserOptions struct {
-	ProjectService bool         `json:"projectService"`
-	Project        ProjectPaths `json:"project,omitempty"`
+	ProjectService bool          `json:"projectService"`
+	Project        ProjectPaths  `json:"project,omitempty"`
+	SourceType     string        `json:"sourceType,omitempty"`
+	EcmaVersion    int           `json:"ecmaVersion,omitempty"`
+	EcmaFeatures   *EcmaFeatures `json:"ecmaFeatures,omitempty"`
 }
 type ByteArray []byte
 
