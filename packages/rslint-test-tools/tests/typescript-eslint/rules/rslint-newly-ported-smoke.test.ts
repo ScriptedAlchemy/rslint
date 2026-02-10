@@ -89,7 +89,7 @@ ruleTester.run('sort-type-constituents', {
   invalid: [
     {
       code: 'type A = string | number;',
-      errors: [{ messageId: 'notSorted' }],
+      errors: [{ messageId: 'notSortedNamed' }],
     },
   ],
 });

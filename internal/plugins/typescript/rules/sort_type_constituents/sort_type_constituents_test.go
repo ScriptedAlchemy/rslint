@@ -14,11 +14,13 @@ func TestSortTypeConstituentsRule(t *testing.T) {
 	}, []rule_tester.InvalidTestCase{
 		{
 			Code:   `type A = string | number;`,
-			Errors: []rule_tester.InvalidTestCaseError{{MessageId: "notSorted", Line: 1, Column: 10}},
+			Output: []string{`type A = number | string;`},
+			Errors: []rule_tester.InvalidTestCaseError{{MessageId: "notSortedNamed", Line: 1, Column: 10}},
 		},
 		{
 			Code:   `type A = C & A;`,
-			Errors: []rule_tester.InvalidTestCaseError{{MessageId: "notSorted", Line: 1, Column: 10}},
+			Output: []string{`type A = A & C;`},
+			Errors: []rule_tester.InvalidTestCaseError{{MessageId: "notSortedNamed", Line: 1, Column: 10}},
 		},
 	})
 }

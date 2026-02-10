@@ -165,7 +165,7 @@ exports[`no-redeclare > invalid 1`] = `
       "messageId": "redeclared",
       "range": {
         "end": {
-          "column": 25,
+          "column": 21,
           "line": 1,
         },
         "start": {
@@ -265,15 +265,15 @@ exports[`no-type-alias > invalid 1`] = `
   "code": "type Foo = string;",
   "diagnostics": [
     {
-      "message": "Type alias are not allowed.",
+      "message": "Type aliases are not allowed.",
       "messageId": "noTypeAlias",
       "range": {
         "end": {
-          "column": 19,
+          "column": 18,
           "line": 1,
         },
         "start": {
-          "column": 1,
+          "column": 12,
           "line": 1,
         },
       },
@@ -618,8 +618,8 @@ exports[`sort-type-constituents > invalid 1`] = `
   "code": "type A = string | number;",
   "diagnostics": [
     {
-      "message": "Type constituents are not sorted.",
-      "messageId": "notSorted",
+      "message": "Union type A constituents must be sorted.",
+      "messageId": "notSortedNamed",
       "range": {
         "end": {
           "column": 25,
