@@ -95,7 +95,15 @@ func isElementAccessWriteContext(node *ast.Node) bool {
 	for current.Parent != nil {
 		parent := current.Parent
 		switch parent.Kind {
-		case ast.KindParenthesizedExpression, ast.KindAsExpression, ast.KindTypeAssertionExpression, ast.KindNonNullExpression, ast.KindSatisfiesExpression:
+		case ast.KindParenthesizedExpression,
+			ast.KindAsExpression,
+			ast.KindTypeAssertionExpression,
+			ast.KindNonNullExpression,
+			ast.KindSatisfiesExpression,
+			ast.KindArrayLiteralExpression,
+			ast.KindObjectLiteralExpression,
+			ast.KindPropertyAssignment,
+			ast.KindSpreadElement:
 			current = parent
 			continue
 		case ast.KindPrefixUnaryExpression:
