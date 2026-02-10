@@ -38,7 +38,7 @@ func isFunctionTypePropertySignature(node *ast.Node) bool {
 	if node == nil || node.Kind != ast.KindPropertySignature {
 		return false
 	}
-	property := node.AsPropertySignature()
+	property := node.AsPropertySignatureDeclaration()
 	if property == nil || property.Type == nil {
 		return false
 	}
