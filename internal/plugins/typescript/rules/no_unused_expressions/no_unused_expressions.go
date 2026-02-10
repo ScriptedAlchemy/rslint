@@ -87,6 +87,9 @@ func isDirectivePrologueStatement(stmt *ast.Node) bool {
 	if parent == nil {
 		return false
 	}
+	if parent.Kind != ast.KindBlock && parent.Kind != ast.KindSourceFile && parent.Kind != ast.KindModuleBlock {
+		return false
+	}
 	stmts := parent.Statements()
 	if stmts == nil {
 		return false
