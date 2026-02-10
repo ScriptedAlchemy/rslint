@@ -1,9 +1,6 @@
 package prefer_for_of
 
-import (
-	"github.com/microsoft/typescript-go/shim/ast"
-	"github.com/web-infra-dev/rslint/internal/rule"
-)
+import "github.com/web-infra-dev/rslint/internal/rule"
 
 // TODO: replace scaffold with full parity implementation.
 var PreferForOfRule = rule.CreateRule(rule.Rule{

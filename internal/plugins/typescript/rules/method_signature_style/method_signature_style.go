@@ -1,9 +1,6 @@
 package method_signature_style
 
-import (
-	"github.com/microsoft/typescript-go/shim/ast"
-	"github.com/web-infra-dev/rslint/internal/rule"
-)
+import "github.com/web-infra-dev/rslint/internal/rule"
 
 // TODO: replace scaffold with full parity implementation.
 var MethodSignatureStyleRule = rule.CreateRule(rule.Rule{

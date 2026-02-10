@@ -1,9 +1,6 @@
 package no_unnecessary_parameter_property_assignment
 
-import (
-	"github.com/microsoft/typescript-go/shim/ast"
-	"github.com/web-infra-dev/rslint/internal/rule"
-)
+import "github.com/web-infra-dev/rslint/internal/rule"
 
 // TODO: replace scaffold with full parity implementation.
 var NoUnnecessaryParameterPropertyAssignmentRule = rule.CreateRule(rule.Rule{

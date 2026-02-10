@@ -1,9 +1,6 @@
 package prefer_regexp_exec
 
-import (
-	"github.com/microsoft/typescript-go/shim/ast"
-	"github.com/web-infra-dev/rslint/internal/rule"
-)
+import "github.com/web-infra-dev/rslint/internal/rule"
 
 // TODO: replace scaffold with full parity implementation.
 var PreferRegexpExecRule = rule.CreateRule(rule.Rule{

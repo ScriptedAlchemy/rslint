@@ -1,9 +1,6 @@
 package no_unused_private_class_members
 
-import (
-	"github.com/microsoft/typescript-go/shim/ast"
-	"github.com/web-infra-dev/rslint/internal/rule"
-)
+import "github.com/web-infra-dev/rslint/internal/rule"
 
 // TODO: replace scaffold with full parity implementation.
 var NoUnusedPrivateClassMembersRule = rule.CreateRule(rule.Rule{

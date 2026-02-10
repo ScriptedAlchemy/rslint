@@ -1,9 +1,6 @@
 package no_empty_object_type
 
-import (
-	"github.com/microsoft/typescript-go/shim/ast"
-	"github.com/web-infra-dev/rslint/internal/rule"
-)
+import "github.com/web-infra-dev/rslint/internal/rule"
 
 // TODO: replace scaffold with full parity implementation.
 var NoEmptyObjectTypeRule = rule.CreateRule(rule.Rule{

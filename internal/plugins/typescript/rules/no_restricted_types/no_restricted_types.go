@@ -1,9 +1,6 @@
 package no_restricted_types
 
-import (
-	"github.com/microsoft/typescript-go/shim/ast"
-	"github.com/web-infra-dev/rslint/internal/rule"
-)
+import "github.com/web-infra-dev/rslint/internal/rule"
 
 // TODO: replace scaffold with full parity implementation.
 var NoRestrictedTypesRule = rule.CreateRule(rule.Rule{

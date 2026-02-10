@@ -1,9 +1,6 @@
 package prefer_optional_chain
 
-import (
-	"github.com/microsoft/typescript-go/shim/ast"
-	"github.com/web-infra-dev/rslint/internal/rule"
-)
+import "github.com/web-infra-dev/rslint/internal/rule"
 
 // TODO: replace scaffold with full parity implementation.
 var PreferOptionalChainRule = rule.CreateRule(rule.Rule{
