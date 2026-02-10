@@ -1,8 +1,12 @@
 package no_unnecessary_type_parameters
 
 import (
+	"regexp"
+	"strings"
+
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/microsoft/typescript-go/shim/checker"
+	"github.com/microsoft/typescript-go/shim/core"
 	"github.com/web-infra-dev/rslint/internal/rule"
 	"github.com/web-infra-dev/rslint/internal/utils"
 )
@@ -16,6 +20,21 @@ func buildSoleMessage(name string, count int, descriptor string) rule.RuleMessag
 		Id:          "sole",
 		Description: "Type parameter '" + name + "' is " + uses + " in the " + descriptor + " signature.",
 	}
+}
+
+var genericArrowSingleTypeParamPattern = regexp.MustCompile(`^\s*<\s*([A-Za-z_$][A-Za-z0-9_$]*)\s*,?\s*>\s*\(`)
+
+func nodeText(sourceFile *ast.SourceFile, node *ast.Node) string {
+	if sourceFile == nil || node == nil {
+		return ""
+	}
+	text := sourceFile.Text()
+	start := node.Pos()
+	end := node.End()
+	if start < 0 || end > len(text) || start >= end {
+		return ""
+	}
+	return text[start:end]
 }
 
 func collectTypeReferences(node *ast.Node, refs map[string]int) {
@@ -175,6 +194,46 @@ func getFunctionLikeTypeParameters(ctx rule.RuleContext, node *ast.Node) []*ast.
 	return decl.TypeParameters()
 }
 
+func countTypeParameterReferencesInParameters(params []*ast.Node, typeParamName string) int {
+	refs := map[string]int{}
+	for _, param := range params {
+		if param == nil || param.Kind != ast.KindParameter {
+			continue
+		}
+		decl := param.AsParameterDeclaration()
+		if decl == nil || decl.Type == nil {
+			continue
+		}
+		collectTypeReferences(decl.Type, refs)
+	}
+	return refs[typeParamName]
+}
+
+func reportGenericArrowTypeParameterFallback(ctx rule.RuleContext, arrowNode *ast.Node, params []*ast.Node) bool {
+	text := nodeText(ctx.SourceFile, arrowNode)
+	if text == "" {
+		return false
+	}
+
+	matches := genericArrowSingleTypeParamPattern.FindStringSubmatch(text)
+	if len(matches) != 2 {
+		return false
+	}
+	typeParamName := matches[1]
+	count := countTypeParameterReferencesInParameters(params, typeParamName)
+	if count > 1 {
+		return false
+	}
+
+	start := arrowNode.Pos() + strings.Index(text, typeParamName)
+	end := start + len(typeParamName)
+	if start < arrowNode.Pos() || end > arrowNode.End() {
+		return false
+	}
+	ctx.ReportRange(core.NewTextRange(start, end), buildSoleMessage(typeParamName, count, "function"))
+	return true
+}
+
 var NoUnnecessaryTypeParametersRule = rule.CreateRule(rule.Rule{
 	Name: "no-unnecessary-type-parameters",
 	Run: func(ctx rule.RuleContext, options any) rule.RuleListeners {
@@ -236,6 +295,21 @@ var NoUnnecessaryTypeParametersRule = rule.CreateRule(rule.Rule{
 					return
 				}
 				checkClassLike(ctx, node.TypeParameters(), classExpr.Members.Nodes)
+			},
+			ast.KindVariableDeclaration: func(node *ast.Node) {
+				decl := node.AsVariableDeclaration()
+				if decl == nil || decl.Initializer == nil || decl.Initializer.Kind != ast.KindArrowFunction {
+					return
+				}
+				arrowNode := decl.Initializer.AsNode()
+				if len(getFunctionLikeTypeParameters(ctx, arrowNode)) > 0 {
+					return
+				}
+				arrow := decl.Initializer.AsArrowFunction()
+				if arrow == nil || arrow.Parameters == nil {
+					return
+				}
+				reportGenericArrowTypeParameterFallback(ctx, arrowNode, arrow.Parameters.Nodes)
 			},
 		}
 	},
