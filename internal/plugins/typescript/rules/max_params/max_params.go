@@ -52,15 +52,15 @@ func parseOptions(options any) MaxParamsOptions {
 
 	hasMax := false
 	if value, ok := optsMap["max"]; ok {
-		if max, ok := parseNumericOption(value); ok {
-			opts.Max = max
+		if maxValue, ok := parseNumericOption(value); ok {
+			opts.Max = maxValue
 			hasMax = true
 		}
 	}
 	if !hasMax {
 		if value, ok := optsMap["maximum"]; ok {
-			if max, ok := parseNumericOption(value); ok {
-				opts.Max = max
+			if maxValue, ok := parseNumericOption(value); ok {
+				opts.Max = maxValue
 			}
 		}
 	}
@@ -95,10 +95,10 @@ func isVoidThisParameter(param *ast.Node) bool {
 	return decl.Type != nil && decl.Type.Kind == ast.KindVoidKeyword
 }
 
-func buildExceedMessage(count int, max int) rule.RuleMessage {
+func buildExceedMessage(count int, maxCount int) rule.RuleMessage {
 	return rule.RuleMessage{
 		Id:          "exceed",
-		Description: fmt.Sprintf("Function has too many parameters (%d). Maximum allowed is %d.", count, max),
+		Description: fmt.Sprintf("Function has too many parameters (%d). Maximum allowed is %d.", count, maxCount),
 	}
 }
 

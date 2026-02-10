@@ -75,9 +75,10 @@ func parseOptions(options any) noRedeclareOptions {
 
 func buildRedeclaredMessage(name, messageID string) rule.RuleMessage {
 	description := "'" + name + "' is already defined."
-	if messageID == "redeclaredAsBuiltin" {
+	switch messageID {
+	case "redeclaredAsBuiltin":
 		description = "'" + name + "' is already defined as a built-in global variable."
-	} else if messageID == "redeclaredBySyntax" {
+	case "redeclaredBySyntax":
 		description = "'" + name + "' is already defined by a variable declaration."
 	}
 	return rule.RuleMessage{

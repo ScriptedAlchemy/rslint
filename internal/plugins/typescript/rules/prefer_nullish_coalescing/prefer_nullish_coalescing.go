@@ -406,11 +406,6 @@ func collectNullishComparisonKinds(sourceFile *ast.SourceFile, node *ast.Node, t
 	return kinds, false
 }
 
-func hasCompleteNullishComparisons(sourceFile *ast.SourceFile, condition *ast.Node, target *ast.Node) bool {
-	kinds, ok := collectNullishComparisonKinds(sourceFile, condition, target)
-	return ok && kinds.hasNull && kinds.hasUndefined
-}
-
 func typeMayContainFlag(t *checker.Type, flag checker.TypeFlags) bool {
 	if t == nil {
 		return false

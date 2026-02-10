@@ -14,7 +14,7 @@ func TestNoMagicNumbersRule(t *testing.T) {
 		{Code: `enum Foo { A = 1 }`, Options: map[string]interface{}{"ignoreEnums": true}},
 	}, []rule_tester.InvalidTestCase{
 		{
-			Code:   `const value = 42;`,
+			Code: `const value = 42;`,
 			Options: map[string]interface{}{
 				"enforceConst": true,
 			},

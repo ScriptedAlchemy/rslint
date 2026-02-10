@@ -122,7 +122,7 @@ func isDirectivePrologue(node *ast.Node) bool {
 		return false
 	}
 
-	for i := 0; i < index; i++ {
+	for i := range index {
 		if !ast.IsPrologueDirective(statements[i]) {
 			return false
 		}

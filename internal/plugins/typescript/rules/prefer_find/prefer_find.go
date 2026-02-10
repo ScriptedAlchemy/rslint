@@ -18,33 +18,6 @@ func buildPreferFindMessage() rule.RuleMessage {
 	}
 }
 
-func isZeroNode(node *ast.Node) bool {
-	if node == nil {
-		return false
-	}
-	switch node.Kind {
-	case ast.KindNumericLiteral:
-		n := node.AsNumericLiteral()
-		return n != nil && n.Text == "0"
-	case ast.KindStringLiteral:
-		s := node.AsStringLiteral()
-		return s != nil && s.Text == "0"
-	case ast.KindBigIntLiteral:
-		return node.AsBigIntLiteral() != nil
-	case ast.KindPrefixUnaryExpression:
-		expr := node.AsPrefixUnaryExpression()
-		if expr == nil {
-			return false
-		}
-		if expr.Operator == ast.KindPlusToken || expr.Operator == ast.KindMinusToken {
-			return isZeroNode(expr.Operand)
-		}
-		return false
-	default:
-		return false
-	}
-}
-
 func unwrapExpression(node *ast.Node) *ast.Node {
 	current := node
 	for current != nil {

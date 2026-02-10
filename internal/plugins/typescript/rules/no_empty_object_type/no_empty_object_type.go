@@ -5,7 +5,6 @@ import (
 
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/web-infra-dev/rslint/internal/rule"
-	"github.com/web-infra-dev/rslint/internal/utils"
 )
 
 type NoEmptyObjectTypeOptions struct {
@@ -70,27 +69,6 @@ func buildNoEmptyObjectMessage() rule.RuleMessage {
 	}
 }
 
-func buildReplaceEmptyInterfaceMessage() rule.RuleMessage {
-	return rule.RuleMessage{
-		Id:          "replaceEmptyInterface",
-		Description: "Replace empty interface.",
-	}
-}
-
-func buildReplaceEmptyInterfaceWithSuperMessage() rule.RuleMessage {
-	return rule.RuleMessage{
-		Id:          "replaceEmptyInterfaceWithSuper",
-		Description: "Replace empty interface with a type alias.",
-	}
-}
-
-func buildReplaceEmptyObjectTypeMessage() rule.RuleMessage {
-	return rule.RuleMessage{
-		Id:          "replaceEmptyObjectType",
-		Description: "Replace `{}` type.",
-	}
-}
-
 func getAllowNameRegex(pattern string) *regexp.Regexp {
 	if pattern == "" {
 		return nil
@@ -109,18 +87,6 @@ func interfaceName(interfaceDecl *ast.InterfaceDeclaration) string {
 	return interfaceDecl.Name().AsIdentifier().Text
 }
 
-func hasMergedClassDeclaration(typeChecker *ast.Symbol, name string) bool {
-	if typeChecker == nil || len(typeChecker.Declarations) == 0 {
-		return false
-	}
-	for _, decl := range typeChecker.Declarations {
-		if decl.Kind == ast.KindClassDeclaration {
-			return true
-		}
-	}
-	return false
-}
-
 func getExtendsTypes(node *ast.InterfaceDeclaration) []*ast.Node {
 	if node == nil || node.HeritageClauses == nil {
 		return nil
@@ -132,21 +98,6 @@ func getExtendsTypes(node *ast.InterfaceDeclaration) []*ast.Node {
 		}
 	}
 	return nil
-}
-
-func getTypeParametersText(sourceFile *ast.SourceFile, typeParams *ast.NodeList) string {
-	if typeParams == nil || len(typeParams.Nodes) == 0 {
-		return ""
-	}
-	first := typeParams.Nodes[0]
-	last := typeParams.Nodes[len(typeParams.Nodes)-1]
-	r := utils.TrimNodeTextRange(sourceFile, first).WithEnd(utils.TrimNodeTextRange(sourceFile, last).End())
-	return sourceFile.Text()[r.Pos()-1 : r.End()+1]
-}
-
-func getNodeText(sourceFile *ast.SourceFile, node *ast.Node) string {
-	r := utils.TrimNodeTextRange(sourceFile, node)
-	return sourceFile.Text()[r.Pos():r.End()]
 }
 
 var NoEmptyObjectTypeRule = rule.CreateRule(rule.Rule{

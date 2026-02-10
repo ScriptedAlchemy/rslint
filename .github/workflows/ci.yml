@@ -154,8 +154,13 @@ jobs:
       - name: Install xvfb and dependencies (Linux only)
         if: runner.os == 'Linux'
         run: |
+          alsa_pkg="libasound2"
+          candidate="$(apt-cache policy libasound2 | awk '/Candidate:/ {print $2}')"
+          if [ -z "$candidate" ] || [ "$candidate" = "(none)" ]; then
+            alsa_pkg="libasound2t64"
+          fi
           for attempt in 1 2 3; do
-            sudo apt-get update && sudo apt-get install -y --no-install-recommends libasound2 libgbm1 libgtk-3-0 libnss3 xvfb && break
+            sudo apt-get update && sudo apt-get install -y --no-install-recommends "$alsa_pkg" libgbm1 libgtk-3-0 libnss3 xvfb && break
             if [ "$attempt" -lt 3 ]; then
               echo "apt install failed, retrying..."
               sleep $((attempt * 10))

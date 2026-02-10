@@ -13,13 +13,6 @@ func buildNoUselessConstructorMessage() rule.RuleMessage {
 	}
 }
 
-func buildRemoveConstructorMessage() rule.RuleMessage {
-	return rule.RuleMessage{
-		Id:          "removeConstructor",
-		Description: "Remove unnecessary constructor.",
-	}
-}
-
 func hasModifier(node *ast.Node, flags ast.ModifierFlags) bool {
 	return ast.GetCombinedModifierFlags(node)&flags != 0
 }

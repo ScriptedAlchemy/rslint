@@ -367,7 +367,7 @@ func hasFunctionOverloadSignatures(node *ast.Node, fn *ast.FunctionDeclaration) 
 		return false
 	}
 
-	for i := 0; i < currentIndex; i++ {
+	for i := range currentIndex {
 		sibling := siblings[i]
 		if sibling == nil || sibling.Kind != ast.KindFunctionDeclaration {
 			continue
@@ -604,7 +604,7 @@ var ExplicitModuleBoundaryTypesRule = rule.CreateRule(rule.Rule{
 					return
 				}
 				if fn.Type == nil {
-					if !(opts.AllowHigherOrderFunctions && hasImmediateFunctionReturn(fn.Body)) {
+					if !opts.AllowHigherOrderFunctions || !hasImmediateFunctionReturn(fn.Body) {
 						ctx.ReportRange(functionDeclarationSignatureRange(fn), buildMissingReturnTypeMessage())
 					}
 				}
@@ -634,7 +634,7 @@ var ExplicitModuleBoundaryTypesRule = rule.CreateRule(rule.Rule{
 					return
 				}
 				if method.Type == nil {
-					if !(opts.AllowHigherOrderFunctions && hasImmediateFunctionReturn(method.Body)) {
+					if !opts.AllowHigherOrderFunctions || !hasImmediateFunctionReturn(method.Body) {
 						if method.Body == nil {
 							ctx.ReportRange(methodSignatureRangeWithoutReturnType(method), buildMissingReturnTypeMessage())
 						} else {
@@ -814,7 +814,7 @@ var ExplicitModuleBoundaryTypesRule = rule.CreateRule(rule.Rule{
 						return
 					}
 					if arrow.Type == nil {
-						if !(opts.AllowHigherOrderFunctions && isHigherOrderFunctionBody(arrow.Body)) {
+						if !opts.AllowHigherOrderFunctions || !isHigherOrderFunctionBody(arrow.Body) {
 							ctx.ReportRange(arrowOperatorRange(ctx.SourceFile, arrow), buildMissingReturnTypeMessage())
 						}
 					}

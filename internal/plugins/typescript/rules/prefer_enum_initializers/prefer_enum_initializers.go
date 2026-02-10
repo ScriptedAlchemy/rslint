@@ -15,13 +15,6 @@ func buildDefineInitializerMessage(name string) rule.RuleMessage {
 	}
 }
 
-func buildDefineInitializerSuggestionMessage(name string, suggested string) rule.RuleMessage {
-	return rule.RuleMessage{
-		Id:          "defineInitializerSuggestion",
-		Description: "Can be fixed to " + name + " = " + suggested,
-	}
-}
-
 func getEnumMemberNameText(sourceFile *ast.SourceFile, member *ast.EnumMember) string {
 	if member == nil || member.Name() == nil {
 		return ""

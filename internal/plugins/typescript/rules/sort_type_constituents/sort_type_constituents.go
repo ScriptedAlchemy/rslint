@@ -269,7 +269,7 @@ func sortedTypeText(node *ast.Node, sorted []constituentInfo) string {
 		text := item.text
 		inner := unwrapParenthesizedType(item.node)
 		if typeNodeRequiresParentheses(item.node, text) || (node != nil && node.Kind == ast.KindIntersectionType && inner != nil && inner.Kind == ast.KindUnionType) {
-			if !(strings.HasPrefix(text, "(") && strings.HasSuffix(text, ")")) {
+			if !strings.HasPrefix(text, "(") || !strings.HasSuffix(text, ")") {
 				text = "(" + text + ")"
 			}
 		}
@@ -293,7 +293,7 @@ func checkConstituents(ctx rule.RuleContext, node *ast.Node, types []*ast.Node, 
 	}
 
 	sorted := append([]constituentInfo{}, sourceOrder...)
-	for i := 0; i < len(sorted)-1; i++ {
+	for i := range len(sorted) - 1 {
 		for j := i + 1; j < len(sorted); j++ {
 			left := sorted[i]
 			right := sorted[j]

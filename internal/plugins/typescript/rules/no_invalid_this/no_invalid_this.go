@@ -353,9 +353,8 @@ func hasThisJSDoc(node *ast.Node, sourceFile *ast.SourceFile) bool {
 	if node == nil || sourceFile == nil {
 		return false
 	}
-	start := node.Pos()
 	trimmed := utils.TrimNodeTextRange(sourceFile, node)
-	start = trimmed.Pos()
+	start := trimmed.Pos()
 	if start <= 0 {
 		return false
 	}
