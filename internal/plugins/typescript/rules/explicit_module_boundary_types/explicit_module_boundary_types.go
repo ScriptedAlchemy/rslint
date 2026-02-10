@@ -107,6 +107,53 @@ func isAllowedName(name string, allowed []string) bool {
 	return false
 }
 
+func staticNameFromNode(node *ast.Node) (string, bool) {
+	if node == nil {
+		return "", false
+	}
+
+	switch node.Kind {
+	case ast.KindIdentifier:
+		id := node.AsIdentifier()
+		if id == nil {
+			return "", false
+		}
+		return id.Text, true
+	case ast.KindStringLiteral:
+		lit := node.AsStringLiteral()
+		if lit == nil {
+			return "", false
+		}
+		return lit.Text, true
+	case ast.KindNumericLiteral:
+		lit := node.AsNumericLiteral()
+		if lit == nil {
+			return "", false
+		}
+		return lit.Text, true
+	case ast.KindNoSubstitutionTemplateLiteral:
+		lit := node.AsNoSubstitutionTemplateLiteral()
+		if lit == nil {
+			return "", false
+		}
+		return lit.Text, true
+	case ast.KindNullKeyword:
+		return "null", true
+	case ast.KindTrueKeyword:
+		return "true", true
+	case ast.KindFalseKeyword:
+		return "false", true
+	case ast.KindComputedPropertyName:
+		computed := node.AsComputedPropertyName()
+		if computed == nil || computed.Expression == nil {
+			return "", false
+		}
+		return staticNameFromNode(unwrapReturnedExpression(computed.Expression))
+	}
+
+	return "", false
+}
+
 func checkParameters(ctx rule.RuleContext, params []*ast.Node, opts ExplicitModuleBoundaryTypesOptions) {
 	for _, p := range params {
 		if p == nil || !ast.IsParameter(p) {
@@ -336,6 +383,61 @@ func hasFunctionOverloadSignatures(node *ast.Node, fn *ast.FunctionDeclaration) 
 	return false
 }
 
+func hasMethodOverloadSignatures(node *ast.Node, method *ast.MethodDeclaration) bool {
+	if node == nil || method == nil || method.Name() == nil || node.Parent == nil {
+		return false
+	}
+
+	targetName, ok := staticNameFromNode(method.Name())
+	if !ok {
+		return false
+	}
+	targetStatic := ast.HasSyntacticModifier(node, ast.ModifierFlagsStatic)
+
+	var members []*ast.Node
+	switch node.Parent.Kind {
+	case ast.KindClassDeclaration:
+		classDecl := node.Parent.AsClassDeclaration()
+		if classDecl == nil || classDecl.Members == nil {
+			return false
+		}
+		members = classDecl.Members.Nodes
+	case ast.KindClassExpression:
+		classExpr := node.Parent.AsClassExpression()
+		if classExpr == nil || classExpr.Members == nil {
+			return false
+		}
+		members = classExpr.Members.Nodes
+	default:
+		return false
+	}
+
+	for _, member := range members {
+		if member == nil {
+			continue
+		}
+		if member == node {
+			break
+		}
+		if member.Kind != ast.KindMethodDeclaration {
+			continue
+		}
+		methodDecl := member.AsMethodDeclaration()
+		if methodDecl == nil || methodDecl.Name() == nil || methodDecl.Body != nil {
+			continue
+		}
+		if ast.HasSyntacticModifier(member, ast.ModifierFlagsStatic) != targetStatic {
+			continue
+		}
+		name, ok := staticNameFromNode(methodDecl.Name())
+		if ok && name == targetName {
+			return true
+		}
+	}
+
+	return false
+}
+
 func hasDeclaratorTypeAnnotation(sourceFile *ast.SourceFile, decl *ast.VariableDeclaration, value *ast.Node) bool {
 	if decl == nil || decl.Name() == nil {
 		return false
@@ -395,12 +497,85 @@ func bodyHasDirectConstAssertion(sourceFile *ast.SourceFile, body *ast.BlockOrEx
 	return strings.Contains(segment, " as const")
 }
 
-func propertyInitializerBoundaryRange(node *ast.Node, prop *ast.PropertyDeclaration) core.TextRange {
-	if node == nil || prop == nil || prop.Initializer == nil {
+func leadingTokenOnLineBeforePos(sourceFile *ast.SourceFile, pos int) int {
+	if sourceFile == nil {
+		return pos
+	}
+
+	text := sourceFile.Text()
+	if pos < 0 || pos > len(text) {
+		return pos
+	}
+
+	lineStart := pos
+	for lineStart > 0 {
+		ch := text[lineStart-1]
+		if ch == '\n' || ch == '\r' {
+			break
+		}
+		lineStart--
+	}
+
+	for lineStart < len(text) {
+		ch := text[lineStart]
+		if ch == ' ' || ch == '\t' {
+			lineStart++
+			continue
+		}
+		break
+	}
+
+	return lineStart
+}
+
+func propertyInitializerBoundaryRange(sourceFile *ast.SourceFile, prop *ast.PropertyDeclaration) core.TextRange {
+	if prop == nil || prop.Name() == nil || prop.Initializer == nil {
 		return core.NewTextRange(0, 0)
 	}
-	start := node.Pos()
-	end := prop.Initializer.Pos()
+	start := leadingTokenOnLineBeforePos(sourceFile, prop.Initializer.Pos())
+	end := prop.Initializer.Pos() + 1
+	if end < start {
+		end = start
+	}
+	return core.NewTextRange(start, end)
+}
+
+func functionExpressionPropertyBoundaryRange(sourceFile *ast.SourceFile, prop *ast.PropertyDeclaration, fnExpr *ast.FunctionExpression) core.TextRange {
+	if prop == nil || prop.Initializer == nil || fnExpr == nil {
+		return core.NewTextRange(0, 0)
+	}
+	start := leadingTokenOnLineBeforePos(sourceFile, prop.Initializer.Pos())
+	end := fnExpr.End()
+	if fnExpr.Body != nil {
+		end = fnExpr.Body.Pos() - 2
+	}
+	if end < start {
+		end = start
+	}
+	return core.NewTextRange(start, end)
+}
+
+func accessorKeywordRange(nameNode *ast.Node, keyword string) core.TextRange {
+	if nameNode == nil {
+		return core.NewTextRange(0, 0)
+	}
+	start := nameNode.Pos() - len(keyword)
+	if start < 0 || start > nameNode.Pos() {
+		start = nameNode.Pos()
+	}
+	end := nameNode.End()
+	if end < start {
+		end = start
+	}
+	return core.NewTextRange(start, end)
+}
+
+func methodSignatureRangeWithoutReturnType(method *ast.MethodDeclaration) core.TextRange {
+	if method == nil || method.Name() == nil {
+		return core.NewTextRange(0, 0)
+	}
+	start := method.Name().End()
+	end := method.End()
 	if end < start {
 		end = start
 	}
@@ -442,6 +617,9 @@ var ExplicitModuleBoundaryTypesRule = rule.CreateRule(rule.Rule{
 				if method == nil || method.Name() == nil {
 					return
 				}
+				if name, ok := staticNameFromNode(method.Name()); ok && isAllowedName(name, opts.AllowedNames) {
+					return
+				}
 				if ast.HasSyntacticModifier(node, ast.ModifierFlagsPrivate) || method.Name().Kind == ast.KindPrivateIdentifier {
 					return
 				}
@@ -452,13 +630,20 @@ var ExplicitModuleBoundaryTypesRule = rule.CreateRule(rule.Rule{
 				if !isExportedClassLikeNode(classNode) {
 					return
 				}
+				if opts.AllowOverloadFunctions && hasMethodOverloadSignatures(node, method) {
+					return
+				}
 				if method.Type == nil {
 					if !(opts.AllowHigherOrderFunctions && hasImmediateFunctionReturn(method.Body)) {
-						reportNode := node
-						if method.Name() != nil {
-							reportNode = method.Name()
+						if method.Body == nil {
+							ctx.ReportRange(methodSignatureRangeWithoutReturnType(method), buildMissingReturnTypeMessage())
+						} else {
+							reportNode := node
+							if method.Name() != nil {
+								reportNode = method.Name()
+							}
+							ctx.ReportNode(reportNode, buildMissingReturnTypeMessage())
 						}
-						ctx.ReportNode(reportNode, buildMissingReturnTypeMessage())
 					}
 				}
 				if method.Parameters != nil {
@@ -468,6 +653,9 @@ var ExplicitModuleBoundaryTypesRule = rule.CreateRule(rule.Rule{
 			ast.KindPropertyDeclaration: func(node *ast.Node) {
 				prop := node.AsPropertyDeclaration()
 				if prop == nil || prop.Name() == nil || prop.Initializer == nil {
+					return
+				}
+				if name, ok := staticNameFromNode(prop.Name()); ok && isAllowedName(name, opts.AllowedNames) {
 					return
 				}
 				if ast.HasSyntacticModifier(node, ast.ModifierFlagsPrivate) {
@@ -495,7 +683,7 @@ var ExplicitModuleBoundaryTypesRule = rule.CreateRule(rule.Rule{
 						return
 					}
 					if arrow.Type == nil {
-						ctx.ReportRange(propertyInitializerBoundaryRange(node, prop), buildMissingReturnTypeMessage())
+						ctx.ReportRange(propertyInitializerBoundaryRange(ctx.SourceFile, prop), buildMissingReturnTypeMessage())
 					}
 					if arrow.Parameters != nil {
 						checkParameters(ctx, arrow.Parameters.Nodes, opts)
@@ -506,7 +694,7 @@ var ExplicitModuleBoundaryTypesRule = rule.CreateRule(rule.Rule{
 						return
 					}
 					if fnExpr.Type == nil {
-						ctx.ReportRange(propertyInitializerBoundaryRange(node, prop), buildMissingReturnTypeMessage())
+						ctx.ReportRange(functionExpressionPropertyBoundaryRange(ctx.SourceFile, prop, fnExpr), buildMissingReturnTypeMessage())
 					}
 					if fnExpr.Parameters != nil {
 						checkParameters(ctx, fnExpr.Parameters.Nodes, opts)
@@ -518,6 +706,9 @@ var ExplicitModuleBoundaryTypesRule = rule.CreateRule(rule.Rule{
 				if getter == nil || getter.Name() == nil {
 					return
 				}
+				if name, ok := staticNameFromNode(getter.Name()); ok && isAllowedName(name, opts.AllowedNames) {
+					return
+				}
 				if ast.HasSyntacticModifier(node, ast.ModifierFlagsPrivate) || getter.Name().Kind == ast.KindPrivateIdentifier {
 					return
 				}
@@ -525,17 +716,15 @@ var ExplicitModuleBoundaryTypesRule = rule.CreateRule(rule.Rule{
 					return
 				}
 				if getter.Type == nil {
-					start := node.Pos()
-					end := getter.Name().End()
-					if end < start {
-						end = start
-					}
-					ctx.ReportRange(core.NewTextRange(start, end), buildMissingReturnTypeMessage())
+					ctx.ReportRange(accessorKeywordRange(getter.Name(), "get"), buildMissingReturnTypeMessage())
 				}
 			},
 			ast.KindSetAccessor: func(node *ast.Node) {
 				setter := node.AsSetAccessorDeclaration()
 				if setter == nil || setter.Name() == nil {
+					return
+				}
+				if name, ok := staticNameFromNode(setter.Name()); ok && isAllowedName(name, opts.AllowedNames) {
 					return
 				}
 				if ast.HasSyntacticModifier(node, ast.ModifierFlagsPrivate) || setter.Name().Kind == ast.KindPrivateIdentifier {
@@ -605,6 +794,44 @@ var ExplicitModuleBoundaryTypesRule = rule.CreateRule(rule.Rule{
 				}
 				if fnExpr.Parameters != nil {
 					checkParameters(ctx, fnExpr.Parameters.Nodes, opts)
+				}
+			},
+			ast.KindExportAssignment: func(node *ast.Node) {
+				exportAssignment := node.AsExportAssignment()
+				if exportAssignment == nil || exportAssignment.Expression == nil {
+					return
+				}
+
+				expr := unwrapReturnedExpression(exportAssignment.Expression)
+				if expr == nil {
+					return
+				}
+
+				switch expr.Kind {
+				case ast.KindArrowFunction:
+					arrow := expr.AsArrowFunction()
+					if arrow == nil {
+						return
+					}
+					if arrow.Type == nil {
+						if !(opts.AllowHigherOrderFunctions && isHigherOrderFunctionBody(arrow.Body)) {
+							ctx.ReportRange(arrowOperatorRange(ctx.SourceFile, arrow), buildMissingReturnTypeMessage())
+						}
+					}
+					if arrow.Parameters != nil {
+						checkParameters(ctx, arrow.Parameters.Nodes, opts)
+					}
+				case ast.KindFunctionExpression:
+					fnExpr := expr.AsFunctionExpression()
+					if fnExpr == nil {
+						return
+					}
+					if fnExpr.Type == nil {
+						ctx.ReportRange(functionExpressionKeywordRange(expr), buildMissingReturnTypeMessage())
+					}
+					if fnExpr.Parameters != nil {
+						checkParameters(ctx, fnExpr.Parameters.Nodes, opts)
+					}
 				}
 			},
 		}
