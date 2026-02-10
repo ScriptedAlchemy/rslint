@@ -167,7 +167,7 @@ var PreferRegexpExecRule = rule.CreateRule(rule.Rule{
 					return
 				}
 
-				target := access.Expression()
+				target := access.Expression
 				if !isStringLikeType(ctx, target) {
 					return
 				}
