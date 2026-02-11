@@ -44,9 +44,13 @@ func buildRuleParserOptions(languageOptions *api.LanguageOptions) *rule.RulePars
 	}
 	parserOptions := languageOptions.ParserOptions
 	result := &rule.RuleParserOptions{
-		SourceType:           parserOptions.SourceType,
-		EcmaVersion:          parserOptions.EcmaVersion,
-		IsolatedDeclarations: parserOptions.IsolatedDeclarations,
+		SourceType:             parserOptions.SourceType,
+		EcmaVersion:            parserOptions.EcmaVersion,
+		IsolatedDeclarations:   parserOptions.IsolatedDeclarations,
+		ExperimentalDecorators: parserOptions.ExperimentalDecorators,
+		EmitDecoratorMetadata:  parserOptions.EmitDecoratorMetadata,
+		JSXPragma:              parserOptions.JSXPragma,
+		JSXFragmentName:        parserOptions.JSXFragmentName,
 	}
 	if parserOptions.EcmaFeatures != nil {
 		result.EcmaFeatures = &rule.RuleEcmaFeatures{
@@ -135,11 +139,15 @@ func (h *IPCHandler) HandleLint(req api.LintRequest) (*api.LintResponse, error) 
 		}
 		if req.LanguageOptions.ParserOptions != nil {
 			configLanguageOptions.ParserOptions = &rslintconfig.ParserOptions{
-				ProjectService:  req.LanguageOptions.ParserOptions.ProjectService,
-				Project:         rslintconfig.ProjectPaths(req.LanguageOptions.ParserOptions.Project),
-				TsconfigRootDir: req.LanguageOptions.ParserOptions.TsconfigRootDir,
-				SourceType:      req.LanguageOptions.ParserOptions.SourceType,
-				EcmaVersion:     req.LanguageOptions.ParserOptions.EcmaVersion,
+				ProjectService:         req.LanguageOptions.ParserOptions.ProjectService,
+				Project:                rslintconfig.ProjectPaths(req.LanguageOptions.ParserOptions.Project),
+				TsconfigRootDir:        req.LanguageOptions.ParserOptions.TsconfigRootDir,
+				SourceType:             req.LanguageOptions.ParserOptions.SourceType,
+				EcmaVersion:            req.LanguageOptions.ParserOptions.EcmaVersion,
+				ExperimentalDecorators: req.LanguageOptions.ParserOptions.ExperimentalDecorators,
+				EmitDecoratorMetadata:  req.LanguageOptions.ParserOptions.EmitDecoratorMetadata,
+				JSXPragma:              req.LanguageOptions.ParserOptions.JSXPragma,
+				JSXFragmentName:        req.LanguageOptions.ParserOptions.JSXFragmentName,
 			}
 			if req.LanguageOptions.ParserOptions.EcmaFeatures != nil {
 				configLanguageOptions.ParserOptions.EcmaFeatures = &rslintconfig.EcmaFeatures{

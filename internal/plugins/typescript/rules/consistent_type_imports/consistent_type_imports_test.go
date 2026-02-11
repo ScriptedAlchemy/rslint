@@ -86,6 +86,12 @@ func TestConsistentTypeImportsRule(t *testing.T) {
 				{MessageId: "noImportTypeAnnotations"},
 			},
 		},
+		{
+			Code: `import { A, B } from 'foo'; const foo: A = B();`,
+			Errors: []rule_tester.InvalidTestCaseError{
+				{MessageId: "someImportsAreOnlyTypes"},
+			},
+		},
 
 		// Options: prefer: 'no-type-imports'
 		{

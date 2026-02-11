@@ -105,21 +105,21 @@ import (
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_wrapper_object_types"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/non_nullable_type_assertion_style"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/only_throw_error"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/parameter_properties"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_as_const"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_destructuring"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_enum_initializers"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_find"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_for_of"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_function_type"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_includes"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_literal_enum_member"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_namespace_keyword"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_nullish_coalescing"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_optional_chain"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_promise_reject_errors"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_readonly"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_readonly_parameter_types"
-	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/parameter_properties"
-	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_function_type"
-	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_optional_chain"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_reduce_type_parameter"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_regexp_exec"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_return_this_type"
@@ -207,12 +207,16 @@ func (p *ProjectPaths) UnmarshalJSON(data []byte) error {
 
 // ParserOptions contains parser-specific configuration
 type ParserOptions struct {
-	ProjectService  bool          `json:"projectService"`
-	Project         ProjectPaths  `json:"project,omitempty"`
-	TsconfigRootDir string        `json:"tsconfigRootDir,omitempty"`
-	SourceType      string        `json:"sourceType,omitempty"`
-	EcmaVersion     int           `json:"ecmaVersion,omitempty"`
-	EcmaFeatures    *EcmaFeatures `json:"ecmaFeatures,omitempty"`
+	ProjectService         bool          `json:"projectService"`
+	Project                ProjectPaths  `json:"project,omitempty"`
+	TsconfigRootDir        string        `json:"tsconfigRootDir,omitempty"`
+	SourceType             string        `json:"sourceType,omitempty"`
+	EcmaVersion            int           `json:"ecmaVersion,omitempty"`
+	ExperimentalDecorators bool          `json:"experimentalDecorators,omitempty"`
+	EmitDecoratorMetadata  bool          `json:"emitDecoratorMetadata,omitempty"`
+	JSXPragma              string        `json:"jsxPragma,omitempty"`
+	JSXFragmentName        string        `json:"jsxFragmentName,omitempty"`
+	EcmaFeatures           *EcmaFeatures `json:"ecmaFeatures,omitempty"`
 }
 
 // Rules represents the rules configuration

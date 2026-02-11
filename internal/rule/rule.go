@@ -167,10 +167,14 @@ type RuleEcmaFeatures struct {
 }
 
 type RuleParserOptions struct {
-	SourceType           string
-	EcmaVersion          int
-	IsolatedDeclarations bool
-	EcmaFeatures         *RuleEcmaFeatures
+	SourceType             string
+	EcmaVersion            int
+	IsolatedDeclarations   bool
+	ExperimentalDecorators bool
+	EmitDecoratorMetadata  bool
+	JSXPragma              string
+	JSXFragmentName        string
+	EcmaFeatures           *RuleEcmaFeatures
 }
 
 type RuleContext struct {
