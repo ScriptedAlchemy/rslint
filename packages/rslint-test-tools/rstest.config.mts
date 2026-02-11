@@ -84,7 +84,7 @@ export default defineConfig({
     './tests/typescript-eslint/rules/no-implied-eval.test.ts',
     './tests/typescript-eslint/rules/no-inferrable-types.test.ts',
     './tests/typescript-eslint/rules/no-invalid-this.test.ts',
-    // './tests/typescript-eslint/rules/no-invalid-void-type.test.ts',
+    './tests/typescript-eslint/rules/no-invalid-void-type.test.ts',
     './tests/typescript-eslint/rules/no-loop-func.test.ts',
     './tests/typescript-eslint/rules/no-loss-of-precision.test.ts',
     './tests/typescript-eslint/rules/no-magic-numbers.test.ts',

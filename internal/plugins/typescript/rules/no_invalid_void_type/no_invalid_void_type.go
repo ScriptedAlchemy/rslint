@@ -227,6 +227,16 @@ func staticNameFromNode(node *ast.Node) (string, bool) {
 	switch node.Kind {
 	case ast.KindIdentifier, ast.KindStringLiteral, ast.KindNumericLiteral, ast.KindNoSubstitutionTemplateLiteral:
 		return node.Text(), true
+	case ast.KindPropertyAccessExpression:
+		propertyAccess := node.AsPropertyAccessExpression()
+		if propertyAccess == nil || propertyAccess.Expression == nil || propertyAccess.Name() == nil {
+			return "", false
+		}
+		left, ok := staticNameFromNode(propertyAccess.Expression)
+		if !ok {
+			return "", false
+		}
+		return left + "." + propertyAccess.Name().Text(), true
 	case ast.KindComputedPropertyName:
 		computed := node.AsComputedPropertyName()
 		if computed == nil || computed.Expression == nil {
@@ -239,9 +249,19 @@ func staticNameFromNode(node *ast.Node) (string, bool) {
 }
 
 func hasFunctionOverloadSignatures(node *ast.Node, fn *ast.FunctionDeclaration) bool {
-	if node == nil || fn == nil || fn.Name() == nil || node.Parent == nil {
+	if node == nil || fn == nil || node.Parent == nil {
 		return false
 	}
+
+	hasName := fn.Name() != nil
+	targetName := ""
+	if hasName {
+		targetName = fn.Name().Text()
+	}
+	isAnonymousDefaultExport := !hasName &&
+		ast.HasSyntacticModifier(node, ast.ModifierFlagsExport) &&
+		ast.HasSyntacticModifier(node, ast.ModifierFlagsDefault)
+
 	var siblings []*ast.Node
 	switch node.Parent.Kind {
 	case ast.KindSourceFile:
@@ -266,7 +286,6 @@ func hasFunctionOverloadSignatures(node *ast.Node, fn *ast.FunctionDeclaration) 
 		return false
 	}
 
-	targetName := fn.Name().Text()
 	for _, sibling := range siblings {
 		if sibling == nil {
 			continue
@@ -278,10 +297,19 @@ func hasFunctionOverloadSignatures(node *ast.Node, fn *ast.FunctionDeclaration) 
 			continue
 		}
 		overload := sibling.AsFunctionDeclaration()
-		if overload == nil || overload.Body != nil || overload.Name() == nil {
+		if overload == nil || overload.Body != nil {
 			continue
 		}
-		if overload.Name().Text() == targetName {
+		if hasName {
+			if overload.Name() != nil && overload.Name().Text() == targetName {
+				return true
+			}
+			continue
+		}
+		if isAnonymousDefaultExport &&
+			overload.Name() == nil &&
+			ast.HasSyntacticModifier(sibling, ast.ModifierFlagsExport) &&
+			ast.HasSyntacticModifier(sibling, ast.ModifierFlagsDefault) {
 			return true
 		}
 	}
@@ -364,6 +392,38 @@ func isUnionInOverloadImplementation(unionNode *ast.Node) bool {
 	return false
 }
 
+func typeNameToQualifiedString(node *ast.Node) string {
+	if node == nil {
+		return ""
+	}
+	switch node.Kind {
+	case ast.KindIdentifier, ast.KindStringLiteral, ast.KindNumericLiteral, ast.KindNoSubstitutionTemplateLiteral:
+		return node.Text()
+	case ast.KindQualifiedName:
+		qualifiedName := node.AsQualifiedName()
+		if qualifiedName == nil || qualifiedName.Left == nil || qualifiedName.Right == nil {
+			return ""
+		}
+		left := typeNameToQualifiedString(qualifiedName.Left)
+		if left == "" {
+			return ""
+		}
+		return left + "." + qualifiedName.Right.Text()
+	case ast.KindPropertyAccessExpression:
+		propertyAccess := node.AsPropertyAccessExpression()
+		if propertyAccess == nil || propertyAccess.Expression == nil || propertyAccess.Name() == nil {
+			return ""
+		}
+		left := typeNameToQualifiedString(propertyAccess.Expression)
+		if left == "" {
+			return ""
+		}
+		return left + "." + propertyAccess.Name().Text()
+	default:
+		return ""
+	}
+}
+
 func isGenericTypeArgumentContext(node *ast.Node) (bool, string) {
 	if node == nil {
 		return false, ""
@@ -376,7 +436,7 @@ func isGenericTypeArgumentContext(node *ast.Node) (bool, string) {
 				if containsNode(arg, node) {
 					name := ""
 					if typeRef.TypeName != nil {
-						name = normalizeQualifiedName(typeRef.TypeName.Text())
+						name = normalizeQualifiedName(typeNameToQualifiedString(typeRef.TypeName))
 					}
 					return true, name
 				}
@@ -386,15 +446,6 @@ func isGenericTypeArgumentContext(node *ast.Node) (bool, string) {
 
 	for current := node.Parent; current != nil; current = current.Parent {
 		switch current.Kind {
-		case ast.KindCallExpression:
-			callExpr := current.AsCallExpression()
-			if callExpr != nil && callExpr.TypeArguments != nil {
-				for _, arg := range callExpr.TypeArguments.Nodes {
-					if containsNode(arg, node) {
-						return true, ""
-					}
-				}
-			}
 		case ast.KindNewExpression:
 			newExpr := current.AsNewExpression()
 			if newExpr != nil && newExpr.TypeArguments != nil {
@@ -411,7 +462,7 @@ func isGenericTypeArgumentContext(node *ast.Node) (bool, string) {
 					if containsNode(arg, node) {
 						name := ""
 						if typeRef.TypeName != nil {
-							name = normalizeQualifiedName(typeRef.TypeName.Text())
+							name = normalizeQualifiedName(typeNameToQualifiedString(typeRef.TypeName))
 						}
 						return true, name
 					}
@@ -488,17 +539,15 @@ var NoInvalidVoidTypeRule = rule.CreateRule(rule.Rule{
 					return
 				}
 
-				for current := node.Parent; current != nil; current = current.Parent {
-					switch current.Kind {
-					case ast.KindFunctionType,
-						ast.KindConstructorType,
-						ast.KindFunctionDeclaration,
-						ast.KindMethodDeclaration,
-						ast.KindArrowFunction,
-						ast.KindFunctionExpression,
-						ast.KindMethodSignature:
-						return
-					}
+				switch node.Parent.Kind {
+				case ast.KindFunctionType,
+					ast.KindConstructorType,
+					ast.KindFunctionDeclaration,
+					ast.KindMethodDeclaration,
+					ast.KindArrowFunction,
+					ast.KindFunctionExpression,
+					ast.KindMethodSignature:
+					return
 				}
 
 				// Report invalid void usage by default
