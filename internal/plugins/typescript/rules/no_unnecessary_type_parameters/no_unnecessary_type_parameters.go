@@ -24,6 +24,18 @@ func buildSoleMessage(name string, count int, descriptor string) rule.RuleMessag
 
 var genericArrowSingleTypeParamPattern = regexp.MustCompile(`^\s*<\s*([A-Za-z_$][A-Za-z0-9_$]*)\s*,?\s*>\s*\(`)
 
+func safeTypeParameters(node *ast.Node) (params []*ast.Node) {
+	if node == nil {
+		return nil
+	}
+	defer func() {
+		if recover() != nil {
+			params = nil
+		}
+	}()
+	return node.TypeParameters()
+}
+
 func nodeText(sourceFile *ast.SourceFile, node *ast.Node) string {
 	if sourceFile == nil || node == nil {
 		return ""
@@ -57,21 +69,47 @@ func collectTypeReferences(node *ast.Node, refs map[string]int) {
 }
 
 func countTypeParameterIdentifierReferences(node *ast.Node, typeParamName string) int {
-	if node == nil {
-		return 0
-	}
-	count := 0
-	if node.Kind == ast.KindIdentifier && ast.IsPartOfTypeNode(node) {
-		identifier := node.AsIdentifier()
-		if identifier != nil && identifier.Text == typeParamName {
-			count++
+	var walk func(node *ast.Node, isShadowed bool) int
+	walk = func(node *ast.Node, isShadowed bool) int {
+		if node == nil {
+			return 0
 		}
+
+		currentShadowed := isShadowed
+		if !currentShadowed {
+			for _, typeParameterNode := range safeTypeParameters(node) {
+				if typeParameterNode == nil || typeParameterNode.Kind != ast.KindTypeParameter {
+					continue
+				}
+				typeParameter := typeParameterNode.AsTypeParameter()
+				if typeParameter != nil && typeParameter.Name() != nil && typeParameter.Name().Text() == typeParamName {
+					currentShadowed = true
+					break
+				}
+			}
+		}
+		if node.Kind == ast.KindTypeParameter {
+			typeParameter := node.AsTypeParameter()
+			if typeParameter != nil && typeParameter.Name() != nil && typeParameter.Name().Text() == typeParamName {
+				currentShadowed = true
+			}
+		}
+
+		count := 0
+		if !currentShadowed && node.Kind == ast.KindIdentifier && ast.IsPartOfTypeNode(node) {
+			identifier := node.AsIdentifier()
+			if identifier != nil && identifier.Text == typeParamName {
+				count++
+			}
+		}
+		node.ForEachChild(func(child *ast.Node) bool {
+			count += walk(child, currentShadowed)
+			return false
+		})
+		return count
 	}
-	node.ForEachChild(func(child *ast.Node) bool {
-		count += countTypeParameterIdentifierReferences(child, typeParamName)
-		return false
-	})
-	return count
+
+	return walk(node, false)
 }
 
 func implicitReturnUsesTypeParam(params []*ast.Node, body *ast.BlockOrExpression, typeParamName string) bool {
@@ -143,8 +181,10 @@ func checkFunctionLike(ctx rule.RuleContext, typeParams []*ast.Node, params []*a
 		}
 		if returnType == nil {
 			count += countTypeParameterReferencesInReturnExpressions(body, name)
+			count += countTypeParameterReferencesInReturnTypeArguments(body, name)
 			count += countTypedParameterMentionsInReturnExpressions(params, body, name)
 		}
+		count += countWrappedTypeParameterUsagesInParameters(params, name)
 		if count <= 1 && implicitReturnUsesTypeParam(params, body, name) {
 			count++
 		}
@@ -443,6 +483,104 @@ func countTypedParameterMentionsInReturnExpressions(params []*ast.Node, body *as
 			continue
 		}
 		total += countIdentifiers(returnStmt.Expression)
+	}
+	return total
+}
+
+func isBareTypeParameterTypeNode(typeNode *ast.Node, typeParamName string) bool {
+	if typeNode == nil {
+		return false
+	}
+	typeNode = ast.SkipParentheses(typeNode)
+	if typeNode == nil {
+		return false
+	}
+	switch typeNode.Kind {
+	case ast.KindIdentifier:
+		identifier := typeNode.AsIdentifier()
+		return identifier != nil && identifier.Text == typeParamName
+	case ast.KindTypeReference:
+		typeRef := typeNode.AsTypeReferenceNode()
+		if typeRef == nil || typeRef.TypeName == nil || typeRef.TypeName.Kind != ast.KindIdentifier {
+			return false
+		}
+		if typeRef.TypeArguments != nil && len(typeRef.TypeArguments.Nodes) > 0 {
+			return false
+		}
+		return typeRef.TypeName.AsIdentifier().Text == typeParamName
+	default:
+		return false
+	}
+}
+
+func countWrappedTypeParameterUsagesInParameters(params []*ast.Node, typeParamName string) int {
+	total := 0
+	for _, param := range params {
+		if param == nil || param.Kind != ast.KindParameter {
+			continue
+		}
+		decl := param.AsParameterDeclaration()
+		if decl == nil || decl.Type == nil {
+			continue
+		}
+		if countTypeParameterIdentifierReferences(decl.Type, typeParamName) == 0 {
+			continue
+		}
+		if !isBareTypeParameterTypeNode(decl.Type, typeParamName) {
+			total++
+		}
+	}
+	return total
+}
+
+func countTypeParameterReferencesInReturnTypeArguments(body *ast.BlockOrExpression, typeParamName string) int {
+	if body == nil || body.Kind != ast.KindBlock {
+		return 0
+	}
+
+	block := body.AsBlock()
+	if block == nil || block.Statements == nil {
+		return 0
+	}
+
+	countFromExpression := func(expression *ast.Node) int {
+		if expression == nil {
+			return 0
+		}
+		expression = ast.SkipParentheses(expression)
+		if expression == nil {
+			return 0
+		}
+		total := 0
+		switch expression.Kind {
+		case ast.KindNewExpression:
+			newExpression := expression.AsNewExpression()
+			if newExpression != nil && newExpression.TypeArguments != nil {
+				for _, typeArgument := range newExpression.TypeArguments.Nodes {
+					total += countTypeParameterIdentifierReferences(typeArgument, typeParamName)
+				}
+			}
+		case ast.KindCallExpression:
+			callExpression := expression.AsCallExpression()
+			if callExpression != nil && callExpression.TypeArguments != nil {
+				for _, typeArgument := range callExpression.TypeArguments.Nodes {
+					total += countTypeParameterIdentifierReferences(typeArgument, typeParamName)
+				}
+			}
+		}
+		return total
+	}
+
+	total := 0
+	for _, statement := range block.Statements.Nodes {
+		if statement == nil || statement.Kind != ast.KindReturnStatement {
+			continue
+		}
+		returnStatement := statement.AsReturnStatement()
+		if returnStatement == nil {
+			continue
+		}
+		total += countFromExpression(returnStatement.Expression)
 	}
 	return total
 }
