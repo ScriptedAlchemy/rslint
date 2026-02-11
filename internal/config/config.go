@@ -53,6 +53,7 @@ import (
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_invalid_this"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_invalid_void_type"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_loop_func"
+	ts_no_loss_of_precision "github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_loss_of_precision"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_magic_numbers"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_meaningless_void_operator"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_misused_new"
@@ -469,6 +470,7 @@ func registerAllTypeScriptEslintPluginRules() {
 	GlobalRuleRegistry.Register("@typescript-eslint/no-invalid-this", no_invalid_this.NoInvalidThisRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-invalid-void-type", no_invalid_void_type.NoInvalidVoidTypeRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-loop-func", no_loop_func.NoLoopFuncRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/no-loss-of-precision", ts_no_loss_of_precision.NoLossOfPrecisionRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-floating-promises", no_floating_promises.NoFloatingPromisesRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-for-in-array", no_for_in_array.NoForInArrayRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-import-type-side-effects", no_import_type_side_effects.NoImportTypeSideEffectsRule)
