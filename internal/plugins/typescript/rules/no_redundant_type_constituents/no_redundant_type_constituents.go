@@ -352,10 +352,17 @@ var NoRedundantTypeConstituentsRule = rule.CreateRule(rule.Rule{
 				}
 
 				for _, typeNode := range node.AsUnionTypeNode().Types.Nodes {
+					reportTypeNode := typeNode
+					if typeNode.Kind == ast.KindParenthesizedType {
+						parenthesized := typeNode.AsParenthesizedTypeNode()
+						if parenthesized != nil && parenthesized.Type != nil && parenthesized.Type.Kind == ast.KindUnionType {
+							reportTypeNode = parenthesized.Type
+						}
+					}
 					typePartFlags := getTypeNodeTypePartFlags(typeNode)
 
 					for _, typePart := range typePartFlags {
-						if checkUnionBottomAndTopTypes(typePart, typeNode) {
+						if checkUnionBottomAndTopTypes(typePart, reportTypeNode) {
 							continue
 						}
 
@@ -364,13 +371,13 @@ var NoRedundantTypeConstituentsRule = rule.CreateRule(rule.Rule{
 						// upsert the literal text and primitive type under the backing type node
 						switch typePart.flags {
 						case checker.TypeFlagsBigIntLiteral:
-							overriddenBigIntTypeNodes[typeNode] = append(overriddenBigIntTypeNodes[typeNode], typePart)
+							overriddenBigIntTypeNodes[reportTypeNode] = append(overriddenBigIntTypeNodes[reportTypeNode], typePart)
 						case checker.TypeFlagsBooleanLiteral:
-							overriddenBooleanTypeNodes[typeNode] = append(overriddenBooleanTypeNodes[typeNode], typePart)
+							overriddenBooleanTypeNodes[reportTypeNode] = append(overriddenBooleanTypeNodes[reportTypeNode], typePart)
 						case checker.TypeFlagsNumberLiteral:
-							overriddenNumberTypeNodes[typeNode] = append(overriddenNumberTypeNodes[typeNode], typePart)
+							overriddenNumberTypeNodes[reportTypeNode] = append(overriddenNumberTypeNodes[reportTypeNode], typePart)
 						case checker.TypeFlagsStringLiteral, checker.TypeFlagsTemplateLiteral:
-							overriddenStringTypeNodes[typeNode] = append(overriddenStringTypeNodes[typeNode], typePart)
+							overriddenStringTypeNodes[reportTypeNode] = append(overriddenStringTypeNodes[reportTypeNode], typePart)
 						}
 
 						seenPrimitiveTypeFlags |= typePart.flags & (checker.TypeFlagsBigInt | checker.TypeFlagsBoolean | checker.TypeFlagsNumber | checker.TypeFlagsString)
