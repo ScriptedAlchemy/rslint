@@ -172,6 +172,6 @@ export default defineConfig({
     './tests/typescript-eslint/rules/typedef.test.ts',
     // './tests/typescript-eslint/rules/unbound-method.test.ts',
     // './tests/typescript-eslint/rules/unified-signatures.test.ts',
-    // './tests/typescript-eslint/rules/use-unknown-in-catch-callback-variable.test.ts',
+    './tests/typescript-eslint/rules/use-unknown-in-catch-callback-variable.test.ts',
   ],
 });

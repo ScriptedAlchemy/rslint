@@ -1,0 +1,833 @@
+// Rstest Snapshot v1
+
+exports[`use-unknown-in-catch-callback-variable > invalid 1`] = `
+{
+  "code": "
+Promise.resolve().catch((err: Error) => {
+  throw err;
+});
+      ",
+  "diagnostics": [
+    {
+      "message": "Prefer the safe \`: unknown\` for a \`catch\` callback variable.",
+      "messageId": "useUnknown",
+      "range": {
+        "end": {
+          "column": 36,
+          "line": 2,
+        },
+        "start": {
+          "column": 26,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/use-unknown-in-catch-callback-variable",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`use-unknown-in-catch-callback-variable > invalid 2`] = `
+{
+  "code": "
+        let method = 'catch';
+        Promise.resolve()[method]((error: Error) => {});
+      ",
+  "diagnostics": [
+    {
+      "message": "Prefer the safe \`: unknown\` for a \`catch\` callback variable.",
+      "messageId": "useUnknown",
+      "range": {
+        "end": {
+          "column": 48,
+          "line": 3,
+        },
+        "start": {
+          "column": 36,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/use-unknown-in-catch-callback-variable",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`use-unknown-in-catch-callback-variable > invalid 3`] = `
+{
+  "code": "
+Promise.resolve().catch((e, ...rest: []) => {
+  throw err;
+});
+      ",
+  "diagnostics": [
+    {
+      "message": "Prefer the safe \`: unknown\` for a \`catch\` callback variable.",
+      "messageId": "useUnknown",
+      "range": {
+        "end": {
+          "column": 27,
+          "line": 2,
+        },
+        "start": {
+          "column": 26,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/use-unknown-in-catch-callback-variable",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`use-unknown-in-catch-callback-variable > invalid 4`] = `
+{
+  "code": "
+Promise.resolve().catch(
+  (err: string | ((number | unknown) & { b: () => void })) => {
+    throw err;
+  },
+);
+      ",
+  "diagnostics": [
+    {
+      "message": "Prefer the safe \`: unknown\` for a \`catch\` callback variable.",
+      "messageId": "useUnknown",
+      "range": {
+        "end": {
+          "column": 58,
+          "line": 3,
+        },
+        "start": {
+          "column": 4,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/use-unknown-in-catch-callback-variable",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`use-unknown-in-catch-callback-variable > invalid 5`] = `
+{
+  "code": "
+Promise.resolve().catch(
+  (
+    ...err: [
+      unknown[],
+      string | ((number | unknown) & { b: () => void }),
+      string,
+    ]
+  ) => {
+    throw err;
+  },
+);
+      ",
+  "diagnostics": [
+    {
+      "message": "Prefer the safe \`: unknown\` for a \`catch\` callback variable.",
+      "messageId": "useUnknown",
+      "range": {
+        "end": {
+          "column": 6,
+          "line": 8,
+        },
+        "start": {
+          "column": 5,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/use-unknown-in-catch-callback-variable",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`use-unknown-in-catch-callback-variable > invalid 6`] = `
+{
+  "code": "
+Promise.resolve().catch(function (err: string) {
+  throw err;
+});
+      ",
+  "diagnostics": [
+    {
+      "message": "Prefer the safe \`: unknown\` for a \`catch\` callback variable.",
+      "messageId": "useUnknown",
+      "range": {
+        "end": {
+          "column": 46,
+          "line": 2,
+        },
+        "start": {
+          "column": 35,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/use-unknown-in-catch-callback-variable",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`use-unknown-in-catch-callback-variable > invalid 7`] = `
+{
+  "code": "
+Promise.resolve().catch(function (err /* awkward spot for comment */) {
+  throw err;
+});
+      ",
+  "diagnostics": [
+    {
+      "message": "Prefer the safe \`: unknown\` for a \`catch\` callback variable.",
+      "messageId": "useUnknown",
+      "range": {
+        "end": {
+          "column": 38,
+          "line": 2,
+        },
+        "start": {
+          "column": 35,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/use-unknown-in-catch-callback-variable",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`use-unknown-in-catch-callback-variable > invalid 8`] = `
+{
+  "code": "
+Promise.resolve().catch(function namedCallback(err: string) {
+  throw err;
+});
+      ",
+  "diagnostics": [
+    {
+      "message": "Prefer the safe \`: unknown\` for a \`catch\` callback variable.",
+      "messageId": "useUnknown",
+      "range": {
+        "end": {
+          "column": 59,
+          "line": 2,
+        },
+        "start": {
+          "column": 48,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/use-unknown-in-catch-callback-variable",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`use-unknown-in-catch-callback-variable > invalid 9`] = `
+{
+  "code": "
+Promise.resolve().catch(err => {
+  throw err;
+});
+      ",
+  "diagnostics": [
+    {
+      "message": "Prefer the safe \`: unknown\` for a \`catch\` callback variable.",
+      "messageId": "useUnknown",
+      "range": {
+        "end": {
+          "column": 28,
+          "line": 2,
+        },
+        "start": {
+          "column": 25,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/use-unknown-in-catch-callback-variable",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`use-unknown-in-catch-callback-variable > invalid 10`] = `
+{
+  "code": "
+Promise.resolve().then(
+  () => {},
+  error => {},
+);
+      ",
+  "diagnostics": [
+    {
+      "message": "Prefer the safe \`: unknown\` for a \`then\` rejection callback variable.",
+      "messageId": "useUnknown",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 4,
+        },
+        "start": {
+          "column": 3,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/use-unknown-in-catch-callback-variable",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`use-unknown-in-catch-callback-variable > invalid 11`] = `
+{
+  "code": "
+Promise.resolve().catch((err?) => {
+  throw err;
+});
+      ",
+  "diagnostics": [
+    {
+      "message": "Prefer the safe \`: unknown\` for a \`catch\` callback variable.",
+      "messageId": "useUnknown",
+      "range": {
+        "end": {
+          "column": 30,
+          "line": 2,
+        },
+        "start": {
+          "column": 26,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/use-unknown-in-catch-callback-variable",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`use-unknown-in-catch-callback-variable > invalid 12`] = `
+{
+  "code": "
+Promise.resolve().catch((err?: string) => {
+  throw err;
+});
+      ",
+  "diagnostics": [
+    {
+      "message": "Prefer the safe \`: unknown\` for a \`catch\` callback variable.",
+      "messageId": "useUnknown",
+      "range": {
+        "end": {
+          "column": 38,
+          "line": 2,
+        },
+        "start": {
+          "column": 26,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/use-unknown-in-catch-callback-variable",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`use-unknown-in-catch-callback-variable > invalid 13`] = `
+{
+  "code": "
+Promise.resolve().catch(err/* with comment */=> {
+  throw err;
+});
+      ",
+  "diagnostics": [
+    {
+      "message": "Prefer the safe \`: unknown\` for a \`catch\` callback variable.",
+      "messageId": "useUnknown",
+      "range": {
+        "end": {
+          "column": 28,
+          "line": 2,
+        },
+        "start": {
+          "column": 25,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/use-unknown-in-catch-callback-variable",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`use-unknown-in-catch-callback-variable > invalid 14`] = `
+{
+  "code": "
+Promise.resolve().catch((err = 2) => {
+  throw err;
+});
+      ",
+  "diagnostics": [
+    {
+      "message": "Prefer the safe \`: unknown\` for a \`catch\` callback variable.",
+      "messageId": "useUnknown",
+      "range": {
+        "end": {
+          "column": 33,
+          "line": 2,
+        },
+        "start": {
+          "column": 26,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/use-unknown-in-catch-callback-variable",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`use-unknown-in-catch-callback-variable > invalid 15`] = `
+{
+  "code": "
+Promise.resolve().catch((err: any /* comment 1 */ = /* comment 2 */ 2) => {
+  throw err;
+});
+      ",
+  "diagnostics": [
+    {
+      "message": "Prefer the safe \`: unknown\` for a \`catch\` callback variable.",
+      "messageId": "useUnknown",
+      "range": {
+        "end": {
+          "column": 70,
+          "line": 2,
+        },
+        "start": {
+          "column": 26,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/use-unknown-in-catch-callback-variable",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`use-unknown-in-catch-callback-variable > invalid 16`] = `
+{
+  "code": "
+Promise.resolve().catch((...args) => {
+  throw args[0];
+});
+      ",
+  "diagnostics": [
+    {
+      "message": "Prefer the safe \`: unknown\` for a \`catch\` callback variable.",
+      "messageId": "useUnknown",
+      "range": {
+        "end": {
+          "column": 33,
+          "line": 2,
+        },
+        "start": {
+          "column": 26,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/use-unknown-in-catch-callback-variable",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`use-unknown-in-catch-callback-variable > invalid 17`] = `
+{
+  "code": "
+Promise.reject(new Error('I will reject!')).catch(([err]: [unknown]) => {
+  console.log(err);
+});
+      ",
+  "diagnostics": [
+    {
+      "message": "Prefer the safe \`: unknown\` for a \`catch\` callback variable. The thrown error may not be iterable.",
+      "messageId": "useUnknownArrayDestructuringPattern",
+      "range": {
+        "end": {
+          "column": 68,
+          "line": 2,
+        },
+        "start": {
+          "column": 52,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/use-unknown-in-catch-callback-variable",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`use-unknown-in-catch-callback-variable > invalid 18`] = `
+{
+  "code": "
+Promise.resolve(' a string ').catch(
+  (a: any, b: () => any, c: (x: string & number) => void) => {},
+);
+      ",
+  "diagnostics": [
+    {
+      "message": "Prefer the safe \`: unknown\` for a \`catch\` callback variable.",
+      "messageId": "useUnknown",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 3,
+        },
+        "start": {
+          "column": 4,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/use-unknown-in-catch-callback-variable",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`use-unknown-in-catch-callback-variable > invalid 19`] = `
+{
+  "code": "
+Promise.resolve('object destructuring').catch(({}) => {});
+      ",
+  "diagnostics": [
+    {
+      "message": "Prefer the safe \`: unknown\` for a \`catch\` callback variable. The thrown error may be nullable, or may not have the expected shape.",
+      "messageId": "useUnknownObjectDestructuringPattern",
+      "range": {
+        "end": {
+          "column": 50,
+          "line": 2,
+        },
+        "start": {
+          "column": 48,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/use-unknown-in-catch-callback-variable",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`use-unknown-in-catch-callback-variable > invalid 20`] = `
+{
+  "code": "
+Promise.resolve('object destructuring').catch(function ({ gotcha }) {
+  return null;
+});
+      ",
+  "diagnostics": [
+    {
+      "message": "Prefer the safe \`: unknown\` for a \`catch\` callback variable. The thrown error may be nullable, or may not have the expected shape.",
+      "messageId": "useUnknownObjectDestructuringPattern",
+      "range": {
+        "end": {
+          "column": 67,
+          "line": 2,
+        },
+        "start": {
+          "column": 57,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/use-unknown-in-catch-callback-variable",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`use-unknown-in-catch-callback-variable > invalid 21`] = `
+{
+  "code": "
+Promise.resolve()['catch']((x: any) => 'return');
+      ",
+  "diagnostics": [
+    {
+      "message": "Prefer the safe \`: unknown\` for a \`catch\` callback variable.",
+      "messageId": "useUnknown",
+      "range": {
+        "end": {
+          "column": 35,
+          "line": 2,
+        },
+        "start": {
+          "column": 29,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/use-unknown-in-catch-callback-variable",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`use-unknown-in-catch-callback-variable > invalid 22`] = `
+{
+  "code": "
+Promise.reject().catch((...x: any) => {});
+      ",
+  "diagnostics": [
+    {
+      "message": "Prefer the safe \`: unknown\` for a \`catch\` callback variable.",
+      "messageId": "useUnknown",
+      "range": {
+        "end": {
+          "column": 34,
+          "line": 2,
+        },
+        "start": {
+          "column": 25,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/use-unknown-in-catch-callback-variable",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`use-unknown-in-catch-callback-variable > invalid 23`] = `
+{
+  "code": "
+Promise.resolve().catch((...[args]: [string]) => {
+  console.log(args);
+});
+      ",
+  "diagnostics": [
+    {
+      "message": "Prefer the safe \`: unknown\` for a \`catch\` callback variable.",
+      "messageId": "useUnknown",
+      "range": {
+        "end": {
+          "column": 45,
+          "line": 2,
+        },
+        "start": {
+          "column": 26,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/use-unknown-in-catch-callback-variable",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`use-unknown-in-catch-callback-variable > invalid 24`] = `
+{
+  "code": "
+Promise.resolve().catch((...{ find }: [string]) => {
+  console.log(find);
+});
+      ",
+  "diagnostics": [
+    {
+      "message": "Prefer the safe \`: unknown\` for a \`catch\` callback variable.",
+      "messageId": "useUnknown",
+      "range": {
+        "end": {
+          "column": 47,
+          "line": 2,
+        },
+        "start": {
+          "column": 26,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/use-unknown-in-catch-callback-variable",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`use-unknown-in-catch-callback-variable > invalid 25`] = `
+{
+  "code": "
+declare const condition: boolean;
+Promise.resolve('foo').then(() => {}, condition ? err => {} : err => {});
+      ",
+  "diagnostics": [
+    {
+      "message": "Prefer the safe \`: unknown\` for a \`then\` rejection callback variable.",
+      "messageId": "useUnknown",
+      "range": {
+        "end": {
+          "column": 54,
+          "line": 3,
+        },
+        "start": {
+          "column": 51,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/use-unknown-in-catch-callback-variable",
+    },
+    {
+      "message": "Prefer the safe \`: unknown\` for a \`then\` rejection callback variable.",
+      "messageId": "useUnknown",
+      "range": {
+        "end": {
+          "column": 66,
+          "line": 3,
+        },
+        "start": {
+          "column": 63,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/use-unknown-in-catch-callback-variable",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`use-unknown-in-catch-callback-variable > invalid 26`] = `
+{
+  "code": "
+declare const condition: boolean;
+declare const maybeNullishHandler: null | ((err: any) => void);
+Promise.resolve('foo').catch(
+  condition
+    ? ((err => {}, err => {}, maybeNullishHandler) ?? (err => {}))
+    : (condition && (err => {})) || (err => {}),
+);
+      ",
+  "diagnostics": [
+    {
+      "message": "Prefer the safe \`: unknown\` for a \`catch\` callback variable.",
+      "messageId": "useUnknown",
+      "range": {
+        "end": {
+          "column": 59,
+          "line": 6,
+        },
+        "start": {
+          "column": 56,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/use-unknown-in-catch-callback-variable",
+    },
+    {
+      "message": "Prefer the safe \`: unknown\` for a \`catch\` callback variable.",
+      "messageId": "useUnknown",
+      "range": {
+        "end": {
+          "column": 25,
+          "line": 7,
+        },
+        "start": {
+          "column": 22,
+          "line": 7,
+        },
+      },
+      "ruleName": "@typescript-eslint/use-unknown-in-catch-callback-variable",
+    },
+    {
+      "message": "Prefer the safe \`: unknown\` for a \`catch\` callback variable.",
+      "messageId": "useUnknown",
+      "range": {
+        "end": {
+          "column": 41,
+          "line": 7,
+        },
+        "start": {
+          "column": 38,
+          "line": 7,
+        },
+      },
+      "ruleName": "@typescript-eslint/use-unknown-in-catch-callback-variable",
+    },
+  ],
+  "errorCount": 3,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
