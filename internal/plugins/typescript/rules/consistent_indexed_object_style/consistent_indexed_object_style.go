@@ -36,6 +36,34 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 		}
 	}
 
+	typeDeclarations := map[string]*ast.Node{}
+	sourceFile := ctx.SourceFile.AsSourceFile()
+	if sourceFile != nil && sourceFile.Statements != nil {
+		for _, stmt := range sourceFile.Statements.Nodes {
+			if stmt == nil {
+				continue
+			}
+			switch stmt.Kind {
+			case ast.KindInterfaceDeclaration:
+				interfaceDecl := stmt.AsInterfaceDeclaration()
+				if interfaceDecl != nil && interfaceDecl.Name() != nil && interfaceDecl.Name().Kind == ast.KindIdentifier {
+					name := interfaceDecl.Name().AsIdentifier()
+					if name != nil {
+						typeDeclarations[name.Text] = stmt
+					}
+				}
+			case ast.KindTypeAliasDeclaration:
+				typeAliasDecl := stmt.AsTypeAliasDeclaration()
+				if typeAliasDecl != nil && typeAliasDecl.Name() != nil && typeAliasDecl.Name().Kind == ast.KindIdentifier {
+					name := typeAliasDecl.Name().AsIdentifier()
+					if name != nil {
+						typeDeclarations[name.Text] = stmt
+					}
+				}
+			}
+		}
+	}
+
 	return rule.RuleListeners{
 		// Check interfaces with index signatures
 		ast.KindInterfaceDeclaration: func(node *ast.Node) {
@@ -52,11 +80,6 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 				return
 			}
 
-			// Skip if interface extends other types
-			if interfaceDecl.HeritageClauses != nil && len(interfaceDecl.HeritageClauses.Nodes) > 0 {
-				return
-			}
-
 			// Check if interface has exactly one member and it's an index signature
 			if interfaceDecl.Members == nil || len(interfaceDecl.Members.Nodes) != 1 {
 				return
@@ -68,12 +91,20 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 			}
 
 			indexSig := member.AsIndexSignatureDeclaration()
-			if indexSig == nil {
+			if indexSig == nil || indexSig.Type == nil || indexSig.Parameters == nil || len(indexSig.Parameters.Nodes) != 1 {
+				return
+			}
+			parameter := indexSig.Parameters.Nodes[0]
+			if parameter == nil || parameter.Kind != ast.KindParameter {
+				return
+			}
+			paramDecl := parameter.AsParameterDeclaration()
+			if paramDecl == nil || paramDecl.Name() == nil || paramDecl.Name().Kind != ast.KindIdentifier || paramDecl.Type == nil {
 				return
 			}
 
 			// Check for circular references
-			if isDeeplyReferencingType(interfaceDecl.Name(), indexSig.Type) {
+			if isDeeplyReferencingType(interfaceDecl.Name(), indexSig.Type, typeDeclarations, map[*ast.Node]bool{}) {
 				return
 			}
 
@@ -110,12 +141,20 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 			}
 
 			indexSig := member.AsIndexSignatureDeclaration()
-			if indexSig == nil {
+			if indexSig == nil || indexSig.Type == nil || indexSig.Parameters == nil || len(indexSig.Parameters.Nodes) != 1 {
+				return
+			}
+			parameter := indexSig.Parameters.Nodes[0]
+			if parameter == nil || parameter.Kind != ast.KindParameter {
+				return
+			}
+			paramDecl := parameter.AsParameterDeclaration()
+			if paramDecl == nil || paramDecl.Name() == nil || paramDecl.Name().Kind != ast.KindIdentifier || paramDecl.Type == nil {
 				return
 			}
 
 			// Check for circular references - need to find the type alias name
-			if isCircularTypeReference(node, indexSig.Type) {
+			if isCircularTypeReference(node, indexSig.Type, typeDeclarations) {
 				return
 			}
 
@@ -139,9 +178,28 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 			if mappedType == nil {
 				return
 			}
+			if mappedType.TypeParameter == nil || mappedType.TypeParameter.Kind != ast.KindTypeParameter {
+				return
+			}
+			typeParam := mappedType.TypeParameter.AsTypeParameter()
+			if typeParam == nil || typeParam.Constraint == nil {
+				return
+			}
+			if typeParam.Constraint.Kind == ast.KindTypeOperator {
+				typeOperator := typeParam.Constraint.AsTypeOperatorNode()
+				if typeOperator != nil && typeOperator.Operator == ast.KindKeyOfKeyword {
+					// `[k in keyof T]` mapped types are not generally equivalent to `Record`.
+					return
+				}
+			}
 
 			// Check if mapped type can be converted to Record
 			if !canConvertMappedTypeToRecord(mappedType) {
+				return
+			}
+			// Skip circular references for mapped types in aliases,
+			// e.g. type Foo = { [key in string]: Foo };
+			if isCircularTypeReference(node, mappedType.Type, typeDeclarations) {
 				return
 			}
 
@@ -200,36 +258,11 @@ func isRecordType(typeRef *ast.TypeReferenceNode) bool {
 	}
 
 	// Must have type arguments
-	if typeRef.TypeArguments == nil || len(typeRef.TypeArguments.Nodes) < 2 {
+	if typeRef.TypeArguments == nil || len(typeRef.TypeArguments.Nodes) != 2 {
 		return false
 	}
 
-	// First type argument should be string, number, or symbol
-	firstArg := typeRef.TypeArguments.Nodes[0]
-	return isValidRecordKeyType(firstArg)
-}
-
-// isValidRecordKeyType checks if a type is a valid key type for Record
-func isValidRecordKeyType(typeNode *ast.Node) bool {
-	switch typeNode.Kind {
-	case ast.KindStringKeyword, ast.KindNumberKeyword, ast.KindSymbolKeyword:
-		return true
-	case ast.KindLiteralType:
-		return true
-	case ast.KindUnionType:
-		unionType := typeNode.AsUnionTypeNode()
-		if unionType == nil || unionType.Types == nil {
-			return false
-		}
-		// All union members should be valid key types
-		for _, t := range unionType.Types.Nodes {
-			if !isValidRecordKeyType(t) {
-				return false
-			}
-		}
-		return true
-	}
-	return false
+	return true
 }
 
 // canConvertMappedTypeToRecord checks if a mapped type can be converted to Record
@@ -249,16 +282,8 @@ func canConvertMappedTypeToRecord(mappedType *ast.MappedTypeNode) bool {
 		return false
 	}
 
-	// Check constraint
+	// Constraint is required for conversion.
 	if typeParam.Constraint == nil {
-		return false
-	}
-
-	constraint := typeParam.Constraint
-	switch constraint.Kind {
-	case ast.KindStringKeyword, ast.KindNumberKeyword, ast.KindSymbolKeyword:
-		// Valid key types
-	default:
 		return false
 	}
 
@@ -271,7 +296,12 @@ func canConvertMappedTypeToRecord(mappedType *ast.MappedTypeNode) bool {
 }
 
 // isDeeplyReferencingType checks if a type deeply references another type (circular reference)
-func isDeeplyReferencingType(name *ast.Node, typeNode *ast.Node) bool {
+func isDeeplyReferencingType(
+	name *ast.Node,
+	typeNode *ast.Node,
+	declarations map[string]*ast.Node,
+	visited map[*ast.Node]bool,
+) bool {
 	if name == nil || typeNode == nil {
 		return false
 	}
@@ -281,7 +311,7 @@ func isDeeplyReferencingType(name *ast.Node, typeNode *ast.Node) bool {
 		return false
 	}
 
-	return checkTypeReference(nameIdent.Text, typeNode)
+	return checkTypeReference(nameIdent.Text, typeNode, declarations, visited)
 }
 
 // isDeeplyReferencingTypeParam checks if a type references a type parameter
@@ -295,114 +325,225 @@ func isDeeplyReferencingTypeParam(name *ast.Node, typeNode *ast.Node) bool {
 		return false
 	}
 
-	return checkTypeReference(nameIdent.Text, typeNode)
+	return checkTypeReferenceAny(nameIdent.Text, typeNode, map[*ast.Node]bool{})
 }
 
 // checkTypeReference recursively checks if a type references a given identifier
-func checkTypeReference(targetName string, typeNode *ast.Node) bool {
+func checkTypeReference(
+	targetName string,
+	typeNode *ast.Node,
+	declarations map[string]*ast.Node,
+	visited map[*ast.Node]bool,
+) bool {
 	if typeNode == nil {
 		return false
 	}
+	if visited[typeNode] {
+		return false
+	}
+	visited[typeNode] = true
 
 	switch typeNode.Kind {
-	case ast.KindTypeReference:
-		typeRef := typeNode.AsTypeReference()
-		if typeRef != nil && typeRef.TypeName != nil {
-			if typeRef.TypeName.Kind == ast.KindIdentifier {
-				ident := typeRef.TypeName.AsIdentifier()
-				if ident != nil && ident.Text == targetName {
-					return true
-				}
-			}
-			// Check type arguments
-			if typeRef.TypeArguments != nil {
-				for _, arg := range typeRef.TypeArguments.Nodes {
-					if checkTypeReference(targetName, arg) {
-						return true
-					}
-				}
-			}
+	case ast.KindIdentifier:
+		ident := typeNode.AsIdentifier()
+		if ident == nil {
+			return false
 		}
-
-	case ast.KindArrayType:
-		arrayType := typeNode.AsArrayTypeNode()
-		if arrayType != nil && arrayType.ElementType != nil {
-			return checkTypeReference(targetName, arrayType.ElementType)
+		if ident.Text == targetName {
+			return true
 		}
-
-	case ast.KindUnionType:
-		unionType := typeNode.AsUnionTypeNode()
-		if unionType != nil && unionType.Types != nil {
-			for _, t := range unionType.Types.Nodes {
-				if checkTypeReference(targetName, t) {
-					return true
-				}
-			}
+		if decl, ok := declarations[ident.Text]; ok && decl != nil {
+			return checkTypeReference(targetName, decl, declarations, visited)
 		}
+		return false
 
-	case ast.KindIntersectionType:
-		intersectionType := typeNode.AsIntersectionTypeNode()
-		if intersectionType != nil && intersectionType.Types != nil {
-			for _, t := range intersectionType.Types.Nodes {
-				if checkTypeReference(targetName, t) {
+	case ast.KindQualifiedName:
+		qualified := typeNode.AsQualifiedName()
+		if qualified == nil || qualified.Left == nil {
+			return false
+		}
+		// Skip checking the right identifier to avoid treating namespace members
+		// (e.g. A.Foo) as direct references to local declarations.
+		return checkTypeReference(targetName, qualified.Left, declarations, visited)
+
+	case ast.KindTypeAliasDeclaration:
+		typeAlias := typeNode.AsTypeAliasDeclaration()
+		if typeAlias != nil && typeAlias.Type != nil {
+			return checkTypeReference(targetName, typeAlias.Type, declarations, visited)
+		}
+		return false
+
+	case ast.KindInterfaceDeclaration:
+		interfaceDecl := typeNode.AsInterfaceDeclaration()
+		if interfaceDecl != nil && interfaceDecl.Members != nil {
+			for _, member := range interfaceDecl.Members.Nodes {
+				if checkTypeReference(targetName, member, declarations, visited) {
 					return true
 				}
 			}
 		}
-
-	case ast.KindParenthesizedType:
-		parenType := typeNode.AsParenthesizedTypeNode()
-		if parenType != nil && parenType.Type != nil {
-			return checkTypeReference(targetName, parenType.Type)
-		}
-
-	case ast.KindTupleType:
-		tupleType := typeNode.AsTupleTypeNode()
-		if tupleType != nil && tupleType.Elements != nil {
-			for _, elem := range tupleType.Elements.Nodes {
-				if checkTypeReference(targetName, elem) {
-					return true
-				}
-			}
-		}
+		return false
 
 	case ast.KindTypeLiteral:
 		typeLiteral := typeNode.AsTypeLiteralNode()
-		if typeLiteral != nil && typeLiteral.Members != nil {
-			for _, member := range typeLiteral.Members.Nodes {
-				if checkMemberReference(targetName, member) {
-					return true
-				}
-			}
+		if typeLiteral == nil || typeLiteral.Members == nil {
+			return false
 		}
 
-	case ast.KindFunctionType, ast.KindConstructorType:
-		// For function/constructor types, check parameters and return type
-		if typeNode.Kind == ast.KindFunctionType {
-			funcType := typeNode.AsFunctionTypeNode()
-			if funcType != nil {
-				if funcType.Type != nil && checkTypeReference(targetName, funcType.Type) {
+		// Treat non-index-signature object literals as a boundary.
+		hasIndexSignature := false
+		for _, member := range typeLiteral.Members.Nodes {
+			if member != nil && member.Kind == ast.KindIndexSignature {
+				hasIndexSignature = true
+				break
+			}
+		}
+		if !hasIndexSignature {
+			return false
+		}
+
+		for _, member := range typeLiteral.Members.Nodes {
+			if checkMemberReference(targetName, member, declarations, visited) {
+				return true
+			}
+		}
+		return false
+
+	case ast.KindIndexSignature:
+		indexSig := typeNode.AsIndexSignatureDeclaration()
+		if indexSig != nil && indexSig.Type != nil {
+			return checkTypeReference(targetName, indexSig.Type, declarations, visited)
+		}
+		return false
+
+	case ast.KindTypeReference:
+		typeRef := typeNode.AsTypeReferenceNode()
+		if typeRef == nil {
+			return false
+		}
+		if typeRef.TypeName != nil && checkTypeReference(targetName, typeRef.TypeName, declarations, visited) {
+			return true
+		}
+		if typeRef.TypeArguments != nil {
+			for _, arg := range typeRef.TypeArguments.Nodes {
+				if checkTypeReference(targetName, arg, declarations, visited) {
 					return true
-				}
-				if funcType.Parameters != nil {
-					for _, param := range funcType.Parameters.Nodes {
-						paramDecl := param.AsParameterDeclaration()
-						if paramDecl != nil && paramDecl.Type != nil {
-							if checkTypeReference(targetName, paramDecl.Type) {
-								return true
-							}
-						}
-					}
 				}
 			}
 		}
+		return false
+
+	case ast.KindIndexedAccessType:
+		indexedAccessType := typeNode.AsIndexedAccessTypeNode()
+		if indexedAccessType == nil {
+			return false
+		}
+		if indexedAccessType.ObjectType != nil && checkTypeReference(targetName, indexedAccessType.ObjectType, declarations, visited) {
+			return true
+		}
+		if indexedAccessType.IndexType != nil && checkTypeReference(targetName, indexedAccessType.IndexType, declarations, visited) {
+			return true
+		}
+		return false
+
+	case ast.KindMappedType:
+		mappedType := typeNode.AsMappedTypeNode()
+		if mappedType == nil {
+			return false
+		}
+		if mappedType.Type != nil && checkTypeReference(targetName, mappedType.Type, declarations, visited) {
+			return true
+		}
+		return false
+
+	case ast.KindConditionalType:
+		conditionalType := typeNode.AsConditionalTypeNode()
+		if conditionalType == nil {
+			return false
+		}
+		if conditionalType.CheckType != nil && checkTypeReference(targetName, conditionalType.CheckType, declarations, visited) {
+			return true
+		}
+		if conditionalType.ExtendsType != nil && checkTypeReference(targetName, conditionalType.ExtendsType, declarations, visited) {
+			return true
+		}
+		if conditionalType.FalseType != nil && checkTypeReference(targetName, conditionalType.FalseType, declarations, visited) {
+			return true
+		}
+		if conditionalType.TrueType != nil && checkTypeReference(targetName, conditionalType.TrueType, declarations, visited) {
+			return true
+		}
+		return false
+
+	case ast.KindUnionType:
+		unionType := typeNode.AsUnionTypeNode()
+		if unionType == nil || unionType.Types == nil {
+			return false
+		}
+		for _, t := range unionType.Types.Nodes {
+			if checkTypeReference(targetName, t, declarations, visited) {
+				return true
+			}
+		}
+		return false
+
+	case ast.KindIntersectionType:
+		intersectionType := typeNode.AsIntersectionTypeNode()
+		if intersectionType == nil || intersectionType.Types == nil {
+			return false
+		}
+		for _, t := range intersectionType.Types.Nodes {
+			if checkTypeReference(targetName, t, declarations, visited) {
+				return true
+			}
+		}
+		return false
+
+	case ast.KindParenthesizedType:
+		parenthesizedType := typeNode.AsParenthesizedTypeNode()
+		if parenthesizedType != nil && parenthesizedType.Type != nil {
+			return checkTypeReference(targetName, parenthesizedType.Type, declarations, visited)
+		}
+		return false
 	}
 
 	return false
 }
 
+func checkTypeReferenceAny(targetName string, typeNode *ast.Node, visited map[*ast.Node]bool) bool {
+	if typeNode == nil {
+		return false
+	}
+	if visited[typeNode] {
+		return false
+	}
+	visited[typeNode] = true
+
+	if typeNode.Kind == ast.KindIdentifier {
+		ident := typeNode.AsIdentifier()
+		if ident != nil && ident.Text == targetName {
+			return true
+		}
+	}
+
+	found := false
+	typeNode.ForEachChild(func(child *ast.Node) bool {
+		if checkTypeReferenceAny(targetName, child, visited) {
+			found = true
+			return true
+		}
+		return false
+	})
+	return found
+}
+
 // checkMemberReference checks if a type member references a given identifier
-func checkMemberReference(targetName string, member *ast.Node) bool {
+func checkMemberReference(
+	targetName string,
+	member *ast.Node,
+	declarations map[string]*ast.Node,
+	visited map[*ast.Node]bool,
+) bool {
 	if member == nil {
 		return false
 	}
@@ -411,27 +552,38 @@ func checkMemberReference(targetName string, member *ast.Node) bool {
 	case ast.KindPropertySignature:
 		propSig := member.AsPropertySignatureDeclaration()
 		if propSig != nil && propSig.Type != nil {
-			return checkTypeReference(targetName, propSig.Type)
+			return checkTypeReference(targetName, propSig.Type, declarations, visited)
 		}
+		return false
 
 	case ast.KindMethodSignature:
 		methodSig := member.AsMethodSignatureDeclaration()
 		if methodSig != nil && methodSig.Type != nil {
-			return checkTypeReference(targetName, methodSig.Type)
+			return checkTypeReference(targetName, methodSig.Type, declarations, visited)
 		}
+		return false
 
 	case ast.KindIndexSignature:
 		indexSig := member.AsIndexSignatureDeclaration()
 		if indexSig != nil && indexSig.Type != nil {
-			return checkTypeReference(targetName, indexSig.Type)
+			return checkTypeReference(targetName, indexSig.Type, declarations, visited)
 		}
+		return false
 	}
 
-	return false
+	found := false
+	member.ForEachChild(func(child *ast.Node) bool {
+		if checkTypeReference(targetName, child, declarations, visited) {
+			found = true
+			return true
+		}
+		return false
+	})
+	return found
 }
 
 // isCircularTypeReference checks if a type literal in a type alias has a circular reference
-func isCircularTypeReference(typeLiteralNode *ast.Node, valueType *ast.Node) bool {
+func isCircularTypeReference(typeLiteralNode *ast.Node, valueType *ast.Node, declarations map[string]*ast.Node) bool {
 	if typeLiteralNode == nil || valueType == nil {
 		return false
 	}
@@ -442,8 +594,13 @@ func isCircularTypeReference(typeLiteralNode *ast.Node, valueType *ast.Node) boo
 		if parent.Kind == ast.KindTypeAliasDeclaration {
 			typeAlias := parent.AsTypeAliasDeclaration()
 			if typeAlias != nil && typeAlias.Name() != nil {
+				if !isPrimaryAliasTypeLiteral(typeAlias.Type, typeLiteralNode, typeAlias.Name()) {
+					return false
+				}
 				// Check if the value type references the type alias name
-				return isDeeplyReferencingType(typeAlias.Name(), valueType)
+				return isDeeplyReferencingType(typeAlias.Name(), valueType, declarations, map[*ast.Node]bool{
+					typeAlias.Name(): true,
+				})
 			}
 			break
 		}
@@ -451,4 +608,59 @@ func isCircularTypeReference(typeLiteralNode *ast.Node, valueType *ast.Node) boo
 	}
 
 	return false
+}
+
+func isPrimaryAliasTypeLiteral(aliasType *ast.Node, candidate *ast.Node, aliasNameNode *ast.Node) bool {
+	if aliasType == nil || candidate == nil {
+		return false
+	}
+	for aliasType != nil && aliasType.Kind == ast.KindParenthesizedType {
+		parenthesizedType := aliasType.AsParenthesizedTypeNode()
+		if parenthesizedType == nil {
+			break
+		}
+		aliasType = parenthesizedType.Type
+	}
+	if aliasType == candidate {
+		return true
+	}
+
+	var unionOrIntersectionParts []*ast.Node
+	switch aliasType.Kind {
+	case ast.KindUnionType:
+		unionType := aliasType.AsUnionTypeNode()
+		if unionType == nil || unionType.Types == nil {
+			return false
+		}
+		unionOrIntersectionParts = unionType.Types.Nodes
+	case ast.KindIntersectionType:
+		intersectionType := aliasType.AsIntersectionTypeNode()
+		if intersectionType == nil || intersectionType.Types == nil {
+			return false
+		}
+		unionOrIntersectionParts = intersectionType.Types.Nodes
+	default:
+		return false
+	}
+
+	aliasName := aliasNameNode.AsIdentifier()
+	if aliasName == nil {
+		return false
+	}
+
+	hasCandidate := false
+	hasAliasInOtherBranch := false
+	for _, part := range unionOrIntersectionParts {
+		if part == nil {
+			continue
+		}
+		if part == candidate {
+			hasCandidate = true
+			continue
+		}
+		if checkTypeReferenceAny(aliasName.Text, part, map[*ast.Node]bool{}) {
+			hasAliasInOtherBranch = true
+		}
+	}
+	return hasCandidate && hasAliasInOtherBranch
 }

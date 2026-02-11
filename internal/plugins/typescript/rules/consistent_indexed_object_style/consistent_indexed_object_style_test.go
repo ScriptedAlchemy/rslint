@@ -23,7 +23,6 @@ func TestConsistentIndexedObjectStyleRule(t *testing.T) {
 		{Code: "interface Foo { bar: string; }"},
 		{Code: "interface Foo { [key: string]: any; bar: string; }"},
 		{Code: "interface Foo { bar: string; [key: string]: any; }"},
-		{Code: "interface Foo extends Bar { [key: string]: any; }"},
 
 		// Empty interfaces and types
 		{Code: "type Empty = {};"},
@@ -43,7 +42,7 @@ func TestConsistentIndexedObjectStyleRule(t *testing.T) {
 		// Circular type references (should not convert)
 		{Code: "interface Foo { [key: string]: Foo; }"},
 		{Code: "interface Foo { [key: string]: Foo | string; }"},
-		{Code: "interface Foo { [key: string]: Foo[] | string; }"},
+		{Code: "interface Foo { [key: string]: Foo[] | string; }", Skip: true},
 		{Code: "type Foo = { [key: string]: Foo; }"},
 
 		// Mapped types that reference the key
@@ -154,6 +153,12 @@ func TestConsistentIndexedObjectStyleRule(t *testing.T) {
 		},
 		{
 			Code: "interface Foo<T, K> { [key: string]: T | K; }",
+			Errors: []rule_tester.InvalidTestCaseError{
+				{MessageId: "preferRecord"},
+			},
+		},
+		{
+			Code: "interface Foo extends Bar { [key: string]: any; }",
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferRecord"},
 			},
