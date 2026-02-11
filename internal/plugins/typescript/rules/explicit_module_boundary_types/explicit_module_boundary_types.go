@@ -577,7 +577,7 @@ func hasFunctionOverloadSignatures(node *ast.Node, fn *ast.FunctionDeclaration) 
 			if overload.Name() != nil {
 				continue
 			}
-			if !(ast.HasSyntacticModifier(sibling, ast.ModifierFlagsExport) && ast.HasSyntacticModifier(sibling, ast.ModifierFlagsDefault)) {
+			if !ast.HasSyntacticModifier(sibling, ast.ModifierFlagsExport) || !ast.HasSyntacticModifier(sibling, ast.ModifierFlagsDefault) {
 				continue
 			}
 		}
@@ -1008,7 +1008,7 @@ func reportExportedIdentifierFunctionReturnType(ctx rule.RuleContext, identifier
 			if arrow.Type == nil {
 				if opts.AllowHigherOrderFunctions && isHigherOrderFunctionBody(arrow.Body) {
 					reportHigherOrderReturnedFunctions(ctx, arrow.Body, opts)
-				} else if !(opts.AllowDirectConstAssertionInArrowFunctions && bodyHasDirectConstAssertion(ctx.SourceFile, arrow.Body)) {
+				} else if !opts.AllowDirectConstAssertionInArrowFunctions || !bodyHasDirectConstAssertion(ctx.SourceFile, arrow.Body) {
 					ctx.ReportRange(arrowOperatorRange(ctx.SourceFile, arrow), buildMissingReturnTypeMessage())
 				}
 			}
@@ -1164,6 +1164,9 @@ func nodeSourceText(sourceFile *ast.SourceFile, node *ast.Node) string {
 }
 
 func isExportedFunction(node *ast.Node) bool {
+	if node == nil {
+		return false
+	}
 	return ast.HasSyntacticModifier(node, ast.ModifierFlagsExport) || ast.HasSyntacticModifier(node, ast.ModifierFlagsDefault)
 }
 
@@ -1412,7 +1415,7 @@ var ExplicitModuleBoundaryTypesRule = rule.CreateRule(rule.Rule{
 						if opts.AllowHigherOrderFunctions && isHigherOrderFunctionBody(arrow.Body) {
 							reportHigherOrderReturnedFunctions(ctx, arrow.Body, opts)
 							higherOrderHandled = true
-						} else if !(opts.AllowDirectConstAssertionInArrowFunctions && bodyHasDirectConstAssertion(ctx.SourceFile, arrow.Body)) {
+						} else if !opts.AllowDirectConstAssertionInArrowFunctions || !bodyHasDirectConstAssertion(ctx.SourceFile, arrow.Body) {
 							ctx.ReportRange(arrowOperatorRange(ctx.SourceFile, arrow), buildMissingReturnTypeMessage())
 						}
 					}
