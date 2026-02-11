@@ -64,6 +64,12 @@ var NoExtraneousClassRule = rule.CreateRule(rule.Rule{
 					reportNode = node
 				}
 
+				// Classes with heritage clauses (`extends` / `implements`) can carry
+				// non-obvious semantic value and are treated as non-extraneous.
+				if classDecl.HeritageClauses != nil && len(classDecl.HeritageClauses.Nodes) > 0 {
+					return
+				}
+
 				// Check for decorators
 				hasDecorators := false
 				if classDecl.Modifiers() != nil {
@@ -199,8 +205,10 @@ var NoExtraneousClassRule = rule.CreateRule(rule.Rule{
 					return
 				}
 
-				// Report static-only class
-				if hasStaticMember && !hasNonStaticMember && !hasConstructor {
+				// Report static-only class.
+				// Upstream behavior still treats classes with only static members
+				// plus a constructor as extraneous static-only classes.
+				if hasStaticMember && !hasNonStaticMember {
 					if !opts.AllowStaticOnly {
 						ctx.ReportNode(reportNode, rule.RuleMessage{
 							Id:          "onlyStatic",

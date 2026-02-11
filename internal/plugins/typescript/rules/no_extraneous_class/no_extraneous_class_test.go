@@ -39,6 +39,13 @@ func TestNoExtraneousClassRule(t *testing.T) {
     return true;
   }
 }`, Options: map[string]interface{}{"allowStaticOnly": true}},
+			{Code: `export class Bar {
+  public static helper(): void {}
+  private static privateHelper(): boolean {
+    return true;
+  }
+  constructor() {}
+}`, Options: map[string]interface{}{"allowStaticOnly": true}},
 			{Code: `export default class {
   hello() {
     return 'I am foo!';
@@ -76,6 +83,18 @@ func TestNoExtraneousClassRule(t *testing.T) {
   private static privateHelper(): boolean {
     return true;
   }
+}`,
+				Errors: []rule_tester.InvalidTestCaseError{
+					{MessageId: "onlyStatic"},
+				},
+			},
+			{
+				Code: `export class Bar {
+  public static helper(): void {}
+  private static privateHelper(): boolean {
+    return true;
+  }
+  constructor() {}
 }`,
 				Errors: []rule_tester.InvalidTestCaseError{
 					{MessageId: "onlyStatic"},
