@@ -36,6 +36,30 @@ func safeTypeParameters(node *ast.Node) (params []*ast.Node) {
 	return node.TypeParameters()
 }
 
+func nodeDeclaresTypeParameters(node *ast.Node) bool {
+	if node == nil {
+		return false
+	}
+	switch node.Kind {
+	case ast.KindFunctionDeclaration,
+		ast.KindFunctionExpression,
+		ast.KindArrowFunction,
+		ast.KindMethodDeclaration,
+		ast.KindMethodSignature,
+		ast.KindCallSignature,
+		ast.KindConstructSignature,
+		ast.KindFunctionType,
+		ast.KindConstructorType,
+		ast.KindClassDeclaration,
+		ast.KindClassExpression,
+		ast.KindInterfaceDeclaration,
+		ast.KindTypeAliasDeclaration:
+		return true
+	default:
+		return false
+	}
+}
+
 func nodeText(sourceFile *ast.SourceFile, node *ast.Node) string {
 	if sourceFile == nil || node == nil {
 		return ""
@@ -76,7 +100,7 @@ func countTypeParameterIdentifierReferences(node *ast.Node, typeParamName string
 		}
 
 		currentShadowed := isShadowed
-		if !currentShadowed {
+		if !currentShadowed && nodeDeclaresTypeParameters(node) {
 			for _, typeParameterNode := range safeTypeParameters(node) {
 				if typeParameterNode == nil || typeParameterNode.Kind != ast.KindTypeParameter {
 					continue
@@ -184,7 +208,8 @@ func checkFunctionLike(ctx rule.RuleContext, typeParams []*ast.Node, params []*a
 			count += countTypeParameterReferencesInReturnTypeArguments(body, name)
 			count += countTypedParameterMentionsInReturnExpressions(params, body, name)
 		}
-		count += countWrappedTypeParameterUsagesInParameters(params, name)
+		count += countTypeReferenceWrappedUsagesInParameters(params, name)
+		count += countTypeReferenceWrappedUsagesInTypeNode(returnType, name)
 		if count <= 1 && implicitReturnUsesTypeParam(params, body, name) {
 			count++
 		}
@@ -487,33 +512,40 @@ func countTypedParameterMentionsInReturnExpressions(params []*ast.Node, body *as
 	return total
 }
 
-func isBareTypeParameterTypeNode(typeNode *ast.Node, typeParamName string) bool {
+func countTypeReferenceWrappedUsagesInTypeNode(typeNode *ast.Node, typeParamName string) int {
 	if typeNode == nil {
-		return false
+		return 0
 	}
-	typeNode = ast.SkipParentheses(typeNode)
-	if typeNode == nil {
-		return false
-	}
-	switch typeNode.Kind {
-	case ast.KindIdentifier:
-		identifier := typeNode.AsIdentifier()
-		return identifier != nil && identifier.Text == typeParamName
-	case ast.KindTypeReference:
-		typeRef := typeNode.AsTypeReferenceNode()
-		if typeRef == nil || typeRef.TypeName == nil || typeRef.TypeName.Kind != ast.KindIdentifier {
-			return false
+
+	total := 0
+	var walk func(node *ast.Node)
+	walk = func(node *ast.Node) {
+		if node == nil {
+			return
 		}
-		if typeRef.TypeArguments != nil && len(typeRef.TypeArguments.Nodes) > 0 {
-			return false
+		if node.Kind == ast.KindTypeReference {
+			typeRef := node.AsTypeReferenceNode()
+			if typeRef != nil && typeRef.TypeName != nil && typeRef.TypeName.Kind == ast.KindIdentifier && typeRef.TypeName.AsIdentifier().Text != typeParamName {
+				if typeRef.TypeArguments != nil {
+					for _, typeArgument := range typeRef.TypeArguments.Nodes {
+						if countTypeParameterIdentifierReferences(typeArgument, typeParamName) > 0 {
+							total++
+							break
+						}
+					}
+				}
+			}
 		}
-		return typeRef.TypeName.AsIdentifier().Text == typeParamName
-	default:
-		return false
+		node.ForEachChild(func(child *ast.Node) bool {
+			walk(child)
+			return false
+		})
 	}
+	walk(typeNode)
+	return total
 }
 
-func countWrappedTypeParameterUsagesInParameters(params []*ast.Node, typeParamName string) int {
+func countTypeReferenceWrappedUsagesInParameters(params []*ast.Node, typeParamName string) int {
 	total := 0
 	for _, param := range params {
 		if param == nil || param.Kind != ast.KindParameter {
@@ -523,12 +555,7 @@ func countWrappedTypeParameterUsagesInParameters(params []*ast.Node, typeParamNa
 		if decl == nil || decl.Type == nil {
 			continue
 		}
-		if countTypeParameterIdentifierReferences(decl.Type, typeParamName) == 0 {
-			continue
-		}
-		if !isBareTypeParameterTypeNode(decl.Type, typeParamName) {
-			total++
-		}
+		total += countTypeReferenceWrappedUsagesInTypeNode(decl.Type, typeParamName)
 	}
 	return total
 }
