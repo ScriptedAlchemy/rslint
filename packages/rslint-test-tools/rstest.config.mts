@@ -124,7 +124,7 @@ export default defineConfig({
     './tests/typescript-eslint/rules/no-unsafe-function-type.test.ts',
     './tests/typescript-eslint/rules/no-unsafe-member-access.test.ts',
     './tests/typescript-eslint/rules/no-unsafe-return.test.ts',
-    // './tests/typescript-eslint/rules/no-unsafe-type-assertion.test.ts',
+    './tests/typescript-eslint/rules/no-unsafe-type-assertion.test.ts',
     './tests/typescript-eslint/rules/no-unsafe-unary-minus.test.ts',
     './tests/typescript-eslint/rules/no-unused-expressions.test.ts',
     './tests/typescript-eslint/rules/no-unused-private-class-members.test.ts',
