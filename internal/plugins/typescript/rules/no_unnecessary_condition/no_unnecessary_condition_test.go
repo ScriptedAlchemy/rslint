@@ -124,6 +124,54 @@ const y = x ?? 'default';`,
 					Column:    11,
 				}},
 			},
+			{
+				Code: `
+[1, 3, 5].filter(() => true);
+[1, 2, 3].find(() => {
+	return false;
+});
+`,
+				Errors: []rule_tester.InvalidTestCaseError{
+					{
+						MessageId: "alwaysTruthy",
+						Line:      2,
+						Column:    24,
+					},
+					{
+						MessageId: "alwaysFalsy",
+						Line:      4,
+						Column:    9,
+					},
+				},
+			},
+			{
+				Code: `
+function truthy() {
+	return [];
+}
+function falsy() {}
+[1, 3, 5].filter(truthy);
+[1, 2, 3].find(falsy);
+[1, 2, 3].findLastIndex(falsy);
+`,
+				Errors: []rule_tester.InvalidTestCaseError{
+					{
+						MessageId: "alwaysTruthyFunc",
+						Line:      6,
+						Column:    18,
+					},
+					{
+						MessageId: "alwaysFalsyFunc",
+						Line:      7,
+						Column:    16,
+					},
+					{
+						MessageId: "alwaysFalsyFunc",
+						Line:      8,
+						Column:    25,
+					},
+				},
+			},
 		},
 	)
 }

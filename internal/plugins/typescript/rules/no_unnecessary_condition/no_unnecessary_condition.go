@@ -83,6 +83,20 @@ func buildAlwaysTruthyMessage() rule.RuleMessage {
 	}
 }
 
+func buildAlwaysFalsyFuncMessage() rule.RuleMessage {
+	return rule.RuleMessage{
+		Id:          "alwaysFalsyFunc",
+		Description: "Unnecessary conditional, function always returns a falsy value.",
+	}
+}
+
+func buildAlwaysTruthyFuncMessage() rule.RuleMessage {
+	return rule.RuleMessage{
+		Id:          "alwaysTruthyFunc",
+		Description: "Unnecessary conditional, function always returns a truthy value.",
+	}
+}
+
 func buildNeverMessage() rule.RuleMessage {
 	return rule.RuleMessage{
 		Id:          "never",
@@ -918,6 +932,226 @@ func isAllowedConstantLoopCondition(ctx rule.RuleContext, node *ast.Node, mode s
 	return false
 }
 
+var arrayPredicateMethodNames = map[string]bool{
+	"filter":        true,
+	"find":          true,
+	"findLast":      true,
+	"findIndex":     true,
+	"findLastIndex": true,
+	"some":          true,
+	"every":         true,
+}
+
+func isArrayLikeReceiver(ctx rule.RuleContext, node *ast.Node) bool {
+	if ctx.TypeChecker == nil || node == nil {
+		return false
+	}
+
+	isArrayOrIntersection := func(t *checker.Type) bool {
+		if t == nil {
+			return false
+		}
+		if utils.IsTypeFlagSet(t, checker.TypeFlagsIntersection) {
+			parts := t.Types()
+			if len(parts) == 0 {
+				return false
+			}
+			for _, part := range parts {
+				if !checker.Checker_isArrayOrTupleType(ctx.TypeChecker, part) {
+					return false
+				}
+			}
+			return true
+		}
+		return checker.Checker_isArrayOrTupleType(ctx.TypeChecker, t)
+	}
+
+	t := utils.GetConstrainedTypeAtLocation(ctx.TypeChecker, node)
+	parts := utils.UnionTypeParts(t)
+	if len(parts) == 0 {
+		parts = []*checker.Type{t}
+	}
+	hasArrayLike := false
+	for _, part := range parts {
+		if part == nil {
+			continue
+		}
+		if utils.IsTypeFlagSet(part, checker.TypeFlagsNull|checker.TypeFlagsUndefined) {
+			continue
+		}
+		if !isArrayOrIntersection(part) {
+			return false
+		}
+		hasArrayLike = true
+	}
+	return hasArrayLike
+}
+
+func getCallMethodName(ctx rule.RuleContext, expr *ast.Node) (string, *ast.Node, bool) {
+	if expr == nil {
+		return "", nil, false
+	}
+	expr = ast.SkipParentheses(expr)
+	switch expr.Kind {
+	case ast.KindPropertyAccessExpression:
+		access := expr.AsPropertyAccessExpression()
+		if access == nil || access.Name() == nil {
+			return "", nil, false
+		}
+		return access.Name().Text(), access.Expression, true
+	case ast.KindElementAccessExpression:
+		access := expr.AsElementAccessExpression()
+		if access == nil || access.Expression == nil || access.ArgumentExpression == nil {
+			return "", nil, false
+		}
+		value, ok := staticLiteralValue(ctx, access.ArgumentExpression, 0)
+		if !ok {
+			return "", nil, false
+		}
+		methodName, ok := value.(string)
+		if !ok {
+			return "", nil, false
+		}
+		return methodName, access.Expression, true
+	}
+	return "", nil, false
+}
+
+func collectReturnExpressionsSkippingNestedFunctions(node *ast.Node, skipNestedFunctions bool, out *[]*ast.Node) {
+	if node == nil {
+		return
+	}
+	if node.Kind == ast.KindReturnStatement {
+		returnStatement := node.AsReturnStatement()
+		if returnStatement != nil && returnStatement.Expression != nil {
+			*out = append(*out, returnStatement.Expression)
+		}
+		return
+	}
+	if skipNestedFunctions && ast.IsFunctionLike(node) {
+		return
+	}
+	node.ForEachChild(func(child *ast.Node) bool {
+		collectReturnExpressionsSkippingNestedFunctions(child, true, out)
+		return false
+	})
+}
+
+func reportPredicateInlineCallbackReturnConditions(ctx rule.RuleContext, callback *ast.Node) bool {
+	if callback == nil {
+		return false
+	}
+	switch callback.Kind {
+	case ast.KindArrowFunction:
+		arrow := callback.AsArrowFunction()
+		if arrow == nil || arrow.Body == nil {
+			return false
+		}
+		bodyNode := arrow.Body.AsNode()
+		if bodyNode == nil {
+			return false
+		}
+		if bodyNode.Kind != ast.KindBlock {
+			checkCondition(ctx, bodyNode, false)
+			return true
+		}
+		returnExprs := []*ast.Node{}
+		collectReturnExpressionsSkippingNestedFunctions(bodyNode, false, &returnExprs)
+		for _, expr := range returnExprs {
+			checkCondition(ctx, expr, false)
+		}
+		return true
+	case ast.KindFunctionExpression:
+		functionExpression := callback.AsFunctionExpression()
+		if functionExpression == nil || functionExpression.Body == nil {
+			return false
+		}
+		returnExprs := []*ast.Node{}
+		collectReturnExpressionsSkippingNestedFunctions(functionExpression.Body.AsNode(), false, &returnExprs)
+		for _, expr := range returnExprs {
+			checkCondition(ctx, expr, false)
+		}
+		return true
+	}
+	return false
+}
+
+func callbackFunctionReturnTruthiness(ctx rule.RuleContext, callback *ast.Node) (bool, bool) {
+	if callback == nil || ctx.TypeChecker == nil {
+		return false, false
+	}
+	callbackType := ctx.TypeChecker.GetTypeAtLocation(callback)
+	if callbackType == nil {
+		return false, false
+	}
+	signatures := utils.GetCallSignatures(ctx.TypeChecker, callbackType)
+	if len(signatures) == 0 {
+		return false, false
+	}
+
+	allTruthy := true
+	allFalsy := true
+	anyReturnType := false
+
+	for _, signature := range signatures {
+		if signature == nil {
+			continue
+		}
+		returnType := checker.Checker_getReturnTypeOfSignature(ctx.TypeChecker, signature)
+		if returnType == nil {
+			continue
+		}
+		anyReturnType = true
+		returnsTruthy := isAlwaysTruthy(returnType, ctx.TypeChecker)
+		returnsFalsy := isAlwaysFalsy(returnType, ctx.TypeChecker)
+		if !returnsTruthy {
+			allTruthy = false
+		}
+		if !returnsFalsy {
+			allFalsy = false
+		}
+	}
+
+	if !anyReturnType {
+		return false, false
+	}
+	if allTruthy && !allFalsy {
+		return true, true
+	}
+	if allFalsy && !allTruthy {
+		return true, false
+	}
+	return false, false
+}
+
+func checkArrayPredicateCallback(ctx rule.RuleContext, node *ast.Node) {
+	call := node.AsCallExpression()
+	if call == nil || call.Expression == nil || call.Arguments == nil || len(call.Arguments.Nodes) == 0 {
+		return
+	}
+	methodName, receiver, ok := getCallMethodName(ctx, call.Expression)
+	if !ok || !arrayPredicateMethodNames[methodName] || !isArrayLikeReceiver(ctx, receiver) {
+		return
+	}
+
+	callback := call.Arguments.Nodes[0]
+	if callback == nil {
+		return
+	}
+
+	if reportPredicateInlineCallbackReturnConditions(ctx, callback) {
+		return
+	}
+
+	if known, truthy := callbackFunctionReturnTruthiness(ctx, callback); known {
+		if truthy {
+			ctx.ReportNode(callback, buildAlwaysTruthyFuncMessage())
+		} else {
+			ctx.ReportNode(callback, buildAlwaysFalsyFuncMessage())
+		}
+	}
+}
+
 // isBooleanOperator checks if a token kind represents a boolean comparison operator
 func isBooleanOperator(kind ast.Kind) bool {
 	switch kind {
@@ -1312,6 +1546,9 @@ var NoUnnecessaryConditionRule = rule.CreateRule(rule.Rule{
 						return
 					}
 				}
+			},
+			ast.KindCallExpression: func(node *ast.Node) {
+				checkArrayPredicateCallback(ctx, node)
 			},
 			ast.KindCaseClause: func(node *ast.Node) {
 				if node == nil || node.Expression() == nil || node.Parent == nil || node.Parent.Parent == nil || node.Parent.Parent.Expression() == nil {
