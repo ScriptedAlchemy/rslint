@@ -29,9 +29,22 @@ type NoMeaninglessVoidOperatorOptions struct {
 var NoMeaninglessVoidOperatorRule = rule.CreateRule(rule.Rule{
 	Name: "no-meaningless-void-operator",
 	Run: func(ctx rule.RuleContext, options any) rule.RuleListeners {
-		opts, ok := options.(NoMeaninglessVoidOperatorOptions)
-		if !ok {
-			opts = NoMeaninglessVoidOperatorOptions{}
+		opts := NoMeaninglessVoidOperatorOptions{}
+		if typedOpts, ok := options.(NoMeaninglessVoidOperatorOptions); ok {
+			opts = typedOpts
+		} else if options != nil {
+			var optsMap map[string]interface{}
+			var ok bool
+			if optArray, isArray := options.([]interface{}); isArray && len(optArray) > 0 {
+				optsMap, ok = optArray[0].(map[string]interface{})
+			} else {
+				optsMap, ok = options.(map[string]interface{})
+			}
+			if ok {
+				if checkNever, hasCheckNever := optsMap["checkNever"].(bool); hasCheckNever {
+					opts.CheckNever = utils.Ref(checkNever)
+				}
+			}
 		}
 		if opts.CheckNever == nil {
 			opts.CheckNever = utils.Ref(false)
