@@ -1,6 +1,8 @@
 package no_misused_spread
 
 import (
+	"encoding/json"
+
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/microsoft/typescript-go/shim/checker"
 	"github.com/microsoft/typescript-go/shim/compiler"
@@ -75,8 +77,80 @@ func buildReplaceMapSpreadInObjectMessage() rule.RuleMessage {
 }
 
 type NoMisusedSpreadOptions struct {
-	Allow       []utils.TypeOrValueSpecifier
-	AllowInline []string
+	Allow       []utils.TypeOrValueSpecifier `json:"allow"`
+	AllowInline []string                     `json:"allowInline"`
+}
+
+func parseOptions(options any) NoMisusedSpreadOptions {
+	opts := NoMisusedSpreadOptions{
+		Allow:       []utils.TypeOrValueSpecifier{},
+		AllowInline: []string{},
+	}
+
+	parseAllow := func(rawAllow any) {
+		values, ok := rawAllow.([]interface{})
+		if !ok {
+			return
+		}
+		for _, value := range values {
+			switch typed := value.(type) {
+			case string:
+				opts.AllowInline = append(opts.AllowInline, typed)
+			case map[string]interface{}:
+				b, err := json.Marshal(typed)
+				if err != nil {
+					continue
+				}
+				var specifier utils.TypeOrValueSpecifier
+				if err := json.Unmarshal(b, &specifier); err != nil {
+					continue
+				}
+				opts.Allow = append(opts.Allow, specifier)
+			}
+		}
+	}
+
+	applyMap := func(raw map[string]interface{}) {
+		if raw == nil {
+			return
+		}
+		if allow, ok := raw["allow"]; ok {
+			parseAllow(allow)
+		}
+		if allowInline, ok := raw["allowInline"].([]interface{}); ok {
+			for _, value := range allowInline {
+				if name, ok := value.(string); ok {
+					opts.AllowInline = append(opts.AllowInline, name)
+				}
+			}
+		}
+	}
+
+	switch raw := options.(type) {
+	case NoMisusedSpreadOptions:
+		opts = raw
+	case *NoMisusedSpreadOptions:
+		if raw != nil {
+			opts = *raw
+		}
+	case map[string]interface{}:
+		applyMap(raw)
+	case []interface{}:
+		if len(raw) > 0 {
+			if firstMap, ok := raw[0].(map[string]interface{}); ok {
+				applyMap(firstMap)
+			}
+		}
+	}
+
+	if opts.Allow == nil {
+		opts.Allow = []utils.TypeOrValueSpecifier{}
+	}
+	if opts.AllowInline == nil {
+		opts.AllowInline = []string{}
+	}
+
+	return opts
 }
 
 func isString(t *checker.Type) bool {
@@ -153,16 +227,7 @@ func isClassDeclaration(t *checker.Type) bool {
 var NoMisusedSpreadRule = rule.CreateRule(rule.Rule{
 	Name: "no-misused-spread",
 	Run: func(ctx rule.RuleContext, options any) rule.RuleListeners {
-		opts, ok := options.(NoMisusedSpreadOptions)
-		if !ok {
-			opts = NoMisusedSpreadOptions{}
-		}
-		if opts.Allow == nil {
-			opts.Allow = []utils.TypeOrValueSpecifier{}
-		}
-		if opts.AllowInline == nil {
-			opts.AllowInline = []string{}
-		}
+		opts := parseOptions(options)
 
 		checkArrayOrCallSpread := func(node *ast.Node) {
 			t := utils.GetConstrainedTypeAtLocation(ctx.TypeChecker, node.AsSpreadElement().Expression)
