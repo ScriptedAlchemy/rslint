@@ -3,6 +3,7 @@ package promise_function_async
 import (
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/microsoft/typescript-go/shim/checker"
+	"github.com/microsoft/typescript-go/shim/core"
 	"github.com/web-infra-dev/rslint/internal/rule"
 	"github.com/web-infra-dev/rslint/internal/utils"
 )
@@ -11,6 +12,13 @@ func buildMissingAsyncMessage() rule.RuleMessage {
 	return rule.RuleMessage{
 		Id:          "missingAsync",
 		Description: "Functions that return promises must be async.",
+	}
+}
+
+func buildMissingAsyncHybridReturnMessage() rule.RuleMessage {
+	return rule.RuleMessage{
+		Id:          "missingAsyncHybridReturn",
+		Description: "Functions that return promises and non-promises must be async.",
 	}
 }
 
@@ -24,31 +32,81 @@ type PromiseFunctionAsyncOptions struct {
 	CheckMethodDeclarations   *bool
 }
 
+func parseOptions(options any) PromiseFunctionAsyncOptions {
+	opts := PromiseFunctionAsyncOptions{}
+
+	applyMap := func(raw map[string]interface{}) {
+		if raw == nil {
+			return
+		}
+		if v, ok := raw["allowAny"].(bool); ok {
+			opts.AllowAny = utils.Ref(v)
+		}
+		if names, ok := raw["allowedPromiseNames"].([]interface{}); ok {
+			opts.AllowedPromiseNames = make([]string, 0, len(names))
+			for _, name := range names {
+				if text, ok := name.(string); ok {
+					opts.AllowedPromiseNames = append(opts.AllowedPromiseNames, text)
+				}
+			}
+		}
+		if v, ok := raw["checkArrowFunctions"].(bool); ok {
+			opts.CheckArrowFunctions = utils.Ref(v)
+		}
+		if v, ok := raw["checkFunctionDeclarations"].(bool); ok {
+			opts.CheckFunctionDeclarations = utils.Ref(v)
+		}
+		if v, ok := raw["checkFunctionExpressions"].(bool); ok {
+			opts.CheckFunctionExpressions = utils.Ref(v)
+		}
+		if v, ok := raw["checkMethodDeclarations"].(bool); ok {
+			opts.CheckMethodDeclarations = utils.Ref(v)
+		}
+	}
+
+	switch raw := options.(type) {
+	case PromiseFunctionAsyncOptions:
+		opts = raw
+	case *PromiseFunctionAsyncOptions:
+		if raw != nil {
+			opts = *raw
+		}
+	case map[string]interface{}:
+		applyMap(raw)
+	case []interface{}:
+		if len(raw) > 0 {
+			if firstMap, ok := raw[0].(map[string]interface{}); ok {
+				applyMap(firstMap)
+			}
+		}
+	}
+
+	if opts.AllowAny == nil {
+		opts.AllowAny = utils.Ref(true)
+	}
+	if opts.AllowedPromiseNames == nil {
+		opts.AllowedPromiseNames = []string{}
+	}
+	if opts.CheckArrowFunctions == nil {
+		opts.CheckArrowFunctions = utils.Ref(true)
+	}
+	if opts.CheckFunctionDeclarations == nil {
+		opts.CheckFunctionDeclarations = utils.Ref(true)
+	}
+	if opts.CheckFunctionExpressions == nil {
+		opts.CheckFunctionExpressions = utils.Ref(true)
+	}
+	if opts.CheckMethodDeclarations == nil {
+		opts.CheckMethodDeclarations = utils.Ref(true)
+	}
+
+	return opts
+}
+
 var PromiseFunctionAsyncRule = rule.CreateRule(rule.Rule{
 	Name: "promise-function-async",
 	Run: func(ctx rule.RuleContext, options any) rule.RuleListeners {
-		opts, ok := options.(PromiseFunctionAsyncOptions)
-		if !ok {
-			opts = PromiseFunctionAsyncOptions{}
-		}
-		if opts.AllowAny == nil {
-			opts.AllowAny = utils.Ref(true)
-		}
-		if opts.AllowedPromiseNames == nil {
-			opts.AllowedPromiseNames = []string{}
-		}
-		if opts.CheckArrowFunctions == nil {
-			opts.CheckArrowFunctions = utils.Ref(true)
-		}
-		if opts.CheckFunctionDeclarations == nil {
-			opts.CheckFunctionDeclarations = utils.Ref(true)
-		}
-		if opts.CheckFunctionExpressions == nil {
-			opts.CheckFunctionExpressions = utils.Ref(true)
-		}
-		if opts.CheckMethodDeclarations == nil {
-			opts.CheckMethodDeclarations = utils.Ref(true)
-		}
+		opts := parseOptions(options)
 
 		allAllowedPromiseNames := utils.NewSetWithSizeHint[string](len(opts.AllowedPromiseNames))
 		allAllowedPromiseNames.Add("Promise")
@@ -107,6 +165,8 @@ var PromiseFunctionAsyncRule = rule.CreateRule(rule.Rule{
 			}
 
 			everySignatureReturnsPromise := true
+			hasHybridReturn := false
+			hasExplicitReturnType := node.Type() != nil
 			for _, signature := range signatures {
 				returnType := checker.Checker_getReturnTypeOfSignature(ctx.TypeChecker, signature)
 				if !*opts.AllowAny && utils.IsTypeFlagSet(returnType, checker.TypeFlagsAnyOrUnknown) {
@@ -116,12 +176,16 @@ var PromiseFunctionAsyncRule = rule.CreateRule(rule.Rule{
 					return
 				}
 
-				// require all potential return types to be promise/any/unknown
-				everySignatureReturnsPromise = everySignatureReturnsPromise && containsAllTypesByName(
-					returnType,
-					// If no return type is explicitly set, we check if any parts of the return type match a Promise (instead of requiring all to match).
-					node.Type() != nil,
-				)
+				hasPromiseReturn := containsAllTypesByName(returnType, false)
+				allPromiseReturn := containsAllTypesByName(returnType, true)
+				signatureQualifies := hasPromiseReturn
+				if hasExplicitReturnType {
+					signatureQualifies = allPromiseReturn
+				}
+				everySignatureReturnsPromise = everySignatureReturnsPromise && signatureQualifies
+				if !hasExplicitReturnType && hasPromiseReturn && !allPromiseReturn {
+					hasHybridReturn = true
+				}
 			}
 
 			if !everySignatureReturnsPromise {
@@ -129,11 +193,44 @@ var PromiseFunctionAsyncRule = rule.CreateRule(rule.Rule{
 			}
 
 			insertAsyncBeforeNode := node
+			reportMethodWithRange := false
+			reportStart := node.Pos()
 			if ast.IsMethodDeclaration(node) {
 				insertAsyncBeforeNode = node.Name()
+				hasDecorator := false
+				if modifiers := node.Modifiers(); modifiers != nil {
+					for _, modifier := range modifiers.Nodes {
+						if modifier == nil {
+							continue
+						}
+						if modifier.Kind == ast.KindDecorator {
+							hasDecorator = true
+						}
+					}
+				}
+				if hasDecorator && node.Name() != nil {
+					reportMethodWithRange = true
+					reportStart = node.Name().Pos()
+					sourceText := ctx.SourceFile.Text()
+					for reportStart > 0 && sourceText[reportStart-1] != '\n' && sourceText[reportStart-1] != '\r' {
+						reportStart--
+					}
+					for reportStart < len(sourceText) && (sourceText[reportStart] == ' ' || sourceText[reportStart] == '\t') {
+						reportStart++
+					}
+				}
 			}
-			// TODO(port): getFunctionHeadLoc
-			ctx.ReportNodeWithFixes(node, buildMissingAsyncMessage(), rule.RuleFixInsertBefore(ctx.SourceFile, insertAsyncBeforeNode, " async "))
+
+			fix := rule.RuleFixInsertBefore(ctx.SourceFile, insertAsyncBeforeNode, " async ")
+			message := buildMissingAsyncMessage()
+			if hasHybridReturn {
+				message = buildMissingAsyncHybridReturnMessage()
+			}
+			if reportMethodWithRange {
+				ctx.ReportRangeWithFixes(core.NewTextRange(reportStart, node.End()), message, fix)
+				return
+			}
+			ctx.ReportNodeWithFixes(node, message, fix)
 		}
 
 		if *opts.CheckArrowFunctions {

@@ -672,7 +672,7 @@ class Test {
 			Errors: []rule_tester.InvalidTestCaseError{
 				{
 					MessageId: "missingAsync",
-					Line:      3,
+					Line:      4,
 					Column:    3,
 				},
 			},
@@ -710,7 +710,7 @@ class Test {
 			Errors: []rule_tester.InvalidTestCaseError{
 				{
 					MessageId: "missingAsync",
-					Line:      3,
+					Line:      4,
 					Column:    3,
 				},
 				{
@@ -772,7 +772,7 @@ class Foo {
 				},
 				{
 					MessageId: "missingAsync",
-					Line:      11,
+					Line:      12,
 					Column:    3,
 				},
 			},
@@ -815,7 +815,7 @@ function promiseInUnionWithoutExplicitReturnType(p: boolean) {
 			},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{
-					MessageId: "missingAsync",
+					MessageId: "missingAsyncHybridReturn",
 				},
 			},
 		},

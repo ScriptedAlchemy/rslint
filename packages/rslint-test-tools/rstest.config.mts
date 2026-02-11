@@ -158,7 +158,7 @@ export default defineConfig({
     './tests/typescript-eslint/rules/prefer-return-this-type.test.ts',
     './tests/typescript-eslint/rules/prefer-string-starts-ends-with.test.ts',
     './tests/typescript-eslint/rules/prefer-ts-expect-error.test.ts',
-    // './tests/typescript-eslint/rules/promise-function-async.test.ts',
+    './tests/typescript-eslint/rules/promise-function-async.test.ts',
     './tests/typescript-eslint/rules/related-getter-setter-pairs.test.ts',
     // './tests/typescript-eslint/rules/require-array-sort-compare.test.ts',
     './tests/typescript-eslint/rules/require-await.test.ts',
