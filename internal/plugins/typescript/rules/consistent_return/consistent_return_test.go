@@ -108,7 +108,7 @@ func TestConsistentReturnRule(t *testing.T) {
 		{
 			Code: `function foo() { if (true) return; return 1; }`,
 			Errors: []rule_tester.InvalidTestCaseError{
-				{MessageId: "missingReturnValue"},
+				{MessageId: "unexpectedReturnValue"},
 			},
 		},
 		{
