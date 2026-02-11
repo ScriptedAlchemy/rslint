@@ -19,6 +19,7 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 	opts := ConsistentGenericConstructorsOptions{
 		Style: "constructor", // default
 	}
+	isIsolatedDeclarations := ctx.ParserOptions != nil && ctx.ParserOptions.IsolatedDeclarations
 
 	// Parse options
 	if options != nil {
@@ -117,6 +118,9 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 		if opts.Style == "constructor" {
 			// Prefer constructor style
 			if hasTypeArgsOnAnnotation && !hasTypeArgsOnConstructor {
+				if isIsolatedDeclarations {
+					return
+				}
 				// Report: type args should be on constructor
 				ctx.ReportNode(node, rule.RuleMessage{
 					Id:          "preferConstructor",

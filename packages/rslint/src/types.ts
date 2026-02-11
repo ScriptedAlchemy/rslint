@@ -48,6 +48,7 @@ export interface LanguageOptions {
 export interface ParserOptions {
   projectService?: boolean;
   project?: string[] | string;
+  isolatedDeclarations?: boolean;
   sourceType?: 'module' | 'script';
   ecmaVersion?: number;
   ecmaFeatures?: {

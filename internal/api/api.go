@@ -131,12 +131,13 @@ func (p *ProjectPaths) UnmarshalJSON(data []byte) error {
 
 // ParserOptions contains parser-specific configuration
 type ParserOptions struct {
-	ProjectService  bool          `json:"projectService"`
-	Project         ProjectPaths  `json:"project,omitempty"`
-	TsconfigRootDir string        `json:"tsconfigRootDir,omitempty"`
-	SourceType      string        `json:"sourceType,omitempty"`
-	EcmaVersion     int           `json:"ecmaVersion,omitempty"`
-	EcmaFeatures    *EcmaFeatures `json:"ecmaFeatures,omitempty"`
+	ProjectService       bool          `json:"projectService"`
+	Project              ProjectPaths  `json:"project,omitempty"`
+	TsconfigRootDir      string        `json:"tsconfigRootDir,omitempty"`
+	SourceType           string        `json:"sourceType,omitempty"`
+	EcmaVersion          int           `json:"ecmaVersion,omitempty"`
+	IsolatedDeclarations bool          `json:"isolatedDeclarations,omitempty"`
+	EcmaFeatures         *EcmaFeatures `json:"ecmaFeatures,omitempty"`
 }
 type ByteArray []byte
 

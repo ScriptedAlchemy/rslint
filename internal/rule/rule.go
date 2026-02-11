@@ -167,9 +167,10 @@ type RuleEcmaFeatures struct {
 }
 
 type RuleParserOptions struct {
-	SourceType   string
-	EcmaVersion  int
-	EcmaFeatures *RuleEcmaFeatures
+	SourceType           string
+	EcmaVersion          int
+	IsolatedDeclarations bool
+	EcmaFeatures         *RuleEcmaFeatures
 }
 
 type RuleContext struct {

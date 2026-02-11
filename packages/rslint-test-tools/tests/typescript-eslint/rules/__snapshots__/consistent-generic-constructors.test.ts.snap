@@ -1,0 +1,1039 @@
+// Rstest Snapshot v1
+
+exports[`consistent-generic-constructors > invalid 1`] = `
+{
+  "code": "const a: Foo<string> = new Foo();",
+  "diagnostics": [
+    {
+      "message": "The generic type arguments should be specified as part of the constructor type arguments.",
+      "messageId": "preferConstructor",
+      "range": {
+        "end": {
+          "column": 33,
+          "line": 1,
+        },
+        "start": {
+          "column": 7,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/consistent-generic-constructors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "const a = new Foo<string>();",
+  "ruleCount": 1,
+}
+`;
+
+exports[`consistent-generic-constructors > invalid 2`] = `
+{
+  "code": "const a: Map<string, number> = new Map();",
+  "diagnostics": [
+    {
+      "message": "The generic type arguments should be specified as part of the constructor type arguments.",
+      "messageId": "preferConstructor",
+      "range": {
+        "end": {
+          "column": 41,
+          "line": 1,
+        },
+        "start": {
+          "column": 7,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/consistent-generic-constructors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "const a = new Map<string, number>();",
+  "ruleCount": 1,
+}
+`;
+
+exports[`consistent-generic-constructors > invalid 3`] = `
+{
+  "code": "const a: Map <string, number> = new Map();",
+  "diagnostics": [
+    {
+      "message": "The generic type arguments should be specified as part of the constructor type arguments.",
+      "messageId": "preferConstructor",
+      "range": {
+        "end": {
+          "column": 42,
+          "line": 1,
+        },
+        "start": {
+          "column": 7,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/consistent-generic-constructors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "const a = new Map<string, number>();",
+  "ruleCount": 1,
+}
+`;
+
+exports[`consistent-generic-constructors > invalid 4`] = `
+{
+  "code": "const a: Map< string, number > = new Map();",
+  "diagnostics": [
+    {
+      "message": "The generic type arguments should be specified as part of the constructor type arguments.",
+      "messageId": "preferConstructor",
+      "range": {
+        "end": {
+          "column": 43,
+          "line": 1,
+        },
+        "start": {
+          "column": 7,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/consistent-generic-constructors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "const a = new Map< string, number >();",
+  "ruleCount": 1,
+}
+`;
+
+exports[`consistent-generic-constructors > invalid 5`] = `
+{
+  "code": "const a: Map<string, number> = new Map ();",
+  "diagnostics": [
+    {
+      "message": "The generic type arguments should be specified as part of the constructor type arguments.",
+      "messageId": "preferConstructor",
+      "range": {
+        "end": {
+          "column": 42,
+          "line": 1,
+        },
+        "start": {
+          "column": 7,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/consistent-generic-constructors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "const a = new Map<string, number> ();",
+  "ruleCount": 1,
+}
+`;
+
+exports[`consistent-generic-constructors > invalid 6`] = `
+{
+  "code": "const a: Foo<number> = new Foo;",
+  "diagnostics": [
+    {
+      "message": "The generic type arguments should be specified as part of the constructor type arguments.",
+      "messageId": "preferConstructor",
+      "range": {
+        "end": {
+          "column": 31,
+          "line": 1,
+        },
+        "start": {
+          "column": 7,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/consistent-generic-constructors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "const a = new Foo<number>();",
+  "ruleCount": 1,
+}
+`;
+
+exports[`consistent-generic-constructors > invalid 7`] = `
+{
+  "code": "const a: /* comment */ Foo/* another */ <string> = new Foo();",
+  "diagnostics": [
+    {
+      "message": "The generic type arguments should be specified as part of the constructor type arguments.",
+      "messageId": "preferConstructor",
+      "range": {
+        "end": {
+          "column": 61,
+          "line": 1,
+        },
+        "start": {
+          "column": 7,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/consistent-generic-constructors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "const a = new Foo/* comment *//* another */<string>();",
+  "ruleCount": 1,
+}
+`;
+
+exports[`consistent-generic-constructors > invalid 8`] = `
+{
+  "code": "const a: Foo/* comment */ <string> = new Foo /* another */();",
+  "diagnostics": [
+    {
+      "message": "The generic type arguments should be specified as part of the constructor type arguments.",
+      "messageId": "preferConstructor",
+      "range": {
+        "end": {
+          "column": 61,
+          "line": 1,
+        },
+        "start": {
+          "column": 7,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/consistent-generic-constructors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "const a = new Foo/* comment */<string> /* another */();",
+  "ruleCount": 1,
+}
+`;
+
+exports[`consistent-generic-constructors > invalid 9`] = `
+{
+  "code": "const a: Foo<string> = new 
+ Foo 
+ ();",
+  "diagnostics": [
+    {
+      "message": "The generic type arguments should be specified as part of the constructor type arguments.",
+      "messageId": "preferConstructor",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 3,
+        },
+        "start": {
+          "column": 7,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/consistent-generic-constructors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "const a = new 
+ Foo<string> 
+ ();",
+  "ruleCount": 1,
+}
+`;
+
+exports[`consistent-generic-constructors > invalid 10`] = `
+{
+  "code": "
+class Foo {
+  a: Foo<string> = new Foo();
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "The generic type arguments should be specified as part of the constructor type arguments.",
+      "messageId": "preferConstructor",
+      "range": {
+        "end": {
+          "column": 30,
+          "line": 3,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/consistent-generic-constructors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+class Foo {
+  a = new Foo<string>();
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`consistent-generic-constructors > invalid 11`] = `
+{
+  "code": "
+class Foo {
+  [a]: Foo<string> = new Foo();
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "The generic type arguments should be specified as part of the constructor type arguments.",
+      "messageId": "preferConstructor",
+      "range": {
+        "end": {
+          "column": 32,
+          "line": 3,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/consistent-generic-constructors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+class Foo {
+  [a] = new Foo<string>();
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`consistent-generic-constructors > invalid 12`] = `
+{
+  "code": "
+class Foo {
+  accessor a: Foo<string> = new Foo();
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "The generic type arguments should be specified as part of the constructor type arguments.",
+      "messageId": "preferConstructor",
+      "range": {
+        "end": {
+          "column": 39,
+          "line": 3,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/consistent-generic-constructors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+class Foo {
+  accessor a = new Foo<string>();
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`consistent-generic-constructors > invalid 13`] = `
+{
+  "code": "
+class Foo {
+  accessor a = new Foo<string>();
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "The generic type arguments should be specified as part of the type annotation.",
+      "messageId": "preferTypeAnnotation",
+      "range": {
+        "end": {
+          "column": 34,
+          "line": 3,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/consistent-generic-constructors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+class Foo {
+  accessor a: Foo<string> = new Foo();
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`consistent-generic-constructors > invalid 14`] = `
+{
+  "code": "
+class Foo {
+  accessor [a]: Foo<string> = new Foo();
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "The generic type arguments should be specified as part of the constructor type arguments.",
+      "messageId": "preferConstructor",
+      "range": {
+        "end": {
+          "column": 41,
+          "line": 3,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/consistent-generic-constructors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+class Foo {
+  accessor [a] = new Foo<string>();
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`consistent-generic-constructors > invalid 15`] = `
+{
+  "code": "
+function foo(a: Foo<string> = new Foo()) {}
+      ",
+  "diagnostics": [
+    {
+      "message": "The generic type arguments should be specified as part of the constructor type arguments.",
+      "messageId": "preferConstructor",
+      "range": {
+        "end": {
+          "column": 40,
+          "line": 2,
+        },
+        "start": {
+          "column": 14,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/consistent-generic-constructors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+function foo(a = new Foo<string>()) {}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`consistent-generic-constructors > invalid 16`] = `
+{
+  "code": "
+function foo({ a }: Foo<string> = new Foo()) {}
+      ",
+  "diagnostics": [
+    {
+      "message": "The generic type arguments should be specified as part of the constructor type arguments.",
+      "messageId": "preferConstructor",
+      "range": {
+        "end": {
+          "column": 44,
+          "line": 2,
+        },
+        "start": {
+          "column": 14,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/consistent-generic-constructors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+function foo({ a } = new Foo<string>()) {}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`consistent-generic-constructors > invalid 17`] = `
+{
+  "code": "
+function foo([a]: Foo<string> = new Foo()) {}
+      ",
+  "diagnostics": [
+    {
+      "message": "The generic type arguments should be specified as part of the constructor type arguments.",
+      "messageId": "preferConstructor",
+      "range": {
+        "end": {
+          "column": 42,
+          "line": 2,
+        },
+        "start": {
+          "column": 14,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/consistent-generic-constructors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+function foo([a] = new Foo<string>()) {}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`consistent-generic-constructors > invalid 18`] = `
+{
+  "code": "
+class A {
+  constructor(a: Foo<string> = new Foo()) {}
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "The generic type arguments should be specified as part of the constructor type arguments.",
+      "messageId": "preferConstructor",
+      "range": {
+        "end": {
+          "column": 41,
+          "line": 3,
+        },
+        "start": {
+          "column": 15,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/consistent-generic-constructors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+class A {
+  constructor(a = new Foo<string>()) {}
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`consistent-generic-constructors > invalid 19`] = `
+{
+  "code": "
+const a = function (a: Foo<string> = new Foo()) {};
+      ",
+  "diagnostics": [
+    {
+      "message": "The generic type arguments should be specified as part of the constructor type arguments.",
+      "messageId": "preferConstructor",
+      "range": {
+        "end": {
+          "column": 47,
+          "line": 2,
+        },
+        "start": {
+          "column": 21,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/consistent-generic-constructors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+const a = function (a = new Foo<string>()) {};
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`consistent-generic-constructors > invalid 20`] = `
+{
+  "code": "const a = new Foo<string>();",
+  "diagnostics": [
+    {
+      "message": "The generic type arguments should be specified as part of the type annotation.",
+      "messageId": "preferTypeAnnotation",
+      "range": {
+        "end": {
+          "column": 28,
+          "line": 1,
+        },
+        "start": {
+          "column": 7,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/consistent-generic-constructors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "const a: Foo<string> = new Foo();",
+  "ruleCount": 1,
+}
+`;
+
+exports[`consistent-generic-constructors > invalid 21`] = `
+{
+  "code": "const a = new Map<string, number>();",
+  "diagnostics": [
+    {
+      "message": "The generic type arguments should be specified as part of the type annotation.",
+      "messageId": "preferTypeAnnotation",
+      "range": {
+        "end": {
+          "column": 36,
+          "line": 1,
+        },
+        "start": {
+          "column": 7,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/consistent-generic-constructors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "const a: Map<string, number> = new Map();",
+  "ruleCount": 1,
+}
+`;
+
+exports[`consistent-generic-constructors > invalid 22`] = `
+{
+  "code": "const a = new Map <string, number> ();",
+  "diagnostics": [
+    {
+      "message": "The generic type arguments should be specified as part of the type annotation.",
+      "messageId": "preferTypeAnnotation",
+      "range": {
+        "end": {
+          "column": 38,
+          "line": 1,
+        },
+        "start": {
+          "column": 7,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/consistent-generic-constructors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "const a: Map<string, number> = new Map  ();",
+  "ruleCount": 1,
+}
+`;
+
+exports[`consistent-generic-constructors > invalid 23`] = `
+{
+  "code": "const a = new Map< string, number >();",
+  "diagnostics": [
+    {
+      "message": "The generic type arguments should be specified as part of the type annotation.",
+      "messageId": "preferTypeAnnotation",
+      "range": {
+        "end": {
+          "column": 38,
+          "line": 1,
+        },
+        "start": {
+          "column": 7,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/consistent-generic-constructors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "const a: Map< string, number > = new Map();",
+  "ruleCount": 1,
+}
+`;
+
+exports[`consistent-generic-constructors > invalid 24`] = `
+{
+  "code": "const a = new 
+ Foo<string> 
+ ();",
+  "diagnostics": [
+    {
+      "message": "The generic type arguments should be specified as part of the type annotation.",
+      "messageId": "preferTypeAnnotation",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 3,
+        },
+        "start": {
+          "column": 7,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/consistent-generic-constructors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "const a: Foo<string> = new 
+ Foo 
+ ();",
+  "ruleCount": 1,
+}
+`;
+
+exports[`consistent-generic-constructors > invalid 25`] = `
+{
+  "code": "const a = new Foo/* comment */ <string> /* another */();",
+  "diagnostics": [
+    {
+      "message": "The generic type arguments should be specified as part of the type annotation.",
+      "messageId": "preferTypeAnnotation",
+      "range": {
+        "end": {
+          "column": 56,
+          "line": 1,
+        },
+        "start": {
+          "column": 7,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/consistent-generic-constructors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "const a: Foo<string> = new Foo/* comment */  /* another */();",
+  "ruleCount": 1,
+}
+`;
+
+exports[`consistent-generic-constructors > invalid 26`] = `
+{
+  "code": "const a = new Foo</* comment */ string, /* another */ number>();",
+  "diagnostics": [
+    {
+      "message": "The generic type arguments should be specified as part of the type annotation.",
+      "messageId": "preferTypeAnnotation",
+      "range": {
+        "end": {
+          "column": 64,
+          "line": 1,
+        },
+        "start": {
+          "column": 7,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/consistent-generic-constructors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "const a: Foo</* comment */ string, /* another */ number> = new Foo();",
+  "ruleCount": 1,
+}
+`;
+
+exports[`consistent-generic-constructors > invalid 27`] = `
+{
+  "code": "
+class Foo {
+  a = new Foo<string>();
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "The generic type arguments should be specified as part of the type annotation.",
+      "messageId": "preferTypeAnnotation",
+      "range": {
+        "end": {
+          "column": 25,
+          "line": 3,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/consistent-generic-constructors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+class Foo {
+  a: Foo<string> = new Foo();
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`consistent-generic-constructors > invalid 28`] = `
+{
+  "code": "
+class Foo {
+  [a] = new Foo<string>();
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "The generic type arguments should be specified as part of the type annotation.",
+      "messageId": "preferTypeAnnotation",
+      "range": {
+        "end": {
+          "column": 27,
+          "line": 3,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/consistent-generic-constructors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+class Foo {
+  [a]: Foo<string> = new Foo();
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`consistent-generic-constructors > invalid 29`] = `
+{
+  "code": "
+class Foo {
+  [a + b] = new Foo<string>();
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "The generic type arguments should be specified as part of the type annotation.",
+      "messageId": "preferTypeAnnotation",
+      "range": {
+        "end": {
+          "column": 31,
+          "line": 3,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/consistent-generic-constructors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+class Foo {
+  [a + b]: Foo<string> = new Foo();
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`consistent-generic-constructors > invalid 30`] = `
+{
+  "code": "
+function foo(a = new Foo<string>()) {}
+      ",
+  "diagnostics": [
+    {
+      "message": "The generic type arguments should be specified as part of the type annotation.",
+      "messageId": "preferTypeAnnotation",
+      "range": {
+        "end": {
+          "column": 35,
+          "line": 2,
+        },
+        "start": {
+          "column": 14,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/consistent-generic-constructors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+function foo(a: Foo<string> = new Foo()) {}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`consistent-generic-constructors > invalid 31`] = `
+{
+  "code": "
+function foo({ a } = new Foo<string>()) {}
+      ",
+  "diagnostics": [
+    {
+      "message": "The generic type arguments should be specified as part of the type annotation.",
+      "messageId": "preferTypeAnnotation",
+      "range": {
+        "end": {
+          "column": 39,
+          "line": 2,
+        },
+        "start": {
+          "column": 14,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/consistent-generic-constructors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+function foo({ a }: Foo<string> = new Foo()) {}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`consistent-generic-constructors > invalid 32`] = `
+{
+  "code": "
+function foo([a] = new Foo<string>()) {}
+      ",
+  "diagnostics": [
+    {
+      "message": "The generic type arguments should be specified as part of the type annotation.",
+      "messageId": "preferTypeAnnotation",
+      "range": {
+        "end": {
+          "column": 37,
+          "line": 2,
+        },
+        "start": {
+          "column": 14,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/consistent-generic-constructors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+function foo([a]: Foo<string> = new Foo()) {}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`consistent-generic-constructors > invalid 33`] = `
+{
+  "code": "
+class A {
+  constructor(a = new Foo<string>()) {}
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "The generic type arguments should be specified as part of the type annotation.",
+      "messageId": "preferTypeAnnotation",
+      "range": {
+        "end": {
+          "column": 36,
+          "line": 3,
+        },
+        "start": {
+          "column": 15,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/consistent-generic-constructors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+class A {
+  constructor(a: Foo<string> = new Foo()) {}
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`consistent-generic-constructors > invalid 34`] = `
+{
+  "code": "
+const a = function (a = new Foo<string>()) {};
+      ",
+  "diagnostics": [
+    {
+      "message": "The generic type arguments should be specified as part of the type annotation.",
+      "messageId": "preferTypeAnnotation",
+      "range": {
+        "end": {
+          "column": 42,
+          "line": 2,
+        },
+        "start": {
+          "column": 21,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/consistent-generic-constructors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+const a = function (a: Foo<string> = new Foo()) {};
+      ",
+  "ruleCount": 1,
+}
+`;

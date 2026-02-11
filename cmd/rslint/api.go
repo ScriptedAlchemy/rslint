@@ -44,8 +44,9 @@ func buildRuleParserOptions(languageOptions *api.LanguageOptions) *rule.RulePars
 	}
 	parserOptions := languageOptions.ParserOptions
 	result := &rule.RuleParserOptions{
-		SourceType:  parserOptions.SourceType,
-		EcmaVersion: parserOptions.EcmaVersion,
+		SourceType:           parserOptions.SourceType,
+		EcmaVersion:          parserOptions.EcmaVersion,
+		IsolatedDeclarations: parserOptions.IsolatedDeclarations,
 	}
 	if parserOptions.EcmaFeatures != nil {
 		result.EcmaFeatures = &rule.RuleEcmaFeatures{
