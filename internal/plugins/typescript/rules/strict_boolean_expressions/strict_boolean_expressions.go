@@ -20,6 +20,7 @@ func buildConditionErrorMessage(messageId string) rule.RuleMessage {
 		"conditionErrorObject":          "Unexpected object value in conditional. The condition is always true.",
 		"conditionErrorString":          "Unexpected string value in conditional.",
 		"conditionErrorOther":           "Unexpected value in conditional. A boolean expression is required.",
+		"noStrictNullCheck":             "This rule requires the `strictNullChecks` compiler option to be turned on to function correctly.",
 	}
 	description, ok := descriptions[messageId]
 	if !ok {
@@ -33,26 +34,28 @@ func buildConditionErrorMessage(messageId string) rule.RuleMessage {
 }
 
 type strictBooleanExpressionsOptions struct {
-	AllowAny             bool
-	AllowNullableBoolean bool
-	AllowNullableEnum    bool
-	AllowNullableNumber  bool
-	AllowNullableObject  bool
-	AllowNullableString  bool
-	AllowNumber          bool
-	AllowString          bool
+	AllowAny                     bool
+	AllowNullableBoolean         bool
+	AllowNullableEnum            bool
+	AllowNullableNumber          bool
+	AllowNullableObject          bool
+	AllowNullableString          bool
+	AllowNumber                  bool
+	AllowString                  bool
+	AllowWithoutStrictNullChecks bool
 }
 
 func defaultStrictBooleanExpressionsOptions() strictBooleanExpressionsOptions {
 	return strictBooleanExpressionsOptions{
-		AllowAny:             false,
-		AllowNullableBoolean: false,
-		AllowNullableEnum:    false,
-		AllowNullableNumber:  false,
-		AllowNullableObject:  true,
-		AllowNullableString:  false,
-		AllowNumber:          true,
-		AllowString:          true,
+		AllowAny:                     false,
+		AllowNullableBoolean:         false,
+		AllowNullableEnum:            false,
+		AllowNullableNumber:          false,
+		AllowNullableObject:          true,
+		AllowNullableString:          false,
+		AllowNumber:                  true,
+		AllowString:                  true,
+		AllowWithoutStrictNullChecks: false,
 	}
 }
 
@@ -80,6 +83,9 @@ func applyStrictBooleanOptionsMap(opts strictBooleanExpressionsOptions, values m
 	}
 	if allowString, ok := values["allowString"].(bool); ok {
 		opts.AllowString = allowString
+	}
+	if allowWithoutStrictNullChecks, ok := values["allowRuleToRunWithoutStrictNullChecksIKnowWhatIAmDoing"].(bool); ok {
+		opts.AllowWithoutStrictNullChecks = allowWithoutStrictNullChecks
 	}
 	return opts
 }
@@ -147,6 +153,7 @@ func conditionErrorMessageID(condType *checker.Type, opts strictBooleanExpressio
 	hasNonNeverValue := false
 	nonNullishPrimitiveSeen := false
 	allNonNullishPrimitivesDefinitelyTruthy := true
+	hasOnlyLiteralNonNullishPrimitives := true
 
 	for _, part := range parts {
 		if part == nil {
@@ -176,11 +183,15 @@ func conditionErrorMessageID(condType *checker.Type, opts strictBooleanExpressio
 				}
 				if intersectionFlags&(checker.TypeFlagsBooleanLike|checker.TypeFlagsStringLike|checker.TypeFlagsNumberLike|checker.TypeFlagsBigIntLike|checker.TypeFlagsEnumLike) != 0 {
 					nonNullishPrimitiveSeen = true
+					if !utils.IsTypeFlagSet(intersectionPart, checker.TypeFlagsStringLiteral|checker.TypeFlagsNumberLiteral|checker.TypeFlagsBigIntLiteral|checker.TypeFlagsBooleanLiteral|checker.TypeFlagsEnumLiteral) {
+						hasOnlyLiteralNonNullishPrimitives = false
+					}
 					if utils.IsTypeFlagSet(intersectionPart, checker.TypeFlagsPossiblyFalsy) {
 						allNonNullishPrimitivesDefinitelyTruthy = false
 					}
 				} else {
 					allNonNullishPrimitivesDefinitelyTruthy = false
+					hasOnlyLiteralNonNullishPrimitives = false
 				}
 				if intersectionFlags&checker.TypeFlagsAny != 0 {
 					hasAny = true
@@ -223,11 +234,15 @@ func conditionErrorMessageID(condType *checker.Type, opts strictBooleanExpressio
 		}
 		if flags&(checker.TypeFlagsBooleanLike|checker.TypeFlagsStringLike|checker.TypeFlagsNumberLike|checker.TypeFlagsBigIntLike|checker.TypeFlagsEnumLike) != 0 {
 			nonNullishPrimitiveSeen = true
+			if !utils.IsTypeFlagSet(part, checker.TypeFlagsStringLiteral|checker.TypeFlagsNumberLiteral|checker.TypeFlagsBigIntLiteral|checker.TypeFlagsBooleanLiteral|checker.TypeFlagsEnumLiteral) {
+				hasOnlyLiteralNonNullishPrimitives = false
+			}
 			if utils.IsTypeFlagSet(part, checker.TypeFlagsPossiblyFalsy) {
 				allNonNullishPrimitivesDefinitelyTruthy = false
 			}
 		} else {
 			allNonNullishPrimitivesDefinitelyTruthy = false
+			hasOnlyLiteralNonNullishPrimitives = false
 		}
 		if flags&checker.TypeFlagsAny != 0 {
 			hasAny = true
@@ -286,7 +301,7 @@ func conditionErrorMessageID(condType *checker.Type, opts strictBooleanExpressio
 	if nonNullishCategoryCount > 1 {
 		return "conditionErrorOther"
 	}
-	if hasNullish && nonNullishPrimitiveSeen && allNonNullishPrimitivesDefinitelyTruthy {
+	if hasNullish && nonNullishPrimitiveSeen && hasOnlyLiteralNonNullishPrimitives && allNonNullishPrimitivesDefinitelyTruthy {
 		return ""
 	}
 	if hasNullish && !hasAny && !hasBoolean && !hasEnum && !hasNumber && !hasString && !hasObject {
@@ -733,6 +748,16 @@ var StrictBooleanExpressionsRule = rule.CreateRule(rule.Rule{
 	Name: "strict-boolean-expressions",
 	Run: func(ctx rule.RuleContext, options any) rule.RuleListeners {
 		opts := parseStrictBooleanExpressionsOptions(options)
+		if ctx.Program != nil && !opts.AllowWithoutStrictNullChecks {
+			compilerOptions := ctx.Program.Options()
+			isStrictNullChecks := utils.IsStrictCompilerOptionEnabled(
+				compilerOptions,
+				compilerOptions.StrictNullChecks,
+			)
+			if !isStrictNullChecks {
+				ctx.ReportNode(&ast.Node{}, buildConditionErrorMessage("noStrictNullCheck"))
+			}
+		}
 
 		return rule.RuleListeners{
 			ast.KindIfStatement: func(node *ast.Node) {
