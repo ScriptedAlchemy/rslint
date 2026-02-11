@@ -136,7 +136,7 @@ export default defineConfig({
     // './tests/typescript-eslint/rules/no-var-requires.test.ts',
     './tests/typescript-eslint/rules/no-wrapper-object-types.test.ts',
     './tests/typescript-eslint/rules/no_namespace.test.ts',
-    // './tests/typescript-eslint/rules/non-nullable-type-assertion-style.test.ts',
+    './tests/typescript-eslint/rules/non-nullable-type-assertion-style.test.ts',
     // './tests/typescript-eslint/rules/only-throw-error.test.ts',
     './tests/typescript-eslint/rules/parameter-properties.test.ts',
     './tests/typescript-eslint/rules/prefer-as-const.test.ts',
