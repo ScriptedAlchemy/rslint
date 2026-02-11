@@ -25,22 +25,32 @@ func TestUnifiedSignaturesRule(t *testing.T) {
 
 			// Valid: Constructor overloads with different parameters
 			{Code: `class C { constructor(); constructor(x: number, y: string); }`},
+
+			// Valid: Ignore overloads with different leading JSDoc block comments
+			{
+				Code: `/** @deprecated */
+declare function f(x: number): unknown;
+declare function f(x: boolean): unknown;`,
+				Options: []interface{}{
+					map[string]interface{}{
+						"ignoreOverloadsWithDifferentJSDoc": true,
+					},
+				},
+			},
 		},
 		[]rule_tester.InvalidTestCase{
-			// NOTE: These test cases are placeholders
-			// Full implementation would detect overloads that can be unified
-			// For now, the rule doesn't report any errors (TODO implementation)
-
-			// Example of what should be invalid (once implemented):
-			// {
-			// 	Code: `function f(x: number): void; function f(x: string): void;`,
-			// 	Errors: []rule_tester.InvalidTestCaseError{
-			// 		{
-			// 			MessageId: "unifiedSignature",
-			// 			Line:      1,
-			// 		},
-			// 	},
-			// },
+			{
+				Code: `function f(x: number): void;
+function f(x: string): void;
+function f(x: number | string): void {}`,
+				Errors: []rule_tester.InvalidTestCaseError{
+					{
+						MessageId: "singleParameterDifference",
+						Line:      2,
+						Column:    12,
+					},
+				},
+			},
 		},
 	)
 }
