@@ -1038,7 +1038,8 @@ func optionalChainBaseNeverNullish(ctx rule.RuleContext, baseExpression *ast.Nod
 	baseType := ctx.TypeChecker.GetTypeAtLocation(baseExpression)
 	baseIsNeverNullish := isTypeNeverNullish(baseType, ctx.TypeChecker)
 	if !baseIsNeverNullish {
-		if baseExpression.Kind == ast.KindPropertyAccessExpression {
+		switch baseExpression.Kind {
+		case ast.KindPropertyAccessExpression:
 			propertyAccess := baseExpression.AsPropertyAccessExpression()
 			if propertyAccess != nil && propertyAccess.Name() != nil {
 				hasOptionalSyntax := propertyAccess.QuestionDotToken != nil || strings.Contains(trimNodeText(ctx.SourceFile, baseExpression), "?.")
@@ -1046,7 +1047,7 @@ func optionalChainBaseNeverNullish(ctx rule.RuleContext, baseExpression *ast.Nod
 					baseIsNeverNullish = optionalPropertyAccessResultNeverNullish(ctx, propertyAccess)
 				}
 			}
-		} else if baseExpression.Kind == ast.KindElementAccessExpression {
+		case ast.KindElementAccessExpression:
 			elementAccess := baseExpression.AsElementAccessExpression()
 			if elementAccess != nil {
 				hasOptionalSyntax := elementAccess.QuestionDotToken != nil || strings.Contains(trimNodeText(ctx.SourceFile, baseExpression), "?.[")
@@ -1054,7 +1055,7 @@ func optionalChainBaseNeverNullish(ctx rule.RuleContext, baseExpression *ast.Nod
 					baseIsNeverNullish = optionalElementAccessResultNeverNullish(ctx, elementAccess)
 				}
 			}
-		} else if baseExpression.Kind == ast.KindCallExpression {
+		case ast.KindCallExpression:
 			callExpression := baseExpression.AsCallExpression()
 			if callExpression != nil {
 				hasOptionalSyntax := callExpression.QuestionDotToken != nil || strings.Contains(trimNodeText(ctx.SourceFile, baseExpression), "?.")
