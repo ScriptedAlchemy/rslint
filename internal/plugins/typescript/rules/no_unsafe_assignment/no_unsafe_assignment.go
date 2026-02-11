@@ -344,6 +344,24 @@ var NoUnsafeAssignmentRule = rule.CreateRule(rule.Rule{
 			return comparisonTypeNone
 		}
 
+		isShorthandObjectAssignmentPattern := func(node *ast.Node) bool {
+			if node == nil || node.Parent == nil || !ast.IsObjectLiteralExpression(node.Parent) {
+				return false
+			}
+
+			container := node.Parent
+			for container.Parent != nil && ast.IsParenthesizedExpression(container.Parent) {
+				container = container.Parent
+			}
+
+			parent := container.Parent
+			if parent == nil || !ast.IsAssignmentExpression(parent, true) {
+				return false
+			}
+
+			return parent.AsBinaryExpression().Left == container
+		}
+
 		checkAssignmentFull := func(id *ast.Node, init *ast.Node, node *ast.Node) {
 			if id == nil || init == nil {
 				return
@@ -395,6 +413,12 @@ var NoUnsafeAssignmentRule = rule.CreateRule(rule.Rule{
 			// ESTree AssignmentPattern
 			ast.KindShorthandPropertyAssignment: func(node *ast.Node) {
 				assignment := node.AsShorthandPropertyAssignment()
+				if assignment == nil || assignment.ObjectAssignmentInitializer == nil {
+					return
+				}
+				if !isShorthandObjectAssignmentPattern(node) {
+					return
+				}
 				checkAssignmentFull(assignment.Name(), assignment.ObjectAssignmentInitializer, node)
 			},
 
@@ -427,6 +451,9 @@ var NoUnsafeAssignmentRule = rule.CreateRule(rule.Rule{
 					if ast.IsPropertyAssignment(node) {
 						init = node.Initializer()
 					} else if ast.IsShorthandPropertyAssignment(node) {
+						if node.AsShorthandPropertyAssignment().ObjectAssignmentInitializer != nil {
+							continue
+						}
 						init = node.Name()
 					} else {
 						continue
