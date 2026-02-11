@@ -18,16 +18,46 @@ type RequireArraySortCompareOptions struct {
 	IgnoreStringArrays *bool
 }
 
+func parseOptions(options any) RequireArraySortCompareOptions {
+	opts := RequireArraySortCompareOptions{}
+
+	applyMap := func(raw map[string]interface{}) {
+		if raw == nil {
+			return
+		}
+		if ignoreStringArrays, ok := raw["ignoreStringArrays"].(bool); ok {
+			opts.IgnoreStringArrays = utils.Ref(ignoreStringArrays)
+		}
+	}
+
+	switch raw := options.(type) {
+	case RequireArraySortCompareOptions:
+		opts = raw
+	case *RequireArraySortCompareOptions:
+		if raw != nil {
+			opts = *raw
+		}
+	case map[string]interface{}:
+		applyMap(raw)
+	case []interface{}:
+		if len(raw) > 0 {
+			if firstMap, ok := raw[0].(map[string]interface{}); ok {
+				applyMap(firstMap)
+			}
+		}
+	}
+
+	if opts.IgnoreStringArrays == nil {
+		opts.IgnoreStringArrays = utils.Ref(true)
+	}
+
+	return opts
+}
+
 var RequireArraySortCompareRule = rule.CreateRule(rule.Rule{
 	Name: "require-array-sort-compare",
 	Run: func(ctx rule.RuleContext, options any) rule.RuleListeners {
-		opts, ok := options.(RequireArraySortCompareOptions)
-		if !ok {
-			opts = RequireArraySortCompareOptions{}
-		}
-		if opts.IgnoreStringArrays == nil {
-			opts.IgnoreStringArrays = utils.Ref(true)
-		}
+		opts := parseOptions(options)
 
 		return rule.RuleListeners{
 			ast.KindCallExpression: func(node *ast.Node) {
@@ -45,7 +75,13 @@ var RequireArraySortCompareRule = rule.CreateRule(rule.Rule{
 					return
 				}
 
-				calleeObjType := utils.GetConstrainedTypeAtLocation(ctx.TypeChecker, callee.Expression())
+				calleeObjType := ctx.TypeChecker.GetTypeAtLocation(callee.Expression())
+				if calleeObjType == nil || utils.IsTypeFlagSet(calleeObjType, checker.TypeFlagsTypeParameter) {
+					calleeObjType = utils.GetConstrainedTypeAtLocation(ctx.TypeChecker, callee.Expression())
+				}
+				if calleeObjType == nil {
+					return
+				}
 
 				if *opts.IgnoreStringArrays && checker.Checker_isArrayOrTupleType(ctx.TypeChecker, calleeObjType) {
 					if utils.Every(checker.Checker_getTypeArguments(ctx.TypeChecker, calleeObjType), func(t *checker.Type) bool {
