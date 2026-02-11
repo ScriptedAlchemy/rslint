@@ -368,6 +368,42 @@ func literalValueFromType(typeChecker *checker.Checker, t *checker.Type) (any, b
 		return "undefined", true, "undefined"
 	}
 
+	if flags&(checker.TypeFlagsBooleanLiteral|checker.TypeFlagsStringLiteral|checker.TypeFlagsNumberLiteral|checker.TypeFlagsBigIntLiteral|checker.TypeFlagsEnumLiteral) != 0 {
+		if literal := tryAsLiteralType(t); literal != nil {
+			switch value := checker.LiteralType_value(literal).(type) {
+			case bool:
+				if value {
+					return true, true, "true"
+				}
+				return false, true, "false"
+			case string:
+				return value, true, strconv.Quote(value)
+			case float64:
+				return value, true, strconv.FormatFloat(value, 'f', -1, 64)
+			case int:
+				return float64(value), true, strconv.Itoa(value)
+			case int32:
+				return float64(value), true, strconv.FormatInt(int64(value), 10)
+			case int64:
+				return float64(value), true, strconv.FormatInt(value, 10)
+			default:
+				numericText := fmt.Sprint(value)
+				if flags&checker.TypeFlagsBigIntLiteral != 0 {
+					trimmed := strings.TrimSpace(numericText)
+					if !strings.HasSuffix(trimmed, "n") {
+						trimmed += "n"
+					}
+					if parsed, err := strconv.ParseFloat(strings.TrimSuffix(trimmed, "n"), 64); err == nil {
+						return parsed, true, trimmed
+					}
+				}
+				if parsed, err := strconv.ParseFloat(strings.TrimSpace(numericText), 64); err == nil {
+					return parsed, true, numericText
+				}
+			}
+		}
+	}
+
 	if typeChecker == nil {
 		return nil, false, ""
 	}
@@ -404,6 +440,18 @@ func literalValueFromType(typeChecker *checker.Checker, t *checker.Type) (any, b
 	}
 
 	return nil, false, ""
+}
+
+func tryAsLiteralType(t *checker.Type) (literal *checker.LiteralType) {
+	if t == nil {
+		return nil
+	}
+	defer func() {
+		if recover() != nil {
+			literal = nil
+		}
+	}()
+	return t.AsLiteralType()
 }
 
 func isBigIntLiteralTypeString(typeText string) bool {
@@ -919,10 +967,10 @@ func shouldSkipElementAccessCondition(ctx rule.RuleContext, node *ast.Node) bool
 			continue
 		}
 		if checker.Checker_isArrayType(ctx.TypeChecker, part) {
-			return true
+			return !checker.Checker_noUncheckedIndexedAccess(ctx.TypeChecker)
 		}
 		if checker.Checker_isArrayOrTupleType(ctx.TypeChecker, part) {
-			if !hasStaticIndex {
+			if !hasStaticIndex && !checker.Checker_noUncheckedIndexedAccess(ctx.TypeChecker) {
 				return true
 			}
 			continue
@@ -967,13 +1015,13 @@ func shouldSkipElementAccessInOptionalChain(ctx rule.RuleContext, node *ast.Node
 			continue
 		}
 		if checker.Checker_isArrayType(ctx.TypeChecker, part) {
-			if !hasStaticIndex {
+			if !checker.Checker_noUncheckedIndexedAccess(ctx.TypeChecker) {
 				return true
 			}
 			continue
 		}
 		if checker.Checker_isArrayOrTupleType(ctx.TypeChecker, part) {
-			if !hasStaticIndex {
+			if !hasStaticIndex && !checker.Checker_noUncheckedIndexedAccess(ctx.TypeChecker) {
 				return true
 			}
 			continue
