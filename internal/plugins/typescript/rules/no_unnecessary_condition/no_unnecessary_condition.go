@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"unsafe"
 
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/microsoft/typescript-go/shim/checker"
-	"github.com/microsoft/typescript-go/shim/core"
 	"github.com/web-infra-dev/rslint/internal/rule"
 	"github.com/web-infra-dev/rslint/internal/utils"
 )
@@ -95,6 +95,13 @@ func buildAlwaysTruthyFuncMessage() rule.RuleMessage {
 	return rule.RuleMessage{
 		Id:          "alwaysTruthyFunc",
 		Description: "Unnecessary conditional, function always returns a truthy value.",
+	}
+}
+
+func buildTypeGuardAlreadyIsTypeMessage() rule.RuleMessage {
+	return rule.RuleMessage{
+		Id:          "typeGuardAlreadyIsType",
+		Description: "Unnecessary conditional, expression already has the type being checked by the type guard.",
 	}
 }
 
@@ -617,6 +624,11 @@ func isAlwaysTruthy(t *checker.Type, typeChecker *checker.Checker) bool {
 		return false
 	}
 	if flags&(checker.TypeFlagsIndexedAccess|checker.TypeFlagsIndex|checker.TypeFlagsConditional|checker.TypeFlagsSubstitution) != 0 {
+		if typeChecker != nil {
+			if baseConstraint := checker.Checker_getBaseConstraintOfType(typeChecker, t); baseConstraint != nil && baseConstraint != t {
+				return isAlwaysTruthy(baseConstraint, typeChecker)
+			}
+		}
 		return false
 	}
 
@@ -634,6 +646,18 @@ func isAlwaysTruthy(t *checker.Type, typeChecker *checker.Checker) bool {
 	if utils.IsUnionType(t) {
 		for _, unionType := range t.Types() {
 			if !isAlwaysTruthy(unionType, typeChecker) {
+				return false
+			}
+		}
+		return true
+	}
+	if utils.IsIntersectionType(t) {
+		parts := t.Types()
+		if len(parts) == 0 {
+			return false
+		}
+		for _, intersectionType := range parts {
+			if !isAlwaysTruthy(intersectionType, typeChecker) {
 				return false
 			}
 		}
@@ -730,6 +754,11 @@ func isAlwaysFalsy(t *checker.Type, typeChecker *checker.Checker) bool {
 		return false
 	}
 	if flags&(checker.TypeFlagsIndexedAccess|checker.TypeFlagsIndex|checker.TypeFlagsConditional|checker.TypeFlagsSubstitution) != 0 {
+		if typeChecker != nil {
+			if baseConstraint := checker.Checker_getBaseConstraintOfType(typeChecker, t); baseConstraint != nil && baseConstraint != t {
+				return isAlwaysFalsy(baseConstraint, typeChecker)
+			}
+		}
 		return false
 	}
 
@@ -741,6 +770,14 @@ func isAlwaysFalsy(t *checker.Type, typeChecker *checker.Checker) bool {
 			}
 		}
 		return true
+	}
+	if utils.IsIntersectionType(t) {
+		for _, intersectionType := range t.Types() {
+			if isAlwaysFalsy(intersectionType, typeChecker) {
+				return true
+			}
+		}
+		return false
 	}
 
 	// Check for literal false
@@ -808,16 +845,18 @@ func constBooleanLiteralValue(ctx rule.RuleContext, node *ast.Node) (bool, bool)
 	return false, false
 }
 
-// checkCondition checks if a condition is unnecessary (always true/false/never)
-func checkCondition(ctx rule.RuleContext, node *ast.Node, isNegated bool) {
+func checkConditionWithReportNode(ctx rule.RuleContext, node *ast.Node, reportNode *ast.Node, isNegated bool) {
 	node = ast.SkipParentheses(node)
 	if node == nil {
 		return
 	}
+	if reportNode == nil {
+		reportNode = node
+	}
 	if node.Kind == ast.KindPrefixUnaryExpression {
 		prefix := node.AsPrefixUnaryExpression()
 		if prefix != nil && prefix.Operator == ast.KindExclamationToken {
-			checkCondition(ctx, prefix.Operand, !isNegated)
+			checkConditionWithReportNode(ctx, prefix.Operand, reportNode, !isNegated)
 			return
 		}
 	}
@@ -826,9 +865,17 @@ func checkCondition(ctx rule.RuleContext, node *ast.Node, isNegated bool) {
 	}
 	if value, ok := constBooleanLiteralValue(ctx, node); ok {
 		if value {
-			ctx.ReportNode(node, buildAlwaysTruthyMessage())
+			if isNegated {
+				ctx.ReportNode(reportNode, buildAlwaysFalsyMessage())
+			} else {
+				ctx.ReportNode(reportNode, buildAlwaysTruthyMessage())
+			}
 		} else {
-			ctx.ReportNode(node, buildAlwaysFalsyMessage())
+			if isNegated {
+				ctx.ReportNode(reportNode, buildAlwaysTruthyMessage())
+			} else {
+				ctx.ReportNode(reportNode, buildAlwaysFalsyMessage())
+			}
 		}
 		return
 	}
@@ -840,10 +887,6 @@ func checkCondition(ctx rule.RuleContext, node *ast.Node, isNegated bool) {
 			return
 		}
 	}
-	if reportNeverOptionalChain(ctx, node) {
-		return
-	}
-
 	conditionType := ctx.TypeChecker.GetTypeAtLocation(node)
 	if conditionType == nil {
 		return
@@ -851,16 +894,16 @@ func checkCondition(ctx rule.RuleContext, node *ast.Node, isNegated bool) {
 
 	// Check for never type
 	if isNeverType(conditionType) {
-		ctx.ReportNode(node, buildNeverMessage())
+		ctx.ReportNode(reportNode, buildNeverMessage())
 		return
 	}
 
 	// Check for always truthy
 	if isAlwaysTruthy(conditionType, ctx.TypeChecker) {
 		if isNegated {
-			ctx.ReportNode(node, buildAlwaysFalsyMessage())
+			ctx.ReportNode(reportNode, buildAlwaysFalsyMessage())
 		} else {
-			ctx.ReportNode(node, buildAlwaysTruthyMessage())
+			ctx.ReportNode(reportNode, buildAlwaysTruthyMessage())
 		}
 		return
 	}
@@ -868,12 +911,21 @@ func checkCondition(ctx rule.RuleContext, node *ast.Node, isNegated bool) {
 	// Check for always falsy
 	if isAlwaysFalsy(conditionType, ctx.TypeChecker) {
 		if isNegated {
-			ctx.ReportNode(node, buildAlwaysTruthyMessage())
+			ctx.ReportNode(reportNode, buildAlwaysTruthyMessage())
 		} else {
-			ctx.ReportNode(node, buildAlwaysFalsyMessage())
+			ctx.ReportNode(reportNode, buildAlwaysFalsyMessage())
 		}
 		return
 	}
+}
+
+// checkCondition checks if a condition is unnecessary (always true/false/never)
+func checkCondition(ctx rule.RuleContext, node *ast.Node, isNegated bool) {
+	reportNode := node
+	if reportNode != nil && reportNode.Kind == ast.KindParenthesizedExpression {
+		reportNode = reportNode.Expression()
+	}
+	checkConditionWithReportNode(ctx, node, reportNode, isNegated)
 }
 
 func shouldSkipElementAccessCondition(ctx rule.RuleContext, node *ast.Node) bool {
@@ -924,34 +976,8 @@ func shouldSkipElementAccessCondition(ctx rule.RuleContext, node *ast.Node) bool
 	return false
 }
 
-func optionalChainBaseExpression(node *ast.Node) (*ast.Node, bool) {
-	if node == nil {
-		return nil, false
-	}
-	switch node.Kind {
-	case ast.KindPropertyAccessExpression:
-		propertyAccess := node.AsPropertyAccessExpression()
-		if propertyAccess == nil || propertyAccess.QuestionDotToken == nil {
-			return nil, false
-		}
-		return propertyAccess.Expression, true
-	case ast.KindElementAccessExpression:
-		elementAccess := node.AsElementAccessExpression()
-		if elementAccess == nil || elementAccess.QuestionDotToken == nil {
-			return nil, false
-		}
-		return elementAccess.Expression, true
-	case ast.KindCallExpression:
-		callExpression := node.AsCallExpression()
-		if callExpression == nil || callExpression.QuestionDotToken == nil {
-			return nil, false
-		}
-		return callExpression.Expression, true
-	}
-	return nil, false
-}
-
 func hasUnsoundArrayIndexInExpressionChain(ctx rule.RuleContext, node *ast.Node) bool {
+	isTop := true
 	for current := node; current != nil; {
 		current = ast.SkipParentheses(current)
 		if current == nil {
@@ -966,10 +992,16 @@ func hasUnsoundArrayIndexInExpressionChain(ctx rule.RuleContext, node *ast.Node)
 			if propertyAccess == nil || propertyAccess.Expression == nil {
 				return false
 			}
+			if propertyAccess.QuestionDotToken == nil {
+				return false
+			}
 			current = propertyAccess.Expression
 		case ast.KindElementAccessExpression:
 			elementAccess := current.AsElementAccessExpression()
 			if elementAccess == nil || elementAccess.Expression == nil {
+				return false
+			}
+			if !isTop && elementAccess.QuestionDotToken == nil {
 				return false
 			}
 			current = elementAccess.Expression
@@ -978,39 +1010,20 @@ func hasUnsoundArrayIndexInExpressionChain(ctx rule.RuleContext, node *ast.Node)
 			if callExpression == nil || callExpression.Expression == nil {
 				return false
 			}
+			if callExpression.QuestionDotToken == nil {
+				return false
+			}
 			current = callExpression.Expression
 		default:
 			return false
 		}
+		isTop = false
 	}
 	return false
 }
 
-func optionalChainTokenRange(sourceFile *ast.SourceFile, node *ast.Node) (core.TextRange, bool) {
-	if sourceFile == nil || node == nil {
-		return core.TextRange{}, false
-	}
-	trimmed := utils.TrimNodeTextRange(sourceFile, node)
-	sourceText := sourceFile.Text()
-	if trimmed.Pos() < 0 || trimmed.End() > len(sourceText) || trimmed.Pos() >= trimmed.End() {
-		return core.TextRange{}, false
-	}
-	subText := sourceText[trimmed.Pos():trimmed.End()]
-	tokenOffset := strings.Index(subText, "?.")
-	if tokenOffset < 0 {
-		return core.TextRange{}, false
-	}
-	start := trimmed.Pos() + tokenOffset
-	end := start + len("?.")
-	if start < 0 || end > len(sourceText) {
-		return core.TextRange{}, false
-	}
-	return core.NewTextRange(start, end), true
-}
-
-func reportNeverOptionalChain(ctx rule.RuleContext, node *ast.Node) bool {
-	baseExpression, ok := optionalChainBaseExpression(node)
-	if !ok || baseExpression == nil || ctx.TypeChecker == nil {
+func optionalChainBaseNeverNullish(ctx rule.RuleContext, baseExpression *ast.Node) bool {
+	if baseExpression == nil || ctx.TypeChecker == nil {
 		return false
 	}
 	if hasUnsoundArrayIndexInExpressionChain(ctx, baseExpression) {
@@ -1021,21 +1034,478 @@ func reportNeverOptionalChain(ctx rule.RuleContext, node *ast.Node) bool {
 	if !baseIsNeverNullish {
 		if baseExpression.Kind == ast.KindPropertyAccessExpression {
 			propertyAccess := baseExpression.AsPropertyAccessExpression()
-			if propertyAccess != nil && propertyAccess.QuestionDotToken != nil && propertyAccess.Name() != nil {
-				propertyType := ctx.TypeChecker.GetTypeAtLocation(propertyAccess.Name())
-				baseIsNeverNullish = isTypeNeverNullish(propertyType, ctx.TypeChecker)
+			if propertyAccess != nil && propertyAccess.Name() != nil {
+				hasOptionalSyntax := propertyAccess.QuestionDotToken != nil || strings.Contains(trimNodeText(ctx.SourceFile, baseExpression), "?.")
+				if hasOptionalSyntax {
+					baseIsNeverNullish = optionalPropertyAccessResultNeverNullish(ctx, propertyAccess)
+				}
+			}
+		} else if baseExpression.Kind == ast.KindElementAccessExpression {
+			elementAccess := baseExpression.AsElementAccessExpression()
+			if elementAccess != nil {
+				hasOptionalSyntax := elementAccess.QuestionDotToken != nil || strings.Contains(trimNodeText(ctx.SourceFile, baseExpression), "?.[")
+				if hasOptionalSyntax {
+					baseIsNeverNullish = optionalElementAccessResultNeverNullish(ctx, elementAccess)
+				}
+			}
+		} else if baseExpression.Kind == ast.KindCallExpression {
+			callExpression := baseExpression.AsCallExpression()
+			if callExpression != nil {
+				hasOptionalSyntax := callExpression.QuestionDotToken != nil || strings.Contains(trimNodeText(ctx.SourceFile, baseExpression), "?.")
+				if hasOptionalSyntax {
+					baseIsNeverNullish = optionalCallExpressionResultNeverNullish(ctx, callExpression)
+				}
 			}
 		}
 	}
-	if !baseIsNeverNullish {
+	return baseIsNeverNullish
+}
+
+func optionalPropertyAccessResultNeverNullish(ctx rule.RuleContext, propertyAccess *ast.PropertyAccessExpression) bool {
+	if ctx.TypeChecker == nil || propertyAccess == nil || propertyAccess.Expression == nil || propertyAccess.Name() == nil {
 		return false
 	}
-	if tokenRange, ok := optionalChainTokenRange(ctx.SourceFile, node); ok {
-		ctx.ReportRange(tokenRange, buildNeverOptionalChainMessage())
-	} else {
-		ctx.ReportNode(node, buildNeverOptionalChainMessage())
+	leftType := ctx.TypeChecker.GetTypeAtLocation(propertyAccess.Expression)
+	if leftType == nil {
+		return false
 	}
+	parts := utils.UnionTypeParts(leftType)
+	if len(parts) == 0 {
+		parts = []*checker.Type{leftType}
+	}
+	hasNonNullPart := false
+	for _, part := range parts {
+		if part == nil {
+			continue
+		}
+		if utils.IsTypeFlagSet(part, checker.TypeFlagsNull|checker.TypeFlagsUndefined|checker.TypeFlagsVoid) {
+			continue
+		}
+		hasNonNullPart = true
+		prop := checker.Checker_getPropertyOfType(ctx.TypeChecker, part, propertyAccess.Name().Text())
+		if prop == nil {
+			indexInfos := checker.Checker_getIndexInfosOfType(ctx.TypeChecker, part)
+			hasStringIndex := false
+			for _, indexInfo := range indexInfos {
+				if indexInfo == nil {
+					continue
+				}
+				keyType := checker.IndexInfo_keyType(indexInfo)
+				if keyType == nil {
+					continue
+				}
+				keyFlags := checker.Type_flags(keyType)
+				if keyFlags&(checker.TypeFlagsStringLiteral|checker.TypeFlagsTemplateLiteral|checker.TypeFlagsStringMapping) == 0 {
+					continue
+				}
+				hasStringIndex = true
+				valueType := checker.IndexInfo_valueType(indexInfo)
+				if !isTypeNeverNullish(valueType, ctx.TypeChecker) {
+					return false
+				}
+			}
+			if !hasStringIndex {
+				return false
+			}
+			continue
+		}
+		location := propertyAccess.Name().AsNode()
+		if prop.ValueDeclaration != nil {
+			location = prop.ValueDeclaration
+		}
+		propType := ctx.TypeChecker.GetTypeOfSymbolAtLocation(prop, location)
+		if !isTypeNeverNullish(propType, ctx.TypeChecker) {
+			return false
+		}
+	}
+	return hasNonNullPart
+}
+
+func literalPropertyNamesFromType(typeChecker *checker.Checker, t *checker.Type) ([]string, bool) {
+	if typeChecker == nil || t == nil {
+		return nil, false
+	}
+	parts := utils.UnionTypeParts(t)
+	if len(parts) == 0 {
+		parts = []*checker.Type{t}
+	}
+	keys := make([]string, 0, len(parts))
+	seen := map[string]bool{}
+
+	for _, part := range parts {
+		if part == nil {
+			return nil, false
+		}
+		flags := checker.Type_flags(part)
+		if flags&checker.TypeFlagsStringLiteral != 0 {
+			if literal := part.AsLiteralType(); literal != nil {
+				if stringValue, ok := checker.LiteralType_value(literal).(string); ok {
+					if !seen[stringValue] {
+						seen[stringValue] = true
+						keys = append(keys, stringValue)
+					}
+					continue
+				}
+			}
+			typeText := strings.Trim(typeChecker.TypeToString(part), `"'`)
+			if typeText == "" {
+				return nil, false
+			}
+			if !seen[typeText] {
+				seen[typeText] = true
+				keys = append(keys, typeText)
+			}
+			continue
+		}
+		if flags&checker.TypeFlagsNumberLiteral != 0 {
+			typeText := strings.TrimSpace(typeChecker.TypeToString(part))
+			if typeText == "" {
+				return nil, false
+			}
+			if !seen[typeText] {
+				seen[typeText] = true
+				keys = append(keys, typeText)
+			}
+			continue
+		}
+		return nil, false
+	}
+
+	if len(keys) == 0 {
+		return nil, false
+	}
+	return keys, true
+}
+
+func optionalElementAccessResultNeverNullish(ctx rule.RuleContext, elementAccess *ast.ElementAccessExpression) bool {
+	if ctx.TypeChecker == nil || elementAccess == nil || elementAccess.Expression == nil || elementAccess.ArgumentExpression == nil {
+		return false
+	}
+	leftType := ctx.TypeChecker.GetTypeAtLocation(elementAccess.Expression)
+	if leftType == nil {
+		return false
+	}
+	keyType := ctx.TypeChecker.GetTypeAtLocation(elementAccess.ArgumentExpression)
+	keys, ok := literalPropertyNamesFromType(ctx.TypeChecker, keyType)
+	if !ok {
+		return false
+	}
+
+	parts := utils.UnionTypeParts(leftType)
+	if len(parts) == 0 {
+		parts = []*checker.Type{leftType}
+	}
+	hasNonNullPart := false
+
+	for _, part := range parts {
+		if part == nil {
+			continue
+		}
+		if utils.IsTypeFlagSet(part, checker.TypeFlagsNull|checker.TypeFlagsUndefined|checker.TypeFlagsVoid) {
+			continue
+		}
+		hasNonNullPart = true
+		for _, key := range keys {
+			prop := checker.Checker_getPropertyOfType(ctx.TypeChecker, part, key)
+			if prop == nil {
+				return false
+			}
+			location := elementAccess.ArgumentExpression
+			if prop.ValueDeclaration != nil {
+				location = prop.ValueDeclaration
+			}
+			propType := ctx.TypeChecker.GetTypeOfSymbolAtLocation(prop, location)
+			if !isTypeNeverNullish(propType, ctx.TypeChecker) {
+				return false
+			}
+		}
+	}
+
+	return hasNonNullPart
+}
+
+func optionalCallExpressionResultNeverNullish(ctx rule.RuleContext, callExpression *ast.CallExpression) bool {
+	if ctx.TypeChecker == nil || callExpression == nil || callExpression.Expression == nil {
+		return false
+	}
+	calleeType := ctx.TypeChecker.GetTypeAtLocation(callExpression.Expression)
+	if calleeType == nil {
+		return false
+	}
+	parts := utils.UnionTypeParts(calleeType)
+	if len(parts) == 0 {
+		parts = []*checker.Type{calleeType}
+	}
+	hasNonNullPart := false
+	for _, part := range parts {
+		if part == nil {
+			continue
+		}
+		if utils.IsTypeFlagSet(part, checker.TypeFlagsNull|checker.TypeFlagsUndefined|checker.TypeFlagsVoid) {
+			continue
+		}
+		hasNonNullPart = true
+		signatures := utils.GetCallSignatures(ctx.TypeChecker, part)
+		if len(signatures) == 0 {
+			baseConstraint := checker.Checker_getBaseConstraintOfType(ctx.TypeChecker, part)
+			if baseConstraint != nil && baseConstraint != part {
+				signatures = utils.GetCallSignatures(ctx.TypeChecker, baseConstraint)
+			}
+		}
+		if len(signatures) == 0 {
+			return false
+		}
+		for _, signature := range signatures {
+			if signature == nil {
+				return false
+			}
+			returnType := checker.Checker_getReturnTypeOfSignature(ctx.TypeChecker, signature)
+			if !isTypeNeverNullish(returnType, ctx.TypeChecker) {
+				return false
+			}
+		}
+	}
+	return hasNonNullPart
+}
+
+func optionalChainBaseExpressionFromToken(node *ast.Node) (*ast.Node, bool) {
+	if node == nil || node.Parent == nil {
+		return nil, false
+	}
+	parent := node.Parent
+	switch parent.Kind {
+	case ast.KindPropertyAccessExpression:
+		propertyAccess := parent.AsPropertyAccessExpression()
+		if propertyAccess == nil || propertyAccess.QuestionDotToken != node {
+			return nil, false
+		}
+		return propertyAccess.Expression, true
+	case ast.KindElementAccessExpression:
+		elementAccess := parent.AsElementAccessExpression()
+		if elementAccess == nil || elementAccess.QuestionDotToken != node {
+			return nil, false
+		}
+		return elementAccess.Expression, true
+	case ast.KindCallExpression:
+		callExpression := parent.AsCallExpression()
+		if callExpression == nil || callExpression.QuestionDotToken != node {
+			return nil, false
+		}
+		return callExpression.Expression, true
+	}
+	return nil, false
+}
+
+func reportNeverOptionalChainFromToken(ctx rule.RuleContext, tokenNode *ast.Node) bool {
+	baseExpression, ok := optionalChainBaseExpressionFromToken(tokenNode)
+	if !ok || baseExpression == nil {
+		return false
+	}
+	if !optionalChainBaseNeverNullish(ctx, baseExpression) {
+		return false
+	}
+	ctx.ReportNode(tokenNode, buildNeverOptionalChainMessage())
 	return true
+}
+
+type signatureWithResolvedTypePredicate struct {
+	flags                 checker.SignatureFlags
+	minArgumentCount      int32
+	resolvedMinArgCount   int32
+	declaration           *ast.Node
+	typeParameters        []*checker.Type
+	parameters            []*ast.Symbol
+	thisParameter         *ast.Symbol
+	resolvedReturnType    *checker.Type
+	resolvedTypePredicate *checker.TypePredicate
+	target                *checker.Signature
+	mapper                *checker.TypeMapper
+	isolatedSignatureType *checker.Type
+	composite             *checker.CompositeSignature
+}
+
+type typePredicateWithType struct {
+	kind           checker.TypePredicateKind
+	parameterIndex int32
+	parameterName  string
+	t              *checker.Type
+}
+
+func signatureResolvedTypePredicate(signature *checker.Signature) *checker.TypePredicate {
+	if signature == nil {
+		return nil
+	}
+	return ((*signatureWithResolvedTypePredicate)(unsafe.Pointer(signature))).resolvedTypePredicate
+}
+
+func typePredicateType(predicate *checker.TypePredicate) *checker.Type {
+	if predicate == nil {
+		return nil
+	}
+	return ((*typePredicateWithType)(unsafe.Pointer(predicate))).t
+}
+
+func trimNodeTextInOwnSource(node *ast.Node) string {
+	if node == nil {
+		return ""
+	}
+	sourceFile := ast.GetSourceFileOfNode(node)
+	if sourceFile == nil {
+		return strings.TrimSpace(node.Text())
+	}
+	trimmed := utils.TrimNodeTextRange(sourceFile, node)
+	sourceText := sourceFile.Text()
+	if trimmed.Pos() < 0 || trimmed.End() > len(sourceText) || trimmed.Pos() >= trimmed.End() {
+		return strings.TrimSpace(node.Text())
+	}
+	return strings.TrimSpace(sourceText[trimmed.Pos():trimmed.End()])
+}
+
+func parseTypePredicateText(signature *checker.Signature) (parameterName string, targetTypeText string, isAsserts bool, ok bool) {
+	declaration := checker.Signature_declaration(signature)
+	if declaration == nil || declaration.Type() == nil {
+		return "", "", false, false
+	}
+	typeText := trimNodeTextInOwnSource(declaration.Type())
+	remainder := typeText
+	asserts := false
+	if strings.HasPrefix(remainder, "asserts ") {
+		asserts = true
+		remainder = strings.TrimSpace(strings.TrimPrefix(remainder, "asserts "))
+	}
+	if remainder == "" {
+		return "", "", false, false
+	}
+	paramName := remainder
+	targetText := ""
+	if idx := strings.Index(remainder, " is "); idx >= 0 {
+		paramName = strings.TrimSpace(remainder[:idx])
+		targetText = strings.TrimSpace(remainder[idx+4:])
+	} else if !asserts {
+		return "", "", false, false
+	}
+	if cut := strings.IndexAny(paramName, " \t\r\n"); cut >= 0 {
+		paramName = paramName[:cut]
+	}
+	if paramName == "" {
+		return "", "", false, false
+	}
+	return paramName, targetText, asserts, true
+}
+
+func normalizeTypeText(value string) string {
+	replacer := strings.NewReplacer(" ", "", "\n", "", "\t", "", "\r", "")
+	return replacer.Replace(strings.TrimSpace(value))
+}
+
+func checkAssertionTypePredicateCall(ctx rule.RuleContext, node *ast.Node) {
+	if ctx.TypeChecker == nil || node == nil || node.Kind != ast.KindCallExpression {
+		return
+	}
+	callExpression := node.AsCallExpression()
+	if callExpression == nil || callExpression.Arguments == nil || len(callExpression.Arguments.Nodes) == 0 {
+		return
+	}
+	signature := checker.Checker_getResolvedSignature(ctx.TypeChecker, node, nil, checker.CheckModeNormal)
+	if signature == nil {
+		return
+	}
+
+	parsedParamName, parsedTargetTypeText, parsedIsAsserts, parsed := parseTypePredicateText(signature)
+
+	typePredicate := signatureResolvedTypePredicate(signature)
+	argIndex := -1
+	if typePredicate != nil {
+		kind := checker.TypePredicate_kind(typePredicate)
+		if kind == checker.TypePredicateKindAssertsIdentifier || kind == checker.TypePredicateKindIdentifier {
+			argIndex = int(checker.TypePredicate_parameterIndex(typePredicate))
+		}
+	}
+	if argIndex < 0 && parsed && parsedParamName != "this" {
+		parameters := checker.Signature_parameters(signature)
+		for i, parameter := range parameters {
+			if parameter != nil && parameter.Name == parsedParamName {
+				argIndex = i
+				break
+			}
+		}
+		if argIndex < 0 {
+			argIndex = 0
+		}
+	}
+	if argIndex < 0 || argIndex >= len(callExpression.Arguments.Nodes) {
+		return
+	}
+	argument := callExpression.Arguments.Nodes[argIndex]
+	if argument == nil || argument.Kind == ast.KindSpreadElement {
+		return
+	}
+	argumentType := ctx.TypeChecker.GetTypeAtLocation(argument)
+	if argumentType == nil {
+		return
+	}
+	predicateType := typePredicateType(typePredicate)
+	if predicateType == nil {
+		if parsed && parsedTargetTypeText != "" {
+			argumentTypeText := normalizeTypeText(ctx.TypeChecker.TypeToString(argumentType))
+			predicateTypeText := normalizeTypeText(parsedTargetTypeText)
+			if argumentTypeText == predicateTypeText {
+				ctx.ReportNode(argument, buildTypeGuardAlreadyIsTypeMessage())
+			}
+			return
+		}
+		if parsed && parsedIsAsserts {
+			checkCondition(ctx, argument, false)
+			return
+		}
+		checkCondition(ctx, argument, false)
+		return
+	}
+	parts := utils.UnionTypeParts(argumentType)
+	if len(parts) == 0 {
+		parts = []*checker.Type{argumentType}
+	}
+	allAssignable := true
+	anyAssignable := false
+	for _, part := range parts {
+		if part == nil {
+			continue
+		}
+		assignable := checker.Checker_isTypeAssignableTo(ctx.TypeChecker, part, predicateType)
+		allAssignable = allAssignable && assignable
+		anyAssignable = anyAssignable || assignable
+	}
+	if allAssignable {
+		ctx.ReportNode(argument, buildTypeGuardAlreadyIsTypeMessage())
+		return
+	}
+	if !anyAssignable {
+		ctx.ReportNode(argument, buildAlwaysFalsyMessage())
+	}
+}
+
+func assignmentLeftMayBeOptionalProperty(ctx rule.RuleContext, node *ast.Node) bool {
+	if ctx.TypeChecker == nil || node == nil {
+		return false
+	}
+	switch node.Kind {
+	case ast.KindPropertyAccessExpression:
+		propertyAccess := node.AsPropertyAccessExpression()
+		if propertyAccess == nil || propertyAccess.Name() == nil {
+			return false
+		}
+		symbol := ctx.TypeChecker.GetSymbolAtLocation(propertyAccess.Name())
+		return symbol != nil && symbol.Flags&ast.SymbolFlagsOptional != 0
+	case ast.KindElementAccessExpression:
+		elementAccess := node.AsElementAccessExpression()
+		if elementAccess == nil || elementAccess.ArgumentExpression == nil {
+			return false
+		}
+		symbol := ctx.TypeChecker.GetSymbolAtLocation(elementAccess.ArgumentExpression)
+		return symbol != nil && symbol.Flags&ast.SymbolFlagsOptional != 0
+	default:
+		return false
+	}
 }
 
 func isConditionPosition(node *ast.Node) bool {
@@ -1627,7 +2097,6 @@ var NoUnnecessaryConditionRule = rule.CreateRule(rule.Rule{
 		if !isStrictNullChecks && !*opts.AllowRuleToRunWithoutStrictNullChecksIKnowWhatIAmDoing {
 			// Report at the beginning of the file
 			ctx.ReportNode(&ast.Node{}, buildNoStrictNullCheckMessage())
-			return rule.RuleListeners{}
 		}
 
 		return rule.RuleListeners{
@@ -1694,12 +2163,22 @@ var NoUnnecessaryConditionRule = rule.CreateRule(rule.Rule{
 						}
 						return
 					}
+					if binExpr.OperatorToken.Kind == ast.KindAmpersandAmpersandEqualsToken ||
+						binExpr.OperatorToken.Kind == ast.KindBarBarEqualsToken {
+						checkCondition(ctx, binExpr.Left, false)
+						return
+					}
 
-					// Handle nullish coalescing operator (??)
-					if binExpr.OperatorToken.Kind == ast.KindQuestionQuestionToken {
+					// Handle nullish coalescing operators (?? and ??=)
+					if binExpr.OperatorToken.Kind == ast.KindQuestionQuestionToken ||
+						binExpr.OperatorToken.Kind == ast.KindQuestionQuestionEqualsToken {
 						leftType := ctx.TypeChecker.GetTypeAtLocation(binExpr.Left)
 						if leftType != nil {
-							if ast.IsOptionalChain(binExpr.Left) {
+							if binExpr.OperatorToken.Kind == ast.KindQuestionQuestionEqualsToken &&
+								assignmentLeftMayBeOptionalProperty(ctx, binExpr.Left) {
+								return
+							}
+							if binExpr.OperatorToken.Kind == ast.KindQuestionQuestionToken && ast.IsOptionalChain(binExpr.Left) {
 								return
 							}
 							if binExpr.Left.Kind == ast.KindElementAccessExpression {
@@ -1737,19 +2216,12 @@ var NoUnnecessaryConditionRule = rule.CreateRule(rule.Rule{
 					}
 				}
 			},
-			ast.KindPropertyAccessExpression: func(node *ast.Node) {
-				if !isConditionPosition(node) {
-					reportNeverOptionalChain(ctx, node)
-				}
-			},
-			ast.KindElementAccessExpression: func(node *ast.Node) {
-				if !isConditionPosition(node) {
-					reportNeverOptionalChain(ctx, node)
-				}
+			ast.KindQuestionDotToken: func(node *ast.Node) {
+				reportNeverOptionalChainFromToken(ctx, node)
 			},
 			ast.KindCallExpression: func(node *ast.Node) {
-				if !isConditionPosition(node) {
-					reportNeverOptionalChain(ctx, node)
+				if *opts.CheckTypePredicates {
+					checkAssertionTypePredicateCall(ctx, node)
 				}
 				checkArrayPredicateCallback(ctx, node)
 			},
