@@ -51,6 +51,59 @@ type ReturnAwaitOptions struct {
 	Option *ReturnAwaitOption
 }
 
+func parseReturnAwaitOption(value string) (ReturnAwaitOption, bool) {
+	switch value {
+	case "always":
+		return ReturnAwaitOptionAlways, true
+	case "error-handling-correctness-only":
+		return ReturnAwaitOptionErrorHandlingCorrectnessOnly, true
+	case "in-try-catch":
+		return ReturnAwaitOptionInTryCatch, true
+	case "never":
+		return ReturnAwaitOptionNever, true
+	default:
+		return 0, false
+	}
+}
+
+func parseOptions(options any) ReturnAwaitOptions {
+	result := ReturnAwaitOptions{
+		Option: utils.Ref(ReturnAwaitOptionInTryCatch),
+	}
+
+	switch value := options.(type) {
+	case nil:
+		return result
+	case ReturnAwaitOptions:
+		if value.Option != nil {
+			result.Option = value.Option
+		}
+		return result
+	case *ReturnAwaitOptions:
+		if value != nil && value.Option != nil {
+			result.Option = value.Option
+		}
+		return result
+	case string:
+		if parsed, ok := parseReturnAwaitOption(value); ok {
+			result.Option = utils.Ref(parsed)
+		}
+		return result
+	case []interface{}:
+		if len(value) == 0 {
+			return result
+		}
+		if asString, ok := value[0].(string); ok {
+			if parsed, ok := parseReturnAwaitOption(asString); ok {
+				result.Option = utils.Ref(parsed)
+			}
+		}
+		return result
+	default:
+		return result
+	}
+}
+
 type scopeInfo struct {
 	hasAsync   bool
 	owningFunc *ast.Node
@@ -97,13 +150,7 @@ func getWhetherToAwait(affectsErrorHandling bool, option ReturnAwaitOption) whet
 var ReturnAwaitRule = rule.CreateRule(rule.Rule{
 	Name: "return-await",
 	Run: func(ctx rule.RuleContext, options any) rule.RuleListeners {
-		opts, ok := options.(ReturnAwaitOptions)
-		if !ok {
-			opts = ReturnAwaitOptions{}
-		}
-		if opts.Option == nil {
-			opts.Option = utils.Ref(ReturnAwaitOptionInTryCatch)
-		}
+		opts := parseOptions(options)
 
 		var scope *scopeInfo
 
