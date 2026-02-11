@@ -939,7 +939,7 @@ func checkArrayPredicateCallback(ctx rule.RuleContext, node *ast.Node, opts stri
 			return
 		}
 		if bodyNode.Kind != ast.KindBlock {
-			checkCondition(ctx, bodyNode, predicateOpts)
+			checkCallbackFunctionReturnType(ctx, callback, predicateOpts)
 			return
 		}
 		checkCallbackFunctionReturnType(ctx, callback, predicateOpts)
