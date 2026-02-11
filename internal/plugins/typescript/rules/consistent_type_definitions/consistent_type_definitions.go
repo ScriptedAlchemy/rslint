@@ -69,12 +69,13 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 			return false
 		}
 
-		// Check if it's a parenthesized type wrapping an object type
-		if typeNode.Kind == ast.KindParenthesizedType {
+		// Unwrap parenthesized types recursively.
+		for typeNode != nil && typeNode.Kind == ast.KindParenthesizedType {
 			parenthesized := typeNode.AsParenthesizedTypeNode()
-			if parenthesized != nil {
-				return isObjectTypeLiteral(parenthesized.Type)
+			if parenthesized == nil {
+				return false
 			}
+			typeNode = parenthesized.Type
 		}
 
 		return isObjectTypeLiteral(typeNode)
@@ -116,7 +117,12 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 			return
 		}
 
-		ctx.ReportNode(node, rule.RuleMessage{
+		reportNode := node
+		if typeAlias.Name() != nil {
+			reportNode = typeAlias.Name()
+		}
+
+		ctx.ReportNode(reportNode, rule.RuleMessage{
 			Id:          "interfaceOverType",
 			Description: "Use an interface instead of a type literal.",
 		})
@@ -133,15 +139,20 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 		}
 
 		// Don't fix interfaces in global modules (see typescript-eslint #2707)
+		reportNode := node
+		if interfaceDecl.Name() != nil {
+			reportNode = interfaceDecl.Name()
+		}
+
 		if isInGlobalModule(node) {
-			ctx.ReportNode(node, rule.RuleMessage{
+			ctx.ReportNode(reportNode, rule.RuleMessage{
 				Id:          "typeOverInterface",
 				Description: "Use a type literal instead of an interface.",
 			})
 			return
 		}
 
-		ctx.ReportNode(node, rule.RuleMessage{
+		ctx.ReportNode(reportNode, rule.RuleMessage{
 			Id:          "typeOverInterface",
 			Description: "Use a type literal instead of an interface.",
 		})
