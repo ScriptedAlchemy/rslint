@@ -10,7 +10,7 @@ import (
 func TestStrictBooleanExpressionsRule(t *testing.T) {
 	rule_tester.RunRuleTester(fixtures.GetRootDir(), "tsconfig.json", t, &StrictBooleanExpressionsRule, []rule_tester.ValidTestCase{
 		{Code: `declare const value: boolean; if (value) {}`},
-		{Code: `const value: string = "x"; if (value) {}`},
+		{Code: `const value: string = "x"; if (value) {}`, Options: map[string]any{"allowString": true}},
 		{Code: `<T extends any>(x: T) => (x ? 1 : 0);`, Options: map[string]any{"allowAny": true}},
 	}, []rule_tester.InvalidTestCase{
 		{

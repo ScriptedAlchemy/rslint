@@ -1,6 +1,9 @@
 package strict_boolean_expressions
 
 import (
+	"strconv"
+	"strings"
+
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/microsoft/typescript-go/shim/checker"
 	"github.com/web-infra-dev/rslint/internal/rule"
@@ -21,6 +24,7 @@ func buildConditionErrorMessage(messageId string) rule.RuleMessage {
 		"conditionErrorString":          "Unexpected string value in conditional.",
 		"conditionErrorOther":           "Unexpected value in conditional. A boolean expression is required.",
 		"noStrictNullCheck":             "This rule requires the `strictNullChecks` compiler option to be turned on to function correctly.",
+		"predicateCannotBeAsync":        "Predicate function should not be async.",
 	}
 	description, ok := descriptions[messageId]
 	if !ok {
@@ -43,6 +47,11 @@ type strictBooleanExpressionsOptions struct {
 	AllowNumber                  bool
 	AllowString                  bool
 	AllowWithoutStrictNullChecks bool
+	AllowNullableNumberSet       bool
+	AllowNullableObjectSet       bool
+	AllowNullableStringSet       bool
+	AllowNumberSet               bool
+	AllowStringSet               bool
 }
 
 func defaultStrictBooleanExpressionsOptions() strictBooleanExpressionsOptions {
@@ -69,20 +78,35 @@ func applyStrictBooleanOptionsMap(opts strictBooleanExpressionsOptions, values m
 	if allowNullableEnum, ok := values["allowNullableEnum"].(bool); ok {
 		opts.AllowNullableEnum = allowNullableEnum
 	}
-	if allowNullableNumber, ok := values["allowNullableNumber"].(bool); ok {
-		opts.AllowNullableNumber = allowNullableNumber
+	if raw, exists := values["allowNullableNumber"]; exists {
+		if allowNullableNumber, ok := raw.(bool); ok {
+			opts.AllowNullableNumber = allowNullableNumber
+		}
+		opts.AllowNullableNumberSet = true
 	}
-	if allowNullableObject, ok := values["allowNullableObject"].(bool); ok {
-		opts.AllowNullableObject = allowNullableObject
+	if raw, exists := values["allowNullableObject"]; exists {
+		if allowNullableObject, ok := raw.(bool); ok {
+			opts.AllowNullableObject = allowNullableObject
+		}
+		opts.AllowNullableObjectSet = true
 	}
-	if allowNullableString, ok := values["allowNullableString"].(bool); ok {
-		opts.AllowNullableString = allowNullableString
+	if raw, exists := values["allowNullableString"]; exists {
+		if allowNullableString, ok := raw.(bool); ok {
+			opts.AllowNullableString = allowNullableString
+		}
+		opts.AllowNullableStringSet = true
 	}
-	if allowNumber, ok := values["allowNumber"].(bool); ok {
-		opts.AllowNumber = allowNumber
+	if raw, exists := values["allowNumber"]; exists {
+		if allowNumber, ok := raw.(bool); ok {
+			opts.AllowNumber = allowNumber
+		}
+		opts.AllowNumberSet = true
 	}
-	if allowString, ok := values["allowString"].(bool); ok {
-		opts.AllowString = allowString
+	if raw, exists := values["allowString"]; exists {
+		if allowString, ok := raw.(bool); ok {
+			opts.AllowString = allowString
+		}
+		opts.AllowStringSet = true
 	}
 	if allowWithoutStrictNullChecks, ok := values["allowRuleToRunWithoutStrictNullChecksIKnowWhatIAmDoing"].(bool); ok {
 		opts.AllowWithoutStrictNullChecks = allowWithoutStrictNullChecks
@@ -427,26 +451,6 @@ func getCallMethodName(callExpression *ast.Node) (string, *ast.Node, bool) {
 	return "", nil, false
 }
 
-func collectReturnExpressionsSkippingNestedFunctions(node *ast.Node, skipNestedFunctions bool, out *[]*ast.Node) {
-	if node == nil {
-		return
-	}
-	if node.Kind == ast.KindReturnStatement {
-		returnStatement := node.AsReturnStatement()
-		if returnStatement != nil && returnStatement.Expression != nil {
-			*out = append(*out, returnStatement.Expression)
-		}
-		return
-	}
-	if skipNestedFunctions && ast.IsFunctionLike(node) {
-		return
-	}
-	node.ForEachChild(func(child *ast.Node) bool {
-		collectReturnExpressionsSkippingNestedFunctions(child, true, out)
-		return false
-	})
-}
-
 func checkCallbackFunctionReturnType(ctx rule.RuleContext, callback *ast.Node, opts strictBooleanExpressionsOptions) {
 	if callback == nil || ctx.TypeChecker == nil {
 		return
@@ -458,8 +462,11 @@ func checkCallbackFunctionReturnType(ctx rule.RuleContext, callback *ast.Node, o
 	}
 	signatures := utils.GetCallSignatures(ctx.TypeChecker, callbackType)
 	if len(signatures) == 0 {
-		return
+		signatures = nil
 	}
+
+	seenAllowed := false
+	reportMessageID := ""
 
 	for _, signature := range signatures {
 		if signature == nil {
@@ -472,13 +479,61 @@ func checkCallbackFunctionReturnType(ctx rule.RuleContext, callback *ast.Node, o
 				effectiveReturnType = baseConstraint
 			}
 		}
-		messageId := conditionErrorMessageID(effectiveReturnType, opts)
-		if messageId == "" {
+		messageID := conditionErrorMessageID(effectiveReturnType, opts)
+		if messageID == "" {
+			seenAllowed = true
 			continue
 		}
-		ctx.ReportNode(callback, buildConditionErrorMessage(messageId))
+		if reportMessageID == "" {
+			reportMessageID = messageID
+			continue
+		}
+		if reportMessageID != messageID {
+			reportMessageID = "conditionErrorOther"
+		}
+	}
+
+	if callback != nil && callback.Kind == ast.KindIdentifier {
+		symbol := ctx.TypeChecker.GetSymbolAtLocation(callback)
+		if symbol != nil {
+			for _, declaration := range symbol.Declarations {
+				if declaration == nil || !ast.IsFunctionLike(declaration) {
+					continue
+				}
+				returnTypeNode := declaration.Type()
+				if returnTypeNode == nil {
+					continue
+				}
+				returnType := ctx.TypeChecker.GetTypeAtLocation(returnTypeNode)
+				if returnType == nil {
+					continue
+				}
+				if baseConstraint := checker.Checker_getBaseConstraintOfType(ctx.TypeChecker, returnType); baseConstraint != nil {
+					returnType = baseConstraint
+				}
+				messageID := conditionErrorMessageID(returnType, opts)
+				if messageID == "" {
+					seenAllowed = true
+					continue
+				}
+				if reportMessageID == "" {
+					reportMessageID = messageID
+					continue
+				}
+				if reportMessageID != messageID {
+					reportMessageID = "conditionErrorOther"
+				}
+			}
+		}
+	}
+
+	if reportMessageID == "" {
 		return
 	}
+	if seenAllowed {
+		reportMessageID = "conditionErrorOther"
+	}
+	ctx.ReportNode(callback, buildConditionErrorMessage(reportMessageID))
 }
 
 func typeParameterNameFromTypeNode(typeNode *ast.Node) (string, bool) {
@@ -561,6 +616,288 @@ func genericTypeParameterConstraintForIdentifier(ctx rule.RuleContext, node *ast
 	return nil, false
 }
 
+func declarationTypeNode(node *ast.Node) *ast.Node {
+	if node == nil {
+		return nil
+	}
+	switch node.Kind {
+	case ast.KindParameter:
+		parameter := node.AsParameterDeclaration()
+		if parameter == nil {
+			return nil
+		}
+		return parameter.Type
+	case ast.KindVariableDeclaration:
+		declaration := node.AsVariableDeclaration()
+		if declaration == nil {
+			return nil
+		}
+		return declaration.Type
+	case ast.KindPropertyDeclaration:
+		declaration := node.AsPropertyDeclaration()
+		if declaration == nil {
+			return nil
+		}
+		return declaration.Type
+	case ast.KindPropertySignature:
+		signature := node.AsPropertySignatureDeclaration()
+		if signature == nil {
+			return nil
+		}
+		return signature.Type
+	}
+	return nil
+}
+
+func isNullishTypeNode(typeNode *ast.Node) bool {
+	if typeNode == nil {
+		return false
+	}
+	typeNode = ast.SkipParentheses(typeNode)
+	if typeNode == nil {
+		return false
+	}
+	if typeNode.Kind == ast.KindLiteralType {
+		literalType := typeNode.AsLiteralTypeNode()
+		if literalType == nil {
+			return false
+		}
+		return isNullishTypeNode(literalType.Literal)
+	}
+	switch typeNode.Kind {
+	case ast.KindNullKeyword, ast.KindUndefinedKeyword, ast.KindVoidKeyword:
+		return true
+	default:
+		return false
+	}
+}
+
+func literalTypeNodeTruthiness(typeNode *ast.Node) (bool, bool) {
+	if typeNode == nil {
+		return false, false
+	}
+	typeNode = ast.SkipParentheses(typeNode)
+	if typeNode == nil {
+		return false, false
+	}
+	if typeNode.Kind == ast.KindLiteralType {
+		literalType := typeNode.AsLiteralTypeNode()
+		if literalType == nil {
+			return false, false
+		}
+		return literalTypeNodeTruthiness(literalType.Literal)
+	}
+	switch typeNode.Kind {
+	case ast.KindTrueKeyword:
+		return true, true
+	case ast.KindFalseKeyword:
+		return true, false
+	case ast.KindStringLiteral:
+		stringLiteral := typeNode.AsStringLiteral()
+		if stringLiteral == nil {
+			return false, false
+		}
+		return true, stringLiteral.Text != ""
+	case ast.KindNoSubstitutionTemplateLiteral:
+		templateLiteral := typeNode.AsNoSubstitutionTemplateLiteral()
+		if templateLiteral == nil {
+			return false, false
+		}
+		return true, templateLiteral.Text != ""
+	case ast.KindNumericLiteral:
+		value, err := strconv.ParseFloat(typeNode.Text(), 64)
+		if err != nil {
+			return false, false
+		}
+		return true, value != 0
+	case ast.KindBigIntLiteral:
+		text := strings.TrimSpace(typeNode.Text())
+		return true, text != "0n"
+	case ast.KindPrefixUnaryExpression:
+		unary := typeNode.AsPrefixUnaryExpression()
+		if unary == nil || unary.Operand == nil {
+			return false, false
+		}
+		if unary.Operator == ast.KindMinusToken || unary.Operator == ast.KindPlusToken {
+			if unary.Operand.Kind == ast.KindNumericLiteral {
+				value, err := strconv.ParseFloat(unary.Operand.Text(), 64)
+				if err != nil {
+					return false, false
+				}
+				if unary.Operator == ast.KindMinusToken {
+					value = -value
+				}
+				return true, value != 0
+			}
+			if unary.Operand.Kind == ast.KindBigIntLiteral {
+				text := strings.TrimSpace(unary.Operand.Text())
+				if unary.Operator == ast.KindMinusToken {
+					return true, text != "0n"
+				}
+				return true, text != "0n"
+			}
+		}
+	}
+	return false, false
+}
+
+func isDefinitelyTruthyNullableLiteralUnionType(typeNode *ast.Node) bool {
+	if typeNode == nil {
+		return false
+	}
+	typeNode = ast.SkipParentheses(typeNode)
+	if typeNode == nil || typeNode.Kind != ast.KindUnionType {
+		return false
+	}
+
+	union := typeNode.AsUnionTypeNode()
+	if union == nil || union.Types == nil {
+		return false
+	}
+
+	hasNullish := false
+	hasTruthyLiteral := false
+	for _, part := range union.Types.Nodes {
+		if isNullishTypeNode(part) {
+			hasNullish = true
+			continue
+		}
+		known, truthy := literalTypeNodeTruthiness(part)
+		if !known || !truthy {
+			return false
+		}
+		hasTruthyLiteral = true
+	}
+
+	return hasNullish && hasTruthyLiteral
+}
+
+func isDefinitelyTruthyLiteralTypeNode(typeNode *ast.Node) bool {
+	known, truthy := literalTypeNodeTruthiness(typeNode)
+	return known && truthy
+}
+
+func symbolHasTruthyNullableLiteralUnionDeclaration(symbol *ast.Symbol) bool {
+	if symbol == nil {
+		return false
+	}
+	for _, declaration := range symbol.Declarations {
+		typeNode := declarationTypeNode(declaration)
+		if isDefinitelyTruthyNullableLiteralUnionType(typeNode) {
+			return true
+		}
+		if declaration != nil && declaration.QuestionToken() != nil && isDefinitelyTruthyLiteralTypeNode(typeNode) {
+			return true
+		}
+	}
+	return false
+}
+
+func expressionHasTruthyNullableLiteralUnionType(ctx rule.RuleContext, node *ast.Node) bool {
+	if ctx.TypeChecker == nil || node == nil {
+		return false
+	}
+	node = ast.SkipParentheses(node)
+	if node == nil {
+		return false
+	}
+	switch node.Kind {
+	case ast.KindIdentifier:
+		symbol := ctx.TypeChecker.GetSymbolAtLocation(node)
+		return symbolHasTruthyNullableLiteralUnionDeclaration(symbol)
+	case ast.KindPropertyAccessExpression:
+		access := node.AsPropertyAccessExpression()
+		if access == nil || access.Name() == nil {
+			return false
+		}
+		symbol := ctx.TypeChecker.GetSymbolAtLocation(access.Name())
+		return symbolHasTruthyNullableLiteralUnionDeclaration(symbol)
+	case ast.KindElementAccessExpression:
+		access := node.AsElementAccessExpression()
+		if access == nil || access.ArgumentExpression == nil {
+			return false
+		}
+		symbol := ctx.TypeChecker.GetSymbolAtLocation(access.ArgumentExpression)
+		return symbolHasTruthyNullableLiteralUnionDeclaration(symbol)
+	}
+	return false
+}
+
+func trimNodeTextInOwnSource(node *ast.Node) string {
+	if node == nil {
+		return ""
+	}
+	sourceFile := ast.GetSourceFileOfNode(node)
+	if sourceFile == nil {
+		return strings.TrimSpace(node.Text())
+	}
+	trimmed := utils.TrimNodeTextRange(sourceFile, node)
+	sourceText := sourceFile.Text()
+	if trimmed.Pos() < 0 || trimmed.End() > len(sourceText) || trimmed.Pos() >= trimmed.End() {
+		return strings.TrimSpace(node.Text())
+	}
+	return strings.TrimSpace(sourceText[trimmed.Pos():trimmed.End()])
+}
+
+func assertionPredicateArgumentIndex(signature *checker.Signature) (int, bool) {
+	if signature == nil {
+		return 0, false
+	}
+	declaration := checker.Signature_declaration(signature)
+	if declaration == nil || declaration.Type() == nil {
+		return 0, false
+	}
+	typeText := trimNodeTextInOwnSource(declaration.Type())
+	if !strings.HasPrefix(typeText, "asserts ") {
+		return 0, false
+	}
+	remainder := strings.TrimSpace(strings.TrimPrefix(typeText, "asserts "))
+	if remainder == "" {
+		return 0, false
+	}
+	if strings.Contains(remainder, " is ") {
+		return 0, false
+	}
+	parameterName := remainder
+	if parameterName == "" || parameterName == "this" {
+		return 0, false
+	}
+
+	parameters := checker.Signature_parameters(signature)
+	for index, parameter := range parameters {
+		if parameter != nil && parameter.Name == parameterName {
+			return index, true
+		}
+	}
+	return 0, false
+}
+
+func checkAssertionPredicateCall(ctx rule.RuleContext, node *ast.Node, opts strictBooleanExpressionsOptions) {
+	if ctx.TypeChecker == nil || node == nil {
+		return
+	}
+	call := node.AsCallExpression()
+	if call == nil || call.Arguments == nil || len(call.Arguments.Nodes) == 0 {
+		return
+	}
+	for _, argument := range call.Arguments.Nodes {
+		if argument != nil && argument.Kind == ast.KindSpreadElement {
+			return
+		}
+	}
+
+	signature := checker.Checker_getResolvedSignature(ctx.TypeChecker, node, nil, checker.CheckModeNormal)
+	if signature == nil {
+		return
+	}
+	argumentIndex, ok := assertionPredicateArgumentIndex(signature)
+	if !ok || argumentIndex < 0 || argumentIndex >= len(call.Arguments.Nodes) {
+		return
+	}
+
+	checkCondition(ctx, call.Arguments.Nodes[argumentIndex], opts)
+}
+
 func checkArrayPredicateCallback(ctx rule.RuleContext, node *ast.Node, opts strictBooleanExpressionsOptions) {
 	call := node.AsCallExpression()
 	if call == nil || call.Expression == nil || call.Arguments == nil || len(call.Arguments.Nodes) == 0 {
@@ -576,6 +913,20 @@ func checkArrayPredicateCallback(ctx rule.RuleContext, node *ast.Node, opts stri
 	if callback == nil {
 		return
 	}
+	predicateOpts := opts
+	if !opts.AllowStringSet {
+		predicateOpts.AllowString = false
+	}
+	if !opts.AllowNullableStringSet {
+		predicateOpts.AllowNullableString = false
+	}
+	if !opts.AllowNullableObjectSet {
+		predicateOpts.AllowNullableObject = false
+	}
+	if ast.HasSyntacticModifier(callback, ast.ModifierFlagsAsync) {
+		ctx.ReportNode(callback, buildConditionErrorMessage("predicateCannotBeAsync"))
+		return
+	}
 
 	switch callback.Kind {
 	case ast.KindArrowFunction:
@@ -588,29 +939,21 @@ func checkArrayPredicateCallback(ctx rule.RuleContext, node *ast.Node, opts stri
 			return
 		}
 		if bodyNode.Kind != ast.KindBlock {
-			checkCondition(ctx, bodyNode, opts)
+			checkCondition(ctx, bodyNode, predicateOpts)
 			return
 		}
-		returnExpressions := []*ast.Node{}
-		collectReturnExpressionsSkippingNestedFunctions(bodyNode, false, &returnExpressions)
-		for _, expression := range returnExpressions {
-			checkCondition(ctx, expression, opts)
-		}
+		checkCallbackFunctionReturnType(ctx, callback, predicateOpts)
 		return
 	case ast.KindFunctionExpression:
 		functionExpression := callback.AsFunctionExpression()
 		if functionExpression == nil || functionExpression.Body == nil {
 			return
 		}
-		returnExpressions := []*ast.Node{}
-		collectReturnExpressionsSkippingNestedFunctions(functionExpression.Body.AsNode(), false, &returnExpressions)
-		for _, expression := range returnExpressions {
-			checkCondition(ctx, expression, opts)
-		}
+		checkCallbackFunctionReturnType(ctx, callback, predicateOpts)
 		return
 	}
 
-	checkCallbackFunctionReturnType(ctx, callback, opts)
+	checkCallbackFunctionReturnType(ctx, callback, predicateOpts)
 }
 
 func isArrayPredicateCallbackNode(ctx rule.RuleContext, node *ast.Node) bool {
@@ -629,6 +972,16 @@ func isArrayPredicateCallbackNode(ctx rule.RuleContext, node *ast.Node) bool {
 		return false
 	}
 	return isArrayLikeReceiver(ctx, receiver)
+}
+
+func isWithinArrayPredicateCallback(ctx rule.RuleContext, node *ast.Node) bool {
+	for current := node; current != nil; current = current.Parent {
+		if !ast.IsFunctionLike(current) {
+			continue
+		}
+		return isArrayPredicateCallbackNode(ctx, current)
+	}
+	return false
 }
 
 func collectLogicalOperands(node *ast.Node, out *[]*ast.Node) {
@@ -721,6 +1074,9 @@ func checkCondition(ctx rule.RuleContext, cond *ast.Node, opts strictBooleanExpr
 
 	condType := utils.GetConstrainedTypeAtLocation(ctx.TypeChecker, cond)
 	messageId := conditionErrorMessageID(condType, opts)
+	if (messageId == "conditionErrorNullableString" || messageId == "conditionErrorNullableNumber" || messageId == "conditionErrorNullableBoolean" || messageId == "conditionErrorNullableEnum") && expressionHasTruthyNullableLiteralUnionType(ctx, cond) {
+		return
+	}
 	if messageId == "conditionErrorOther" {
 		if constraintType, found := genericTypeParameterConstraintForIdentifier(ctx, cond); found {
 			if constraintType == nil {
@@ -761,6 +1117,9 @@ var StrictBooleanExpressionsRule = rule.CreateRule(rule.Rule{
 
 		return rule.RuleListeners{
 			ast.KindIfStatement: func(node *ast.Node) {
+				if isWithinArrayPredicateCallback(ctx, node) {
+					return
+				}
 				stmt := node.AsIfStatement()
 				if stmt == nil {
 					return
@@ -768,6 +1127,9 @@ var StrictBooleanExpressionsRule = rule.CreateRule(rule.Rule{
 				checkCondition(ctx, stmt.Expression, opts)
 			},
 			ast.KindWhileStatement: func(node *ast.Node) {
+				if isWithinArrayPredicateCallback(ctx, node) {
+					return
+				}
 				stmt := node.AsWhileStatement()
 				if stmt == nil {
 					return
@@ -775,6 +1137,9 @@ var StrictBooleanExpressionsRule = rule.CreateRule(rule.Rule{
 				checkCondition(ctx, stmt.Expression, opts)
 			},
 			ast.KindDoStatement: func(node *ast.Node) {
+				if isWithinArrayPredicateCallback(ctx, node) {
+					return
+				}
 				stmt := node.AsDoStatement()
 				if stmt == nil {
 					return
@@ -782,6 +1147,9 @@ var StrictBooleanExpressionsRule = rule.CreateRule(rule.Rule{
 				checkCondition(ctx, stmt.Expression, opts)
 			},
 			ast.KindForStatement: func(node *ast.Node) {
+				if isWithinArrayPredicateCallback(ctx, node) {
+					return
+				}
 				stmt := node.AsForStatement()
 				if stmt == nil {
 					return
@@ -789,6 +1157,9 @@ var StrictBooleanExpressionsRule = rule.CreateRule(rule.Rule{
 				checkCondition(ctx, stmt.Condition, opts)
 			},
 			ast.KindConditionalExpression: func(node *ast.Node) {
+				if isWithinArrayPredicateCallback(ctx, node) {
+					return
+				}
 				cond := node.AsConditionalExpression()
 				if cond == nil {
 					return
@@ -841,6 +1212,7 @@ var StrictBooleanExpressionsRule = rule.CreateRule(rule.Rule{
 				checkControlFlowLogicalExpression(ctx, expression, opts)
 			},
 			ast.KindCallExpression: func(node *ast.Node) {
+				checkAssertionPredicateCall(ctx, node, opts)
 				checkArrayPredicateCallback(ctx, node, opts)
 
 				call := node.AsCallExpression()
