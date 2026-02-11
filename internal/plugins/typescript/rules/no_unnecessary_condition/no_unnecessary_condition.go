@@ -368,42 +368,6 @@ func literalValueFromType(typeChecker *checker.Checker, t *checker.Type) (any, b
 		return "undefined", true, "undefined"
 	}
 
-	if flags&(checker.TypeFlagsBooleanLiteral|checker.TypeFlagsStringLiteral|checker.TypeFlagsNumberLiteral|checker.TypeFlagsBigIntLiteral|checker.TypeFlagsEnumLiteral) != 0 {
-		if literal := t.AsLiteralType(); literal != nil {
-			switch value := checker.LiteralType_value(literal).(type) {
-			case bool:
-				if value {
-					return true, true, "true"
-				}
-				return false, true, "false"
-			case string:
-				return value, true, strconv.Quote(value)
-			case float64:
-				return value, true, strconv.FormatFloat(value, 'f', -1, 64)
-			case int:
-				return float64(value), true, strconv.Itoa(value)
-			case int32:
-				return float64(value), true, strconv.FormatInt(int64(value), 10)
-			case int64:
-				return float64(value), true, strconv.FormatInt(value, 10)
-			default:
-				numericText := fmt.Sprint(value)
-				if flags&checker.TypeFlagsBigIntLiteral != 0 {
-					trimmed := strings.TrimSpace(numericText)
-					if !strings.HasSuffix(trimmed, "n") {
-						trimmed += "n"
-					}
-					if parsed, err := strconv.ParseFloat(strings.TrimSuffix(trimmed, "n"), 64); err == nil {
-						return parsed, true, trimmed
-					}
-				}
-				if parsed, err := strconv.ParseFloat(strings.TrimSpace(numericText), 64); err == nil {
-					return parsed, true, numericText
-				}
-			}
-		}
-	}
-
 	if typeChecker == nil {
 		return nil, false, ""
 	}
@@ -554,15 +518,6 @@ func reportTypeLiteralComparison(ctx rule.RuleContext, node *ast.Node) bool {
 func literalTruthiness(t *checker.Type, typeChecker *checker.Checker) (bool, bool) {
 	if t == nil {
 		return false, false
-	}
-
-	if literal := t.AsLiteralType(); literal != nil {
-		switch literalValue := checker.LiteralType_value(literal).(type) {
-		case bool:
-			return true, literalValue
-		case string:
-			return true, literalValue != ""
-		}
 	}
 
 	if typeChecker == nil {
@@ -1192,15 +1147,6 @@ func literalPropertyNamesFromType(typeChecker *checker.Checker, t *checker.Type)
 		}
 		flags := checker.Type_flags(part)
 		if flags&checker.TypeFlagsStringLiteral != 0 {
-			if literal := part.AsLiteralType(); literal != nil {
-				if stringValue, ok := checker.LiteralType_value(literal).(string); ok {
-					if !seen[stringValue] {
-						seen[stringValue] = true
-						keys = append(keys, stringValue)
-					}
-					continue
-				}
-			}
 			typeText := strings.Trim(typeChecker.TypeToString(part), `"'`)
 			if typeText == "" {
 				return nil, false
