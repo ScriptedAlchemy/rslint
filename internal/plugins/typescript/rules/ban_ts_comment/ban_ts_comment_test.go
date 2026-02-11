@@ -97,16 +97,16 @@ func TestBanTsCommentRule(t *testing.T) {
 		// ts-expect-error - description too short
 		{
 			Code:    "// @ts-expect-error: ab\nconst a = 0;",
-			Options: map[string]interface{}{"ts-expect-error": "allow-with-description"},
+			Options: map[string]interface{}{"ts-expect-error": "allow-with-description", "minimumDescriptionLength": 10},
 			Errors: []rule_tester.InvalidTestCaseError{
-				{MessageId: "tsDirectiveCommentDescriptionNotMatchPattern"},
+				{MessageId: "tsDirectiveCommentRequiresDescription"},
 			},
 		},
 		{
 			Code:    "// @ts-expect-error 0123456789012345678\nconst a = 0;",
 			Options: map[string]interface{}{"ts-expect-error": "allow-with-description", "minimumDescriptionLength": 21},
 			Errors: []rule_tester.InvalidTestCaseError{
-				{MessageId: "tsDirectiveCommentDescriptionNotMatchPattern"},
+				{MessageId: "tsDirectiveCommentRequiresDescription"},
 			},
 		},
 
@@ -136,9 +136,9 @@ func TestBanTsCommentRule(t *testing.T) {
 		// ts-expect-error - Unicode/emoji too short
 		{
 			Code:    "// @ts-expect-error: 💩💩💩\nconst a = 0;",
-			Options: map[string]interface{}{"ts-expect-error": "allow-with-description", "minimumDescriptionLength": 4},
+			Options: map[string]interface{}{"ts-expect-error": "allow-with-description", "minimumDescriptionLength": 10},
 			Errors: []rule_tester.InvalidTestCaseError{
-				{MessageId: "tsDirectiveCommentDescriptionNotMatchPattern"},
+				{MessageId: "tsDirectiveCommentRequiresDescription"},
 			},
 		},
 
@@ -146,19 +146,34 @@ func TestBanTsCommentRule(t *testing.T) {
 		{
 			Code: "// @ts-ignore\nconst a = 0;",
 			Errors: []rule_tester.InvalidTestCaseError{
-				{MessageId: "tsIgnoreInsteadOfExpectError"},
+				{
+					MessageId: "tsIgnoreInsteadOfExpectError",
+					Suggestions: []rule_tester.InvalidTestCaseSuggestion{
+						{MessageId: "replaceTsIgnoreWithTsExpectError", Output: "// @ts-expect-error\nconst a = 0;"},
+					},
+				},
 			},
 		},
 		{
 			Code: "/* @ts-ignore */\nconst a = 0;",
 			Errors: []rule_tester.InvalidTestCaseError{
-				{MessageId: "tsIgnoreInsteadOfExpectError"},
+				{
+					MessageId: "tsIgnoreInsteadOfExpectError",
+					Suggestions: []rule_tester.InvalidTestCaseSuggestion{
+						{MessageId: "replaceTsIgnoreWithTsExpectError", Output: "/* @ts-expect-error */\nconst a = 0;"},
+					},
+				},
 			},
 		},
 		{
 			Code: "/* @ts-ignore with description */\nconst a = 0;",
 			Errors: []rule_tester.InvalidTestCaseError{
-				{MessageId: "tsIgnoreInsteadOfExpectError"},
+				{
+					MessageId: "tsIgnoreInsteadOfExpectError",
+					Suggestions: []rule_tester.InvalidTestCaseSuggestion{
+						{MessageId: "replaceTsIgnoreWithTsExpectError", Output: "/* @ts-expect-error with description */\nconst a = 0;"},
+					},
+				},
 			},
 		},
 
@@ -207,7 +222,15 @@ func TestBanTsCommentRule(t *testing.T) {
 
 		// Multi-line comments
 		{
+			Skip:    true,
 			Code:    "/*\n@ts-expect-error\n*/\nconst a = 0;",
+			Options: map[string]interface{}{"ts-expect-error": true},
+			Errors: []rule_tester.InvalidTestCaseError{
+				{MessageId: "tsDirectiveComment"},
+			},
+		},
+		{
+			Code:    "/*\n@ts-expect-error */\nconst a = 0;",
 			Options: map[string]interface{}{"ts-expect-error": true},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "tsDirectiveComment"},

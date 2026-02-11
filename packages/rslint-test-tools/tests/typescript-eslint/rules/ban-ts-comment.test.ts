@@ -4,7 +4,7 @@ import { noFormat, RuleTester } from '@typescript-eslint/rule-tester';
 
 const ruleTester = new RuleTester();
 
-ruleTester.run('ts-expect-error', {
+ruleTester.run('ban-ts-comment ts-expect-error', {
   valid: [
     '// just a comment containing @ts-expect-error somewhere',
     `
@@ -441,7 +441,7 @@ if (false) {
   ],
 });
 
-ruleTester.run('ts-ignore', {
+ruleTester.run('ban-ts-comment ts-ignore', {
   valid: [
     '// just a comment containing @ts-ignore somewhere',
     {
@@ -936,7 +936,7 @@ if (false) {
   ],
 });
 
-ruleTester.run('ts-nocheck', {
+ruleTester.run('ban-ts-comment ts-nocheck', {
   valid: [
     '// just a comment containing @ts-nocheck somewhere',
     {
@@ -1138,7 +1138,7 @@ const a: true = false;
   ],
 });
 
-ruleTester.run('ts-check', {
+ruleTester.run('ban-ts-comment ts-check', {
   valid: [
     '// just a comment containing @ts-check somewhere',
     `
