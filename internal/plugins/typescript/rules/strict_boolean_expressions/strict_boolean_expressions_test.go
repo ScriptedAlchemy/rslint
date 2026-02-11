@@ -11,6 +11,7 @@ func TestStrictBooleanExpressionsRule(t *testing.T) {
 	rule_tester.RunRuleTester(fixtures.GetRootDir(), "tsconfig.json", t, &StrictBooleanExpressionsRule, []rule_tester.ValidTestCase{
 		{Code: `declare const value: boolean; if (value) {}`},
 		{Code: `const value: string = "x"; if (value) {}`},
+		{Code: `<T extends any>(x: T) => (x ? 1 : 0);`, Options: map[string]any{"allowAny": true}},
 	}, []rule_tester.InvalidTestCase{
 		{
 			Code:   `const value: {} = {}; if (value) {}`,
@@ -20,6 +21,14 @@ func TestStrictBooleanExpressionsRule(t *testing.T) {
 			Code:    `const value: string = "x"; if (value) {}`,
 			Options: map[string]any{"allowString": false},
 			Errors:  []rule_tester.InvalidTestCaseError{{MessageId: "conditionErrorString", Line: 1, Column: 32}},
+		},
+		{
+			Code: `
+declare const array: string[];
+array.some(x => x);
+			`,
+			Options: map[string]any{"allowString": false},
+			Errors:  []rule_tester.InvalidTestCaseError{{MessageId: "conditionErrorString"}},
 		},
 	})
 }
