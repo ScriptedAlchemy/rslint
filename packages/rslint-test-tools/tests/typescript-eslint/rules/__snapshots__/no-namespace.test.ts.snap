@@ -1,0 +1,1040 @@
+// Rstest Snapshot v1
+
+exports[`no-namespace > invalid 1`] = `
+{
+  "code": "module foo {}",
+  "diagnostics": [
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 7,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-namespace > invalid 2`] = `
+{
+  "code": "namespace foo {}",
+  "diagnostics": [
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-namespace > invalid 3`] = `
+{
+  "code": "module foo {}",
+  "diagnostics": [
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 7,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-namespace > invalid 4`] = `
+{
+  "code": "namespace foo {}",
+  "diagnostics": [
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-namespace > invalid 5`] = `
+{
+  "code": "module foo {}",
+  "diagnostics": [
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 7,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-namespace > invalid 6`] = `
+{
+  "code": "namespace foo {}",
+  "diagnostics": [
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-namespace > invalid 7`] = `
+{
+  "code": "declare module foo {}",
+  "diagnostics": [
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 22,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-namespace > invalid 8`] = `
+{
+  "code": "declare namespace foo {}",
+  "diagnostics": [
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 25,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-namespace > invalid 9`] = `
+{
+  "code": "declare module foo {}",
+  "diagnostics": [
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 22,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-namespace > invalid 10`] = `
+{
+  "code": "declare namespace foo {}",
+  "diagnostics": [
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 25,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-namespace > invalid 11`] = `
+{
+  "code": "namespace foo {}",
+  "diagnostics": [
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-namespace > invalid 12`] = `
+{
+  "code": "module foo {}",
+  "diagnostics": [
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 7,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-namespace > invalid 13`] = `
+{
+  "code": "declare module foo {}",
+  "diagnostics": [
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 22,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-namespace > invalid 14`] = `
+{
+  "code": "declare namespace foo {}",
+  "diagnostics": [
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 25,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-namespace > invalid 15`] = `
+{
+  "code": "namespace Foo.Bar {}",
+  "diagnostics": [
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-namespace > invalid 16`] = `
+{
+  "code": "
+namespace Foo.Bar {
+  namespace Baz.Bas {
+    interface X {}
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 2,
+        },
+        "start": {
+          "column": 1,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 12,
+          "line": 3,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-namespace > invalid 17`] = `
+{
+  "code": "
+namespace A {
+  namespace B {
+    declare namespace C {}
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 2,
+        },
+        "start": {
+          "column": 1,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 12,
+          "line": 3,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-namespace > invalid 18`] = `
+{
+  "code": "
+namespace A {
+  namespace B {
+    export declare namespace C {}
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 2,
+        },
+        "start": {
+          "column": 1,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 12,
+          "line": 3,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-namespace > invalid 19`] = `
+{
+  "code": "
+namespace A {
+  declare namespace B {
+    namespace C {}
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 2,
+        },
+        "start": {
+          "column": 1,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-namespace > invalid 20`] = `
+{
+  "code": "
+namespace A {
+  export declare namespace B {
+    namespace C {}
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 2,
+        },
+        "start": {
+          "column": 1,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-namespace > invalid 21`] = `
+{
+  "code": "
+namespace A {
+  export declare namespace B {
+    declare namespace C {}
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 2,
+        },
+        "start": {
+          "column": 1,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-namespace > invalid 22`] = `
+{
+  "code": "
+namespace A {
+  export declare namespace B {
+    export declare namespace C {}
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 2,
+        },
+        "start": {
+          "column": 1,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-namespace > invalid 23`] = `
+{
+  "code": "
+namespace A {
+  declare namespace B {
+    export declare namespace C {}
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 2,
+        },
+        "start": {
+          "column": 1,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-namespace > invalid 24`] = `
+{
+  "code": "
+namespace A {
+  export namespace B {
+    export declare namespace C {}
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 2,
+        },
+        "start": {
+          "column": 1,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 19,
+          "line": 3,
+        },
+        "start": {
+          "column": 10,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-namespace > invalid 25`] = `
+{
+  "code": "
+export namespace A {
+  namespace B {
+    declare namespace C {}
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 17,
+          "line": 2,
+        },
+        "start": {
+          "column": 8,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 12,
+          "line": 3,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-namespace > invalid 26`] = `
+{
+  "code": "
+export namespace A {
+  namespace B {
+    export declare namespace C {}
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 17,
+          "line": 2,
+        },
+        "start": {
+          "column": 8,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 12,
+          "line": 3,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-namespace > invalid 27`] = `
+{
+  "code": "
+export namespace A {
+  declare namespace B {
+    namespace C {}
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 17,
+          "line": 2,
+        },
+        "start": {
+          "column": 8,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-namespace > invalid 28`] = `
+{
+  "code": "
+export namespace A {
+  export declare namespace B {
+    namespace C {}
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 17,
+          "line": 2,
+        },
+        "start": {
+          "column": 8,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-namespace > invalid 29`] = `
+{
+  "code": "
+export namespace A {
+  export declare namespace B {
+    declare namespace C {}
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 17,
+          "line": 2,
+        },
+        "start": {
+          "column": 8,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-namespace > invalid 30`] = `
+{
+  "code": "
+export namespace A {
+  export declare namespace B {
+    export declare namespace C {}
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 17,
+          "line": 2,
+        },
+        "start": {
+          "column": 8,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-namespace > invalid 31`] = `
+{
+  "code": "
+export namespace A {
+  declare namespace B {
+    export declare namespace C {}
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 17,
+          "line": 2,
+        },
+        "start": {
+          "column": 8,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-namespace > invalid 32`] = `
+{
+  "code": "
+export namespace A {
+  export namespace B {
+    export declare namespace C {}
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 17,
+          "line": 2,
+        },
+        "start": {
+          "column": 8,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+    {
+      "message": "Namespace is not allowed.",
+      "messageId": "moduleSyntaxIsPreferred",
+      "range": {
+        "end": {
+          "column": 19,
+          "line": 3,
+        },
+        "start": {
+          "column": 10,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-namespace",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
