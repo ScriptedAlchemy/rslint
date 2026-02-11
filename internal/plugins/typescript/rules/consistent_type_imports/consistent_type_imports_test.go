@@ -15,8 +15,8 @@ func TestConsistentTypeImportsRule(t *testing.T) {
 		{Code: `import Foo from 'foo'; class Bar extends Foo {}`},
 
 		// Named imports with mixed usage
-		{Code: `import { A, B } from 'foo'; const a: A = B();`},
-		{Code: `import { A, B } from 'foo'; const a = A; type T = B;`},
+		{Code: `import { type A, B } from 'foo'; const a: A = B();`},
+		{Code: `import { A, type B } from 'foo'; const a = A; type T = B;`},
 
 		// Empty imports
 		{Code: `import {} from 'foo';`},
