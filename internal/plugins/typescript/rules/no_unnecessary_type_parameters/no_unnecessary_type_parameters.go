@@ -133,6 +133,10 @@ func checkFunctionLike(ctx rule.RuleContext, typeParams []*ast.Node, params []*a
 		}
 		name := tp.Name().Text()
 		count := refs[name]
+		exactSignatureRefCount := countTypeParameterReferencesInParameters(params, name) + countTypeParameterReferencesInTypeNode(returnType, name)
+		if body == nil && exactSignatureRefCount <= 1 {
+			count = exactSignatureRefCount
+		}
 		if count <= 1 && implicitReturnUsesTypeParam(params, body, name) {
 			count++
 		}
@@ -195,7 +199,26 @@ func getFunctionLikeTypeParameters(ctx rule.RuleContext, node *ast.Node) []*ast.
 }
 
 func countTypeParameterReferencesInParameters(params []*ast.Node, typeParamName string) int {
-	refs := map[string]int{}
+	var countTypeParamIdentifierReferences func(node *ast.Node) int
+	countTypeParamIdentifierReferences = func(node *ast.Node) int {
+		if node == nil {
+			return 0
+		}
+		count := 0
+		if node.Kind == ast.KindIdentifier && ast.IsPartOfTypeNode(node) {
+			identifier := node.AsIdentifier()
+			if identifier != nil && identifier.Text == typeParamName {
+				count++
+			}
+		}
+		node.ForEachChild(func(child *ast.Node) bool {
+			count += countTypeParamIdentifierReferences(child)
+			return false
+		})
+		return count
+	}
+
+	total := 0
 	for _, param := range params {
 		if param == nil || param.Kind != ast.KindParameter {
 			continue
@@ -204,12 +227,44 @@ func countTypeParameterReferencesInParameters(params []*ast.Node, typeParamName 
 		if decl == nil || decl.Type == nil {
 			continue
 		}
-		collectTypeReferences(decl.Type, refs)
+		total += countTypeParamIdentifierReferences(decl.Type)
 	}
-	return refs[typeParamName]
+	return total
 }
 
-func reportGenericArrowTypeParameterFallback(ctx rule.RuleContext, arrowNode *ast.Node, params []*ast.Node) bool {
+func countTypeParameterReferencesInTypeNode(typeNode *ast.Node, typeParamName string) int {
+	if typeNode == nil {
+		return 0
+	}
+
+	count := 0
+	var walk func(node *ast.Node)
+	walk = func(node *ast.Node) {
+		if node == nil {
+			return
+		}
+		if node.Kind == ast.KindIdentifier && ast.IsPartOfTypeNode(node) {
+			identifier := node.AsIdentifier()
+			if identifier != nil && identifier.Text == typeParamName {
+				count++
+			}
+		}
+		node.ForEachChild(func(child *ast.Node) bool {
+			walk(child)
+			return false
+		})
+	}
+	walk(typeNode)
+	return count
+}
+
+func reportGenericArrowTypeParameterFallback(
+	ctx rule.RuleContext,
+	arrowNode *ast.Node,
+	params []*ast.Node,
+	returnType *ast.Node,
+	body *ast.BlockOrExpression,
+) bool {
 	text := nodeText(ctx.SourceFile, arrowNode)
 	if text == "" {
 		return false
@@ -220,8 +275,13 @@ func reportGenericArrowTypeParameterFallback(ctx rule.RuleContext, arrowNode *as
 		return false
 	}
 	typeParamName := matches[1]
-	count := countTypeParameterReferencesInParameters(params, typeParamName)
-	if count > 1 {
+	parameterRefCount := countTypeParameterReferencesInParameters(params, typeParamName)
+	returnTypeRefCount := countTypeParameterReferencesInTypeNode(returnType, typeParamName)
+	count := parameterRefCount + returnTypeRefCount
+	if count <= 1 && implicitReturnUsesTypeParam(params, body, typeParamName) {
+		count++
+	}
+	if count != 1 {
 		return false
 	}
 
@@ -237,50 +297,53 @@ func reportGenericArrowTypeParameterFallback(ctx rule.RuleContext, arrowNode *as
 var NoUnnecessaryTypeParametersRule = rule.CreateRule(rule.Rule{
 	Name: "no-unnecessary-type-parameters",
 	Run: func(ctx rule.RuleContext, options any) rule.RuleListeners {
+		checkFunctionLikeNode := func(node *ast.Node, body *ast.BlockOrExpression) {
+			if node == nil {
+				return
+			}
+			params := node.Parameters()
+			checkFunctionLike(ctx, getFunctionLikeTypeParameters(ctx, node), params, node.Type(), body)
+		}
+
 		return rule.RuleListeners{
 			ast.KindFunctionDeclaration: func(node *ast.Node) {
 				fn := node.AsFunctionDeclaration()
-				if fn == nil {
-					return
+				if fn != nil {
+					checkFunctionLikeNode(node, fn.Body)
 				}
-				params := []*ast.Node{}
-				if fn.Parameters != nil {
-					params = fn.Parameters.Nodes
-				}
-				checkFunctionLike(ctx, getFunctionLikeTypeParameters(ctx, node), params, fn.Type, fn.Body)
 			},
 			ast.KindFunctionExpression: func(node *ast.Node) {
 				fn := node.AsFunctionExpression()
-				if fn == nil {
-					return
+				if fn != nil {
+					checkFunctionLikeNode(node, fn.Body)
 				}
-				params := []*ast.Node{}
-				if fn.Parameters != nil {
-					params = fn.Parameters.Nodes
-				}
-				checkFunctionLike(ctx, getFunctionLikeTypeParameters(ctx, node), params, fn.Type, fn.Body)
 			},
 			ast.KindArrowFunction: func(node *ast.Node) {
 				fn := node.AsArrowFunction()
-				if fn == nil {
-					return
+				if fn != nil {
+					checkFunctionLikeNode(node, fn.Body)
 				}
-				params := []*ast.Node{}
-				if fn.Parameters != nil {
-					params = fn.Parameters.Nodes
-				}
-				checkFunctionLike(ctx, getFunctionLikeTypeParameters(ctx, node), params, fn.Type, fn.Body)
 			},
 			ast.KindMethodDeclaration: func(node *ast.Node) {
 				fn := node.AsMethodDeclaration()
-				if fn == nil {
-					return
+				if fn != nil {
+					checkFunctionLikeNode(node, fn.Body)
 				}
-				params := []*ast.Node{}
-				if fn.Parameters != nil {
-					params = fn.Parameters.Nodes
-				}
-				checkFunctionLike(ctx, getFunctionLikeTypeParameters(ctx, node), params, fn.Type, fn.Body)
+			},
+			ast.KindMethodSignature: func(node *ast.Node) {
+				checkFunctionLikeNode(node, nil)
+			},
+			ast.KindCallSignature: func(node *ast.Node) {
+				checkFunctionLikeNode(node, nil)
+			},
+			ast.KindConstructSignature: func(node *ast.Node) {
+				checkFunctionLikeNode(node, nil)
+			},
+			ast.KindFunctionType: func(node *ast.Node) {
+				checkFunctionLikeNode(node, nil)
+			},
+			ast.KindConstructorType: func(node *ast.Node) {
+				checkFunctionLikeNode(node, nil)
 			},
 			ast.KindClassDeclaration: func(node *ast.Node) {
 				classDecl := node.AsClassDeclaration()
@@ -302,14 +365,11 @@ var NoUnnecessaryTypeParametersRule = rule.CreateRule(rule.Rule{
 					return
 				}
 				arrowNode := decl.Initializer.AsNode()
-				if len(getFunctionLikeTypeParameters(ctx, arrowNode)) > 0 {
-					return
-				}
 				arrow := decl.Initializer.AsArrowFunction()
 				if arrow == nil || arrow.Parameters == nil {
 					return
 				}
-				reportGenericArrowTypeParameterFallback(ctx, arrowNode, arrow.Parameters.Nodes)
+				reportGenericArrowTypeParameterFallback(ctx, arrowNode, arrow.Parameters.Nodes, arrow.Type, arrow.Body)
 			},
 		}
 	},
