@@ -1,11 +1,14 @@
 package no_misused_promises
 
 import (
+	"encoding/json"
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/microsoft/typescript-go/shim/checker"
+	"github.com/microsoft/typescript-go/shim/core"
 	"github.com/web-infra-dev/rslint/internal/rule"
 	"github.com/web-infra-dev/rslint/internal/utils"
 )
@@ -80,43 +83,142 @@ type NoMisusedPromisesOptions struct {
 	ChecksVoidReturnOpts *NoMisusedPromisesChecksVoidReturnOptions
 }
 
+func applyDefaults(opts NoMisusedPromisesOptions) NoMisusedPromisesOptions {
+	if opts.ChecksConditionals == nil {
+		opts.ChecksConditionals = utils.Ref(true)
+	}
+	if opts.ChecksSpreads == nil {
+		opts.ChecksSpreads = utils.Ref(true)
+	}
+	if opts.ChecksVoidReturn == nil {
+		opts.ChecksVoidReturn = utils.Ref(true)
+	}
+	if opts.ChecksVoidReturnOpts == nil {
+		opts.ChecksVoidReturnOpts = utils.Ref(NoMisusedPromisesChecksVoidReturnOptions{})
+	}
+	if opts.ChecksVoidReturnOpts.Arguments == nil {
+		opts.ChecksVoidReturnOpts.Arguments = utils.Ref(true)
+	}
+	if opts.ChecksVoidReturnOpts.Attributes == nil {
+		opts.ChecksVoidReturnOpts.Attributes = utils.Ref(true)
+	}
+	if opts.ChecksVoidReturnOpts.InheritedMethods == nil {
+		opts.ChecksVoidReturnOpts.InheritedMethods = utils.Ref(true)
+	}
+	if opts.ChecksVoidReturnOpts.Properties == nil {
+		opts.ChecksVoidReturnOpts.Properties = utils.Ref(true)
+	}
+	if opts.ChecksVoidReturnOpts.Returns == nil {
+		opts.ChecksVoidReturnOpts.Returns = utils.Ref(true)
+	}
+	if opts.ChecksVoidReturnOpts.Variables == nil {
+		opts.ChecksVoidReturnOpts.Variables = utils.Ref(true)
+	}
+	return opts
+}
+
+func parseOptions(options any) NoMisusedPromisesOptions {
+	switch value := options.(type) {
+	case NoMisusedPromisesOptions:
+		return applyDefaults(value)
+	case *NoMisusedPromisesOptions:
+		if value == nil {
+			return applyDefaults(NoMisusedPromisesOptions{})
+		}
+		return applyDefaults(*value)
+	}
+
+	opts := applyDefaults(NoMisusedPromisesOptions{})
+
+	applyMap := func(raw map[string]any) {
+		if raw == nil {
+			return
+		}
+		if checksConditionals, ok := raw["checksConditionals"].(bool); ok {
+			opts.ChecksConditionals = utils.Ref(checksConditionals)
+		}
+		if checksSpreads, ok := raw["checksSpreads"].(bool); ok {
+			opts.ChecksSpreads = utils.Ref(checksSpreads)
+		}
+
+		if checksVoidReturn, exists := raw["checksVoidReturn"]; exists {
+			switch value := checksVoidReturn.(type) {
+			case bool:
+				opts.ChecksVoidReturn = utils.Ref(value)
+			case map[string]any:
+				opts.ChecksVoidReturn = utils.Ref(true)
+				if arguments, ok := value["arguments"].(bool); ok {
+					opts.ChecksVoidReturnOpts.Arguments = utils.Ref(arguments)
+				}
+				if attributes, ok := value["attributes"].(bool); ok {
+					opts.ChecksVoidReturnOpts.Attributes = utils.Ref(attributes)
+				}
+				if inheritedMethods, ok := value["inheritedMethods"].(bool); ok {
+					opts.ChecksVoidReturnOpts.InheritedMethods = utils.Ref(inheritedMethods)
+				}
+				if properties, ok := value["properties"].(bool); ok {
+					opts.ChecksVoidReturnOpts.Properties = utils.Ref(properties)
+				}
+				if returns, ok := value["returns"].(bool); ok {
+					opts.ChecksVoidReturnOpts.Returns = utils.Ref(returns)
+				}
+				if variables, ok := value["variables"].(bool); ok {
+					opts.ChecksVoidReturnOpts.Variables = utils.Ref(variables)
+				}
+			}
+		}
+	}
+
+	switch value := options.(type) {
+	case map[string]interface{}:
+		applyMap(value)
+	case []interface{}:
+		if len(value) > 0 {
+			if firstMap, ok := value[0].(map[string]interface{}); ok {
+				applyMap(firstMap)
+			}
+		}
+	default:
+		if value != nil {
+			raw := map[string]any{}
+			if jsonBytes, err := json.Marshal(value); err == nil {
+				if err := json.Unmarshal(jsonBytes, &raw); err == nil {
+					applyMap(raw)
+				}
+			}
+		}
+	}
+
+	return applyDefaults(opts)
+}
+
+func arrowFunctionHeadEndPos(sourceFile *ast.SourceFile, arrow *ast.ArrowFunction) int {
+	if sourceFile == nil || arrow == nil {
+		return 0
+	}
+	if arrow.Parameters != nil && len(arrow.Parameters.Nodes) > 0 && arrow.Parameters.Nodes[0] != nil {
+		return arrow.Parameters.Nodes[0].Pos()
+	}
+
+	sourceText := sourceFile.Text()
+	start := arrow.Pos()
+	end := arrow.Body.Pos()
+	if start >= 0 && end > start && end <= len(sourceText) {
+		segment := sourceText[start:end]
+		if idx := strings.Index(segment, "("); idx >= 0 {
+			return start + idx
+		}
+		if idx := strings.Index(segment, "=>"); idx >= 0 {
+			return start + idx
+		}
+	}
+	return arrow.Pos()
+}
+
 var NoMisusedPromisesRule = rule.CreateRule(rule.Rule{
 	Name: "no-misused-promises",
 	Run: func(ctx rule.RuleContext, options any) rule.RuleListeners {
-		opts, ok := options.(NoMisusedPromisesOptions)
-		if !ok {
-			opts = NoMisusedPromisesOptions{}
-		}
-		if opts.ChecksConditionals == nil {
-			opts.ChecksConditionals = utils.Ref(true)
-		}
-		if opts.ChecksSpreads == nil {
-			opts.ChecksSpreads = utils.Ref(true)
-		}
-		if opts.ChecksVoidReturn == nil {
-			opts.ChecksVoidReturn = utils.Ref(true)
-		}
-		if opts.ChecksVoidReturnOpts == nil {
-			opts.ChecksVoidReturnOpts = utils.Ref(NoMisusedPromisesChecksVoidReturnOptions{})
-		}
-		if opts.ChecksVoidReturnOpts.Arguments == nil {
-			opts.ChecksVoidReturnOpts.Arguments = utils.Ref(true)
-		}
-		if opts.ChecksVoidReturnOpts.Attributes == nil {
-			opts.ChecksVoidReturnOpts.Attributes = utils.Ref(true)
-		}
-		if opts.ChecksVoidReturnOpts.InheritedMethods == nil {
-			opts.ChecksVoidReturnOpts.InheritedMethods = utils.Ref(true)
-		}
-		if opts.ChecksVoidReturnOpts.Properties == nil {
-			opts.ChecksVoidReturnOpts.Properties = utils.Ref(true)
-		}
-		if opts.ChecksVoidReturnOpts.Returns == nil {
-			opts.ChecksVoidReturnOpts.Returns = utils.Ref(true)
-		}
-		if opts.ChecksVoidReturnOpts.Variables == nil {
-			opts.ChecksVoidReturnOpts.Variables = utils.Ref(true)
-		}
+		opts := parseOptions(options)
 
 		anySignatureIsThenableType := func(
 			node *ast.Node,
@@ -541,6 +643,13 @@ var NoMisusedPromisesRule = rule.CreateRule(rule.Rule{
 						returnType := property.Initializer.Type()
 						if returnType != nil {
 							ctx.ReportNode(returnType, buildVoidReturnPropertyMessage())
+						} else if ast.IsArrowFunction(property.Initializer) && property.Name() != nil {
+							start := utils.TrimNodeTextRange(ctx.SourceFile, property.Name()).Pos()
+							end := arrowFunctionHeadEndPos(ctx.SourceFile, property.Initializer.AsArrowFunction())
+							if end < start {
+								end = start
+							}
+							ctx.ReportRange(core.NewTextRange(start, end), buildVoidReturnPropertyMessage())
 						} else {
 							ctx.ReportNode(
 								// TODO(port): getFunctionHeadLoc(functionNode, context.sourceCode)
@@ -601,11 +710,12 @@ var NoMisusedPromisesRule = rule.CreateRule(rule.Rule{
 					if node.Type() != nil {
 						ctx.ReportNode(node.Type(), buildVoidReturnPropertyMessage())
 					} else {
-						ctx.ReportNode(
-							// TODO(port): getFunctionHeadLoc(functionNode, context.sourceCode)
-							node,
-							buildVoidReturnPropertyMessage(),
-						)
+						start := utils.TrimNodeTextRange(ctx.SourceFile, node).Pos()
+						end := node.Name().End()
+						if end < start {
+							end = start
+						}
+						ctx.ReportRange(core.NewTextRange(start, end), buildVoidReturnPropertyMessage())
 					}
 				}
 			}
