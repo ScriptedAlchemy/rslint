@@ -20,22 +20,58 @@ type PreferPromiseRejectErrorsOptions struct {
 	AllowThrowingUnknown *bool
 }
 
+func parseOptions(options any) PreferPromiseRejectErrorsOptions {
+	opts := PreferPromiseRejectErrorsOptions{}
+
+	applyMap := func(raw map[string]interface{}) {
+		if raw == nil {
+			return
+		}
+		if allowEmptyReject, ok := raw["allowEmptyReject"].(bool); ok {
+			opts.AllowEmptyReject = utils.Ref(allowEmptyReject)
+		}
+		if allowThrowingAny, ok := raw["allowThrowingAny"].(bool); ok {
+			opts.AllowThrowingAny = utils.Ref(allowThrowingAny)
+		}
+		if allowThrowingUnknown, ok := raw["allowThrowingUnknown"].(bool); ok {
+			opts.AllowThrowingUnknown = utils.Ref(allowThrowingUnknown)
+		}
+	}
+
+	switch raw := options.(type) {
+	case PreferPromiseRejectErrorsOptions:
+		opts = raw
+	case *PreferPromiseRejectErrorsOptions:
+		if raw != nil {
+			opts = *raw
+		}
+	case map[string]interface{}:
+		applyMap(raw)
+	case []interface{}:
+		if len(raw) > 0 {
+			if firstMap, ok := raw[0].(map[string]interface{}); ok {
+				applyMap(firstMap)
+			}
+		}
+	}
+
+	if opts.AllowEmptyReject == nil {
+		opts.AllowEmptyReject = utils.Ref(false)
+	}
+	if opts.AllowThrowingAny == nil {
+		opts.AllowThrowingAny = utils.Ref(false)
+	}
+	if opts.AllowThrowingUnknown == nil {
+		opts.AllowThrowingUnknown = utils.Ref(false)
+	}
+
+	return opts
+}
+
 var PreferPromiseRejectErrorsRule = rule.CreateRule(rule.Rule{
 	Name: "prefer-promise-reject-errors",
 	Run: func(ctx rule.RuleContext, options any) rule.RuleListeners {
-		opts, ok := options.(PreferPromiseRejectErrorsOptions)
-		if !ok {
-			opts = PreferPromiseRejectErrorsOptions{}
-		}
-		if opts.AllowEmptyReject == nil {
-			opts.AllowEmptyReject = utils.Ref(false)
-		}
-		if opts.AllowThrowingAny == nil {
-			opts.AllowThrowingAny = utils.Ref(false)
-		}
-		if opts.AllowThrowingUnknown == nil {
-			opts.AllowThrowingUnknown = utils.Ref(false)
-		}
+		opts := parseOptions(options)
 
 		checkRejectCall := func(callExpression *ast.CallExpression) {
 			if len(callExpression.Arguments.Nodes) != 0 {
@@ -94,7 +130,16 @@ var PreferPromiseRejectErrorsRule = rule.CreateRule(rule.Rule{
 					}
 
 					params := parentNode.Parameters()
-					if len(params) < 2 || params[1] != param {
+					if len(params) < 2 || params[1] == nil || params[1].Name() == nil {
+						return
+					}
+					secondParamName := params[1].Name()
+					if !ast.IsIdentifier(secondParamName) || secondParamName.AsIdentifier().Text != callee.AsIdentifier().Text {
+						return
+					}
+					// Keep original strict relation for non-duplicate names, but allow duplicate
+					// parameter declarations where symbol resolution may target the first parameter.
+					if params[1] != param && params[0] != param {
 						return
 					}
 
