@@ -976,6 +976,57 @@ func shouldSkipElementAccessCondition(ctx rule.RuleContext, node *ast.Node) bool
 	return false
 }
 
+func shouldSkipElementAccessInOptionalChain(ctx rule.RuleContext, node *ast.Node) bool {
+	if node == nil || node.Kind != ast.KindElementAccessExpression || ctx.TypeChecker == nil {
+		return false
+	}
+	elementAccess := node.AsElementAccessExpression()
+	if elementAccess == nil || elementAccess.Expression == nil {
+		return false
+	}
+
+	receiverType := utils.GetConstrainedTypeAtLocation(ctx.TypeChecker, elementAccess.Expression)
+	if receiverType == nil {
+		return false
+	}
+
+	parts := utils.UnionTypeParts(receiverType)
+	if len(parts) == 0 {
+		parts = []*checker.Type{receiverType}
+	}
+
+	indexValue, hasStaticIndex := staticLiteralValue(ctx, elementAccess.ArgumentExpression, 0)
+	if hasStaticIndex {
+		switch indexValue.(type) {
+		case float64, int, int32, int64, string:
+		default:
+			hasStaticIndex = false
+		}
+	}
+
+	for _, part := range parts {
+		if part == nil {
+			continue
+		}
+		if utils.IsTypeFlagSet(part, checker.TypeFlagsNull|checker.TypeFlagsUndefined) {
+			continue
+		}
+		if checker.Checker_isArrayType(ctx.TypeChecker, part) {
+			if !hasStaticIndex {
+				return true
+			}
+			continue
+		}
+		if checker.Checker_isArrayOrTupleType(ctx.TypeChecker, part) {
+			if !hasStaticIndex {
+				return true
+			}
+			continue
+		}
+	}
+	return false
+}
+
 func hasUnsoundArrayIndexInExpressionChain(ctx rule.RuleContext, node *ast.Node) bool {
 	isTop := true
 	for current := node; current != nil; {
@@ -983,7 +1034,7 @@ func hasUnsoundArrayIndexInExpressionChain(ctx rule.RuleContext, node *ast.Node)
 		if current == nil {
 			return false
 		}
-		if current.Kind == ast.KindElementAccessExpression && shouldSkipElementAccessCondition(ctx, current) {
+		if current.Kind == ast.KindElementAccessExpression && shouldSkipElementAccessInOptionalChain(ctx, current) {
 			return true
 		}
 		switch current.Kind {
@@ -1084,6 +1135,9 @@ func optionalPropertyAccessResultNeverNullish(ctx rule.RuleContext, propertyAcce
 		hasNonNullPart = true
 		prop := checker.Checker_getPropertyOfType(ctx.TypeChecker, part, propertyAccess.Name().Text())
 		if prop == nil {
+			if checker.Checker_noUncheckedIndexedAccess(ctx.TypeChecker) {
+				return false
+			}
 			indexInfos := checker.Checker_getIndexInfosOfType(ctx.TypeChecker, part)
 			hasStringIndex := false
 			for _, indexInfo := range indexInfos {
