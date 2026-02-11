@@ -185,6 +185,21 @@ func getPropertyType(typeChecker *checker.Checker, property *ast.Symbol) *checke
 	if typeChecker == nil || property == nil {
 		return nil
 	}
+	for _, declaration := range property.Declarations {
+		if declaration == nil {
+			continue
+		}
+		if declaration.Type() != nil &&
+			declaration.Kind != ast.KindMethodSignature &&
+			declaration.Kind != ast.KindMethodDeclaration &&
+			declaration.Kind != ast.KindFunctionDeclaration &&
+			declaration.Kind != ast.KindFunctionExpression &&
+			declaration.Kind != ast.KindArrowFunction {
+			if fromTypeNode := checker.Checker_getTypeFromTypeNode(typeChecker, declaration.Type()); fromTypeNode != nil {
+				return fromTypeNode
+			}
+		}
+	}
 	if declared := checker.Checker_getDeclaredTypeOfSymbol(typeChecker, property); declared != nil {
 		return declared
 	}
@@ -209,6 +224,7 @@ func isTypeReadonlyArrayOrTuple(
 	if t == nil || ctx.TypeChecker == nil {
 		return readonlynessUnknown
 	}
+	typeText := strings.TrimSpace(ctx.TypeChecker.TypeToString(t))
 
 	checkTypeArguments := func(arrayLikeType *checker.Type) readonlyness {
 		typeArguments := checker.Checker_getTypeArguments(ctx.TypeChecker, arrayLikeType)
@@ -216,15 +232,22 @@ func isTypeReadonlyArrayOrTuple(
 			return readonlynessReadonly
 		}
 		for _, typeArgument := range typeArguments {
-			if isTypeReadonlyRecurser(ctx, typeArgument, opts, seenTypes) == readonlynessMutable {
+			argResult := isTypeReadonlyRecurser(ctx, typeArgument, opts, seenTypes)
+			if argResult == readonlynessMutable {
 				return readonlynessMutable
 			}
 		}
 		return readonlynessReadonly
 	}
 
+	if strings.HasPrefix(typeText, "readonly [") {
+		return checkTypeArguments(t)
+	}
+	if strings.HasPrefix(typeText, "[") {
+		return readonlynessMutable
+	}
+
 	if checker.Type_objectFlags(t)&checker.ObjectFlagsTuple != 0 {
-		typeText := strings.TrimSpace(ctx.TypeChecker.TypeToString(t))
 		if !strings.HasPrefix(typeText, "readonly [") {
 			return readonlynessMutable
 		}
@@ -243,6 +266,10 @@ func isTypeReadonlyArrayOrTuple(
 		return checkTypeArguments(t)
 	}
 
+	if utils.IsBuiltinSymbolLike(ctx.Program, ctx.TypeChecker, t, "ReadonlyArray") {
+		return checkTypeArguments(t)
+	}
+
 	return readonlynessUnknown
 }
 
@@ -251,6 +278,16 @@ func isTypeReadonlyObject(
 	t *checker.Type,
 	opts PreferReadonlyParameterTypesOptions,
 	seenTypes map[*checker.Type]bool,
+) readonlyness {
+	return isTypeReadonlyObjectWithMode(ctx, t, opts, seenTypes, false)
+}
+
+func isTypeReadonlyObjectWithMode(
+	ctx rule.RuleContext,
+	t *checker.Type,
+	opts PreferReadonlyParameterTypesOptions,
+	seenTypes map[*checker.Type]bool,
+	assumePropertiesReadonly bool,
 ) readonlyness {
 	if ctx.TypeChecker == nil || t == nil {
 		return readonlynessUnknown
@@ -262,24 +299,41 @@ func isTypeReadonlyObject(
 			if property == nil {
 				continue
 			}
-			if opts.TreatMethodsAsReadonly && isSymbolMethodLike(property) {
-				continue
+			if !assumePropertiesReadonly {
+				if opts.TreatMethodsAsReadonly && isSymbolMethodLike(property) {
+					continue
+				}
+				if symbolIsReadonly(property) {
+					continue
+				}
+				if symbolIsPrivateIdentifier(property) {
+					continue
+				}
+				return readonlynessMutable
 			}
-			if symbolIsReadonly(property) {
-				continue
-			}
-			if symbolIsPrivateIdentifier(property) {
-				continue
-			}
-			return readonlynessMutable
 		}
 
 		for _, property := range properties {
 			if property == nil {
 				continue
 			}
+			if assumePropertiesReadonly && strings.Contains(property.Name, "@unscopables") {
+				continue
+			}
 			propertyType := getPropertyType(ctx.TypeChecker, property)
-			if propertyType == nil || propertyType == t || seenTypes[propertyType] {
+			if propertyType == nil {
+				continue
+			}
+			if propertyType == t {
+				if assumePropertiesReadonly {
+					return readonlynessMutable
+				}
+				continue
+			}
+			if seenTypes[propertyType] {
+				if utils.IsTypeFlagSet(propertyType, checker.TypeFlagsObject) && hasShallowMutableMembers(ctx, propertyType, opts) {
+					return readonlynessMutable
+				}
 				continue
 			}
 			if isTypeReadonlyRecurser(ctx, propertyType, opts, seenTypes) == readonlynessMutable {
@@ -293,7 +347,7 @@ func isTypeReadonlyObject(
 		if indexInfo == nil {
 			continue
 		}
-		if !checker.IndexInfo_isReadonly(indexInfo) {
+		if !assumePropertiesReadonly && !checker.IndexInfo_isReadonly(indexInfo) {
 			return readonlynessMutable
 		}
 		valueType := checker.IndexInfo_valueType(indexInfo)
@@ -308,6 +362,54 @@ func isTypeReadonlyObject(
 	return readonlynessReadonly
 }
 
+func readonlyWrapperTypeArgument(ctx rule.RuleContext, t *checker.Type) (*checker.Type, bool) {
+	if t == nil || ctx.TypeChecker == nil {
+		return nil, false
+	}
+	if alias := checker.Type_alias(t); alias != nil && alias.Symbol() != nil && alias.Symbol().Name == "Readonly" && len(alias.TypeArguments()) > 0 {
+		return alias.TypeArguments()[0], true
+	}
+	typeText := strings.TrimSpace(ctx.TypeChecker.TypeToString(t))
+	if !strings.HasPrefix(typeText, "Readonly<") {
+		return nil, false
+	}
+	typeArguments := checker.Checker_getTypeArguments(ctx.TypeChecker, t)
+	if len(typeArguments) == 0 {
+		return nil, false
+	}
+	return typeArguments[0], true
+}
+
+func isReadonlyWrappedTypeArgument(
+	ctx rule.RuleContext,
+	typeArgument *checker.Type,
+	opts PreferReadonlyParameterTypesOptions,
+	seenTypes map[*checker.Type]bool,
+) readonlyness {
+	if typeArgument == nil {
+		return readonlynessMutable
+	}
+	if checker.Checker_isArrayOrTupleType(ctx.TypeChecker, typeArgument) ||
+		strings.HasPrefix(strings.TrimSpace(ctx.TypeChecker.TypeToString(typeArgument)), "[") ||
+		strings.HasPrefix(strings.TrimSpace(ctx.TypeChecker.TypeToString(typeArgument)), "readonly [") {
+		typeArguments := checker.Checker_getTypeArguments(ctx.TypeChecker, typeArgument)
+		for _, innerTypeArgument := range typeArguments {
+			if isTypeReadonlyRecurser(ctx, innerTypeArgument, opts, seenTypes) == readonlynessMutable {
+				return readonlynessMutable
+			}
+		}
+		return readonlynessReadonly
+	}
+	if utils.IsTypeFlagSet(typeArgument, checker.TypeFlagsObject) {
+		if seenTypes[typeArgument] {
+			return readonlynessMutable
+		}
+		seenTypes[typeArgument] = true
+		return isTypeReadonlyObjectWithMode(ctx, typeArgument, opts, seenTypes, true)
+	}
+	return isTypeReadonlyRecurser(ctx, typeArgument, opts, seenTypes)
+}
+
 func isTypeReadonlyRecurser(
 	ctx rule.RuleContext,
 	t *checker.Type,
@@ -318,6 +420,9 @@ func isTypeReadonlyRecurser(
 		return readonlynessMutable
 	}
 	if seenTypes[t] {
+		if utils.IsTypeFlagSet(t, checker.TypeFlagsObject) && hasShallowMutableMembers(ctx, t, opts) {
+			return readonlynessMutable
+		}
 		return readonlynessReadonly
 	}
 	seenTypes[t] = true
@@ -325,16 +430,11 @@ func isTypeReadonlyRecurser(
 	if utils.TypeMatchesSomeSpecifier(t, opts.Allow, opts.AllowInline, ctx.Program) {
 		return readonlynessReadonly
 	}
-	if alias := checker.Type_alias(t); alias != nil && alias.Symbol() != nil && alias.Symbol().Name == "Readonly" && len(alias.TypeArguments()) > 0 {
-		typeArgument := alias.TypeArguments()[0]
-		if checker.Checker_isArrayOrTupleType(ctx.TypeChecker, typeArgument) || checker.Type_objectFlags(typeArgument)&checker.ObjectFlagsTuple != 0 {
-			for _, arg := range checker.Checker_getTypeArguments(ctx.TypeChecker, typeArgument) {
-				if isTypeReadonlyRecurser(ctx, arg, opts, seenTypes) == readonlynessMutable {
-					return readonlynessMutable
-				}
-			}
-			return readonlynessReadonly
-		}
+	if utils.IsTypeFlagSet(t, checker.TypeFlagsAny|checker.TypeFlagsUnknown|checker.TypeFlagsStringLike|checker.TypeFlagsNumberLike|checker.TypeFlagsBooleanLike|checker.TypeFlagsBigIntLike|checker.TypeFlagsNull|checker.TypeFlagsUndefined|checker.TypeFlagsNever|checker.TypeFlagsESSymbolLike|checker.TypeFlagsVoidLike) {
+		return readonlynessReadonly
+	}
+	if typeArgument, ok := readonlyWrapperTypeArgument(ctx, t); ok {
+		return isReadonlyWrappedTypeArgument(ctx, typeArgument, opts, seenTypes)
 	}
 	if utils.IsReadonlyTypeLike(ctx.Program, ctx.TypeChecker, t, func(subType *checker.Type) bool {
 		alias := checker.Type_alias(subType)
@@ -349,7 +449,11 @@ func isTypeReadonlyRecurser(
 
 	if checker.Type_flags(t)&checker.TypeFlagsUnion != 0 {
 		for _, memberType := range t.Types() {
-			if !seenTypes[memberType] && isTypeReadonlyRecurser(ctx, memberType, opts, seenTypes) == readonlynessMutable {
+			if seenTypes[memberType] {
+				continue
+			}
+			memberResult := isTypeReadonlyRecurser(ctx, memberType, opts, seenTypes)
+			if memberResult == readonlynessMutable {
 				return readonlynessMutable
 			}
 		}
@@ -396,6 +500,33 @@ func isTypeReadonlyRecurser(
 	}
 
 	return readonlynessReadonly
+}
+
+func hasShallowMutableMembers(ctx rule.RuleContext, t *checker.Type, opts PreferReadonlyParameterTypesOptions) bool {
+	if ctx.TypeChecker == nil || t == nil {
+		return false
+	}
+	for _, property := range checker.Checker_getPropertiesOfType(ctx.TypeChecker, t) {
+		if property == nil {
+			continue
+		}
+		if opts.TreatMethodsAsReadonly && isSymbolMethodLike(property) {
+			continue
+		}
+		if symbolIsReadonly(property) || symbolIsPrivateIdentifier(property) {
+			continue
+		}
+		return true
+	}
+	for _, indexInfo := range checker.Checker_getIndexInfosOfType(ctx.TypeChecker, t) {
+		if indexInfo == nil {
+			continue
+		}
+		if !checker.IndexInfo_isReadonly(indexInfo) {
+			return true
+		}
+	}
+	return false
 }
 
 func isTypeReadonly(ctx rule.RuleContext, t *checker.Type, opts PreferReadonlyParameterTypesOptions) bool {

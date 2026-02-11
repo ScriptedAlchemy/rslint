@@ -116,7 +116,7 @@ import (
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_nullish_coalescing"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_promise_reject_errors"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_readonly"
-	// "github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_readonly_parameter_types" // Temporarily disabled - incomplete implementation
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_readonly_parameter_types"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/parameter_properties"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_function_type"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/prefer_optional_chain"
@@ -541,10 +541,7 @@ func registerAllTypeScriptEslintPluginRules() {
 	GlobalRuleRegistry.Register("@typescript-eslint/prefer-nullish-coalescing", prefer_nullish_coalescing.PreferNullishCoalescingRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/prefer-promise-reject-errors", prefer_promise_reject_errors.PreferPromiseRejectErrorsRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/prefer-readonly", prefer_readonly.PreferReadonlyRule)
-	// TODO: prefer-readonly-parameter-types needs complete implementation for proper type checking
-	// Temporarily disabled until the isReadonlyType function is fully implemented with proper
-	// detection of readonly arrays, readonly objects, function types, and other edge cases
-	// GlobalRuleRegistry.Register("@typescript-eslint/prefer-readonly-parameter-types", prefer_readonly_parameter_types.PreferReadonlyParameterTypesRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/prefer-readonly-parameter-types", prefer_readonly_parameter_types.PreferReadonlyParameterTypesRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/prefer-regexp-exec", prefer_regexp_exec.PreferRegExpExecRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/prefer-optional-chain", prefer_optional_chain.PreferOptionalChainRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/prefer-reduce-type-parameter", prefer_reduce_type_parameter.PreferReduceTypeParameterRule)
