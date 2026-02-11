@@ -94,6 +94,15 @@ function resolveVirtualEntry(
   filename?: string,
 ): string {
   if (filename) {
+    if (filename.endsWith('.d.ts')) {
+      return path.resolve(virtualBaseDir, 'virtual.d.ts');
+    }
+    if (filename.endsWith('.mts')) {
+      return path.resolve(virtualBaseDir, 'virtual.mts');
+    }
+    if (filename.endsWith('.cts')) {
+      return path.resolve(virtualBaseDir, 'virtual.cts');
+    }
     return path.isAbsolute(filename)
       ? filename
       : path.resolve(virtualBaseDir, filename);
