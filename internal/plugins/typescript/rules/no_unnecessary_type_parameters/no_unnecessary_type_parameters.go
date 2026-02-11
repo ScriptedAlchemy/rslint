@@ -206,10 +206,17 @@ func checkFunctionLike(ctx rule.RuleContext, typeParams []*ast.Node, params []*a
 		if returnType == nil {
 			count += countTypeParameterReferencesInReturnExpressions(body, name)
 			count += countTypeParameterReferencesInReturnTypeArguments(body, name)
+			count += countTypeParameterReferencesInBodyTypeArguments(body, name)
 			count += countTypedParameterMentionsInReturnExpressions(params, body, name)
 		}
 		count += countTypeReferenceWrappedUsagesInParameters(params, name)
 		count += countTypeReferenceWrappedUsagesInTypeNode(returnType, name)
+		if returnType != nil && returnType.Kind == ast.KindArrayType {
+			arrayType := returnType.AsArrayTypeNode()
+			if arrayType != nil && countTypeParameterIdentifierReferences(arrayType.ElementType, name) > 0 {
+				count++
+			}
+		}
 		if count <= 1 && implicitReturnUsesTypeParam(params, body, name) {
 			count++
 		}
@@ -464,20 +471,51 @@ func countTypedParameterMentionsInReturnExpressions(params []*ast.Node, body *as
 		return 0
 	}
 
-	countIdentifiers := func(expr *ast.Node) int {
-		if expr == nil {
+	countElementAccessMentions := func(expression *ast.Node) int {
+		if expression == nil {
 			return 0
 		}
-		count := 0
+		total := 0
 		var walk func(node *ast.Node)
 		walk = func(node *ast.Node) {
 			if node == nil {
 				return
 			}
-			if node.Kind == ast.KindIdentifier {
-				identifier := node.AsIdentifier()
-				if identifier != nil && typedParams[identifier.Text] {
-					count++
+			if node.Kind == ast.KindElementAccessExpression {
+				elementAccess := node.AsElementAccessExpression()
+				if elementAccess != nil && elementAccess.ArgumentExpression != nil {
+					argument := ast.SkipParentheses(elementAccess.ArgumentExpression)
+					if argument != nil && argument.Kind == ast.KindIdentifier && typedParams[argument.AsIdentifier().Text] {
+						total++
+					}
+				}
+			}
+			if node.Kind == ast.KindShorthandPropertyAssignment {
+				shorthand := node.AsShorthandPropertyAssignment()
+				if shorthand != nil && shorthand.Name() != nil && shorthand.Name().Kind == ast.KindIdentifier {
+					if typedParams[shorthand.Name().AsIdentifier().Text] {
+						total++
+					}
+				}
+			}
+			if node.Kind == ast.KindPropertyAssignment {
+				propertyAssignment := node.AsPropertyAssignment()
+				if propertyAssignment != nil && propertyAssignment.Initializer != nil {
+					initializer := ast.SkipParentheses(propertyAssignment.Initializer)
+					if initializer != nil && initializer.Kind == ast.KindIdentifier && typedParams[initializer.AsIdentifier().Text] {
+						total++
+					}
+				}
+			}
+			if node.Kind == ast.KindCallExpression {
+				callExpression := node.AsCallExpression()
+				if callExpression != nil && callExpression.Arguments != nil {
+					for _, argument := range callExpression.Arguments.Nodes {
+						unwrapped := ast.SkipParentheses(argument)
+						if unwrapped != nil && unwrapped.Kind == ast.KindIdentifier && typedParams[unwrapped.AsIdentifier().Text] {
+							total++
+						}
+					}
 				}
 			}
 			node.ForEachChild(func(child *ast.Node) bool {
@@ -485,12 +523,16 @@ func countTypedParameterMentionsInReturnExpressions(params []*ast.Node, body *as
 				return false
 			})
 		}
-		walk(expr)
-		return count
+		walk(expression)
+		return total
 	}
 
 	if body.Kind != ast.KindBlock {
-		return countIdentifiers(body.AsNode())
+		expression := ast.SkipParentheses(body.AsNode())
+		if expression != nil && expression.Kind == ast.KindIdentifier && typedParams[expression.AsIdentifier().Text] {
+			return 1
+		}
+		return countElementAccessMentions(expression)
 	}
 
 	block := body.AsBlock()
@@ -507,7 +549,11 @@ func countTypedParameterMentionsInReturnExpressions(params []*ast.Node, body *as
 		if returnStmt == nil || returnStmt.Expression == nil {
 			continue
 		}
-		total += countIdentifiers(returnStmt.Expression)
+		expression := ast.SkipParentheses(returnStmt.Expression)
+		if expression != nil && expression.Kind == ast.KindIdentifier && typedParams[expression.AsIdentifier().Text] {
+			total++
+		}
+		total += countElementAccessMentions(expression)
 	}
 	return total
 }
@@ -525,8 +571,12 @@ func countTypeReferenceWrappedUsagesInTypeNode(typeNode *ast.Node, typeParamName
 		}
 		if node.Kind == ast.KindTypeReference {
 			typeRef := node.AsTypeReferenceNode()
-			if typeRef != nil && typeRef.TypeName != nil && typeRef.TypeName.Kind == ast.KindIdentifier && typeRef.TypeName.AsIdentifier().Text != typeParamName {
-				if typeRef.TypeArguments != nil {
+			if typeRef != nil && typeRef.TypeArguments != nil {
+				isBareTypeParam := false
+				if typeRef.TypeName != nil && typeRef.TypeName.Kind == ast.KindIdentifier {
+					isBareTypeParam = typeRef.TypeName.AsIdentifier().Text == typeParamName
+				}
+				if !isBareTypeParam {
 					for _, typeArgument := range typeRef.TypeArguments.Nodes {
 						if countTypeParameterIdentifierReferences(typeArgument, typeParamName) > 0 {
 							total++
@@ -609,6 +659,53 @@ func countTypeParameterReferencesInReturnTypeArguments(body *ast.BlockOrExpressi
 		}
 		total += countFromExpression(returnStatement.Expression)
 	}
+	return total
+}
+
+func countTypeParameterReferencesInBodyTypeArguments(body *ast.BlockOrExpression, typeParamName string) int {
+	if body == nil {
+		return 0
+	}
+
+	root := body.AsNode()
+	if root == nil {
+		return 0
+	}
+
+	total := 0
+	var walk func(node *ast.Node, skipNestedFunctions bool)
+	walk = func(node *ast.Node, skipNestedFunctions bool) {
+		if node == nil {
+			return
+		}
+		if skipNestedFunctions && ast.IsFunctionLike(node) {
+			return
+		}
+
+		switch node.Kind {
+		case ast.KindNewExpression:
+			newExpression := node.AsNewExpression()
+			if newExpression != nil && newExpression.TypeArguments != nil {
+				for _, typeArgument := range newExpression.TypeArguments.Nodes {
+					total += countTypeParameterIdentifierReferences(typeArgument, typeParamName)
+				}
+			}
+		case ast.KindCallExpression:
+			callExpression := node.AsCallExpression()
+			if callExpression != nil && callExpression.TypeArguments != nil {
+				for _, typeArgument := range callExpression.TypeArguments.Nodes {
+					total += countTypeParameterIdentifierReferences(typeArgument, typeParamName)
+				}
+			}
+		}
+
+		node.ForEachChild(func(child *ast.Node) bool {
+			walk(child, true)
+			return false
+		})
+	}
+
+	walk(root, false)
 	return total
 }
 
