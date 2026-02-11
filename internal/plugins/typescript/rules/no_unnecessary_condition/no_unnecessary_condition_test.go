@@ -31,6 +31,15 @@ function test<T>(a: T) {
 	return a ?? 'default';
 }`},
 			{Code: `
+function foo<T extends object>(arg: T, key: keyof T): void {
+	arg[key] ?? 'default';
+}`},
+			{Code: `
+declare const b1: boolean;
+declare const b2: true;
+const x = b1 && b2;
+`},
+			{Code: `
 declare const x: string;
 if (x) {
 	console.log(x);
@@ -64,6 +73,17 @@ if (x === y) {}
 				Errors: []rule_tester.InvalidTestCaseError{{
 					MessageId: "comparisonBetweenLiteralTypes",
 					Line:      4,
+					Column:    5,
+				}},
+			},
+			{
+				Code: `
+declare const b1: object | true;
+if (b1) {}
+`,
+				Errors: []rule_tester.InvalidTestCaseError{{
+					MessageId: "alwaysTruthy",
+					Line:      3,
 					Column:    5,
 				}},
 			},
