@@ -7,10 +7,28 @@ import (
 	"github.com/web-infra-dev/rslint/internal/utils"
 )
 
-func buildConditionErrorOtherMessage() rule.RuleMessage {
+func buildConditionErrorMessage(messageId string) rule.RuleMessage {
+	descriptions := map[string]string{
+		"conditionErrorAny":             "Unexpected any value in conditional.",
+		"conditionErrorNullableBoolean": "Unexpected nullable boolean value in conditional.",
+		"conditionErrorNullableEnum":    "Unexpected nullable enum value in conditional.",
+		"conditionErrorNullableNumber":  "Unexpected nullable number value in conditional.",
+		"conditionErrorNullableObject":  "Unexpected nullable object value in conditional.",
+		"conditionErrorNullableString":  "Unexpected nullable string value in conditional.",
+		"conditionErrorNullish":         "Unexpected nullish value in conditional. The condition is always false.",
+		"conditionErrorNumber":          "Unexpected number value in conditional.",
+		"conditionErrorObject":          "Unexpected object value in conditional. The condition is always true.",
+		"conditionErrorString":          "Unexpected string value in conditional.",
+		"conditionErrorOther":           "Unexpected value in conditional. A boolean expression is required.",
+	}
+	description, ok := descriptions[messageId]
+	if !ok {
+		messageId = "conditionErrorOther"
+		description = descriptions[messageId]
+	}
 	return rule.RuleMessage{
-		Id:          "conditionErrorOther",
-		Description: "Unexpected value in conditional. A boolean expression is required.",
+		Id:          messageId,
+		Description: description,
 	}
 }
 
@@ -34,7 +52,7 @@ func defaultStrictBooleanExpressionsOptions() strictBooleanExpressionsOptions {
 		AllowNullableObject:  true,
 		AllowNullableString:  false,
 		AllowNumber:          true,
-		AllowString:          false,
+		AllowString:          true,
 	}
 }
 
@@ -108,9 +126,9 @@ func isBooleanLikeSyntax(node *ast.Node) bool {
 	return false
 }
 
-func isConditionTypeAllowed(condType *checker.Type, opts strictBooleanExpressionsOptions) bool {
+func conditionErrorMessageID(condType *checker.Type, opts strictBooleanExpressionsOptions) string {
 	if condType == nil {
-		return true
+		return ""
 	}
 
 	parts := utils.UnionTypeParts(condType)
@@ -126,6 +144,7 @@ func isConditionTypeAllowed(condType *checker.Type, opts strictBooleanExpression
 	hasEnum := false
 	hasObject := false
 	hasOther := false
+	hasNonNeverValue := false
 
 	for _, part := range parts {
 		if part == nil {
@@ -135,6 +154,7 @@ func isConditionTypeAllowed(condType *checker.Type, opts strictBooleanExpression
 		if flags&checker.TypeFlagsNever != 0 {
 			continue
 		}
+		hasNonNeverValue = true
 		if flags&(checker.TypeFlagsNull|checker.TypeFlagsUndefined|checker.TypeFlagsVoid) != 0 {
 			hasNullish = true
 			continue
@@ -166,44 +186,49 @@ func isConditionTypeAllowed(condType *checker.Type, opts strictBooleanExpression
 		hasOther = true
 	}
 
+	if !hasNonNeverValue {
+		return ""
+	}
 	if hasOther {
-		return false
+		return "conditionErrorOther"
+	}
+	if hasNullish && !hasAny && !hasBoolean && !hasEnum && !hasNumber && !hasString && !hasObject {
+		return "conditionErrorNullish"
 	}
 	if hasAny && !opts.AllowAny {
-		return false
+		return "conditionErrorAny"
 	}
-	if hasString && !opts.AllowString {
-		return false
-	}
-	if hasNumber && !opts.AllowNumber {
-		return false
-	}
-	if hasObject && !hasNullish {
-		return false
-	}
-
 	if hasNullish {
 		if hasBoolean && !opts.AllowNullableBoolean {
-			return false
+			return "conditionErrorNullableBoolean"
 		}
 		if hasEnum && !opts.AllowNullableEnum {
-			return false
+			return "conditionErrorNullableEnum"
 		}
 		if hasNumber && !opts.AllowNullableNumber {
-			return false
+			return "conditionErrorNullableNumber"
 		}
 		if hasString && !opts.AllowNullableString {
-			return false
+			return "conditionErrorNullableString"
 		}
 		if hasObject && !opts.AllowNullableObject {
-			return false
-		}
-		if !hasBoolean && !hasEnum && !hasNumber && !hasString && !hasObject && !hasAny {
-			return false
+			return "conditionErrorNullableObject"
 		}
 	}
 
-	return hasAny || hasBoolean || hasEnum || hasNumber || hasString || hasObject
+	if hasObject && !hasNullish {
+		return "conditionErrorObject"
+	}
+	if hasNumber && !opts.AllowNumber {
+		return "conditionErrorNumber"
+	}
+	if hasEnum && !opts.AllowNumber {
+		return "conditionErrorNumber"
+	}
+	if hasString && !opts.AllowString {
+		return "conditionErrorString"
+	}
+	return ""
 }
 
 func checkCondition(ctx rule.RuleContext, cond *ast.Node, opts strictBooleanExpressionsOptions) {
@@ -232,15 +257,16 @@ func checkCondition(ctx rule.RuleContext, cond *ast.Node, opts strictBooleanExpr
 		if isBooleanLikeSyntax(cond) {
 			return
 		}
-		ctx.ReportNode(cond, buildConditionErrorOtherMessage())
+		ctx.ReportNode(cond, buildConditionErrorMessage("conditionErrorOther"))
 		return
 	}
 
 	condType := utils.GetConstrainedTypeAtLocation(ctx.TypeChecker, cond)
-	if isConditionTypeAllowed(condType, opts) {
+	messageId := conditionErrorMessageID(condType, opts)
+	if messageId == "" {
 		return
 	}
-	ctx.ReportNode(cond, buildConditionErrorOtherMessage())
+	ctx.ReportNode(cond, buildConditionErrorMessage(messageId))
 }
 
 var StrictBooleanExpressionsRule = rule.CreateRule(rule.Rule{

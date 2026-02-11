@@ -644,8 +644,8 @@ exports[`strict-boolean-expressions > invalid 1`] = `
   "code": "const value: string = "x"; if (value) {}",
   "diagnostics": [
     {
-      "message": "Unexpected value in conditional. A boolean expression is required.",
-      "messageId": "conditionErrorOther",
+      "message": "Unexpected string value in conditional.",
+      "messageId": "conditionErrorString",
       "range": {
         "end": {
           "column": 37,

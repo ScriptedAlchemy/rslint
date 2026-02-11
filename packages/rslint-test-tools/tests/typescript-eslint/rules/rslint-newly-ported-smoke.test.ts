@@ -271,7 +271,8 @@ ruleTester.run('strict-boolean-expressions', {
   invalid: [
     {
       code: 'const value: string = "x"; if (value) {}',
-      errors: [{ messageId: 'conditionErrorOther' }],
+      options: [{ allowString: false }],
+      errors: [{ messageId: 'conditionErrorString' }],
     },
   ],
 });
