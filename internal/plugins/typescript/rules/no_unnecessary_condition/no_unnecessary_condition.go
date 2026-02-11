@@ -7,6 +7,7 @@ import (
 
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/microsoft/typescript-go/shim/checker"
+	"github.com/microsoft/typescript-go/shim/core"
 	"github.com/web-infra-dev/rslint/internal/rule"
 	"github.com/web-infra-dev/rslint/internal/utils"
 )
@@ -150,6 +151,13 @@ func buildNoOverlapBooleanExpressionMessage() rule.RuleMessage {
 	}
 }
 
+func buildNeverOptionalChainMessage() rule.RuleMessage {
+	return rule.RuleMessage{
+		Id:          "neverOptionalChain",
+		Description: "Unnecessary optional chain on a non-nullish value.",
+	}
+}
+
 // Type checking utilities using the correct RSLint APIs
 func isNeverType(typeOfNode *checker.Type) bool {
 	return utils.IsTypeFlagSet(typeOfNode, checker.TypeFlagsNever)
@@ -233,6 +241,20 @@ func isTypeNeverNullish(t *checker.Type, typeChecker *checker.Checker) bool {
 		for _, unionType := range t.Types() {
 			typeFlags := checker.Type_flags(unionType)
 			if typeFlags&(checker.TypeFlagsNull|checker.TypeFlagsUndefined|checker.TypeFlagsVoid) != 0 {
+				return false
+			}
+			if typeFlags&checker.TypeFlagsTypeParameter != 0 {
+				if typeChecker != nil {
+					if constraint := typeChecker.GetConstraintOfTypeParameter(unionType); constraint != nil && constraint != unionType {
+						if !isTypeNeverNullish(constraint, typeChecker) {
+							return false
+						}
+						continue
+					}
+				}
+				return false
+			}
+			if typeFlags&(checker.TypeFlagsAny|checker.TypeFlagsUnknown|checker.TypeFlagsTypeVariable|checker.TypeFlagsIndexedAccess|checker.TypeFlagsIndex|checker.TypeFlagsConditional|checker.TypeFlagsSubstitution) != 0 {
 				return false
 			}
 		}
@@ -788,6 +810,7 @@ func constBooleanLiteralValue(ctx rule.RuleContext, node *ast.Node) (bool, bool)
 
 // checkCondition checks if a condition is unnecessary (always true/false/never)
 func checkCondition(ctx rule.RuleContext, node *ast.Node, isNegated bool) {
+	node = ast.SkipParentheses(node)
 	if node == nil {
 		return
 	}
@@ -798,10 +821,9 @@ func checkCondition(ctx rule.RuleContext, node *ast.Node, isNegated bool) {
 			return
 		}
 	}
-	if node.Kind == ast.KindElementAccessExpression {
+	if shouldSkipElementAccessCondition(ctx, node) {
 		return
 	}
-
 	if value, ok := constBooleanLiteralValue(ctx, node); ok {
 		if value {
 			ctx.ReportNode(node, buildAlwaysTruthyMessage())
@@ -817,6 +839,9 @@ func checkCondition(ctx rule.RuleContext, node *ast.Node, isNegated bool) {
 		if binExpr != nil && (binExpr.OperatorToken.Kind == ast.KindAmpersandAmpersandToken || binExpr.OperatorToken.Kind == ast.KindBarBarToken) {
 			return
 		}
+	}
+	if reportNeverOptionalChain(ctx, node) {
+		return
 	}
 
 	conditionType := ctx.TypeChecker.GetTypeAtLocation(node)
@@ -849,6 +874,168 @@ func checkCondition(ctx rule.RuleContext, node *ast.Node, isNegated bool) {
 		}
 		return
 	}
+}
+
+func shouldSkipElementAccessCondition(ctx rule.RuleContext, node *ast.Node) bool {
+	if node == nil || node.Kind != ast.KindElementAccessExpression || ctx.TypeChecker == nil {
+		return false
+	}
+	elementAccess := node.AsElementAccessExpression()
+	if elementAccess == nil || elementAccess.Expression == nil {
+		return false
+	}
+
+	receiverType := utils.GetConstrainedTypeAtLocation(ctx.TypeChecker, elementAccess.Expression)
+	if receiverType == nil {
+		return false
+	}
+
+	parts := utils.UnionTypeParts(receiverType)
+	if len(parts) == 0 {
+		parts = []*checker.Type{receiverType}
+	}
+
+	indexValue, hasStaticIndex := staticLiteralValue(ctx, elementAccess.ArgumentExpression, 0)
+	if hasStaticIndex {
+		switch indexValue.(type) {
+		case float64, int, int32, int64, string:
+		default:
+			hasStaticIndex = false
+		}
+	}
+
+	for _, part := range parts {
+		if part == nil {
+			continue
+		}
+		if utils.IsTypeFlagSet(part, checker.TypeFlagsNull|checker.TypeFlagsUndefined) {
+			continue
+		}
+		if checker.Checker_isArrayType(ctx.TypeChecker, part) {
+			return true
+		}
+		if checker.Checker_isArrayOrTupleType(ctx.TypeChecker, part) {
+			if !hasStaticIndex {
+				return true
+			}
+			continue
+		}
+	}
+	return false
+}
+
+func optionalChainBaseExpression(node *ast.Node) (*ast.Node, bool) {
+	if node == nil {
+		return nil, false
+	}
+	switch node.Kind {
+	case ast.KindPropertyAccessExpression:
+		propertyAccess := node.AsPropertyAccessExpression()
+		if propertyAccess == nil || propertyAccess.QuestionDotToken == nil {
+			return nil, false
+		}
+		return propertyAccess.Expression, true
+	case ast.KindElementAccessExpression:
+		elementAccess := node.AsElementAccessExpression()
+		if elementAccess == nil || elementAccess.QuestionDotToken == nil {
+			return nil, false
+		}
+		return elementAccess.Expression, true
+	case ast.KindCallExpression:
+		callExpression := node.AsCallExpression()
+		if callExpression == nil || callExpression.QuestionDotToken == nil {
+			return nil, false
+		}
+		return callExpression.Expression, true
+	}
+	return nil, false
+}
+
+func hasUnsoundArrayIndexInExpressionChain(ctx rule.RuleContext, node *ast.Node) bool {
+	for current := node; current != nil; {
+		current = ast.SkipParentheses(current)
+		if current == nil {
+			return false
+		}
+		if current.Kind == ast.KindElementAccessExpression && shouldSkipElementAccessCondition(ctx, current) {
+			return true
+		}
+		switch current.Kind {
+		case ast.KindPropertyAccessExpression:
+			propertyAccess := current.AsPropertyAccessExpression()
+			if propertyAccess == nil || propertyAccess.Expression == nil {
+				return false
+			}
+			current = propertyAccess.Expression
+		case ast.KindElementAccessExpression:
+			elementAccess := current.AsElementAccessExpression()
+			if elementAccess == nil || elementAccess.Expression == nil {
+				return false
+			}
+			current = elementAccess.Expression
+		case ast.KindCallExpression:
+			callExpression := current.AsCallExpression()
+			if callExpression == nil || callExpression.Expression == nil {
+				return false
+			}
+			current = callExpression.Expression
+		default:
+			return false
+		}
+	}
+	return false
+}
+
+func optionalChainTokenRange(sourceFile *ast.SourceFile, node *ast.Node) (core.TextRange, bool) {
+	if sourceFile == nil || node == nil {
+		return core.TextRange{}, false
+	}
+	trimmed := utils.TrimNodeTextRange(sourceFile, node)
+	sourceText := sourceFile.Text()
+	if trimmed.Pos() < 0 || trimmed.End() > len(sourceText) || trimmed.Pos() >= trimmed.End() {
+		return core.TextRange{}, false
+	}
+	subText := sourceText[trimmed.Pos():trimmed.End()]
+	tokenOffset := strings.Index(subText, "?.")
+	if tokenOffset < 0 {
+		return core.TextRange{}, false
+	}
+	start := trimmed.Pos() + tokenOffset
+	end := start + len("?.")
+	if start < 0 || end > len(sourceText) {
+		return core.TextRange{}, false
+	}
+	return core.NewTextRange(start, end), true
+}
+
+func reportNeverOptionalChain(ctx rule.RuleContext, node *ast.Node) bool {
+	baseExpression, ok := optionalChainBaseExpression(node)
+	if !ok || baseExpression == nil || ctx.TypeChecker == nil {
+		return false
+	}
+	if hasUnsoundArrayIndexInExpressionChain(ctx, baseExpression) {
+		return false
+	}
+	baseType := ctx.TypeChecker.GetTypeAtLocation(baseExpression)
+	baseIsNeverNullish := isTypeNeverNullish(baseType, ctx.TypeChecker)
+	if !baseIsNeverNullish {
+		if baseExpression.Kind == ast.KindPropertyAccessExpression {
+			propertyAccess := baseExpression.AsPropertyAccessExpression()
+			if propertyAccess != nil && propertyAccess.QuestionDotToken != nil && propertyAccess.Name() != nil {
+				propertyType := ctx.TypeChecker.GetTypeAtLocation(propertyAccess.Name())
+				baseIsNeverNullish = isTypeNeverNullish(propertyType, ctx.TypeChecker)
+			}
+		}
+	}
+	if !baseIsNeverNullish {
+		return false
+	}
+	if tokenRange, ok := optionalChainTokenRange(ctx.SourceFile, node); ok {
+		ctx.ReportRange(tokenRange, buildNeverOptionalChainMessage())
+	} else {
+		ctx.ReportNode(node, buildNeverOptionalChainMessage())
+	}
+	return true
 }
 
 func isConditionPosition(node *ast.Node) bool {
@@ -903,7 +1090,7 @@ func isInConditionChain(node *ast.Node) bool {
 	return isInConditionChain(parent)
 }
 
-func isAllowedConstantLoopCondition(ctx rule.RuleContext, node *ast.Node, mode string) bool {
+func isAllowedConstantLoopCondition(ctx rule.RuleContext, node *ast.Node, mode string, loopKind ast.Kind) bool {
 	if mode == "never" {
 		return false
 	}
@@ -912,6 +1099,9 @@ func isAllowedConstantLoopCondition(ctx rule.RuleContext, node *ast.Node, mode s
 		return ok
 	}
 	if mode == "only-allowed-literals" {
+		if loopKind != ast.KindWhileStatement {
+			return false
+		}
 		value, ok := staticLiteralValue(ctx, node, 0)
 		if !ok {
 			return false
@@ -1454,7 +1644,7 @@ var NoUnnecessaryConditionRule = rule.CreateRule(rule.Rule{
 				whileStmt := node.AsWhileStatement()
 				if whileStmt != nil && whileStmt.Expression != nil {
 					// Handle constant loop conditions
-					if isAllowedConstantLoopCondition(ctx, whileStmt.Expression, *opts.AllowConstantLoopConditions) {
+					if isAllowedConstantLoopCondition(ctx, whileStmt.Expression, *opts.AllowConstantLoopConditions, ast.KindWhileStatement) {
 						return
 					}
 					checkCondition(ctx, whileStmt.Expression, false)
@@ -1465,7 +1655,7 @@ var NoUnnecessaryConditionRule = rule.CreateRule(rule.Rule{
 			ast.KindForStatement: func(node *ast.Node) {
 				forStmt := node.AsForStatement()
 				if forStmt != nil && forStmt.Condition != nil {
-					if isAllowedConstantLoopCondition(ctx, forStmt.Condition, *opts.AllowConstantLoopConditions) {
+					if isAllowedConstantLoopCondition(ctx, forStmt.Condition, *opts.AllowConstantLoopConditions, ast.KindForStatement) {
 						return
 					}
 					checkCondition(ctx, forStmt.Condition, false)
@@ -1476,7 +1666,7 @@ var NoUnnecessaryConditionRule = rule.CreateRule(rule.Rule{
 			ast.KindDoStatement: func(node *ast.Node) {
 				doStmt := node.AsDoStatement()
 				if doStmt != nil && doStmt.Expression != nil {
-					if isAllowedConstantLoopCondition(ctx, doStmt.Expression, *opts.AllowConstantLoopConditions) {
+					if isAllowedConstantLoopCondition(ctx, doStmt.Expression, *opts.AllowConstantLoopConditions, ast.KindDoStatement) {
 						return
 					}
 					checkCondition(ctx, doStmt.Expression, false)
@@ -1547,7 +1737,20 @@ var NoUnnecessaryConditionRule = rule.CreateRule(rule.Rule{
 					}
 				}
 			},
+			ast.KindPropertyAccessExpression: func(node *ast.Node) {
+				if !isConditionPosition(node) {
+					reportNeverOptionalChain(ctx, node)
+				}
+			},
+			ast.KindElementAccessExpression: func(node *ast.Node) {
+				if !isConditionPosition(node) {
+					reportNeverOptionalChain(ctx, node)
+				}
+			},
 			ast.KindCallExpression: func(node *ast.Node) {
+				if !isConditionPosition(node) {
+					reportNeverOptionalChain(ctx, node)
+				}
 				checkArrayPredicateCallback(ctx, node)
 			},
 			ast.KindCaseClause: func(node *ast.Node) {
