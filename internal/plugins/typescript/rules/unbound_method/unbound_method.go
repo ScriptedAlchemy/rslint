@@ -1,6 +1,8 @@
 package unbound_method
 
 import (
+	"encoding/json"
+
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/microsoft/typescript-go/shim/checker"
 	"github.com/web-infra-dev/rslint/internal/rule"
@@ -26,6 +28,56 @@ func buildUnboundWithoutThisAnnotationMessage() rule.RuleMessage {
 
 type UnboundMethodOptions struct {
 	IgnoreStatic *bool
+}
+
+func parseOptions(options any) UnboundMethodOptions {
+	opts := UnboundMethodOptions{
+		IgnoreStatic: utils.Ref(false),
+	}
+
+	switch value := options.(type) {
+	case UnboundMethodOptions:
+		if value.IgnoreStatic != nil {
+			opts.IgnoreStatic = value.IgnoreStatic
+		}
+		return opts
+	case *UnboundMethodOptions:
+		if value != nil && value.IgnoreStatic != nil {
+			opts.IgnoreStatic = value.IgnoreStatic
+		}
+		return opts
+	}
+
+	applyMap := func(raw map[string]interface{}) {
+		if raw == nil {
+			return
+		}
+		if ignoreStatic, ok := raw["ignoreStatic"].(bool); ok {
+			opts.IgnoreStatic = utils.Ref(ignoreStatic)
+		}
+	}
+
+	switch value := options.(type) {
+	case map[string]interface{}:
+		applyMap(value)
+	case []interface{}:
+		if len(value) > 0 {
+			if firstMap, ok := value[0].(map[string]interface{}); ok {
+				applyMap(firstMap)
+			}
+		}
+	default:
+		if value != nil {
+			raw := map[string]interface{}{}
+			if payload, err := json.Marshal(value); err == nil {
+				if err := json.Unmarshal(payload, &raw); err == nil {
+					applyMap(raw)
+				}
+			}
+		}
+	}
+
+	return opts
 }
 
 func isNodeInsideTypeDeclaration(node *ast.Node) bool {
@@ -183,13 +235,7 @@ func checkIfMethod(symbol *ast.Symbol, ignoreStatic bool) ( /* dangerous */ bool
 var UnboundMethodRule = rule.CreateRule(rule.Rule{
 	Name: "unbound-method",
 	Run: func(ctx rule.RuleContext, options any) rule.RuleListeners {
-		opts, ok := options.(UnboundMethodOptions)
-		if !ok {
-			opts = UnboundMethodOptions{}
-		}
-		if opts.IgnoreStatic == nil {
-			opts.IgnoreStatic = utils.Ref(false)
-		}
+		opts := parseOptions(options)
 
 		isNativelyBound := func(object *ast.Node, property *ast.Node) bool {
 			// We can't rely entirely on the type-level checks made at the end of this
@@ -237,8 +283,35 @@ var UnboundMethodRule = rule.CreateRule(rule.Rule{
 		}
 
 		checkBindingProperty := func(patternNode *ast.Node, initNode *ast.Node, propertyName *ast.Node, parentIsAssignmentPatternLike bool) {
+			reportFromTypeParts := func(t *checker.Type) bool {
+				foundUnbound := false
+				for _, part := range utils.UnionTypeParts(t) {
+					symbol := checker.Checker_getPropertyOfType(ctx.TypeChecker, part, propertyName.Text())
+					if symbol == nil {
+						continue
+					}
+					dangerous, firstParamIsThis := checkIfMethod(symbol, *opts.IgnoreStatic)
+					if !dangerous {
+						continue
+					}
+					if !firstParamIsThis {
+						ctx.ReportNode(propertyName, buildUnboundWithoutThisAnnotationMessage())
+						return true
+					}
+					foundUnbound = true
+				}
+				if foundUnbound {
+					ctx.ReportNode(propertyName, buildUnboundMessage())
+					return true
+				}
+				return false
+			}
+
 			if initNode != nil {
 				if !isNativelyBound(initNode, propertyName) {
+					if reportFromTypeParts(ctx.TypeChecker.GetTypeAtLocation(initNode)) {
+						return
+					}
 					reported := checkIfMethodAndReport(propertyName, checker.Checker_getPropertyOfType(ctx.TypeChecker, ctx.TypeChecker.GetTypeAtLocation(initNode), propertyName.Text()))
 					if reported {
 						return
@@ -259,7 +332,9 @@ var UnboundMethodRule = rule.CreateRule(rule.Rule{
 
 		return rule.RuleListeners{
 			ast.KindPropertyAccessExpression: func(node *ast.Node) {
-				if isSafeUse(node) || isNativelyBound(node.Expression(), node.Name()) {
+				safe := isSafeUse(node)
+				nativelyBound := isNativelyBound(node.Expression(), node.Name())
+				if safe || nativelyBound {
 					return
 				}
 
