@@ -2,6 +2,7 @@ package consistent_type_exports
 
 import (
 	"github.com/microsoft/typescript-go/shim/ast"
+	"github.com/microsoft/typescript-go/shim/checker"
 	"github.com/web-infra-dev/rslint/internal/rule"
 )
 
@@ -34,6 +35,7 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 			}
 		}
 	}
+	_ = opts
 
 	// Helper to check if a symbol is type-only
 	// Returns: true = type-only, false = value-based, nil = unknown/unresolved
@@ -82,39 +84,41 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 			return
 		}
 
-		// Handle export * from 'module'
-		if exportDecl.ExportClause == nil && exportDecl.ModuleSpecifier != nil {
-			// Check if the entire module exports only types
+		// Handle export * from 'module' and export * as ns from 'module'
+		if exportDecl.ModuleSpecifier != nil && (exportDecl.ExportClause == nil || ast.IsNamespaceExport(exportDecl.ExportClause)) {
 			moduleSpecifier := exportDecl.ModuleSpecifier
 			moduleSymbol := ctx.TypeChecker.GetSymbolAtLocation(moduleSpecifier)
 
-			if moduleSymbol != nil {
-				// Get the exports of the module symbol
-				if moduleSymbol.Exports != nil {
-					hasValueExport := false
-					hasAnyExport := false
+			if moduleSymbol == nil {
+				return
+			}
 
-					// Check each export from the module
-					for _, exportSymbol := range moduleSymbol.Exports {
-						hasAnyExport = true
-						// Use our helper function to determine if this export is type-only
-						isType := isSymbolTypeBased(exportSymbol)
-						if isType != nil && !*isType {
-							// This export is a value
-							hasValueExport = true
-							break
-						}
-					}
+			moduleType := ctx.TypeChecker.GetTypeOfSymbolAtLocation(moduleSymbol, moduleSpecifier)
+			if moduleType == nil {
+				return
+			}
 
-					// If all exports are type-only, report it
-					if hasAnyExport && !hasValueExport {
-						ctx.ReportNode(node, rule.RuleMessage{
-							Id:          "typeOverValue",
-							Description: "All exports in the declaration are only used as types. Use `export type`.",
-						})
-					}
+			exportedProperties := checker.Checker_getPropertiesOfType(ctx.TypeChecker, moduleType)
+			if len(exportedProperties) == 0 {
+				ctx.ReportNode(node, rule.RuleMessage{
+					Id:          "typeOverValue",
+					Description: "All exports in the declaration are only used as types. Use `export type`.",
+				})
+				return
+			}
+
+			// Mirror upstream behavior: properties returned by getPropertiesOfType can include
+			// type-only star exports; getPropertyOfType returns nil for those.
+			for _, propertySymbol := range exportedProperties {
+				if checker.Checker_getPropertyOfType(ctx.TypeChecker, moduleType, propertySymbol.Name) != nil {
+					return
 				}
 			}
+
+			ctx.ReportNode(node, rule.RuleMessage{
+				Id:          "typeOverValue",
+				Description: "All exports in the declaration are only used as types. Use `export type`.",
+			})
 			return
 		}
 
@@ -128,6 +132,7 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 			var typeSpecifiers []*ast.Node
 			var valueSpecifiers []*ast.Node
 			var inlineTypeSpecifiers []*ast.Node
+			var unknownSpecifiers []*ast.Node
 
 			for _, element := range namedExports.Elements.Nodes {
 				exportSpecifier := element.AsExportSpecifier()
@@ -141,19 +146,15 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 					continue
 				}
 
-				// Get the symbol being exported
-				var symbol *ast.Symbol
-				// For local exports, we check the property name (what's being exported)
-				// For re-exports, we check the name (what's being imported from the module)
-				if exportSpecifier.PropertyName != nil {
+				// Align with upstream: inspect the exported binding symbol.
+				symbol := ctx.TypeChecker.GetSymbolAtLocation(exportSpecifier.Name())
+				if symbol == nil && exportSpecifier.PropertyName != nil {
 					symbol = ctx.TypeChecker.GetSymbolAtLocation(exportSpecifier.PropertyName)
-				} else {
-					symbol = ctx.TypeChecker.GetSymbolAtLocation(exportSpecifier.Name())
 				}
 
 				isType := isSymbolTypeBased(symbol)
-				// Skip if we can't determine the type (unknown symbol)
 				if isType == nil {
+					unknownSpecifiers = append(unknownSpecifiers, element)
 					continue
 				}
 
@@ -164,8 +165,8 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 				}
 			}
 
-			// All specifiers are type-only
-			if len(typeSpecifiers) > 0 && len(valueSpecifiers) == 0 && len(inlineTypeSpecifiers) == 0 {
+			// All specifiers are type-only (including inline type specifiers)
+			if len(unknownSpecifiers) == 0 && (len(typeSpecifiers) > 0 || len(inlineTypeSpecifiers) > 0) && len(valueSpecifiers) == 0 {
 				ctx.ReportNode(node, rule.RuleMessage{
 					Id:          "typeOverValue",
 					Description: "All exports in the declaration are only used as types. Use `export type`.",
@@ -174,14 +175,7 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 			}
 
 			// Mixed: some types, some values
-			if len(typeSpecifiers) > 0 && len(valueSpecifiers) > 0 {
-				// If fixMixedExportsWithInlineTypeSpecifier is enabled and there are already
-				// inline type specifiers, don't report an error (the code is already following
-				// the preferred inline style)
-				if opts.FixMixedExportsWithInlineTypeSpecifier && len(inlineTypeSpecifiers) > 0 {
-					return
-				}
-
+			if len(typeSpecifiers) > 0 && (len(valueSpecifiers) > 0 || len(unknownSpecifiers) > 0) {
 				if len(typeSpecifiers) == 1 {
 					ctx.ReportNode(node, rule.RuleMessage{
 						Id:          "singleExportIsType",
