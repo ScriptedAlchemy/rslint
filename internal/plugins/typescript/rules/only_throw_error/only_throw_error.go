@@ -1,6 +1,8 @@
 package only_throw_error
 
 import (
+	"encoding/json"
+
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/microsoft/typescript-go/shim/checker"
 	"github.com/web-infra-dev/rslint/internal/rule"
@@ -8,10 +10,62 @@ import (
 )
 
 type OnlyThrowErrorOptions struct {
-	Allow                []utils.TypeOrValueSpecifier
-	AllowInline          []string
-	AllowThrowingAny     *bool
-	AllowThrowingUnknown *bool
+	Allow                []utils.TypeOrValueSpecifier `json:"allow"`
+	AllowInline          []string                     `json:"allowInline"`
+	AllowRethrowing      *bool                        `json:"allowRethrowing"`
+	AllowThrowingAny     *bool                        `json:"allowThrowingAny"`
+	AllowThrowingUnknown *bool                        `json:"allowThrowingUnknown"`
+}
+
+func parseOptions(options any) OnlyThrowErrorOptions {
+	opts := OnlyThrowErrorOptions{
+		Allow:       []utils.TypeOrValueSpecifier{},
+		AllowInline: []string{},
+	}
+
+	applyJSON := func(raw any) {
+		if raw == nil {
+			return
+		}
+		rawJSON, err := json.Marshal(raw)
+		if err != nil {
+			return
+		}
+		_ = json.Unmarshal(rawJSON, &opts)
+	}
+
+	switch raw := options.(type) {
+	case OnlyThrowErrorOptions:
+		opts = raw
+	case *OnlyThrowErrorOptions:
+		if raw != nil {
+			opts = *raw
+		}
+	case map[string]interface{}:
+		applyJSON(raw)
+	case []interface{}:
+		if len(raw) > 0 {
+			applyJSON(raw[0])
+		}
+	}
+
+	if opts.Allow == nil {
+		opts.Allow = []utils.TypeOrValueSpecifier{}
+	}
+	if opts.AllowInline == nil {
+		opts.AllowInline = []string{}
+	}
+	if opts.AllowRethrowing == nil {
+		opts.AllowRethrowing = utils.Ref(true)
+	}
+	if opts.AllowThrowingAny == nil {
+		opts.AllowThrowingAny = utils.Ref(true)
+	}
+	if opts.AllowThrowingUnknown == nil {
+		opts.AllowThrowingUnknown = utils.Ref(true)
+	}
+
+	return opts
 }
 
 func buildObjectMessage() rule.RuleMessage {
@@ -30,21 +84,123 @@ func buildUndefMessage() rule.RuleMessage {
 var OnlyThrowErrorRule = rule.CreateRule(rule.Rule{
 	Name: "only-throw-error",
 	Run: func(ctx rule.RuleContext, options any) rule.RuleListeners {
-		opts, ok := options.(OnlyThrowErrorOptions)
-		if !ok {
-			opts = OnlyThrowErrorOptions{}
+		opts := parseOptions(options)
+
+		containsNode := func(target *ast.Node, needle *ast.Node) bool {
+			if target == nil || needle == nil {
+				return false
+			}
+			for current := needle; current != nil; current = current.Parent {
+				if current == target {
+					return true
+				}
+			}
+			return false
 		}
-		if opts.Allow == nil {
-			opts.Allow = []utils.TypeOrValueSpecifier{}
+
+		unwrapToCallExpression := func(node *ast.Node) *ast.CallExpression {
+			current := node
+			for current != nil && ast.IsParenthesizedExpression(current) {
+				current = current.Parent
+			}
+			if current == nil || !ast.IsCallExpression(current) {
+				return nil
+			}
+			return current.AsCallExpression()
 		}
-		if opts.AllowInline == nil {
-			opts.AllowInline = []string{}
+
+		getHandlerByMethod := func(callExpr *ast.CallExpression, methodName string) *ast.Node {
+			if callExpr == nil {
+				return nil
+			}
+			args := callExpr.Arguments.Nodes
+			switch methodName {
+			case "catch":
+				if len(args) == 0 || ast.IsSpreadElement(args[0]) {
+					return nil
+				}
+				return args[0]
+			case "then":
+				if len(args) < 2 || ast.IsSpreadElement(args[0]) || ast.IsSpreadElement(args[1]) {
+					return nil
+				}
+				return args[1]
+			default:
+				return nil
+			}
 		}
-		if opts.AllowThrowingAny == nil {
-			opts.AllowThrowingAny = utils.Ref(true)
-		}
-		if opts.AllowThrowingUnknown == nil {
-			opts.AllowThrowingUnknown = utils.Ref(true)
+
+		isRethrownError := func(node *ast.Node) bool {
+			if node == nil || !ast.IsIdentifier(node) {
+				return false
+			}
+			symbol := ctx.TypeChecker.GetSymbolAtLocation(node)
+			if symbol == nil {
+				return false
+			}
+
+			declaration := symbol.ValueDeclaration
+			if declaration == nil && len(symbol.Declarations) > 0 {
+				declaration = symbol.Declarations[0]
+			}
+			if declaration == nil {
+				return false
+			}
+
+			// try/catch rethrow
+			for current := declaration; current != nil; current = current.Parent {
+				if current.Kind != ast.KindCatchClause {
+					continue
+				}
+				catchClause := current.AsCatchClause()
+				if catchClause == nil || catchClause.VariableDeclaration == nil {
+					return false
+				}
+				return containsNode(catchClause.VariableDeclaration, declaration)
+			}
+
+			paramNode := declaration
+			if ast.IsIdentifier(declaration) && declaration.Parent != nil && ast.IsParameter(declaration.Parent) {
+				paramNode = declaration.Parent
+			}
+			if !ast.IsParameter(paramNode) {
+				return false
+			}
+			paramDecl := paramNode.AsParameterDeclaration()
+			if paramDecl == nil || paramDecl.DotDotDotToken != nil || paramDecl.Name() == nil || !ast.IsIdentifier(paramDecl.Name()) {
+				return false
+			}
+			if paramDecl.Name().AsIdentifier().Text != node.AsIdentifier().Text {
+				return false
+			}
+
+			callback := paramNode.Parent
+			if callback == nil || (!ast.IsFunctionExpression(callback) && !ast.IsArrowFunction(callback)) {
+				return false
+			}
+			params := callback.Parameters()
+			if len(params) == 0 || params[0] != paramNode {
+				return false
+			}
+
+			callExpr := unwrapToCallExpression(callback.Parent)
+			if callExpr == nil {
+				return false
+			}
+			callee := ast.SkipParentheses(callExpr.Expression)
+			if !ast.IsAccessExpression(callee) {
+				return false
+			}
+			methodName, ok := checker.Checker_getAccessedPropertyName(ctx.TypeChecker, callee)
+			if !ok {
+				return false
+			}
+			onRejected := getHandlerByMethod(callExpr, methodName)
+			if onRejected != callback {
+				return false
+			}
+
+			return utils.IsThenableType(ctx.TypeChecker, callee.Expression(), nil)
 		}
 
 		return rule.RuleListeners{
@@ -57,6 +213,9 @@ var OnlyThrowErrorRule = rule.CreateRule(rule.Rule{
 				// ) {
 				//   return;
 				// }
+				if *opts.AllowRethrowing && isRethrownError(expr) {
+					return
+				}
 
 				t := ctx.TypeChecker.GetTypeAtLocation(expr)
 
@@ -65,7 +224,7 @@ var OnlyThrowErrorRule = rule.CreateRule(rule.Rule{
 				}
 
 				if utils.IsTypeFlagSet(t, checker.TypeFlagsUndefined) {
-					ctx.ReportNode(node, buildUndefMessage())
+					ctx.ReportNode(expr, buildUndefMessage())
 					return
 				}
 
