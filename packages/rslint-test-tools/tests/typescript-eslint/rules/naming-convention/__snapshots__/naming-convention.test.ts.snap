@@ -2079,7 +2079,7 @@ exports[`naming-convention > invalid 28`] = `
       "ruleName": "@typescript-eslint/naming-convention",
     },
     {
-      "message": "Class Property name \`AsyncBar2\` must match one of the following formats: camelCase",
+      "message": "Class Method name \`AsyncBar2\` must match one of the following formats: snake_case",
       "messageId": "doesNotMatchFormat",
       "range": {
         "end": {
@@ -2094,7 +2094,7 @@ exports[`naming-convention > invalid 28`] = `
       "ruleName": "@typescript-eslint/naming-convention",
     },
     {
-      "message": "Class Property name \`AsyncBar3\` must match one of the following formats: camelCase",
+      "message": "Class Method name \`AsyncBar3\` must match one of the following formats: snake_case",
       "messageId": "doesNotMatchFormat",
       "range": {
         "end": {
@@ -2171,7 +2171,7 @@ exports[`naming-convention > invalid 29`] = `
       "ruleName": "@typescript-eslint/naming-convention",
     },
     {
-      "message": "Object Literal Property name \`AsyncBar2\` must match one of the following formats: camelCase",
+      "message": "Object Literal Method name \`AsyncBar2\` must match one of the following formats: snake_case",
       "messageId": "doesNotMatchFormat",
       "range": {
         "end": {
@@ -2186,7 +2186,7 @@ exports[`naming-convention > invalid 29`] = `
       "ruleName": "@typescript-eslint/naming-convention",
     },
     {
-      "message": "Object Literal Property name \`AsyncBar3\` must match one of the following formats: camelCase",
+      "message": "Object Literal Method name \`AsyncBar3\` must match one of the following formats: snake_case",
       "messageId": "doesNotMatchFormat",
       "range": {
         "end": {

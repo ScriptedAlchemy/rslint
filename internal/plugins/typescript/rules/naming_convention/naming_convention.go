@@ -330,12 +330,18 @@ func selectorMatches(selector string, candidateSelector string) bool {
 			candidateSelector == "classMethod" ||
 			candidateSelector == "objectLiteralMethod" ||
 			candidateSelector == "typeMethod" ||
-			candidateSelector == "accessor"
+			candidateSelector == "accessor" ||
+			candidateSelector == "autoAccessor" ||
+			candidateSelector == "classicAccessor"
 	case "property":
-		return candidateSelector == "property" || candidateSelector == "classProperty" || candidateSelector == "objectLiteralProperty" || candidateSelector == "typeProperty" || candidateSelector == "parameterProperty"
+		return candidateSelector == "property" || candidateSelector == "classProperty" || candidateSelector == "autoAccessor" || candidateSelector == "objectLiteralProperty" || candidateSelector == "typeProperty" || candidateSelector == "parameterProperty"
 	case "method":
 		return candidateSelector == "method" || candidateSelector == "classMethod" || candidateSelector == "objectLiteralMethod" || candidateSelector == "typeMethod"
-	case "classProperty", "objectLiteralProperty", "parameterProperty", "typeProperty", "classMethod", "objectLiteralMethod", "typeMethod", "accessor", "enumMember":
+	case "classProperty":
+		return candidateSelector == "classProperty" || candidateSelector == "autoAccessor"
+	case "accessor":
+		return candidateSelector == "accessor" || candidateSelector == "autoAccessor" || candidateSelector == "classicAccessor"
+	case "objectLiteralProperty", "parameterProperty", "typeProperty", "classMethod", "objectLiteralMethod", "typeMethod", "autoAccessor", "classicAccessor", "enumMember":
 		return candidateSelector == selector
 	}
 	return false
@@ -849,6 +855,26 @@ func collectIdentifierCounts(root *ast.Node, counts map[string]int) {
 	})
 }
 
+func isAutoAccessorProperty(node *ast.Node) bool {
+	if node == nil || node.Kind != ast.KindPropertyDeclaration {
+		return false
+	}
+	flags := ast.GetCombinedModifierFlags(node)
+	if flags&ast.ModifierFlagsAccessor != 0 {
+		return true
+	}
+	modifiers := node.Modifiers()
+	if modifiers == nil {
+		return false
+	}
+	for _, modifier := range modifiers.Nodes {
+		if modifier != nil && modifier.Kind == ast.KindAccessorKeyword {
+			return true
+		}
+	}
+	return false
+}
+
 func validateCandidate(ctx rule.RuleContext, opts []parsedNamingOption, candidate namingCandidate) {
 	if candidate.NameNode == nil {
 		return
@@ -1047,6 +1073,21 @@ var NamingConventionRule = rule.CreateRule(rule.Rule{
 					Modifiers: candidateModifiers,
 				})
 			},
+			ast.KindClassExpression: func(node *ast.Node) {
+				name, nameNode := declarationName(node)
+				if !hasCandidateName(name, nameNode) {
+					return
+				}
+				candidateModifiers := declarationModifiers(node)
+				candidateModifiers = withUnusedModifier(candidateModifiers, name, identifierCounts)
+				validateCandidate(ctx, opts, namingCandidate{
+					Name:      name,
+					NameNode:  nameNode,
+					Selector:  "class",
+					TypeName:  "Class",
+					Modifiers: candidateModifiers,
+				})
+			},
 			ast.KindInterfaceDeclaration: func(node *ast.Node) {
 				name, nameNode := declarationName(node)
 				if !hasCandidateName(name, nameNode) {
@@ -1206,13 +1247,30 @@ var NamingConventionRule = rule.CreateRule(rule.Rule{
 					return
 				}
 				propDecl := node.AsPropertyDeclaration()
+				modifiers := declarationModifiers(node)
+				if propDecl != nil && propDecl.Initializer != nil {
+					initializer := ast.SkipParentheses(propDecl.Initializer)
+					if initializer != nil && ast.GetCombinedModifierFlags(initializer)&ast.ModifierFlagsAsync != 0 {
+						modifiers = withModifier(modifiers, "async")
+					}
+				}
+				selector := "classProperty"
+				typeName := "Class Property"
+				typeCategory := inferTypeCategory(propDecl.Type)
+				if isAutoAccessorProperty(node) {
+					selector = "autoAccessor"
+					typeName = "Accessor"
+				} else if typeCategory == "function" || inferExpressionCategory(propDecl.Initializer) == "function" {
+					selector = "classMethod"
+					typeName = "Class Method"
+				}
 				validateCandidate(ctx, opts, namingCandidate{
 					Name:         name,
 					NameNode:     nameNode,
-					Selector:     "classProperty",
-					TypeName:     "Class Property",
-					Modifiers:    declarationModifiers(node),
-					TypeCategory: inferTypeCategory(propDecl.Type),
+					Selector:     selector,
+					TypeName:     typeName,
+					Modifiers:    modifiers,
+					TypeCategory: typeCategory,
 				})
 			},
 			ast.KindMethodDeclaration: func(node *ast.Node) {
@@ -1242,7 +1300,7 @@ var NamingConventionRule = rule.CreateRule(rule.Rule{
 				validateCandidate(ctx, opts, namingCandidate{
 					Name:      name,
 					NameNode:  nameNode,
-					Selector:  "accessor",
+					Selector:  "classicAccessor",
 					TypeName:  "Accessor",
 					Modifiers: declarationModifiers(node),
 				})
@@ -1255,7 +1313,7 @@ var NamingConventionRule = rule.CreateRule(rule.Rule{
 				validateCandidate(ctx, opts, namingCandidate{
 					Name:      name,
 					NameNode:  nameNode,
-					Selector:  "accessor",
+					Selector:  "classicAccessor",
 					TypeName:  "Accessor",
 					Modifiers: declarationModifiers(node),
 				})
@@ -1311,12 +1369,26 @@ var NamingConventionRule = rule.CreateRule(rule.Rule{
 				if !hasCandidateName(name, nameNode) {
 					return
 				}
+				selector := "objectLiteralProperty"
+				typeName := "Object Literal Property"
+				modifiers := []string{}
+				propertyAssignment := node.AsPropertyAssignment()
+				if propertyAssignment != nil {
+					if inferExpressionCategory(propertyAssignment.Initializer) == "function" {
+						selector = "objectLiteralMethod"
+						typeName = "Object Literal Method"
+					}
+					initializer := ast.SkipParentheses(propertyAssignment.Initializer)
+					if initializer != nil && ast.GetCombinedModifierFlags(initializer)&ast.ModifierFlagsAsync != 0 {
+						modifiers = withModifier(modifiers, "async")
+					}
+				}
 				validateCandidate(ctx, opts, namingCandidate{
 					Name:      name,
 					NameNode:  nameNode,
-					Selector:  "objectLiteralProperty",
-					TypeName:  "Object Literal Property",
-					Modifiers: []string{},
+					Selector:  selector,
+					TypeName:  typeName,
+					Modifiers: modifiers,
 				})
 			},
 			ast.KindShorthandPropertyAssignment: func(node *ast.Node) {
