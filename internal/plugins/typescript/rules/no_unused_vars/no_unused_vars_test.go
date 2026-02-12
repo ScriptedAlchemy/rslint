@@ -11,11 +11,11 @@ func TestNoUnusedVarsRule(t *testing.T) {
 	validTestCases := []rule_tester.ValidTestCase{
 		{Code: `const foo = 5; console.log(foo);`},
 		{Code: `function foo() {} foo();`},
-		{Code: `function foo(bar) { console.log(bar); }`},
+		{Code: `function foo(bar) { console.log(bar); } foo(1);`},
 		{Code: `try {} catch (e) { console.log(e); }`},
 		{Code: `const { foo, ...rest } = { foo: 1, bar: 2 }; console.log(rest);`, Options: map[string]interface{}{"ignoreRestSiblings": true}},
 		{Code: `const _foo = 1;`, Options: map[string]interface{}{"varsIgnorePattern": "^_"}},
-		{Code: `function foo(bar) {}`, Options: map[string]interface{}{"args": "none"}},
+		{Code: `function foo(bar) {} foo(1);`, Options: map[string]interface{}{"args": "none"}},
 		{Code: `try {} catch (e) {}`, Options: map[string]interface{}{"caughtErrors": "none"}},
 		{Code: `export const foo = 1;`},
 		{Code: `import type { Foo } from "./foo"; const bar: Foo = {};`},
@@ -31,8 +31,11 @@ func TestNoUnusedVarsRule(t *testing.T) {
 			Errors: []rule_tester.InvalidTestCaseError{{MessageId: "unusedVar", Line: 1, Column: 10}},
 		},
 		{
-			Code:   `function foo(bar) {}`,
-			Errors: []rule_tester.InvalidTestCaseError{{MessageId: "unusedVar", Line: 1, Column: 14}},
+			Code: `function foo(bar) {}`,
+			Errors: []rule_tester.InvalidTestCaseError{
+				{MessageId: "unusedVar", Line: 1, Column: 10},
+				{MessageId: "unusedVar", Line: 1, Column: 14},
+			},
 		},
 		{
 			Code:   `try {} catch (e) {}`,
