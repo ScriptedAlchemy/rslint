@@ -605,34 +605,6 @@ func checkNodeParameters(ctx rule.RuleContext, node *ast.Node, opts PreferReadon
 	}
 }
 
-func isTypeLikeFunctionNode(node *ast.Node) bool {
-	if node == nil {
-		return false
-	}
-	switch node.Kind {
-	case ast.KindFunctionType,
-		ast.KindCallSignature,
-		ast.KindConstructSignature,
-		ast.KindMethodSignature:
-		return true
-	default:
-		return false
-	}
-}
-
-func checkTypeLikeFunctionNodes(ctx rule.RuleContext, opts PreferReadonlyParameterTypesOptions, node *ast.Node) {
-	if node == nil {
-		return
-	}
-	if isTypeLikeFunctionNode(node) {
-		checkNodeParameters(ctx, node, opts)
-	}
-	node.ForEachChild(func(child *ast.Node) bool {
-		checkTypeLikeFunctionNodes(ctx, opts, child)
-		return false
-	})
-}
-
 var PreferReadonlyParameterTypesRule = rule.CreateRule(rule.Rule{
 	Name: "prefer-readonly-parameter-types",
 	Run: func(ctx rule.RuleContext, options any) rule.RuleListeners {

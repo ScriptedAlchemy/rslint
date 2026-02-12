@@ -17,6 +17,7 @@ async function main() {
       extensionDevelopmentPath,
       extensionTestsPath,
       launchArgs: ['--disable-extensions', testWorkspace],
+      timeout: 120000,
       version: 'stable',
     });
 
@@ -24,6 +25,7 @@ async function main() {
       extensionDevelopmentPath,
       extensionTestsPath,
       launchArgs: ['--disable-extensions', testWorkspace],
+      timeout: 120000,
       version: '1.106.3',
     });
   } catch (err) {

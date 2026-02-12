@@ -303,7 +303,7 @@ func typeParameterListsAreEqual(a []*ast.Node, b []*ast.Node) bool {
 	if len(a) != len(b) {
 		return false
 	}
-	for i := 0; i < len(a); i++ {
+	for i := range a {
 		if !typeParametersAreEqual(a[i], b[i]) {
 			return false
 		}
@@ -382,7 +382,7 @@ func indexOfFirstParameterDifference(sourceFile *ast.SourceFile, a []*ast.Node, 
 	if len(b) < limit {
 		limit = len(b)
 	}
-	for i := 0; i < limit; i++ {
+	for i := range limit {
 		if !parametersAreEqual(sourceFile, a[i], b[i]) {
 			return i, true
 		}
@@ -497,7 +497,7 @@ func hasCodeBetween(sourceText string, start int, end int) bool {
 			}
 			if next == '*' {
 				i += 2
-				for i+1 < end && !(sourceText[i] == '*' && sourceText[i+1] == '/') {
+				for i+1 < end && (sourceText[i] != '*' || sourceText[i+1] != '/') {
 					i++
 				}
 				if i+1 < end {
@@ -532,7 +532,7 @@ func signaturesCanBeUnified(
 		if len(bParams) < commonLength {
 			commonLength = len(bParams)
 		}
-		for i := 0; i < commonLength; i++ {
+		for i := range commonLength {
 			if staticParameterName(aParams[i]) != staticParameterName(bParams[i]) {
 				return false
 			}
@@ -635,7 +635,7 @@ func signaturesDifferByOptionalOrRestParameter(ctx rule.RuleContext, a *ast.Node
 		}
 	}
 
-	for i := 0; i < minLength; i++ {
+	for i := range minLength {
 		if !typesAreEqual(ctx.SourceFile, sig1[i].Type(), sig2[i].Type()) {
 			return nil
 		}
@@ -680,7 +680,7 @@ func checkOverloads(
 	scopeTypeParameters map[string]struct{},
 ) []failure {
 	failures := []failure{}
-	for i := 0; i < len(signatures); i++ {
+	for i := range signatures {
 		for j := i + 1; j < len(signatures); j++ {
 			unify := compareSignatures(ctx, options, signatures[i], signatures[j], scopeTypeParameters)
 			if unify == nil {

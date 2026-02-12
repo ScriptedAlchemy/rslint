@@ -369,20 +369,6 @@ func hasDecorators(node *ast.Node) bool {
 	return false
 }
 
-func trimNodeText(sourceFile *ast.SourceFile, node *ast.Node) string {
-	if sourceFile == nil || node == nil {
-		return ""
-	}
-	r := utils.TrimNodeTextRange(sourceFile, node)
-	start := r.Pos()
-	end := r.End()
-	text := sourceFile.Text()
-	if start < 0 || end > len(text) || start >= end {
-		return ""
-	}
-	return strings.TrimSpace(text[start:end])
-}
-
 func propertyNameKey(nameNode *ast.Node) string {
 	if nameNode == nil {
 		return ""
