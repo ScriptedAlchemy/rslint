@@ -436,7 +436,10 @@ func inferTypeCategory(typeNode *ast.Node) string {
 		if typeRef == nil || typeRef.TypeName == nil {
 			return ""
 		}
-		typeName := typeRef.TypeName.Text()
+		typeName := ""
+		if typeRef.TypeName.Kind == ast.KindIdentifier {
+			typeName = typeRef.TypeName.AsIdentifier().Text
+		}
 		if typeName == "Array" || typeName == "ReadonlyArray" {
 			return "array"
 		}
