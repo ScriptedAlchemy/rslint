@@ -31,15 +31,15 @@ exports[`naming-convention > invalid 1`] = `
   "code": "class userName {};",
   "diagnostics": [
     {
-      "message": "Identifier 'userName' does not match the expected PascalCase format.",
+      "message": "Class name \`userName\` must match one of the following formats: PascalCase",
       "messageId": "doesNotMatchFormat",
       "range": {
         "end": {
-          "column": 18,
+          "column": 15,
           "line": 1,
         },
         "start": {
-          "column": 1,
+          "column": 7,
           "line": 1,
         },
       },
