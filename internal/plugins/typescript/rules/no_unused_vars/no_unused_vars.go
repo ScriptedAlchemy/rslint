@@ -347,7 +347,7 @@ func isIdentifierUsageCandidate(node *ast.Node) bool {
 	return true
 }
 
-func shouldIgnoreVariable(varName string, varInfo *VariableInfo, opts Config, allUsages map[string][]*ast.Node, allWrites map[string][]*ast.Node, exportedNames map[string]bool, forcedUsedNames map[string]bool) bool {
+func shouldIgnoreVariable(varName string, varInfo *VariableInfo, opts Config, allUsages map[string][]*ast.Node, allWrites map[string][]*ast.Node, allValueDeclarations map[string][]*ast.Node, exportedNames map[string]bool, forcedUsedNames map[string]bool) bool {
 	if isCaughtError(varInfo.Definition) {
 		if forcedUsedNames[varName] {
 			return true
@@ -390,7 +390,7 @@ func shouldIgnoreVariable(varName string, varInfo *VariableInfo, opts Config, al
 
 	// Check if it's a function parameter and should be ignored
 	if parameterNode := parameterNodeForDefinition(varInfo.Definition); parameterNode != nil {
-		return shouldIgnoreParameter(varName, varInfo, parameterNode, opts, allUsages, forcedUsedNames)
+		return shouldIgnoreParameter(varName, varInfo, parameterNode, opts, allUsages, allValueDeclarations, forcedUsedNames)
 	}
 
 	if exportedNames[varName] && isProgramLevelDefinition(varInfo.Definition) {
@@ -719,7 +719,51 @@ func parameterIndexInParent(param *ast.Node) (int, []*ast.Node) {
 	return -1, params
 }
 
-func isParameterUsed(param *ast.Node, allUsages map[string][]*ast.Node, forcedUsedNames map[string]bool) bool {
+type parameterBindingInfo struct {
+	name       string
+	definition *ast.Node
+	nameNode   *ast.Node
+}
+
+func appendParameterBindingInfos(node *ast.Node, parameter *ast.Node, out *[]parameterBindingInfo) {
+	if node == nil || out == nil {
+		return
+	}
+	switch node.Kind {
+	case ast.KindIdentifier:
+		identifier := node.AsIdentifier()
+		if identifier == nil || identifier.Text == "" {
+			return
+		}
+		definition := parameter
+		if node.Parent != nil && node.Parent.Kind == ast.KindBindingElement {
+			definition = node.Parent
+		}
+		*out = append(*out, parameterBindingInfo{
+			name:       identifier.Text,
+			definition: definition,
+			nameNode:   node,
+		})
+	case ast.KindBindingElement:
+		bindingElement := node.AsBindingElement()
+		if bindingElement != nil && bindingElement.Name() != nil {
+			appendParameterBindingInfos(bindingElement.Name(), parameter, out)
+		}
+	case ast.KindArrayBindingPattern, ast.KindObjectBindingPattern:
+		bindingPattern := node.AsBindingPattern()
+		if bindingPattern == nil || bindingPattern.Elements == nil {
+			return
+		}
+		for _, element := range bindingPattern.Elements.Nodes {
+			if element == nil {
+				continue
+			}
+			appendParameterBindingInfos(element, parameter, out)
+		}
+	}
+}
+
+func isParameterUsed(param *ast.Node, allUsages map[string][]*ast.Node, allValueDeclarations map[string][]*ast.Node, forcedUsedNames map[string]bool) bool {
 	if param == nil {
 		return false
 	}
@@ -727,26 +771,49 @@ func isParameterUsed(param *ast.Node, allUsages map[string][]*ast.Node, forcedUs
 		return true
 	}
 	decl := param.AsParameterDeclaration()
-	if decl == nil || decl.Name() == nil || decl.Name().Kind != ast.KindIdentifier {
-		return true
+	if decl == nil || decl.Name() == nil {
+		return false
 	}
-	name := decl.Name().AsIdentifier().Text
-	if forcedUsedNames[name] {
-		return true
+
+	bindingInfos := make([]parameterBindingInfo, 0, 4)
+	appendParameterBindingInfos(decl.Name(), param, &bindingInfos)
+	if len(bindingInfos) == 0 {
+		return false
 	}
-	for _, usage := range allUsages[name] {
-		if usage == nil || usage.Pos() == decl.Name().Pos() {
+
+	for _, bindingInfo := range bindingInfos {
+		if bindingInfo.name == "" {
 			continue
 		}
-		if isPartOfAssignment(usage) || isInTypeContext(usage) {
-			continue
+		if forcedUsedNames[bindingInfo.name] {
+			return true
 		}
-		return true
+		for _, usage := range allUsages[bindingInfo.name] {
+			if usage == nil {
+				continue
+			}
+			if bindingInfo.nameNode != nil && usage.Pos() == bindingInfo.nameNode.Pos() {
+				continue
+			}
+			if isPartOfDeclaration(usage) {
+				continue
+			}
+			if !isDescendantOf(usage, param.Parent) {
+				continue
+			}
+			if isPartOfAssignment(usage) || isInTypeContext(usage) {
+				continue
+			}
+			if isUsageShadowedByValueDeclaration(usage, bindingInfo.definition, bindingInfo.name, allValueDeclarations) {
+				continue
+			}
+			return true
+		}
 	}
 	return false
 }
 
-func shouldIgnoreParameter(varName string, varInfo *VariableInfo, param *ast.Node, opts Config, allUsages map[string][]*ast.Node, forcedUsedNames map[string]bool) bool {
+func shouldIgnoreParameter(varName string, varInfo *VariableInfo, param *ast.Node, opts Config, allUsages map[string][]*ast.Node, allValueDeclarations map[string][]*ast.Node, forcedUsedNames map[string]bool) bool {
 	if varInfo == nil || param == nil {
 		return false
 	}
@@ -779,7 +846,7 @@ func shouldIgnoreParameter(varName string, varInfo *VariableInfo, param *ast.Nod
 		if index >= 0 {
 			lastUsedIndex := -1
 			for idx, sibling := range params {
-				if isParameterUsed(sibling, allUsages, forcedUsedNames) {
+				if isParameterUsed(sibling, allUsages, allValueDeclarations, forcedUsedNames) {
 					lastUsedIndex = idx
 				}
 			}
@@ -2611,7 +2678,7 @@ func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, defi
 	}
 
 	// Check if we should report this variable
-	if shouldIgnoreVariable(name, varInfo, opts, allUsages, allWrites, exportedNames, forcedUsedNames) {
+	if shouldIgnoreVariable(name, varInfo, opts, allUsages, allWrites, allValueDeclarations, exportedNames, forcedUsedNames) {
 		return
 	}
 	if ctx.SourceFile != nil && ctx.SourceFile.IsDeclarationFile && !ast.IsExternalModule(ctx.SourceFile) {
