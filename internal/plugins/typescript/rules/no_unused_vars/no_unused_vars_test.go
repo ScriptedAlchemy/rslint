@@ -48,7 +48,10 @@ func TestNoUnusedVarsRule(t *testing.T) {
 		{
 			Code:    `const foo = 1; type Bar = typeof foo;`,
 			Options: map[string]interface{}{"vars": "all"},
-			Errors:  []rule_tester.InvalidTestCaseError{{MessageId: "usedOnlyAsType", Line: 1, Column: 7}},
+			Errors: []rule_tester.InvalidTestCaseError{
+				{MessageId: "usedOnlyAsType", Line: 1, Column: 7},
+				{MessageId: "unusedVar", Line: 1, Column: 21},
+			},
 		},
 		{
 			Code:    `const foo = 1;`,

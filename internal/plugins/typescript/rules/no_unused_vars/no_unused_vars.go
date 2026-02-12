@@ -188,6 +188,9 @@ func isPartOfDeclaration(node *ast.Node) bool {
 	case ast.KindImportEqualsDeclaration:
 		importEquals := parent.AsImportEqualsDeclaration()
 		return importEquals != nil && importEquals.Name() == node
+	case ast.KindModuleDeclaration:
+		moduleDeclaration := parent.AsModuleDeclaration()
+		return moduleDeclaration != nil && moduleDeclaration.Name() == node
 	}
 
 	return false
@@ -211,6 +214,29 @@ func isPartOfAssignment(node *ast.Node) bool {
 	}
 
 	return false
+}
+
+func isIdentifierUsageCandidate(node *ast.Node) bool {
+	if node == nil || node.Parent == nil {
+		return false
+	}
+
+	switch node.Parent.Kind {
+	case ast.KindPropertyAccessExpression:
+		propertyAccess := node.Parent.AsPropertyAccessExpression()
+		return propertyAccess != nil && propertyAccess.Expression == node
+	case ast.KindPropertyAssignment:
+		propertyAssignment := node.Parent.AsPropertyAssignment()
+		return propertyAssignment != nil && propertyAssignment.Initializer == node
+	case ast.KindMethodDeclaration,
+		ast.KindMethodSignature,
+		ast.KindPropertyDeclaration,
+		ast.KindPropertySignature,
+		ast.KindEnumMember:
+		return false
+	}
+
+	return true
 }
 
 func shouldIgnoreVariable(varName string, varInfo *VariableInfo, opts Config, allUsages map[string][]*ast.Node) bool {
@@ -286,6 +312,26 @@ func isAmbientParameter(param *ast.Node) bool {
 		}
 	}
 
+	return false
+}
+
+func isAmbientDefinition(definition *ast.Node) bool {
+	if definition == nil {
+		return false
+	}
+	for current := definition; current != nil; current = current.Parent {
+		if utils.IncludesModifier(current, ast.KindDeclareKeyword) {
+			return true
+		}
+	}
+	switch definition.Kind {
+	case ast.KindFunctionDeclaration:
+		functionDeclaration := definition.AsFunctionDeclaration()
+		return functionDeclaration != nil && functionDeclaration.Body == nil
+	case ast.KindMethodDeclaration:
+		methodDeclaration := definition.AsMethodDeclaration()
+		return methodDeclaration != nil && methodDeclaration.Body == nil
+	}
 	return false
 }
 
@@ -490,13 +536,97 @@ func isImportDefinition(definition *ast.Node) bool {
 	}
 }
 
+func isTypeOnlyDefinition(definition *ast.Node) bool {
+	if definition == nil {
+		return false
+	}
+	switch definition.Kind {
+	case ast.KindInterfaceDeclaration, ast.KindTypeAliasDeclaration, ast.KindTypeParameter, ast.KindEnumDeclaration:
+		return true
+	default:
+		return false
+	}
+}
+
+func safeTypeParameters(node *ast.Node) (params []*ast.Node) {
+	if node == nil {
+		return nil
+	}
+	defer func() {
+		if recover() != nil {
+			params = nil
+		}
+	}()
+	return node.TypeParameters()
+}
+
+func nodeDeclaresTypeParameters(node *ast.Node) bool {
+	if node == nil {
+		return false
+	}
+	switch node.Kind {
+	case ast.KindFunctionDeclaration,
+		ast.KindFunctionExpression,
+		ast.KindArrowFunction,
+		ast.KindMethodDeclaration,
+		ast.KindMethodSignature,
+		ast.KindCallSignature,
+		ast.KindConstructSignature,
+		ast.KindFunctionType,
+		ast.KindConstructorType,
+		ast.KindClassDeclaration,
+		ast.KindClassExpression,
+		ast.KindInterfaceDeclaration,
+		ast.KindTypeAliasDeclaration:
+		return true
+	default:
+		return false
+	}
+}
+
+func isUsageShadowedByTypeParameter(usage *ast.Node, name string) bool {
+	if usage == nil || name == "" {
+		return false
+	}
+	for current := usage.Parent; current != nil; current = current.Parent {
+		if !nodeDeclaresTypeParameters(current) {
+			continue
+		}
+		for _, typeParameter := range safeTypeParameters(current) {
+			if typeParameter == nil {
+				continue
+			}
+			decl := typeParameter.AsTypeParameter()
+			if decl == nil || decl.Name() == nil {
+				continue
+			}
+			if decl.Name().Text() == name {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func isDescendantOf(node *ast.Node, ancestor *ast.Node) bool {
+	if node == nil || ancestor == nil {
+		return false
+	}
+	for current := node.Parent; current != nil; current = current.Parent {
+		if current == ancestor {
+			return true
+		}
+	}
+	return false
+}
+
 func collectVariableUsages(node *ast.Node, usages map[string][]*ast.Node) {
 	if node == nil {
 		return
 	}
 
 	// Visit current node
-	if ast.IsIdentifier(node) && !isPartOfDeclaration(node) && !isPartOfAssignment(node) {
+	if ast.IsIdentifier(node) && !isPartOfDeclaration(node) && !isPartOfAssignment(node) && isIdentifierUsageCandidate(node) {
 		identifier := node.AsIdentifier()
 		if identifier == nil {
 			return
@@ -548,19 +678,11 @@ func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, defi
 			if varInfo.Variable != nil && usage.Pos() == varInfo.Variable.Pos() {
 				continue
 			}
-			if definition != nil && (definition.Kind == ast.KindFunctionDeclaration || definition.Kind == ast.KindFunctionExpression || definition.Kind == ast.KindClassDeclaration || definition.Kind == ast.KindClassExpression) {
-				for scope := usage.Parent; scope != nil; scope = scope.Parent {
-					switch scope.Kind {
-					case ast.KindFunctionDeclaration, ast.KindFunctionExpression, ast.KindClassDeclaration, ast.KindClassExpression:
-						if scope == definition {
-							usage = nil
-						}
-						scope = nil
-					}
-				}
-				if usage == nil {
-					continue
-				}
+			if definition != nil && definition.Kind == ast.KindModuleDeclaration && isDescendantOf(usage, definition) {
+				continue
+			}
+			if isImportDefinition(definition) && isUsageShadowedByTypeParameter(usage, name) {
+				continue
 			}
 			filteredUsages = append(filteredUsages, usage)
 		}
@@ -589,6 +711,9 @@ func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, defi
 	if shouldIgnoreVariable(name, varInfo, opts, allUsages) {
 		return
 	}
+	if isAmbientDefinition(definition) {
+		return
+	}
 
 	// Skip exported variables
 	if isExported(varInfo) {
@@ -597,6 +722,9 @@ func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, defi
 
 	// Report unused variables
 	if varInfo.OnlyUsedAsType && opts.Vars == "all" {
+		if isTypeOnlyDefinition(definition) {
+			return
+		}
 		if isImportDefinition(definition) {
 			return
 		}
@@ -774,6 +902,87 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 				}
 				nameNode := namespaceImport.Name().AsNode()
 				name := namespaceImport.Name().Text()
+				if !collected {
+					sourceFile := getRootSourceFile(node)
+					collectVariableUsages(sourceFile, allUsages)
+					collected = true
+				}
+				processVariable(ctx, nameNode, name, node, opts, allUsages)
+			},
+
+			ast.KindEnumDeclaration: func(node *ast.Node) {
+				enumDeclaration := node.AsEnumDeclaration()
+				if enumDeclaration == nil || enumDeclaration.Name() == nil || enumDeclaration.Name().Kind != ast.KindIdentifier {
+					return
+				}
+				nameNode := enumDeclaration.Name()
+				name := enumDeclaration.Name().AsIdentifier().Text
+				if !collected {
+					sourceFile := getRootSourceFile(node)
+					collectVariableUsages(sourceFile, allUsages)
+					collected = true
+				}
+				processVariable(ctx, nameNode, name, node, opts, allUsages)
+			},
+
+			ast.KindClassDeclaration: func(node *ast.Node) {
+				classDeclaration := node.AsClassDeclaration()
+				if classDeclaration == nil || classDeclaration.Name() == nil || classDeclaration.Name().Kind != ast.KindIdentifier {
+					return
+				}
+				nameNode := classDeclaration.Name()
+				name := classDeclaration.Name().AsIdentifier().Text
+				if !collected {
+					sourceFile := getRootSourceFile(node)
+					collectVariableUsages(sourceFile, allUsages)
+					collected = true
+				}
+				processVariable(ctx, nameNode, name, node, opts, allUsages)
+			},
+
+			ast.KindInterfaceDeclaration: func(node *ast.Node) {
+				interfaceDeclaration := node.AsInterfaceDeclaration()
+				if interfaceDeclaration == nil || interfaceDeclaration.Name() == nil || interfaceDeclaration.Name().Kind != ast.KindIdentifier {
+					return
+				}
+				nameNode := interfaceDeclaration.Name().AsNode()
+				name := interfaceDeclaration.Name().Text()
+				if !collected {
+					sourceFile := getRootSourceFile(node)
+					collectVariableUsages(sourceFile, allUsages)
+					collected = true
+				}
+				processVariable(ctx, nameNode, name, node, opts, allUsages)
+			},
+
+			ast.KindTypeAliasDeclaration: func(node *ast.Node) {
+				typeAliasDeclaration := node.AsTypeAliasDeclaration()
+				if typeAliasDeclaration == nil || typeAliasDeclaration.Name() == nil || typeAliasDeclaration.Name().Kind != ast.KindIdentifier {
+					return
+				}
+				nameNode := typeAliasDeclaration.Name().AsNode()
+				name := typeAliasDeclaration.Name().Text()
+				if !collected {
+					sourceFile := getRootSourceFile(node)
+					collectVariableUsages(sourceFile, allUsages)
+					collected = true
+				}
+				processVariable(ctx, nameNode, name, node, opts, allUsages)
+			},
+
+			ast.KindModuleDeclaration: func(node *ast.Node) {
+				moduleDeclaration := node.AsModuleDeclaration()
+				if moduleDeclaration == nil || moduleDeclaration.Name() == nil || moduleDeclaration.Name().Kind != ast.KindIdentifier {
+					return
+				}
+				if node.Parent != nil && node.Parent.Kind == ast.KindModuleDeclaration {
+					return
+				}
+				if moduleDeclaration.Body != nil && moduleDeclaration.Body.Kind == ast.KindModuleDeclaration {
+					return
+				}
+				nameNode := moduleDeclaration.Name()
+				name := moduleDeclaration.Name().AsIdentifier().Text
 				if !collected {
 					sourceFile := getRootSourceFile(node)
 					collectVariableUsages(sourceFile, allUsages)
