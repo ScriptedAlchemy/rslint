@@ -214,23 +214,71 @@ func isPartOfDeclaration(node *ast.Node) bool {
 }
 
 func isPartOfAssignment(node *ast.Node) bool {
-	if node == nil || node.Parent == nil {
+	return assignmentTargetExpressionForNode(node) != nil
+}
+
+func isSameOrDescendantOf(node *ast.Node, ancestor *ast.Node) bool {
+	return node == ancestor || isDescendantOf(node, ancestor)
+}
+
+func assignmentTargetExpressionForNode(node *ast.Node) *ast.BinaryExpression {
+	if node == nil {
+		return nil
+	}
+	for current := node.Parent; current != nil; current = current.Parent {
+		if current.Kind != ast.KindBinaryExpression {
+			continue
+		}
+		binaryExpression := current.AsBinaryExpression()
+		if binaryExpression == nil || !isAssignmentOperator(binaryExpression.OperatorToken.Kind) || binaryExpression.Left == nil {
+			continue
+		}
+		if isAssignmentTargetWithinLeft(node, binaryExpression.Left) {
+			return binaryExpression
+		}
+	}
+	return nil
+}
+
+func isAssignmentTargetWithinLeft(node *ast.Node, left *ast.Node) bool {
+	if node == nil || left == nil {
 		return false
 	}
+	if node == left {
+		return true
+	}
 
-	parent := node.Parent
-	if parent.Kind == ast.KindBinaryExpression {
-		binaryExpr := parent.AsBinaryExpression()
-		if binaryExpr == nil {
+	for current := node; current != nil && current != left; current = current.Parent {
+		parent := current.Parent
+		if parent == nil {
 			return false
 		}
-		// Assignment targets are not usages by default.
-		if isAssignmentOperator(binaryExpr.OperatorToken.Kind) && binaryExpr.Left == node {
-			return true
+		switch parent.Kind {
+		case ast.KindArrayLiteralExpression,
+			ast.KindObjectLiteralExpression,
+			ast.KindSpreadElement,
+			ast.KindParenthesizedExpression,
+			ast.KindAsExpression,
+			ast.KindTypeAssertionExpression,
+			ast.KindSatisfiesExpression,
+			ast.KindNonNullExpression:
+			continue
+		case ast.KindPropertyAssignment:
+			propertyAssignment := parent.AsPropertyAssignment()
+			if propertyAssignment == nil || propertyAssignment.Initializer != current {
+				return false
+			}
+		case ast.KindShorthandPropertyAssignment:
+			shorthandPropertyAssignment := parent.AsShorthandPropertyAssignment()
+			if shorthandPropertyAssignment == nil || shorthandPropertyAssignment.Name() != current {
+				return false
+			}
+		default:
+			return false
 		}
 	}
 
-	return false
+	return isDescendantOf(node, left)
 }
 
 func isIdentifierUsageCandidate(node *ast.Node) bool {
@@ -1155,14 +1203,7 @@ func collectVariableWrites(node *ast.Node, writes map[string][]*ast.Node) {
 }
 
 func isAssignmentTarget(node *ast.Node) bool {
-	if node == nil || node.Parent == nil || node.Parent.Kind != ast.KindBinaryExpression {
-		return false
-	}
-	binaryExpression := node.Parent.AsBinaryExpression()
-	if binaryExpression == nil {
-		return false
-	}
-	return isAssignmentOperator(binaryExpression.OperatorToken.Kind) && binaryExpression.Left == node
+	return assignmentTargetExpressionForNode(node) != nil
 }
 
 func collectValueDeclarations(node *ast.Node, declarations map[string][]*ast.Node) {
