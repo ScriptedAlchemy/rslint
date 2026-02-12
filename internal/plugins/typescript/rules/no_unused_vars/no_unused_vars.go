@@ -12,14 +12,15 @@ import (
 )
 
 type Config struct {
-	Vars                      string `json:"vars"`
-	VarsIgnorePattern         string `json:"varsIgnorePattern"`
-	Args                      string `json:"args"`
-	ArgsIgnorePattern         string `json:"argsIgnorePattern"`
-	CaughtErrors              string `json:"caughtErrors"`
-	CaughtErrorsIgnorePattern string `json:"caughtErrorsIgnorePattern"`
-	IgnoreRestSiblings        bool   `json:"ignoreRestSiblings"`
-	ReportUsedIgnorePattern   bool   `json:"reportUsedIgnorePattern"`
+	Vars                           string `json:"vars"`
+	VarsIgnorePattern              string `json:"varsIgnorePattern"`
+	DestructuredArrayIgnorePattern string `json:"destructuredArrayIgnorePattern"`
+	Args                           string `json:"args"`
+	ArgsIgnorePattern              string `json:"argsIgnorePattern"`
+	CaughtErrors                   string `json:"caughtErrors"`
+	CaughtErrorsIgnorePattern      string `json:"caughtErrorsIgnorePattern"`
+	IgnoreRestSiblings             bool   `json:"ignoreRestSiblings"`
+	ReportUsedIgnorePattern        bool   `json:"reportUsedIgnorePattern"`
 }
 
 type VariableInfo struct {
@@ -36,14 +37,15 @@ var useEveryACommentRe = regexp.MustCompile(`@rule-tester/use-every-a`)
 
 func parseOptions(options interface{}) Config {
 	config := Config{
-		Vars:                      "all",
-		VarsIgnorePattern:         "",
-		Args:                      "after-used",
-		ArgsIgnorePattern:         "",
-		CaughtErrors:              "all",
-		CaughtErrorsIgnorePattern: "",
-		IgnoreRestSiblings:        false,
-		ReportUsedIgnorePattern:   false,
+		Vars:                           "all",
+		VarsIgnorePattern:              "",
+		DestructuredArrayIgnorePattern: "",
+		Args:                           "after-used",
+		ArgsIgnorePattern:              "",
+		CaughtErrors:                   "all",
+		CaughtErrorsIgnorePattern:      "",
+		IgnoreRestSiblings:             false,
+		ReportUsedIgnorePattern:        false,
 	}
 
 	if options == nil {
@@ -56,6 +58,9 @@ func parseOptions(options interface{}) Config {
 		}
 		if val, ok := optsMap["varsIgnorePattern"].(string); ok {
 			config.VarsIgnorePattern = val
+		}
+		if val, ok := optsMap["destructuredArrayIgnorePattern"].(string); ok {
+			config.DestructuredArrayIgnorePattern = val
 		}
 		if val, ok := optsMap["args"].(string); ok {
 			config.Args = val
@@ -138,6 +143,12 @@ func isPartOfDeclaration(node *ast.Node) bool {
 			return false
 		}
 		return varDecl.Name() == node
+	case ast.KindBindingElement:
+		bindingElement := parent.AsBindingElement()
+		if bindingElement == nil {
+			return false
+		}
+		return bindingElement.Name() == node
 	case ast.KindFunctionDeclaration:
 		funcDecl := parent.AsFunctionDeclaration()
 		if funcDecl == nil {
@@ -254,14 +265,24 @@ func shouldIgnoreVariable(varName string, varInfo *VariableInfo, opts Config, al
 			}
 		}
 	}
+	if opts.DestructuredArrayIgnorePattern != "" && isArrayBindingElementDefinition(varInfo.Definition) {
+		if matched, _ := regexp.MatchString(opts.DestructuredArrayIgnorePattern, varName); matched {
+			if !varInfo.Used || !opts.ReportUsedIgnorePattern {
+				return true
+			}
+		}
+	}
 
 	if forcedUsedNames[varName] {
 		return true
 	}
+	if isIgnoredByRestSibling(varInfo.Definition, opts) {
+		return true
+	}
 
 	// Check if it's a function parameter and should be ignored
-	if isParameter(varInfo.Definition) {
-		return shouldIgnoreParameter(varName, varInfo, opts, allUsages)
+	if parameterNode := parameterNodeForDefinition(varInfo.Definition); parameterNode != nil {
+		return shouldIgnoreParameter(varName, varInfo, parameterNode, opts, allUsages)
 	}
 
 	// Check if it's a caught error and should be ignored
@@ -275,6 +296,38 @@ func shouldIgnoreVariable(varName string, varInfo *VariableInfo, opts Config, al
 		return true
 	}
 
+	return false
+}
+
+func isArrayBindingElementDefinition(definition *ast.Node) bool {
+	return definition != nil && definition.Kind == ast.KindBindingElement && definition.Parent != nil && definition.Parent.Kind == ast.KindArrayBindingPattern
+}
+
+func isIgnoredByRestSibling(definition *ast.Node, opts Config) bool {
+	if !opts.IgnoreRestSiblings || definition == nil || definition.Kind != ast.KindBindingElement || definition.Parent == nil || definition.Parent.Kind != ast.KindObjectBindingPattern {
+		return false
+	}
+	pattern := definition.Parent.AsBindingPattern()
+	if pattern == nil || pattern.Elements == nil {
+		return false
+	}
+	seenCurrent := false
+	for _, elementNode := range pattern.Elements.Nodes {
+		if elementNode == nil || elementNode.Kind != ast.KindBindingElement {
+			continue
+		}
+		if elementNode == definition {
+			seenCurrent = true
+			continue
+		}
+		if !seenCurrent {
+			continue
+		}
+		element := elementNode.AsBindingElement()
+		if element != nil && element.DotDotDotToken != nil {
+			return true
+		}
+	}
 	return false
 }
 
@@ -304,10 +357,28 @@ func isProgramLevelDefinition(node *ast.Node) bool {
 }
 
 func isParameter(node *ast.Node) bool {
+	return parameterNodeForDefinition(node) != nil
+}
+
+func parameterNodeForDefinition(node *ast.Node) *ast.Node {
 	if node == nil {
-		return false
+		return nil
 	}
-	return node.Kind == ast.KindParameter
+	if node.Kind == ast.KindParameter {
+		return node
+	}
+	if node.Kind != ast.KindBindingElement {
+		return nil
+	}
+	for current := node.Parent; current != nil; current = current.Parent {
+		switch current.Kind {
+		case ast.KindParameter:
+			return current
+		case ast.KindVariableDeclaration:
+			return nil
+		}
+	}
+	return nil
 }
 
 func isCaughtError(node *ast.Node) bool {
@@ -448,14 +519,13 @@ func isParameterUsed(param *ast.Node, allUsages map[string][]*ast.Node) bool {
 	return false
 }
 
-func shouldIgnoreParameter(varName string, varInfo *VariableInfo, opts Config, allUsages map[string][]*ast.Node) bool {
-	if varInfo == nil || varInfo.Definition == nil {
+func shouldIgnoreParameter(varName string, varInfo *VariableInfo, param *ast.Node, opts Config, allUsages map[string][]*ast.Node) bool {
+	if varInfo == nil || param == nil {
 		return false
 	}
 	if varName == "this" {
 		return true
 	}
-	param := varInfo.Definition
 
 	if isAmbientParameter(param) {
 		return true
@@ -999,16 +1069,62 @@ func isUsedAssignmentTarget(node *ast.Node) bool {
 	if binaryExpression == nil || !isAssignmentOperator(binaryExpression.OperatorToken.Kind) || binaryExpression.Left != node {
 		return false
 	}
-	if binaryExpression.OperatorToken.Kind == ast.KindEqualsToken {
-		return false
-	}
+	consumed := false
 	for current := assignmentExpression.Parent; current != nil; current = current.Parent {
 		if current.Kind == ast.KindParenthesizedExpression {
 			continue
 		}
-		return current.Kind != ast.KindExpressionStatement
+		consumed = current.Kind != ast.KindExpressionStatement
+		break
 	}
-	return false
+	if !consumed {
+		return false
+	}
+
+	if binaryExpression.OperatorToken.Kind != ast.KindEqualsToken {
+		return true
+	}
+	if binaryExpression.Left == nil || binaryExpression.Left.Kind != ast.KindIdentifier {
+		return false
+	}
+	name := binaryExpression.Left.AsIdentifier().Text
+	if name == "" || binaryExpression.Right == nil {
+		return false
+	}
+	return assignmentExpressionHasSelfRead(binaryExpression.Right, name)
+}
+
+func assignmentExpressionHasSelfRead(node *ast.Node, name string) bool {
+	if node == nil || name == "" {
+		return false
+	}
+	found := false
+	var visit func(current *ast.Node)
+	visit = func(current *ast.Node) {
+		if current == nil || found {
+			return
+		}
+		switch current.Kind {
+		case ast.KindFunctionDeclaration,
+			ast.KindFunctionExpression,
+			ast.KindArrowFunction,
+			ast.KindMethodDeclaration,
+			ast.KindConstructor,
+			ast.KindGetAccessor,
+			ast.KindSetAccessor:
+			return
+		}
+		if current.Kind == ast.KindIdentifier && current.AsIdentifier().Text == name && !isPartOfDeclaration(current) {
+			found = true
+			return
+		}
+		current.ForEachChild(func(child *ast.Node) bool {
+			visit(child)
+			return found
+		})
+	}
+	visit(node)
+	return found
 }
 
 func collectVariableWrites(node *ast.Node, writes map[string][]*ast.Node) {
@@ -1067,6 +1183,11 @@ func collectValueDeclarations(node *ast.Node, declarations map[string][]*ast.Nod
 		varDecl := node.AsVariableDeclaration()
 		if varDecl != nil {
 			addNamed(varDecl.Name())
+		}
+	case ast.KindBindingElement:
+		bindingElement := node.AsBindingElement()
+		if bindingElement != nil {
+			addNamed(bindingElement.Name())
 		}
 	case ast.KindFunctionDeclaration:
 		funcDecl := node.AsFunctionDeclaration()
@@ -1849,16 +1970,16 @@ func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, defi
 					continue
 				}
 			}
-			if definition != nil && definition.Kind == ast.KindParameter {
-				if definition.Parent == nil || !isDescendantOf(usage, definition.Parent) {
+			if parameterNode := parameterNodeForDefinition(definition); parameterNode != nil {
+				if parameterNode.Parent == nil || !isDescendantOf(usage, parameterNode.Parent) {
 					continue
 				}
-				bodyNode := functionLikeBodyNode(definition.Parent)
+				bodyNode := functionLikeBodyNode(parameterNode.Parent)
 				if bodyNode != nil {
 					if usage != bodyNode && !isDescendantOf(usage, bodyNode) {
 						continue
 					}
-				} else if usage.Pos() <= definition.End() {
+				} else if usage.Pos() <= parameterNode.End() {
 					continue
 				}
 			}
@@ -2198,6 +2319,40 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 
 					processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, forcedUsedNames, sourceHasJSX)
 				}
+			},
+
+			// Handle destructured binding elements
+			ast.KindBindingElement: func(node *ast.Node) {
+				bindingElement := node.AsBindingElement()
+				if bindingElement == nil || bindingElement.Name() == nil || !ast.IsIdentifier(bindingElement.Name()) {
+					return
+				}
+				nameNode := bindingElement.Name()
+				identifier := nameNode.AsIdentifier()
+				if identifier == nil {
+					return
+				}
+				name := identifier.Text
+
+				if !collected {
+					sourceFile := getRootSourceFile(node)
+					collectVariableUsages(sourceFile, allUsages)
+					collectVariableWrites(sourceFile, allWrites)
+					collectValueDeclarations(sourceFile, allValueDeclarations)
+					collectTypeDeclarations(sourceFile, allTypeDeclarations)
+					sourceHasJSX = sourceFileHasJSX(sourceFile)
+					if ctx.SourceFile != nil {
+						sourceText := ctx.SourceFile.Text()
+						exportedNames = parseExportedCommentNames(sourceText)
+						globalCommentNames = parseGlobalCommentNames(sourceText)
+						if hasUseEveryAComment(sourceText) {
+							forcedUsedNames["a"] = true
+						}
+					}
+					collected = true
+				}
+
+				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, forcedUsedNames, sourceHasJSX)
 			},
 
 			// Handle catch clauses
