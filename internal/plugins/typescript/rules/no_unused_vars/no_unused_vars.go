@@ -29,6 +29,8 @@ type VariableInfo struct {
 	Definition     *ast.Node
 }
 
+var exportedCommentRe = regexp.MustCompile(`(?i)^\s*exported\s+(.+)$`)
+
 func parseOptions(options interface{}) Config {
 	config := Config{
 		Vars:                      "all",
@@ -208,7 +210,7 @@ func isPartOfAssignment(node *ast.Node) bool {
 		if binaryExpr == nil {
 			return false
 		}
-		// Check if this is the left side of an assignment - assignments should not count as usage
+		// Assignment targets are not usages by default.
 		if isAssignmentOperator(binaryExpr.OperatorToken.Kind) && binaryExpr.Left == node {
 			return true
 		}
@@ -240,7 +242,7 @@ func isIdentifierUsageCandidate(node *ast.Node) bool {
 	return true
 }
 
-func shouldIgnoreVariable(varName string, varInfo *VariableInfo, opts Config, allUsages map[string][]*ast.Node) bool {
+func shouldIgnoreVariable(varName string, varInfo *VariableInfo, opts Config, allUsages map[string][]*ast.Node, exportedNames map[string]bool) bool {
 	// Check if it matches ignore patterns
 	if opts.VarsIgnorePattern != "" {
 		if matched, _ := regexp.MatchString(opts.VarsIgnorePattern, varName); matched {
@@ -259,7 +261,38 @@ func shouldIgnoreVariable(varName string, varInfo *VariableInfo, opts Config, al
 	if isCaughtError(varInfo.Definition) {
 		return shouldIgnoreCaughtError(varName, opts)
 	}
+	if exportedNames[varName] && isProgramLevelDefinition(varInfo.Definition) {
+		return true
+	}
+	if opts.Vars == "local" && isProgramLevelDefinition(varInfo.Definition) {
+		return true
+	}
 
+	return false
+}
+
+func isProgramLevelDefinition(node *ast.Node) bool {
+	if node == nil {
+		return false
+	}
+	for current := node.Parent; current != nil; current = current.Parent {
+		switch current.Kind {
+		case ast.KindSourceFile:
+			return true
+		case ast.KindFunctionDeclaration,
+			ast.KindFunctionExpression,
+			ast.KindArrowFunction,
+			ast.KindMethodDeclaration,
+			ast.KindConstructor,
+			ast.KindGetAccessor,
+			ast.KindSetAccessor,
+			ast.KindBlock,
+			ast.KindCatchClause,
+			ast.KindModuleDeclaration,
+			ast.KindModuleBlock:
+			return false
+		}
+	}
 	return false
 }
 
@@ -749,7 +782,10 @@ func collectVariableUsages(node *ast.Node, usages map[string][]*ast.Node) {
 	}
 
 	// Visit current node
-	if ast.IsIdentifier(node) && !isPartOfDeclaration(node) && !isPartOfAssignment(node) && isIdentifierUsageCandidate(node) {
+	if ast.IsIdentifier(node) && !isPartOfDeclaration(node) && isIdentifierUsageCandidate(node) {
+		if isPartOfAssignment(node) && !isUsedAssignmentTarget(node) {
+			return
+		}
 		identifier := node.AsIdentifier()
 		if identifier == nil {
 			return
@@ -765,6 +801,24 @@ func collectVariableUsages(node *ast.Node, usages map[string][]*ast.Node) {
 	})
 }
 
+func isUsedAssignmentTarget(node *ast.Node) bool {
+	if node == nil || node.Parent == nil || node.Parent.Kind != ast.KindBinaryExpression {
+		return false
+	}
+	assignmentExpression := node.Parent
+	binaryExpression := assignmentExpression.AsBinaryExpression()
+	if binaryExpression == nil || !isAssignmentOperator(binaryExpression.OperatorToken.Kind) || binaryExpression.Left != node {
+		return false
+	}
+	for current := assignmentExpression.Parent; current != nil; current = current.Parent {
+		if current.Kind == ast.KindParenthesizedExpression {
+			continue
+		}
+		return current.Kind != ast.KindExpressionStatement
+	}
+	return false
+}
+
 func collectVariableWrites(node *ast.Node, writes map[string][]*ast.Node) {
 	if node == nil {
 		return
@@ -776,7 +830,7 @@ func collectVariableWrites(node *ast.Node, writes map[string][]*ast.Node) {
 			return
 		}
 		name := identifier.Text
-		if isPartOfAssignment(node) {
+		if isAssignmentTarget(node) {
 			writes[name] = append(writes[name], node)
 		} else if isPartOfDeclaration(node) && node.Parent != nil && node.Parent.Kind == ast.KindVariableDeclaration {
 			variableDeclaration := node.Parent.AsVariableDeclaration()
@@ -790,6 +844,17 @@ func collectVariableWrites(node *ast.Node, writes map[string][]*ast.Node) {
 		collectVariableWrites(child, writes)
 		return false
 	})
+}
+
+func isAssignmentTarget(node *ast.Node) bool {
+	if node == nil || node.Parent == nil || node.Parent.Kind != ast.KindBinaryExpression {
+		return false
+	}
+	binaryExpression := node.Parent.AsBinaryExpression()
+	if binaryExpression == nil {
+		return false
+	}
+	return isAssignmentOperator(binaryExpression.OperatorToken.Kind) && binaryExpression.Left == node
 }
 
 func collectValueDeclarations(node *ast.Node, declarations map[string][]*ast.Node) {
@@ -1004,6 +1069,60 @@ func isSelfAssignmentUsage(usage *ast.Node, name string) bool {
 		return binaryExpression.Left != usage
 	}
 	return false
+}
+
+func parseExportedCommentNames(sourceText string) map[string]bool {
+	names := map[string]bool{}
+	if sourceText == "" {
+		return names
+	}
+
+	addNames := func(commentBody string) {
+		matches := exportedCommentRe.FindStringSubmatch(commentBody)
+		if len(matches) < 2 {
+			return
+		}
+		for _, token := range strings.Split(matches[1], ",") {
+			name := strings.TrimSpace(token)
+			if name == "" {
+				continue
+			}
+			if colon := strings.Index(name, ":"); colon >= 0 {
+				name = strings.TrimSpace(name[:colon])
+			}
+			if name != "" {
+				names[name] = true
+			}
+		}
+	}
+
+	for i := 0; i < len(sourceText)-1; i++ {
+		if sourceText[i] != '/' {
+			continue
+		}
+		if sourceText[i+1] == '/' {
+			j := i + 2
+			for j < len(sourceText) && sourceText[j] != '\n' && sourceText[j] != '\r' {
+				j++
+			}
+			addNames(sourceText[i+2 : j])
+			i = j
+			continue
+		}
+		if sourceText[i+1] == '*' {
+			j := i + 2
+			for j+1 < len(sourceText) && (sourceText[j] != '*' || sourceText[j+1] != '/') {
+				j++
+			}
+			if j+1 >= len(sourceText) {
+				break
+			}
+			addNames(sourceText[i+2 : j])
+			i = j + 1
+		}
+	}
+
+	return names
 }
 
 func functionLikeBodyNode(node *ast.Node) *ast.Node {
@@ -1437,7 +1556,7 @@ func isInDeclareModuleContext(node *ast.Node) bool {
 	return false
 }
 
-func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, definition *ast.Node, opts Config, allUsages map[string][]*ast.Node, allWrites map[string][]*ast.Node, allValueDeclarations map[string][]*ast.Node, allTypeDeclarations map[string][]*ast.Node, sourceHasJSX bool) {
+func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, definition *ast.Node, opts Config, allUsages map[string][]*ast.Node, allWrites map[string][]*ast.Node, allValueDeclarations map[string][]*ast.Node, allTypeDeclarations map[string][]*ast.Node, exportedNames map[string]bool, sourceHasJSX bool) {
 	if nameNode == nil || name == "" {
 		return
 	}
@@ -1486,6 +1605,12 @@ func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, defi
 			if isSelfAssignmentUsage(usage, name) {
 				continue
 			}
+			if definition != nil && definition.Kind == ast.KindFunctionDeclaration {
+				functionDeclaration := definition.AsFunctionDeclaration()
+				if functionDeclaration != nil && functionDeclaration.Body != nil && isDescendantOf(usage, functionDeclaration.Body) {
+					continue
+				}
+			}
 			if isTypeOnlyDefinition(definition) && usageInSameNamedTypeDeclaration(usage, definition, name) {
 				continue
 			}
@@ -1531,7 +1656,7 @@ func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, defi
 	}
 
 	// Check if we should report this variable
-	if shouldIgnoreVariable(name, varInfo, opts, allUsages) {
+	if shouldIgnoreVariable(name, varInfo, opts, allUsages, exportedNames) {
 		return
 	}
 	if ctx.SourceFile != nil && ctx.SourceFile.IsDeclarationFile && !ast.IsExternalModule(ctx.SourceFile) {
@@ -1658,6 +1783,7 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 		allWrites := make(map[string][]*ast.Node)
 		allValueDeclarations := make(map[string][]*ast.Node)
 		allTypeDeclarations := make(map[string][]*ast.Node)
+		exportedNames := map[string]bool{}
 		collected := false
 		sourceHasJSX := false
 
@@ -1693,10 +1819,13 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 						collectValueDeclarations(sourceFile, allValueDeclarations)
 						collectTypeDeclarations(sourceFile, allTypeDeclarations)
 						sourceHasJSX = sourceFileHasJSX(sourceFile)
+						if ctx.SourceFile != nil {
+							exportedNames = parseExportedCommentNames(ctx.SourceFile.Text())
+						}
 						collected = true
 					}
 
-					processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, sourceHasJSX)
+					processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, sourceHasJSX)
 				}
 			},
 
@@ -1722,10 +1851,13 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 						collectValueDeclarations(sourceFile, allValueDeclarations)
 						collectTypeDeclarations(sourceFile, allTypeDeclarations)
 						sourceHasJSX = sourceFileHasJSX(sourceFile)
+						if ctx.SourceFile != nil {
+							exportedNames = parseExportedCommentNames(ctx.SourceFile.Text())
+						}
 						collected = true
 					}
 
-					processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, sourceHasJSX)
+					processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, sourceHasJSX)
 				}
 			},
 
@@ -1751,10 +1883,13 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 						collectValueDeclarations(sourceFile, allValueDeclarations)
 						collectTypeDeclarations(sourceFile, allTypeDeclarations)
 						sourceHasJSX = sourceFileHasJSX(sourceFile)
+						if ctx.SourceFile != nil {
+							exportedNames = parseExportedCommentNames(ctx.SourceFile.Text())
+						}
 						collected = true
 					}
 
-					processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, sourceHasJSX)
+					processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, sourceHasJSX)
 				}
 			},
 
@@ -1780,10 +1915,13 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 						collectValueDeclarations(sourceFile, allValueDeclarations)
 						collectTypeDeclarations(sourceFile, allTypeDeclarations)
 						sourceHasJSX = sourceFileHasJSX(sourceFile)
+						if ctx.SourceFile != nil {
+							exportedNames = parseExportedCommentNames(ctx.SourceFile.Text())
+						}
 						collected = true
 					}
 
-					processVariable(ctx, nameNode, name, nameNode, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, sourceHasJSX)
+					processVariable(ctx, nameNode, name, nameNode, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, sourceHasJSX)
 				}
 			},
 
@@ -1801,9 +1939,12 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 					collectValueDeclarations(sourceFile, allValueDeclarations)
 					collectTypeDeclarations(sourceFile, allTypeDeclarations)
 					sourceHasJSX = sourceFileHasJSX(sourceFile)
+					if ctx.SourceFile != nil {
+						exportedNames = parseExportedCommentNames(ctx.SourceFile.Text())
+					}
 					collected = true
 				}
-				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, sourceHasJSX)
+				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, sourceHasJSX)
 			},
 
 			ast.KindImportSpecifier: func(node *ast.Node) {
@@ -1820,9 +1961,12 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 					collectValueDeclarations(sourceFile, allValueDeclarations)
 					collectTypeDeclarations(sourceFile, allTypeDeclarations)
 					sourceHasJSX = sourceFileHasJSX(sourceFile)
+					if ctx.SourceFile != nil {
+						exportedNames = parseExportedCommentNames(ctx.SourceFile.Text())
+					}
 					collected = true
 				}
-				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, sourceHasJSX)
+				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, sourceHasJSX)
 			},
 
 			ast.KindNamespaceImport: func(node *ast.Node) {
@@ -1839,9 +1983,12 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 					collectValueDeclarations(sourceFile, allValueDeclarations)
 					collectTypeDeclarations(sourceFile, allTypeDeclarations)
 					sourceHasJSX = sourceFileHasJSX(sourceFile)
+					if ctx.SourceFile != nil {
+						exportedNames = parseExportedCommentNames(ctx.SourceFile.Text())
+					}
 					collected = true
 				}
-				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, sourceHasJSX)
+				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, sourceHasJSX)
 			},
 
 			ast.KindImportEqualsDeclaration: func(node *ast.Node) {
@@ -1858,9 +2005,12 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 					collectValueDeclarations(sourceFile, allValueDeclarations)
 					collectTypeDeclarations(sourceFile, allTypeDeclarations)
 					sourceHasJSX = sourceFileHasJSX(sourceFile)
+					if ctx.SourceFile != nil {
+						exportedNames = parseExportedCommentNames(ctx.SourceFile.Text())
+					}
 					collected = true
 				}
-				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, sourceHasJSX)
+				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, sourceHasJSX)
 			},
 
 			ast.KindEnumDeclaration: func(node *ast.Node) {
@@ -1877,9 +2027,12 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 					collectValueDeclarations(sourceFile, allValueDeclarations)
 					collectTypeDeclarations(sourceFile, allTypeDeclarations)
 					sourceHasJSX = sourceFileHasJSX(sourceFile)
+					if ctx.SourceFile != nil {
+						exportedNames = parseExportedCommentNames(ctx.SourceFile.Text())
+					}
 					collected = true
 				}
-				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, sourceHasJSX)
+				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, sourceHasJSX)
 			},
 
 			ast.KindClassDeclaration: func(node *ast.Node) {
@@ -1896,9 +2049,12 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 					collectValueDeclarations(sourceFile, allValueDeclarations)
 					collectTypeDeclarations(sourceFile, allTypeDeclarations)
 					sourceHasJSX = sourceFileHasJSX(sourceFile)
+					if ctx.SourceFile != nil {
+						exportedNames = parseExportedCommentNames(ctx.SourceFile.Text())
+					}
 					collected = true
 				}
-				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, sourceHasJSX)
+				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, sourceHasJSX)
 			},
 
 			ast.KindInterfaceDeclaration: func(node *ast.Node) {
@@ -1915,9 +2071,12 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 					collectValueDeclarations(sourceFile, allValueDeclarations)
 					collectTypeDeclarations(sourceFile, allTypeDeclarations)
 					sourceHasJSX = sourceFileHasJSX(sourceFile)
+					if ctx.SourceFile != nil {
+						exportedNames = parseExportedCommentNames(ctx.SourceFile.Text())
+					}
 					collected = true
 				}
-				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, sourceHasJSX)
+				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, sourceHasJSX)
 			},
 
 			ast.KindTypeAliasDeclaration: func(node *ast.Node) {
@@ -1934,9 +2093,12 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 					collectValueDeclarations(sourceFile, allValueDeclarations)
 					collectTypeDeclarations(sourceFile, allTypeDeclarations)
 					sourceHasJSX = sourceFileHasJSX(sourceFile)
+					if ctx.SourceFile != nil {
+						exportedNames = parseExportedCommentNames(ctx.SourceFile.Text())
+					}
 					collected = true
 				}
-				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, sourceHasJSX)
+				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, sourceHasJSX)
 			},
 
 			ast.KindModuleDeclaration: func(node *ast.Node) {
@@ -1958,9 +2120,12 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 					collectValueDeclarations(sourceFile, allValueDeclarations)
 					collectTypeDeclarations(sourceFile, allTypeDeclarations)
 					sourceHasJSX = sourceFileHasJSX(sourceFile)
+					if ctx.SourceFile != nil {
+						exportedNames = parseExportedCommentNames(ctx.SourceFile.Text())
+					}
 					collected = true
 				}
-				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, sourceHasJSX)
+				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, sourceHasJSX)
 			},
 		}
 	},
