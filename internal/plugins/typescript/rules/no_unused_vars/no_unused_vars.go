@@ -255,6 +255,10 @@ func shouldIgnoreVariable(varName string, varInfo *VariableInfo, opts Config, al
 		}
 	}
 
+	if forcedUsedNames[varName] {
+		return true
+	}
+
 	// Check if it's a function parameter and should be ignored
 	if isParameter(varInfo.Definition) {
 		return shouldIgnoreParameter(varName, varInfo, opts, allUsages)
@@ -263,9 +267,6 @@ func shouldIgnoreVariable(varName string, varInfo *VariableInfo, opts Config, al
 	// Check if it's a caught error and should be ignored
 	if isCaughtError(varInfo.Definition) {
 		return shouldIgnoreCaughtError(varName, opts)
-	}
-	if forcedUsedNames[varName] {
-		return true
 	}
 	if exportedNames[varName] && isProgramLevelDefinition(varInfo.Definition) {
 		return true
@@ -782,6 +783,188 @@ func isDescendantOf(node *ast.Node, ancestor *ast.Node) bool {
 	return false
 }
 
+func scopeDepth(node *ast.Node) int {
+	depth := 0
+	for current := node; current != nil; current = current.Parent {
+		depth++
+	}
+	return depth
+}
+
+func isValueScopeBoundary(node *ast.Node) bool {
+	if node == nil {
+		return false
+	}
+	switch node.Kind {
+	case ast.KindSourceFile,
+		ast.KindFunctionDeclaration,
+		ast.KindFunctionExpression,
+		ast.KindArrowFunction,
+		ast.KindMethodDeclaration,
+		ast.KindConstructor,
+		ast.KindGetAccessor,
+		ast.KindSetAccessor:
+		return true
+	}
+	return false
+}
+
+func nearestValueScope(node *ast.Node) *ast.Node {
+	for current := node; current != nil; current = current.Parent {
+		if isValueScopeBoundary(current) {
+			return current
+		}
+	}
+	return nil
+}
+
+func isBlockScopeBoundary(node *ast.Node) bool {
+	if node == nil {
+		return false
+	}
+	switch node.Kind {
+	case ast.KindSourceFile,
+		ast.KindBlock,
+		ast.KindModuleBlock,
+		ast.KindForStatement,
+		ast.KindForInStatement,
+		ast.KindForOfStatement,
+		ast.KindCatchClause,
+		ast.KindFunctionDeclaration,
+		ast.KindFunctionExpression,
+		ast.KindArrowFunction,
+		ast.KindMethodDeclaration,
+		ast.KindConstructor,
+		ast.KindGetAccessor,
+		ast.KindSetAccessor:
+		return true
+	}
+	return false
+}
+
+func nearestBlockScope(node *ast.Node) *ast.Node {
+	for current := node; current != nil; current = current.Parent {
+		if isBlockScopeBoundary(current) {
+			return current
+		}
+	}
+	return nil
+}
+
+func valueDeclarationScope(definition *ast.Node) *ast.Node {
+	if definition == nil {
+		return nil
+	}
+	switch definition.Kind {
+	case ast.KindVariableDeclaration:
+		if definition.Parent != nil && definition.Parent.Kind == ast.KindVariableDeclarationList {
+			declarationList := definition.Parent.AsVariableDeclarationList()
+			if declarationList != nil && declarationList.Flags&ast.NodeFlagsBlockScoped == 0 {
+				return nearestValueScope(definition.Parent)
+			}
+		}
+		return nearestBlockScope(definition.Parent)
+	case ast.KindBindingElement:
+		for current := definition.Parent; current != nil; current = current.Parent {
+			switch current.Kind {
+			case ast.KindVariableDeclaration:
+				return valueDeclarationScope(current)
+			case ast.KindParameter:
+				return valueDeclarationScope(current)
+			}
+		}
+		return nearestBlockScope(definition.Parent)
+	case ast.KindParameter:
+		return nearestValueScope(definition.Parent)
+	case ast.KindFunctionDeclaration,
+		ast.KindClassDeclaration,
+		ast.KindEnumDeclaration,
+		ast.KindImportClause,
+		ast.KindImportSpecifier,
+		ast.KindNamespaceImport,
+		ast.KindImportEqualsDeclaration:
+		return nearestBlockScope(definition.Parent)
+	case ast.KindFunctionExpression:
+		return nearestValueScope(definition.Parent)
+	}
+	return nearestBlockScope(definition.Parent)
+}
+
+func isForInOrOfIterationVariable(definition *ast.Node) bool {
+	if definition == nil {
+		return false
+	}
+
+	variableDeclaration := definition
+	if definition.Kind == ast.KindBindingElement {
+		for current := definition.Parent; current != nil; current = current.Parent {
+			if current.Kind == ast.KindVariableDeclaration {
+				variableDeclaration = current
+				break
+			}
+			if current.Kind == ast.KindParameter {
+				return false
+			}
+		}
+	}
+	if variableDeclaration == nil || variableDeclaration.Kind != ast.KindVariableDeclaration {
+		return false
+	}
+	if variableDeclaration.Parent == nil || variableDeclaration.Parent.Kind != ast.KindVariableDeclarationList || variableDeclaration.Parent.Parent == nil {
+		return false
+	}
+
+	variableDeclarationList := variableDeclaration.Parent
+	switch variableDeclarationList.Parent.Kind {
+	case ast.KindForInStatement:
+		forInStatement := variableDeclarationList.Parent.AsForInOrOfStatement()
+		return forInStatement != nil && forInStatement.Initializer == variableDeclarationList
+	case ast.KindForOfStatement:
+		forOfStatement := variableDeclarationList.Parent.AsForInOrOfStatement()
+		return forOfStatement != nil && forOfStatement.Initializer == variableDeclarationList
+	}
+	return false
+}
+
+func isUsageShadowedByValueDeclaration(usage *ast.Node, definition *ast.Node, name string, allValueDeclarations map[string][]*ast.Node) bool {
+	if usage == nil || definition == nil || name == "" {
+		return false
+	}
+
+	definitionScope := valueDeclarationScope(definition)
+	if definitionScope == nil {
+		return false
+	}
+
+	bestDepth := scopeDepth(definitionScope)
+	bestDefinition := definition
+
+	for _, candidate := range allValueDeclarations[name] {
+		if candidate == nil || candidate == definition {
+			continue
+		}
+		candidateScope := valueDeclarationScope(candidate)
+		if candidateScope == nil || candidateScope == definitionScope {
+			continue
+		}
+		if !isDescendantOf(usage, candidateScope) {
+			continue
+		}
+
+		candidateDepth := scopeDepth(candidateScope)
+		if candidateDepth > bestDepth {
+			bestDepth = candidateDepth
+			bestDefinition = candidate
+			continue
+		}
+		if candidateDepth == bestDepth && candidate.Pos() > bestDefinition.Pos() {
+			bestDefinition = candidate
+		}
+	}
+
+	return bestDefinition != definition
+}
+
 func collectVariableUsages(node *ast.Node, usages map[string][]*ast.Node) {
 	if node == nil {
 		return
@@ -814,6 +997,9 @@ func isUsedAssignmentTarget(node *ast.Node) bool {
 	assignmentExpression := node.Parent
 	binaryExpression := assignmentExpression.AsBinaryExpression()
 	if binaryExpression == nil || !isAssignmentOperator(binaryExpression.OperatorToken.Kind) || binaryExpression.Left != node {
+		return false
+	}
+	if binaryExpression.OperatorToken.Kind == ast.KindEqualsToken {
 		return false
 	}
 	for current := assignmentExpression.Parent; current != nil; current = current.Parent {
@@ -1059,6 +1245,16 @@ func isSelfAssignmentUsage(usage *ast.Node, name string) bool {
 		return false
 	}
 	for current := usage.Parent; current != nil; current = current.Parent {
+		switch current.Kind {
+		case ast.KindFunctionDeclaration,
+			ast.KindFunctionExpression,
+			ast.KindArrowFunction,
+			ast.KindMethodDeclaration,
+			ast.KindConstructor,
+			ast.KindGetAccessor,
+			ast.KindSetAccessor:
+			return false
+		}
 		if current.Kind != ast.KindBinaryExpression {
 			continue
 		}
@@ -1684,6 +1880,9 @@ func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, defi
 			if isImportDefinition(definition) && isUsageShadowedByTypeParameter(usage, name) {
 				continue
 			}
+			if isUsageShadowedByValueDeclaration(usage, definition, name, allValueDeclarations) {
+				continue
+			}
 			filteredUsages = append(filteredUsages, usage)
 		}
 
@@ -1715,6 +1914,10 @@ func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, defi
 		varInfo.OnlyUsedAsType = false
 	}
 	if !varInfo.Used && isJSXPragmaImportUsed(ctx, definition, name, sourceHasJSX) {
+		varInfo.Used = true
+		varInfo.OnlyUsedAsType = false
+	}
+	if !varInfo.Used && isForInOrOfIterationVariable(definition) {
 		varInfo.Used = true
 		varInfo.OnlyUsedAsType = false
 	}
