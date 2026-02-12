@@ -11,9 +11,9 @@ import (
 )
 
 var camelCaseRe = regexp.MustCompile(`^[a-z][a-zA-Z0-9]*$`)
-var strictCamelCaseRe = regexp.MustCompile(`^[a-z][a-zA-Z0-9]*$`)
+var strictCamelCaseRe = regexp.MustCompile(`^[a-z](?:[a-z0-9]*)(?:[A-Z][a-z0-9]+)*$`)
 var pascalCaseRe = regexp.MustCompile(`^[A-Z][a-zA-Z0-9]*$`)
-var strictPascalCaseRe = regexp.MustCompile(`^[A-Z][a-zA-Z0-9]*$`)
+var strictPascalCaseRe = regexp.MustCompile(`^[A-Z](?:[a-z0-9]+(?:[A-Z][a-z0-9]+)*)?$`)
 var snakeCaseRe = regexp.MustCompile(`^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$`)
 var upperCaseRe = regexp.MustCompile(`^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*$`)
 var identifierNameRe = regexp.MustCompile(`^[A-Za-z_$][A-Za-z0-9_$]*$`)
@@ -450,20 +450,28 @@ func trimTrailingUnderscores(name string) string {
 	return strings.TrimRight(name, "_")
 }
 
+func underscoreCount(name string, leading bool) int {
+	count := 0
+	if leading {
+		for count < len(name) && name[count] == '_' {
+			count++
+		}
+		return count
+	}
+	for count < len(name) && name[len(name)-1-count] == '_' {
+		count++
+	}
+	return count
+}
+
 func applyUnderscorePolicy(candidate namingCandidate, processedName string, policy string, leading bool) (string, *rule.RuleMessage) {
 	position := "leading"
 	if !leading {
 		position = "trailing"
 	}
-	hasSingle := false
-	hasDouble := false
-	if leading {
-		hasSingle = strings.HasPrefix(processedName, "_")
-		hasDouble = strings.HasPrefix(processedName, "__")
-	} else {
-		hasSingle = strings.HasSuffix(processedName, "_")
-		hasDouble = strings.HasSuffix(processedName, "__")
-	}
+	count := underscoreCount(processedName, leading)
+	hasSingle := count >= 1
+	hasDouble := count >= 2
 
 	switch policy {
 	case "allow":
@@ -473,12 +481,38 @@ func applyUnderscorePolicy(candidate namingCandidate, processedName string, poli
 			processedName = trimTrailingUnderscores(processedName)
 		}
 	case "allowDouble":
-		if hasSingle {
+		switch count {
+		case 0:
+			// keep as-is
+		case 2:
 			if leading {
-				processedName = trimLeadingUnderscores(processedName)
+				processedName = strings.TrimPrefix(processedName, "__")
 			} else {
-				processedName = trimTrailingUnderscores(processedName)
+				processedName = strings.TrimSuffix(processedName, "__")
 			}
+		default:
+			msg := buildUnexpectedUnderscoreMessage(candidate.TypeName, candidate.Name, position)
+			return processedName, &msg
+		}
+	case "allowSingleOrDouble":
+		switch count {
+		case 0:
+			// keep as-is
+		case 1:
+			if leading {
+				processedName = strings.TrimPrefix(processedName, "_")
+			} else {
+				processedName = strings.TrimSuffix(processedName, "_")
+			}
+		case 2:
+			if leading {
+				processedName = strings.TrimPrefix(processedName, "__")
+			} else {
+				processedName = strings.TrimSuffix(processedName, "__")
+			}
+		default:
+			msg := buildUnexpectedUnderscoreMessage(candidate.TypeName, candidate.Name, position)
+			return processedName, &msg
 		}
 	case "forbid":
 		if hasSingle {
