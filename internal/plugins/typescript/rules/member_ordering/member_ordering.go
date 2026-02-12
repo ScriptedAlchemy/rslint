@@ -1,0 +1,740 @@
+package member_ordering
+
+import (
+	"fmt"
+	"math/big"
+	"sort"
+	"strings"
+	"unicode"
+
+	"github.com/microsoft/typescript-go/shim/ast"
+	"github.com/web-infra-dev/rslint/internal/rule"
+	"github.com/web-infra-dev/rslint/internal/utils"
+)
+
+type memberTypeGroup []string
+
+type memberOrderingConfig struct {
+	memberTypes      []memberTypeGroup
+	memberTypesNever bool
+	order            string
+	optionalityOrder string
+}
+
+type memberOrderingOptions struct {
+	defaultConfig      memberOrderingConfig
+	classesConfig      *memberOrderingConfig
+	classExprConfig    *memberOrderingConfig
+	interfacesConfig   *memberOrderingConfig
+	typeLiteralsConfig *memberOrderingConfig
+}
+
+type memberInfo struct {
+	node          *ast.Node
+	name          string
+	nameKey       string
+	groupIndex    int
+	optional      bool
+	isStatic      bool
+	isAbstract    bool
+	isDecorated   bool
+	isReadonly    bool
+	isPrivateName bool
+	accessibility string
+	kind          string
+}
+
+func buildIncorrectOrderMessage() rule.RuleMessage {
+	return rule.RuleMessage{
+		Id:          "incorrectOrder",
+		Description: "Member order is incorrect.",
+	}
+}
+
+func buildIncorrectGroupOrderMessage() rule.RuleMessage {
+	return rule.RuleMessage{
+		Id:          "incorrectGroupOrder",
+		Description: "Member group order is incorrect.",
+	}
+}
+
+func buildIncorrectRequiredMembersOrderMessage() rule.RuleMessage {
+	return rule.RuleMessage{
+		Id:          "incorrectRequiredMembersOrder",
+		Description: "Optional and required members are in the wrong order.",
+	}
+}
+
+func defaultConfig() memberOrderingConfig {
+	return memberOrderingConfig{
+		memberTypes: []memberTypeGroup{
+			{"signature"},
+			{"field"},
+			{"constructor"},
+			{"method"},
+		},
+		order: "as-written",
+	}
+}
+
+func parseOptions(options any) memberOrderingOptions {
+	parsed := memberOrderingOptions{
+		defaultConfig: defaultConfig(),
+	}
+	if options == nil {
+		return parsed
+	}
+
+	var optsMap map[string]interface{}
+	switch value := options.(type) {
+	case []interface{}:
+		if len(value) == 0 {
+			return parsed
+		}
+		first, ok := value[0].(map[string]interface{})
+		if !ok {
+			return parsed
+		}
+		optsMap = first
+	case map[string]interface{}:
+		optsMap = value
+	default:
+		return parsed
+	}
+
+	if defaultMap, ok := optsMap["default"].(map[string]interface{}); ok {
+		cfg := parseMemberOrderingConfig(defaultMap, parsed.defaultConfig)
+		parsed.defaultConfig = cfg
+	}
+	if classesMap, ok := optsMap["classes"].(map[string]interface{}); ok {
+		cfg := parseMemberOrderingConfig(classesMap, parsed.defaultConfig)
+		parsed.classesConfig = &cfg
+	}
+	if classExprMap, ok := optsMap["classExpressions"].(map[string]interface{}); ok {
+		cfg := parseMemberOrderingConfig(classExprMap, parsed.defaultConfig)
+		parsed.classExprConfig = &cfg
+	}
+	if interfacesMap, ok := optsMap["interfaces"].(map[string]interface{}); ok {
+		cfg := parseMemberOrderingConfig(interfacesMap, parsed.defaultConfig)
+		parsed.interfacesConfig = &cfg
+	}
+	if typeLiteralsMap, ok := optsMap["typeLiterals"].(map[string]interface{}); ok {
+		cfg := parseMemberOrderingConfig(typeLiteralsMap, parsed.defaultConfig)
+		parsed.typeLiteralsConfig = &cfg
+	}
+	return parsed
+}
+
+func parseMemberOrderingConfig(configMap map[string]interface{}, base memberOrderingConfig) memberOrderingConfig {
+	cfg := base
+	if configMap == nil {
+		return cfg
+	}
+
+	if order, ok := configMap["order"].(string); ok && order != "" {
+		cfg.order = order
+	}
+	if optionalityOrder, ok := configMap["optionalityOrder"].(string); ok && optionalityOrder != "" {
+		cfg.optionalityOrder = optionalityOrder
+	}
+	if memberTypes, hasMemberTypes := configMap["memberTypes"]; hasMemberTypes {
+		cfg.memberTypesNever = false
+		cfg.memberTypes = nil
+
+		if memberTypesValue, ok := memberTypes.(string); ok {
+			if memberTypesValue == "never" {
+				cfg.memberTypesNever = true
+				return cfg
+			}
+			cfg.memberTypes = []memberTypeGroup{{memberTypesValue}}
+			return cfg
+		}
+
+		if arr, ok := memberTypes.([]interface{}); ok {
+			memberGroups := make([]memberTypeGroup, 0, len(arr))
+			for _, item := range arr {
+				switch v := item.(type) {
+				case string:
+					memberGroups = append(memberGroups, memberTypeGroup{v})
+				case []interface{}:
+					group := make(memberTypeGroup, 0, len(v))
+					for _, inner := range v {
+						s, ok := inner.(string)
+						if !ok || s == "" {
+							continue
+						}
+						group = append(group, s)
+					}
+					if len(group) > 0 {
+						memberGroups = append(memberGroups, group)
+					}
+				}
+			}
+			if len(memberGroups) > 0 {
+				cfg.memberTypes = memberGroups
+			}
+		}
+	}
+	return cfg
+}
+
+func effectiveConfig(node *ast.Node, opts memberOrderingOptions) memberOrderingConfig {
+	switch node.Kind {
+	case ast.KindClassDeclaration:
+		if opts.classesConfig != nil {
+			return *opts.classesConfig
+		}
+	case ast.KindClassExpression:
+		if opts.classExprConfig != nil {
+			return *opts.classExprConfig
+		}
+	case ast.KindInterfaceDeclaration:
+		if opts.interfacesConfig != nil {
+			return *opts.interfacesConfig
+		}
+	case ast.KindTypeLiteral:
+		if opts.typeLiteralsConfig != nil {
+			return *opts.typeLiteralsConfig
+		}
+	}
+	return opts.defaultConfig
+}
+
+func collectMembers(ctx rule.RuleContext, container *ast.Node, cfg memberOrderingConfig) []memberInfo {
+	members := membersForContainer(container)
+	if len(members) == 0 {
+		return nil
+	}
+
+	collected := make([]memberInfo, 0, len(members))
+	for _, member := range members {
+		if member == nil {
+			continue
+		}
+		info := buildMemberInfo(ctx, member)
+		info.groupIndex = memberGroupIndex(info, cfg)
+		collected = append(collected, info)
+	}
+	return collected
+}
+
+func membersForContainer(container *ast.Node) []*ast.Node {
+	if container == nil {
+		return nil
+	}
+	switch container.Kind {
+	case ast.KindClassDeclaration:
+		classDeclaration := container.AsClassDeclaration()
+		if classDeclaration != nil && classDeclaration.Members != nil {
+			return classDeclaration.Members.Nodes
+		}
+	case ast.KindClassExpression:
+		classExpression := container.AsClassExpression()
+		if classExpression != nil && classExpression.Members != nil {
+			return classExpression.Members.Nodes
+		}
+	case ast.KindInterfaceDeclaration:
+		interfaceDeclaration := container.AsInterfaceDeclaration()
+		if interfaceDeclaration != nil && interfaceDeclaration.Members != nil {
+			return interfaceDeclaration.Members.Nodes
+		}
+	case ast.KindTypeLiteral:
+		typeLiteral := container.AsTypeLiteralNode()
+		if typeLiteral != nil && typeLiteral.Members != nil {
+			return typeLiteral.Members.Nodes
+		}
+	}
+	return nil
+}
+
+func buildMemberInfo(ctx rule.RuleContext, node *ast.Node) memberInfo {
+	info := memberInfo{
+		node:          node,
+		name:          memberName(ctx, node),
+		optional:      isOptionalMember(node),
+		isStatic:      ast.HasSyntacticModifier(node, ast.ModifierFlagsStatic),
+		isAbstract:    ast.HasSyntacticModifier(node, ast.ModifierFlagsAbstract),
+		isReadonly:    ast.HasSyntacticModifier(node, ast.ModifierFlagsReadonly),
+		isDecorated:   utils.IncludesModifier(node, ast.KindDecorator),
+		isPrivateName: node.Name() != nil && node.Name().Kind == ast.KindPrivateIdentifier,
+		accessibility: memberAccessibility(node),
+		kind:          memberKind(node),
+	}
+	if info.name == "" {
+		info.name = info.kind
+	}
+	info.nameKey = strings.TrimSpace(info.name)
+	return info
+}
+
+func memberName(ctx rule.RuleContext, node *ast.Node) string {
+	if node == nil {
+		return ""
+	}
+	switch node.Kind {
+	case ast.KindConstructor, ast.KindConstructSignature:
+		return "new"
+	case ast.KindCallSignature:
+		return "call"
+	case ast.KindClassStaticBlockDeclaration:
+		return "static"
+	case ast.KindIndexSignature:
+		return "index"
+	}
+	nameNode := node.Name()
+	if nameNode == nil || ctx.SourceFile == nil {
+		return ""
+	}
+	name, _ := utils.GetNameFromMember(ctx.SourceFile, nameNode)
+	return name
+}
+
+func memberKind(node *ast.Node) string {
+	if node == nil {
+		return ""
+	}
+	switch node.Kind {
+	case ast.KindPropertyDeclaration, ast.KindPropertySignature:
+		return "field"
+	case ast.KindMethodDeclaration, ast.KindMethodSignature:
+		return "method"
+	case ast.KindGetAccessor:
+		return "get"
+	case ast.KindSetAccessor:
+		return "set"
+	case ast.KindConstructor, ast.KindConstructSignature:
+		return "constructor"
+	case ast.KindCallSignature:
+		return "call-signature"
+	case ast.KindIndexSignature:
+		return "index-signature"
+	case ast.KindClassStaticBlockDeclaration:
+		return "static-initialization"
+	}
+	return "field"
+}
+
+func memberAccessibility(node *ast.Node) string {
+	if node == nil {
+		return ""
+	}
+	switch {
+	case ast.HasSyntacticModifier(node, ast.ModifierFlagsPrivate):
+		return "private"
+	case ast.HasSyntacticModifier(node, ast.ModifierFlagsProtected):
+		return "protected"
+	case ast.HasSyntacticModifier(node, ast.ModifierFlagsPublic):
+		return "public"
+	default:
+		return "public"
+	}
+}
+
+func isOptionalMember(node *ast.Node) bool {
+	if node == nil {
+		return false
+	}
+	if node.QuestionToken() != nil {
+		return true
+	}
+	if node.Kind == ast.KindIndexSignature {
+		indexSignature := node.AsIndexSignatureDeclaration()
+		if indexSignature == nil || indexSignature.Parameters == nil || len(indexSignature.Parameters.Nodes) == 0 {
+			return false
+		}
+		parameter := indexSignature.Parameters.Nodes[0]
+		return parameter != nil && parameter.QuestionToken() != nil
+	}
+	return false
+}
+
+func memberGroupIndex(member memberInfo, cfg memberOrderingConfig) int {
+	if cfg.memberTypesNever || len(cfg.memberTypes) == 0 {
+		return 0
+	}
+	for index, group := range cfg.memberTypes {
+		for _, token := range group {
+			if memberMatchesGroup(member, token) {
+				return index
+			}
+		}
+	}
+	return len(cfg.memberTypes)
+}
+
+func memberMatchesGroup(member memberInfo, group string) bool {
+	if group == "" {
+		return false
+	}
+	if group == "never" {
+		return true
+	}
+
+	baseKinds := []string{
+		"static-initialization",
+		"call-signature",
+		"construct-signature",
+		"index-signature",
+		"constructor",
+		"accessor",
+		"method",
+		"field",
+		"get",
+		"set",
+		"signature",
+	}
+
+	base := ""
+	for _, candidate := range baseKinds {
+		if group == candidate || strings.HasSuffix(group, "-"+candidate) {
+			base = candidate
+			break
+		}
+	}
+	if base == "" {
+		return false
+	}
+
+	if !memberMatchesBase(member, base) {
+		return false
+	}
+
+	prefix := strings.TrimSuffix(group, base)
+	prefix = strings.TrimSuffix(prefix, "-")
+	if prefix == "" {
+		return true
+	}
+	for _, token := range strings.Split(prefix, "-") {
+		switch token {
+		case "public":
+			if member.accessibility != "public" || member.isPrivateName {
+				return false
+			}
+		case "protected":
+			if member.accessibility != "protected" {
+				return false
+			}
+		case "private":
+			if member.accessibility != "private" {
+				return false
+			}
+		case "#private":
+			if !member.isPrivateName {
+				return false
+			}
+		case "static":
+			if !member.isStatic {
+				return false
+			}
+		case "instance":
+			if member.isStatic {
+				return false
+			}
+		case "abstract":
+			if !member.isAbstract {
+				return false
+			}
+		case "decorated":
+			if !member.isDecorated {
+				return false
+			}
+		case "readonly":
+			if !member.isReadonly {
+				return false
+			}
+		default:
+			return false
+		}
+	}
+	return true
+}
+
+func memberMatchesBase(member memberInfo, base string) bool {
+	switch base {
+	case "field":
+		return member.kind == "field"
+	case "method":
+		return member.kind == "method"
+	case "get":
+		return member.kind == "get"
+	case "set":
+		return member.kind == "set"
+	case "accessor":
+		return member.kind == "get" || member.kind == "set" || member.kind == "accessor"
+	case "constructor":
+		return member.kind == "constructor"
+	case "construct-signature":
+		return member.node != nil && member.node.Kind == ast.KindConstructSignature
+	case "call-signature":
+		return member.kind == "call-signature"
+	case "index-signature":
+		return member.kind == "index-signature"
+	case "signature":
+		return member.kind == "call-signature" || member.kind == "index-signature" || (member.node != nil && member.node.Kind == ast.KindConstructSignature)
+	case "static-initialization":
+		return member.kind == "static-initialization"
+	default:
+		return false
+	}
+}
+
+func compareMemberName(left, right string, order string) int {
+	switch order {
+	case "alphabetically":
+		return strings.Compare(left, right)
+	case "alphabetically-case-insensitive":
+		cmp := strings.Compare(strings.ToLower(left), strings.ToLower(right))
+		if cmp != 0 {
+			return cmp
+		}
+		return strings.Compare(left, right)
+	case "natural":
+		return compareNatural(left, right, false)
+	case "natural-case-insensitive":
+		return compareNatural(left, right, true)
+	default:
+		return 0
+	}
+}
+
+func compareNatural(left, right string, caseInsensitive bool) int {
+	leftParts := splitNaturalParts(left)
+	rightParts := splitNaturalParts(right)
+	limit := len(leftParts)
+	if len(rightParts) < limit {
+		limit = len(rightParts)
+	}
+
+	for i := range limit {
+		leftPart := leftParts[i]
+		rightPart := rightParts[i]
+
+		leftIsNumber := isNumericString(leftPart)
+		rightIsNumber := isNumericString(rightPart)
+		if leftIsNumber && rightIsNumber {
+			numberCompare := compareNumericStrings(leftPart, rightPart)
+			if numberCompare != 0 {
+				return numberCompare
+			}
+			continue
+		}
+
+		compareLeft := leftPart
+		compareRight := rightPart
+		if caseInsensitive {
+			compareLeft = strings.ToLower(compareLeft)
+			compareRight = strings.ToLower(compareRight)
+		}
+		partCompare := strings.Compare(compareLeft, compareRight)
+		if partCompare != 0 {
+			return partCompare
+		}
+		if caseInsensitive {
+			partCompare = strings.Compare(leftPart, rightPart)
+			if partCompare != 0 {
+				return partCompare
+			}
+		}
+	}
+
+	if len(leftParts) != len(rightParts) {
+		if len(leftParts) < len(rightParts) {
+			return -1
+		}
+		return 1
+	}
+	return strings.Compare(left, right)
+}
+
+func splitNaturalParts(value string) []string {
+	if value == "" {
+		return []string{""}
+	}
+	parts := []string{}
+	start := 0
+	inDigits := unicode.IsDigit(rune(value[0]))
+	for i := 1; i < len(value); i++ {
+		isDigit := unicode.IsDigit(rune(value[i]))
+		if isDigit == inDigits {
+			continue
+		}
+		parts = append(parts, value[start:i])
+		start = i
+		inDigits = isDigit
+	}
+	parts = append(parts, value[start:])
+	return parts
+}
+
+func isNumericString(value string) bool {
+	if value == "" {
+		return false
+	}
+	for _, r := range value {
+		if !unicode.IsDigit(r) {
+			return false
+		}
+	}
+	return true
+}
+
+func compareNumericStrings(left, right string) int {
+	leftInt := new(big.Int)
+	rightInt := new(big.Int)
+	_, leftOK := leftInt.SetString(left, 10)
+	_, rightOK := rightInt.SetString(right, 10)
+	if !leftOK || !rightOK {
+		return strings.Compare(left, right)
+	}
+	return leftInt.Cmp(rightInt)
+}
+
+func optionalityKey(member memberInfo, optionalityOrder string) int {
+	switch optionalityOrder {
+	case "required-first":
+		if member.optional {
+			return 1
+		}
+		return 0
+	case "optional-first":
+		if member.optional {
+			return 0
+		}
+		return 1
+	default:
+		return 0
+	}
+}
+
+func checkOrdering(ctx rule.RuleContext, members []memberInfo, cfg memberOrderingConfig) {
+	if len(members) < 2 {
+		return
+	}
+
+	if !cfg.memberTypesNever && len(cfg.memberTypes) > 0 {
+		maxSeenGroup := -1
+		for _, member := range members {
+			if member.groupIndex < maxSeenGroup {
+				ctx.ReportNode(member.node, buildIncorrectGroupOrderMessage())
+				continue
+			}
+			if member.groupIndex > maxSeenGroup {
+				maxSeenGroup = member.groupIndex
+			}
+		}
+	}
+
+	if cfg.optionalityOrder != "" {
+		type optionalityState struct {
+			firstOptional *memberInfo
+			firstRequired *memberInfo
+			reported      bool
+		}
+		stateByGroup := map[int]*optionalityState{}
+		for i := range members {
+			member := &members[i]
+			state, ok := stateByGroup[member.groupIndex]
+			if !ok {
+				state = &optionalityState{}
+				stateByGroup[member.groupIndex] = state
+			}
+			switch cfg.optionalityOrder {
+			case "required-first":
+				if member.optional {
+					if state.firstOptional == nil {
+						state.firstOptional = member
+					}
+					continue
+				}
+				if state.firstOptional != nil && !state.reported {
+					ctx.ReportNode(state.firstOptional.node, buildIncorrectRequiredMembersOrderMessage())
+					state.reported = true
+				}
+			case "optional-first":
+				if !member.optional {
+					if state.firstRequired == nil {
+						state.firstRequired = member
+					}
+					continue
+				}
+				if state.firstRequired != nil && !state.reported {
+					ctx.ReportNode(state.firstRequired.node, buildIncorrectRequiredMembersOrderMessage())
+					state.reported = true
+				}
+			}
+		}
+	}
+
+	if cfg.order == "" || cfg.order == "as-written" {
+		return
+	}
+
+	previousByKey := map[string]memberInfo{}
+	for _, member := range members {
+		if !isNameComparableMember(member) {
+			continue
+		}
+		key := fmt.Sprintf("%d:%d", member.groupIndex, optionalityKey(member, cfg.optionalityOrder))
+		prev, exists := previousByKey[key]
+		if exists && compareMemberName(prev.nameKey, member.nameKey, cfg.order) > 0 {
+			ctx.ReportNode(member.node, buildIncorrectOrderMessage())
+		}
+		previousByKey[key] = member
+	}
+}
+
+func isNameComparableMember(member memberInfo) bool {
+	switch member.kind {
+	case "field", "method", "get", "set", "accessor":
+		return true
+	default:
+		return false
+	}
+}
+
+func checkMemberOrderingNode(ctx rule.RuleContext, node *ast.Node, opts memberOrderingOptions) {
+	if node == nil {
+		return
+	}
+	cfg := effectiveConfig(node, opts)
+	members := collectMembers(ctx, node, cfg)
+	if len(members) == 0 {
+		return
+	}
+
+	// Preserve original source order.
+	sort.SliceStable(members, func(i, j int) bool {
+		return members[i].node.Pos() < members[j].node.Pos()
+	})
+	checkOrdering(ctx, members, cfg)
+}
+
+func createMemberOrderingRule(ruleName string) rule.Rule {
+	return rule.CreateRule(rule.Rule{
+		Name: ruleName,
+		Run: func(ctx rule.RuleContext, options any) rule.RuleListeners {
+			opts := parseOptions(options)
+			return rule.RuleListeners{
+				ast.KindClassDeclaration: func(node *ast.Node) {
+					checkMemberOrderingNode(ctx, node, opts)
+				},
+				ast.KindClassExpression: func(node *ast.Node) {
+					checkMemberOrderingNode(ctx, node, opts)
+				},
+				ast.KindInterfaceDeclaration: func(node *ast.Node) {
+					checkMemberOrderingNode(ctx, node, opts)
+				},
+				ast.KindTypeLiteral: func(node *ast.Node) {
+					checkMemberOrderingNode(ctx, node, opts)
+				},
+			}
+		},
+	})
+}
+
+var MemberOrderingRule = createMemberOrderingRule("member-ordering")
+var MemberOrderingAlphabeticallyOrderAliasRule = createMemberOrderingRule("member-ordering-alphabetically-order")
+var MemberOrderingAlphabeticallyCaseInsensitiveOrderAliasRule = createMemberOrderingRule("member-ordering-alphabetically-case-insensitive-order")
+var MemberOrderingNaturalOrderAliasRule = createMemberOrderingRule("member-ordering-natural-order")
+var MemberOrderingNaturalCaseInsensitiveOrderAliasRule = createMemberOrderingRule("member-ordering-natural-case-insensitive-order")
+var MemberOrderingRequiredAliasRule = createMemberOrderingRule("member-ordering-required")

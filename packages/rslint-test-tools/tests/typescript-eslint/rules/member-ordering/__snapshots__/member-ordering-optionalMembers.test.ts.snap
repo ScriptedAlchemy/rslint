@@ -1,0 +1,262 @@
+// Rstest Snapshot v1
+
+exports[`member-ordering-required > invalid 1`] = `
+{
+  "code": "
+interface X {
+  m: string;
+  d?: string;
+  b?: string;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Member order is incorrect.",
+      "messageId": "incorrectOrder",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 5,
+        },
+        "start": {
+          "column": 3,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/member-ordering-required",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`member-ordering-required > invalid 2`] = `
+{
+  "code": "
+interface X {
+  a: string;
+  b?: string;
+  c: string;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Optional and required members are in the wrong order.",
+      "messageId": "incorrectRequiredMembersOrder",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 4,
+        },
+        "start": {
+          "column": 3,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/member-ordering-required",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`member-ordering-required > invalid 3`] = `
+{
+  "code": "
+class X {
+  a?: string;
+  static {}
+  b?: string;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Optional and required members are in the wrong order.",
+      "messageId": "incorrectRequiredMembersOrder",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 3,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/member-ordering-required",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`member-ordering-required > invalid 4`] = `
+{
+  "code": "
+class X {
+  b: string;
+  a: string;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Member order is incorrect.",
+      "messageId": "incorrectOrder",
+      "range": {
+        "end": {
+          "column": 13,
+          "line": 4,
+        },
+        "start": {
+          "column": 3,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/member-ordering-required",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`member-ordering-required > invalid 5`] = `
+{
+  "code": "
+interface X {
+  d?: string;
+  b?: string;
+  m: string;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Member order is incorrect.",
+      "messageId": "incorrectOrder",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 4,
+        },
+        "start": {
+          "column": 3,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/member-ordering-required",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`member-ordering-required > invalid 6`] = `
+{
+  "code": "
+interface X {
+  a?: string;
+  b: string;
+  c?: string;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Optional and required members are in the wrong order.",
+      "messageId": "incorrectRequiredMembersOrder",
+      "range": {
+        "end": {
+          "column": 13,
+          "line": 4,
+        },
+        "start": {
+          "column": 3,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/member-ordering-required",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`member-ordering-required > invalid 7`] = `
+{
+  "code": "
+class Test {
+  a?: string;
+  b?: string;
+  f: string;
+  c?: string;
+  d?: string;
+  g: string;
+  h: string;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Optional and required members are in the wrong order.",
+      "messageId": "incorrectRequiredMembersOrder",
+      "range": {
+        "end": {
+          "column": 13,
+          "line": 5,
+        },
+        "start": {
+          "column": 3,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/member-ordering-required",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`member-ordering-required > invalid 8`] = `
+{
+  "code": "
+class Test {
+  a: string;
+  b: string;
+  f?: string;
+  c?: string;
+  d?: string;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Optional and required members are in the wrong order.",
+      "messageId": "incorrectRequiredMembersOrder",
+      "range": {
+        "end": {
+          "column": 13,
+          "line": 3,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/member-ordering-required",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;

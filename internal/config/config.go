@@ -32,6 +32,7 @@ import (
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/explicit_module_boundary_types"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/init_declarations"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/max_params"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/member_ordering"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/method_signature_style"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/naming_convention"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_array_constructor"
@@ -463,6 +464,12 @@ func registerAllTypeScriptEslintPluginRules() {
 	GlobalRuleRegistry.Register("@typescript-eslint/explicit-module-boundary-types", explicit_module_boundary_types.ExplicitModuleBoundaryTypesRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/init-declarations", init_declarations.InitDeclarationsRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/max-params", max_params.MaxParamsRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/member-ordering", member_ordering.MemberOrderingRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/member-ordering-alphabetically-order", member_ordering.MemberOrderingAlphabeticallyOrderAliasRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/member-ordering-alphabetically-case-insensitive-order", member_ordering.MemberOrderingAlphabeticallyCaseInsensitiveOrderAliasRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/member-ordering-natural-order", member_ordering.MemberOrderingNaturalOrderAliasRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/member-ordering-natural-case-insensitive-order", member_ordering.MemberOrderingNaturalCaseInsensitiveOrderAliasRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/member-ordering-required", member_ordering.MemberOrderingRequiredAliasRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/method-signature-style", method_signature_style.MethodSignatureStyleRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/naming-convention", naming_convention.NamingConventionRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-array-constructor", no_array_constructor.NoArrayConstructorRule)
