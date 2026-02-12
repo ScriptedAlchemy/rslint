@@ -304,7 +304,7 @@ func isIdentifierUsageCandidate(node *ast.Node) bool {
 	return true
 }
 
-func shouldIgnoreVariable(varName string, varInfo *VariableInfo, opts Config, allUsages map[string][]*ast.Node, exportedNames map[string]bool, forcedUsedNames map[string]bool) bool {
+func shouldIgnoreVariable(varName string, varInfo *VariableInfo, opts Config, allUsages map[string][]*ast.Node, allWrites map[string][]*ast.Node, exportedNames map[string]bool, forcedUsedNames map[string]bool) bool {
 	// Check if it matches ignore patterns
 	if opts.VarsIgnorePattern != "" {
 		if matched, _ := regexp.MatchString(opts.VarsIgnorePattern, varName); matched {
@@ -314,6 +314,13 @@ func shouldIgnoreVariable(varName string, varInfo *VariableInfo, opts Config, al
 		}
 	}
 	if opts.DestructuredArrayIgnorePattern != "" && isArrayBindingElementDefinition(varInfo.Definition) {
+		if matched, _ := regexp.MatchString(opts.DestructuredArrayIgnorePattern, varName); matched {
+			if !varInfo.Used || !opts.ReportUsedIgnorePattern {
+				return true
+			}
+		}
+	}
+	if opts.DestructuredArrayIgnorePattern != "" && hasArrayDestructuringWrite(varName, allWrites) {
 		if matched, _ := regexp.MatchString(opts.DestructuredArrayIgnorePattern, varName); matched {
 			if !varInfo.Used || !opts.ReportUsedIgnorePattern {
 				return true
@@ -349,6 +356,22 @@ func shouldIgnoreVariable(varName string, varInfo *VariableInfo, opts Config, al
 
 func isArrayBindingElementDefinition(definition *ast.Node) bool {
 	return definition != nil && definition.Kind == ast.KindBindingElement && definition.Parent != nil && definition.Parent.Kind == ast.KindArrayBindingPattern
+}
+
+func hasArrayDestructuringWrite(varName string, allWrites map[string][]*ast.Node) bool {
+	for _, write := range allWrites[varName] {
+		if write == nil {
+			continue
+		}
+		assignmentExpression := assignmentTargetExpressionForNode(write)
+		if assignmentExpression == nil || assignmentExpression.Left == nil {
+			continue
+		}
+		if assignmentExpression.Left.Kind == ast.KindArrayLiteralExpression {
+			return true
+		}
+	}
+	return false
 }
 
 func isIgnoredByRestSibling(definition *ast.Node, opts Config) bool {
@@ -2085,7 +2108,7 @@ func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, defi
 	}
 
 	// Check if we should report this variable
-	if shouldIgnoreVariable(name, varInfo, opts, allUsages, exportedNames, forcedUsedNames) {
+	if shouldIgnoreVariable(name, varInfo, opts, allUsages, allWrites, exportedNames, forcedUsedNames) {
 		return
 	}
 	if ctx.SourceFile != nil && ctx.SourceFile.IsDeclarationFile && !ast.IsExternalModule(ctx.SourceFile) {
