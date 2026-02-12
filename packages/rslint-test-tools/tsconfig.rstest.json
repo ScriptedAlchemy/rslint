@@ -7,5 +7,5 @@
     "esModuleInterop": true,
     "lib": ["es2015", "es2017", "esnext"]
   },
-  "include": ["virtual.ts", "virtual.tsx"]
+  "include": ["virtual.ts", "virtual.tsx", "virtual.d.ts", "virtual.mts", "virtual.cts"]
 }
