@@ -252,15 +252,40 @@ func isUsedUpdateExpressionTarget(node *ast.Node) bool {
 	if updateExpression == nil {
 		return false
 	}
-	consumed := false
-	for current := updateExpression.Parent; current != nil; current = current.Parent {
-		if current.Kind == ast.KindParenthesizedExpression {
+	return isExpressionValueConsumed(updateExpression)
+}
+
+func isExpressionValueConsumed(expression *ast.Node) bool {
+	if expression == nil {
+		return false
+	}
+	current := expression
+	for parent := current.Parent; parent != nil; parent = parent.Parent {
+		if parent.Kind == ast.KindParenthesizedExpression {
+			current = parent
 			continue
 		}
-		consumed = current.Kind != ast.KindExpressionStatement
-		break
+		switch parent.Kind {
+		case ast.KindExpressionStatement:
+			return false
+		case ast.KindBinaryExpression:
+			binaryExpression := parent.AsBinaryExpression()
+			if binaryExpression == nil || binaryExpression.OperatorToken.Kind != ast.KindCommaToken {
+				return true
+			}
+			if binaryExpression.Left != nil && (current == binaryExpression.Left || isDescendantOf(current, binaryExpression.Left)) {
+				return false
+			}
+			if binaryExpression.Right == nil || !(current == binaryExpression.Right || isDescendantOf(current, binaryExpression.Right)) {
+				return false
+			}
+			current = parent
+			continue
+		default:
+			return true
+		}
 	}
-	return consumed
+	return false
 }
 
 func assignmentTargetExpressionForNode(node *ast.Node) *ast.BinaryExpression {
@@ -355,13 +380,14 @@ func shouldIgnoreVariable(varName string, varInfo *VariableInfo, opts Config, al
 		return shouldIgnoreCaughtError(varName, opts)
 	}
 
-	// Check if it matches ignore patterns
-	if opts.VarsIgnorePattern != "" {
-		if matched, _ := regexp.MatchString(opts.VarsIgnorePattern, varName); matched {
-			if !varInfo.Used || !opts.ReportUsedIgnorePattern {
-				return true
-			}
-		}
+	if forcedUsedNames[varName] {
+		return true
+	}
+	if isIgnoredByRestSibling(varInfo.Definition, opts) {
+		return true
+	}
+	if opts.IgnoreRestSiblings && hasObjectRestSiblingWrite(varName, allWrites) {
+		return true
 	}
 	if opts.DestructuredArrayIgnorePattern != "" && isArrayBindingElementDefinition(varInfo.Definition) {
 		if matched, _ := regexp.MatchString(opts.DestructuredArrayIgnorePattern, varName); matched {
@@ -378,21 +404,19 @@ func shouldIgnoreVariable(varName string, varInfo *VariableInfo, opts Config, al
 		}
 	}
 
-	if forcedUsedNames[varName] {
-		return true
-	}
-	if isIgnoredByRestSibling(varInfo.Definition, opts) {
-		return true
-	}
-	if opts.IgnoreRestSiblings && hasObjectRestSiblingWrite(varName, allWrites) {
-		return true
-	}
-
-	// Check if it's a function parameter and should be ignored
+	// Parameter options should take precedence over varsIgnorePattern.
 	if parameterNode := parameterNodeForDefinition(varInfo.Definition); parameterNode != nil {
 		return shouldIgnoreParameter(varName, varInfo, varInfo.Definition, parameterNode, opts, allUsages, allValueDeclarations, forcedUsedNames)
 	}
 
+	// Check if it matches ignore patterns
+	if opts.VarsIgnorePattern != "" {
+		if matched, _ := regexp.MatchString(opts.VarsIgnorePattern, varName); matched {
+			if !varInfo.Used || !opts.ReportUsedIgnorePattern {
+				return true
+			}
+		}
+	}
 	if exportedNames[varName] && isProgramLevelDefinition(varInfo.Definition) {
 		return true
 	}
@@ -1329,6 +1353,25 @@ func isUsageShadowedByValueDeclaration(usage *ast.Node, definition *ast.Node, na
 	return bestDefinition != definition
 }
 
+func isWriteInNestedFunction(writeNode *ast.Node, definition *ast.Node) bool {
+	if writeNode == nil || definition == nil {
+		return false
+	}
+	definitionScope := valueDeclarationScope(definition)
+	if definitionScope == nil {
+		return false
+	}
+	for current := writeNode.Parent; current != nil; current = current.Parent {
+		if current == definitionScope {
+			return false
+		}
+		if isFunctionLikeNode(current) {
+			return true
+		}
+	}
+	return false
+}
+
 func collectVariableUsages(node *ast.Node, usages map[string][]*ast.Node) {
 	if node == nil {
 		return
@@ -1369,15 +1412,7 @@ func isUsedAssignmentTarget(node *ast.Node) bool {
 	if binaryExpression == nil || !isAssignmentOperator(binaryExpression.OperatorToken.Kind) || binaryExpression.Left != node {
 		return false
 	}
-	consumed := false
-	for current := assignmentExpression.Parent; current != nil; current = current.Parent {
-		if current.Kind == ast.KindParenthesizedExpression {
-			continue
-		}
-		consumed = current.Kind != ast.KindExpressionStatement
-		break
-	}
-	if !consumed {
+	if !isExpressionValueConsumed(assignmentExpression) {
 		return false
 	}
 
@@ -1769,15 +1804,72 @@ func isSelfAssignmentUsage(usage *ast.Node, name string) bool {
 			return true
 		}
 		if functionLikeAncestor := functionLikeAncestorWithin(usage, binaryExpression.Right); functionLikeAncestor != nil {
+			right := unwrapAssignmentTarget(binaryExpression.Right)
+			if right == nil {
+				return false
+			}
 			if functionLikeAncestor.Kind == ast.KindFunctionDeclaration && functionDeclarationHasExternalReference(functionLikeAncestor, binaryExpression.Right) {
 				return false
 			}
 			if isFunctionLikePassedAsArgument(functionLikeAncestor, binaryExpression.Right) {
 				return false
 			}
-			return true
+			if isFunctionLikeWithinCommaExpression(functionLikeAncestor, right) {
+				return true
+			}
+			if right.Kind == ast.KindFunctionExpression || right.Kind == ast.KindArrowFunction {
+				return true
+			}
+			if isFunctionLikeImmediatelyInvoked(functionLikeAncestor, right) {
+				return true
+			}
+			return false
 		}
 		return !isConditionalOrLogicalSelfAssignmentRead(usage, binaryExpression.Right) && !isInLoopContext(current)
+	}
+	return false
+}
+
+func isSelfReferenceInVariableInitializer(usage *ast.Node, definition *ast.Node, name string) bool {
+	if usage == nil || definition == nil || definition.Kind != ast.KindVariableDeclaration || name == "" {
+		return false
+	}
+	variableDeclaration := definition.AsVariableDeclaration()
+	if variableDeclaration == nil || variableDeclaration.Initializer == nil || variableDeclaration.Name() == nil || variableDeclaration.Name().Kind != ast.KindIdentifier {
+		return false
+	}
+	if variableDeclaration.Name().AsIdentifier().Text != name {
+		return false
+	}
+	initializer := variableDeclaration.Initializer
+	if usage == initializer || !isDescendantOf(usage, initializer) {
+		return false
+	}
+	functionLikeAncestor := functionLikeAncestorWithin(usage, initializer)
+	if functionLikeAncestor == nil && isFunctionLikeNode(initializer) {
+		functionLikeAncestor = initializer
+	}
+	if functionLikeAncestor == nil {
+		return false
+	}
+	right := unwrapAssignmentTarget(initializer)
+	if right == nil {
+		return false
+	}
+	if functionLikeAncestor.Kind == ast.KindFunctionDeclaration && functionDeclarationHasExternalReference(functionLikeAncestor, initializer) {
+		return false
+	}
+	if isFunctionLikePassedAsArgument(functionLikeAncestor, initializer) {
+		return false
+	}
+	if isFunctionLikeWithinCommaExpression(functionLikeAncestor, right) {
+		return true
+	}
+	if right.Kind == ast.KindFunctionExpression || right.Kind == ast.KindArrowFunction {
+		return true
+	}
+	if isFunctionLikeImmediatelyInvoked(functionLikeAncestor, right) {
+		return true
 	}
 	return false
 }
@@ -1799,6 +1891,24 @@ func functionLikeAncestorWithin(node *ast.Node, stop *ast.Node) *ast.Node {
 		}
 	}
 	return nil
+}
+
+func isFunctionLikeNode(node *ast.Node) bool {
+	if node == nil {
+		return false
+	}
+	switch node.Kind {
+	case ast.KindFunctionDeclaration,
+		ast.KindFunctionExpression,
+		ast.KindArrowFunction,
+		ast.KindMethodDeclaration,
+		ast.KindConstructor,
+		ast.KindGetAccessor,
+		ast.KindSetAccessor:
+		return true
+	default:
+		return false
+	}
 }
 
 func functionDeclarationHasExternalReference(functionDeclarationNode *ast.Node, stop *ast.Node) bool {
@@ -1893,6 +2003,61 @@ func isFunctionLikePassedAsArgument(functionLikeAncestor *ast.Node, right *ast.N
 				}
 			}
 			return false
+		default:
+			return false
+		}
+	}
+	return false
+}
+
+func isFunctionLikeImmediatelyInvoked(functionLikeAncestor *ast.Node, right *ast.Node) bool {
+	if functionLikeAncestor == nil || right == nil {
+		return false
+	}
+	for current := functionLikeAncestor; current != nil && current != right; current = current.Parent {
+		parent := current.Parent
+		if parent == nil {
+			return false
+		}
+		switch parent.Kind {
+		case ast.KindParenthesizedExpression,
+			ast.KindAsExpression,
+			ast.KindTypeAssertionExpression,
+			ast.KindSatisfiesExpression,
+			ast.KindNonNullExpression:
+			continue
+		case ast.KindCallExpression:
+			callExpression := parent.AsCallExpression()
+			return callExpression != nil && callExpression.Expression != nil && (callExpression.Expression == current || isDescendantOf(current, callExpression.Expression))
+		case ast.KindNewExpression:
+			newExpression := parent.AsNewExpression()
+			return newExpression != nil && newExpression.Expression != nil && (newExpression.Expression == current || isDescendantOf(current, newExpression.Expression))
+		default:
+			return false
+		}
+	}
+	return false
+}
+
+func isFunctionLikeWithinCommaExpression(functionLikeAncestor *ast.Node, right *ast.Node) bool {
+	if functionLikeAncestor == nil || right == nil {
+		return false
+	}
+	for current := functionLikeAncestor; current != nil && current != right; current = current.Parent {
+		parent := current.Parent
+		if parent == nil {
+			return false
+		}
+		switch parent.Kind {
+		case ast.KindParenthesizedExpression,
+			ast.KindAsExpression,
+			ast.KindTypeAssertionExpression,
+			ast.KindSatisfiesExpression,
+			ast.KindNonNullExpression:
+			continue
+		case ast.KindBinaryExpression:
+			binaryExpression := parent.AsBinaryExpression()
+			return binaryExpression != nil && binaryExpression.OperatorToken.Kind == ast.KindCommaToken
 		default:
 			return false
 		}
@@ -2657,6 +2822,9 @@ func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, defi
 			if isSelfAssignmentUsage(usage, name) {
 				continue
 			}
+			if isSelfReferenceInVariableInitializer(usage, definition, name) {
+				continue
+			}
 			if definition != nil && definition.Kind == ast.KindFunctionDeclaration {
 				functionDeclaration := definition.AsFunctionDeclaration()
 				if functionDeclaration != nil && functionDeclaration.Body != nil && isDescendantOf(usage, functionDeclaration.Body) {
@@ -2820,11 +2988,27 @@ func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, defi
 				hasNonDestructuringWrite = true
 				break
 			}
+			hasNonNestedFunctionWrite := false
 			for _, writeNode := range writeNodes {
 				if writeNode == nil {
 					continue
 				}
 				if !hasNonDestructuringWrite && isDestructuringAssignmentWrite(writeNode) {
+					continue
+				}
+				if !isWriteInNestedFunction(writeNode, definition) {
+					hasNonNestedFunctionWrite = true
+					break
+				}
+			}
+			for _, writeNode := range writeNodes {
+				if writeNode == nil {
+					continue
+				}
+				if !hasNonDestructuringWrite && isDestructuringAssignmentWrite(writeNode) {
+					continue
+				}
+				if hasNonNestedFunctionWrite && isWriteInNestedFunction(writeNode, definition) {
 					continue
 				}
 				if reportNode == nil || writeNode.Pos() > reportNode.Pos() {
