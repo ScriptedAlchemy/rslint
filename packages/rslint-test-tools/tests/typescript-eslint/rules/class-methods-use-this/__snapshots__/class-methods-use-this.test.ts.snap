@@ -13,7 +13,7 @@ class Foo {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 14,
+          "column": 10,
           "line": 3,
         },
         "start": {
@@ -43,11 +43,11 @@ class Foo {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 22,
+          "column": 18,
           "line": 3,
         },
         "start": {
-          "column": 3,
+          "column": 11,
           "line": 3,
         },
       },
@@ -73,11 +73,11 @@ class Foo {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 24,
+          "column": 20,
           "line": 3,
         },
         "start": {
-          "column": 3,
+          "column": 13,
           "line": 3,
         },
       },
@@ -103,11 +103,11 @@ class Foo {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 30,
+          "column": 21,
           "line": 3,
         },
         "start": {
-          "column": 3,
+          "column": 12,
           "line": 3,
         },
       },
@@ -133,11 +133,11 @@ class Foo {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 38,
+          "column": 29,
           "line": 3,
         },
         "start": {
-          "column": 3,
+          "column": 20,
           "line": 3,
         },
       },
@@ -163,11 +163,11 @@ class Foo {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 40,
+          "column": 31,
           "line": 3,
         },
         "start": {
-          "column": 3,
+          "column": 22,
           "line": 3,
         },
       },
@@ -193,7 +193,7 @@ class Foo {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 15,
+          "column": 10,
           "line": 3,
         },
         "start": {
@@ -223,7 +223,7 @@ class Foo {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 26,
+          "column": 13,
           "line": 3,
         },
         "start": {
@@ -253,11 +253,11 @@ class Foo {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 34,
+          "column": 21,
           "line": 3,
         },
         "start": {
-          "column": 3,
+          "column": 11,
           "line": 3,
         },
       },
@@ -283,11 +283,11 @@ class Foo {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 36,
+          "column": 23,
           "line": 3,
         },
         "start": {
-          "column": 3,
+          "column": 13,
           "line": 3,
         },
       },
@@ -313,7 +313,7 @@ class Foo {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 27,
+          "column": 14,
           "line": 3,
         },
         "start": {
@@ -343,7 +343,7 @@ class Foo {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 27,
+          "column": 13,
           "line": 3,
         },
         "start": {
@@ -373,11 +373,11 @@ class Foo {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 35,
+          "column": 21,
           "line": 3,
         },
         "start": {
-          "column": 3,
+          "column": 11,
           "line": 3,
         },
       },
@@ -403,11 +403,11 @@ class Foo {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 37,
+          "column": 23,
           "line": 3,
         },
         "start": {
-          "column": 3,
+          "column": 13,
           "line": 3,
         },
       },
@@ -433,7 +433,7 @@ class Foo {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 28,
+          "column": 14,
           "line": 3,
         },
         "start": {
@@ -463,7 +463,7 @@ class Foo implements Bar {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 14,
+          "column": 10,
           "line": 3,
         },
         "start": {
@@ -493,7 +493,7 @@ class Foo implements Bar {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 15,
+          "column": 10,
           "line": 3,
         },
         "start": {
@@ -523,11 +523,11 @@ class Foo implements Bar {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 22,
+          "column": 18,
           "line": 3,
         },
         "start": {
-          "column": 3,
+          "column": 11,
           "line": 3,
         },
       },
@@ -553,11 +553,11 @@ class Foo implements Bar {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 24,
+          "column": 20,
           "line": 3,
         },
         "start": {
-          "column": 3,
+          "column": 13,
           "line": 3,
         },
       },
@@ -583,7 +583,7 @@ class Foo implements Bar {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 26,
+          "column": 13,
           "line": 3,
         },
         "start": {
@@ -613,7 +613,7 @@ class Foo implements Bar {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 27,
+          "column": 14,
           "line": 3,
         },
         "start": {
@@ -643,11 +643,11 @@ class Foo implements Bar {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 34,
+          "column": 21,
           "line": 3,
         },
         "start": {
-          "column": 3,
+          "column": 11,
           "line": 3,
         },
       },
@@ -673,11 +673,11 @@ class Foo implements Bar {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 36,
+          "column": 23,
           "line": 3,
         },
         "start": {
-          "column": 3,
+          "column": 13,
           "line": 3,
         },
       },
@@ -703,7 +703,7 @@ class Foo implements Bar {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 27,
+          "column": 13,
           "line": 3,
         },
         "start": {
@@ -733,7 +733,7 @@ class Foo implements Bar {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 28,
+          "column": 14,
           "line": 3,
         },
         "start": {
@@ -763,11 +763,11 @@ class Foo implements Bar {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 35,
+          "column": 21,
           "line": 3,
         },
         "start": {
-          "column": 3,
+          "column": 11,
           "line": 3,
         },
       },
@@ -793,11 +793,11 @@ class Foo implements Bar {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 37,
+          "column": 23,
           "line": 3,
         },
         "start": {
-          "column": 3,
+          "column": 13,
           "line": 3,
         },
       },
@@ -823,11 +823,11 @@ class Foo {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 23,
+          "column": 19,
           "line": 3,
         },
         "start": {
-          "column": 3,
+          "column": 12,
           "line": 3,
         },
       },
@@ -853,11 +853,11 @@ class Foo {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 35,
+          "column": 22,
           "line": 3,
         },
         "start": {
-          "column": 3,
+          "column": 12,
           "line": 3,
         },
       },
@@ -883,11 +883,11 @@ class Foo {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 36,
+          "column": 22,
           "line": 3,
         },
         "start": {
-          "column": 3,
+          "column": 12,
           "line": 3,
         },
       },
@@ -913,11 +913,11 @@ class Foo implements Bar {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 23,
+          "column": 19,
           "line": 3,
         },
         "start": {
-          "column": 3,
+          "column": 12,
           "line": 3,
         },
       },
@@ -943,11 +943,11 @@ class Foo implements Bar {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 35,
+          "column": 22,
           "line": 3,
         },
         "start": {
-          "column": 3,
+          "column": 12,
           "line": 3,
         },
       },
@@ -973,11 +973,11 @@ class Foo implements Bar {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 36,
+          "column": 22,
           "line": 3,
         },
         "start": {
-          "column": 3,
+          "column": 12,
           "line": 3,
         },
       },
@@ -1003,7 +1003,7 @@ class Foo implements Bar {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 23,
+          "column": 14,
           "line": 3,
         },
         "start": {
@@ -1033,7 +1033,7 @@ class Foo implements Bar {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 24,
+          "column": 15,
           "line": 3,
         },
         "start": {
@@ -1063,11 +1063,11 @@ class Foo {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 32,
+          "column": 23,
           "line": 3,
         },
         "start": {
-          "column": 3,
+          "column": 12,
           "line": 3,
         },
       },
@@ -1093,11 +1093,11 @@ class Foo implements Bar {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 32,
+          "column": 23,
           "line": 3,
         },
         "start": {
-          "column": 3,
+          "column": 12,
           "line": 3,
         },
       },
@@ -1123,11 +1123,11 @@ class Foo implements Bar {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 31,
+          "column": 22,
           "line": 3,
         },
         "start": {
-          "column": 3,
+          "column": 11,
           "line": 3,
         },
       },
@@ -1153,11 +1153,11 @@ class Foo implements Bar {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 33,
+          "column": 24,
           "line": 3,
         },
         "start": {
-          "column": 3,
+          "column": 13,
           "line": 3,
         },
       },
@@ -1187,7 +1187,7 @@ function fn() {
       "messageId": "missingThis",
       "range": {
         "end": {
-          "column": 16,
+          "column": 12,
           "line": 6,
         },
         "start": {

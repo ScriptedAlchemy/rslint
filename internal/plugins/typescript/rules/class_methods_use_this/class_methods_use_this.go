@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/microsoft/typescript-go/shim/ast"
+	"github.com/microsoft/typescript-go/shim/core"
 	"github.com/web-infra-dev/rslint/internal/rule"
 	"github.com/web-infra-dev/rslint/internal/utils"
 )
@@ -175,9 +176,37 @@ func containsThisOrSuper(node *ast.Node) bool {
 			ast.KindMethodDeclaration,
 			ast.KindConstructor,
 			ast.KindGetAccessor,
-			ast.KindSetAccessor,
-			ast.KindClassDeclaration,
-			ast.KindClassExpression:
+			ast.KindSetAccessor:
+			return
+		case ast.KindClassDeclaration, ast.KindClassExpression:
+			heritageClauses := utils.GetHeritageClauses(current)
+			if heritageClauses != nil {
+				for _, heritageClauseNode := range heritageClauses.Nodes {
+					heritageClause := heritageClauseNode.AsHeritageClause()
+					if heritageClause == nil || heritageClause.Types == nil {
+						continue
+					}
+					for _, heritageType := range heritageClause.Types.Nodes {
+						visit(heritageType)
+						if found {
+							return
+						}
+					}
+				}
+			}
+			for _, member := range current.Members() {
+				if member == nil || member.Name() == nil || member.Name().Kind != ast.KindComputedPropertyName {
+					continue
+				}
+				computedName := member.Name().AsComputedPropertyName()
+				if computedName == nil || computedName.Expression == nil {
+					continue
+				}
+				visit(computedName.Expression)
+				if found {
+					return
+				}
+			}
 			return
 		}
 		current.ForEachChild(func(child *ast.Node) bool {
@@ -242,6 +271,107 @@ func shouldIgnoreForImplementsOption(classNode *ast.Node, member *ast.Node, opti
 	return false
 }
 
+func keywordStart(sourceFile *ast.SourceFile, node *ast.Node, keyword string, beforePos int) (int, bool) {
+	if sourceFile == nil || node == nil {
+		return 0, false
+	}
+	text := sourceFile.Text()
+	start := utils.TrimNodeTextRange(sourceFile, node).Pos()
+	if beforePos <= start || beforePos > len(text) {
+		return 0, false
+	}
+	segment := text[start:beforePos]
+	index := strings.Index(segment, keyword)
+	if index < 0 {
+		return 0, false
+	}
+	return start + index, true
+}
+
+func reportRangeForMember(sourceFile *ast.SourceFile, node *ast.Node) (core.TextRange, bool) {
+	if sourceFile == nil || node == nil {
+		return core.NewTextRange(0, 0), false
+	}
+
+	switch node.Kind {
+	case ast.KindMethodDeclaration:
+		methodDecl := node.AsMethodDeclaration()
+		name := node.Name()
+		if name == nil {
+			return core.NewTextRange(0, 0), false
+		}
+		nameRange := utils.TrimNodeTextRange(sourceFile, name)
+		if nameRange.End() <= nameRange.Pos() {
+			return core.NewTextRange(0, 0), false
+		}
+		start := nameRange.Pos()
+		end := nameRange.End()
+		if name.Kind == ast.KindIdentifier {
+			end++
+		}
+		if methodDecl != nil && methodDecl.AsteriskToken != nil {
+			starRange := utils.TrimNodeTextRange(sourceFile, methodDecl.AsteriskToken)
+			if starRange.Pos() < start {
+				start = starRange.Pos()
+			}
+		}
+		return core.NewTextRange(start, end), true
+	case ast.KindGetAccessor:
+		name := node.Name()
+		if name == nil {
+			return core.NewTextRange(0, 0), false
+		}
+		nameRange := utils.TrimNodeTextRange(sourceFile, name)
+		start, ok := keywordStart(sourceFile, node, "get", nameRange.Pos())
+		if !ok {
+			return core.NewTextRange(0, 0), false
+		}
+		return core.NewTextRange(start, nameRange.End()), true
+	case ast.KindSetAccessor:
+		name := node.Name()
+		if name == nil {
+			return core.NewTextRange(0, 0), false
+		}
+		nameRange := utils.TrimNodeTextRange(sourceFile, name)
+		start, ok := keywordStart(sourceFile, node, "set", nameRange.Pos())
+		if !ok {
+			return core.NewTextRange(0, 0), false
+		}
+		return core.NewTextRange(start, nameRange.End()), true
+	case ast.KindPropertyDeclaration:
+		propertyDecl := node.AsPropertyDeclaration()
+		if propertyDecl == nil || propertyDecl.Name() == nil || propertyDecl.Initializer == nil {
+			return core.NewTextRange(0, 0), false
+		}
+		nameRange := utils.TrimNodeTextRange(sourceFile, propertyDecl.Name())
+		if nameRange.End() <= nameRange.Pos() {
+			return core.NewTextRange(0, 0), false
+		}
+		switch propertyDecl.Initializer.Kind {
+		case ast.KindArrowFunction:
+			start := nameRange.Pos()
+			end := propertyDecl.Initializer.Pos() + 1
+			if end > start {
+				return core.NewTextRange(start, end), true
+			}
+		case ast.KindFunctionExpression:
+			functionExpr := propertyDecl.Initializer.AsFunctionExpression()
+			if functionExpr != nil && functionExpr.Parameters != nil {
+				start := nameRange.Pos()
+				end := functionExpr.Parameters.Pos()
+				if end > start {
+					end--
+				}
+				if end > start {
+					return core.NewTextRange(start, end), true
+				}
+			}
+		}
+	}
+
+	return core.NewTextRange(0, 0), false
+}
+
 func checkMember(node *ast.Node, ctx rule.RuleContext, opts classMethodsUseThisOptions) {
 	if node == nil || ast.IsStatic(node) {
 		return
@@ -271,6 +401,10 @@ func checkMember(node *ast.Node, ctx rule.RuleContext, opts classMethodsUseThisO
 		return
 	}
 
+	if reportRange, ok := reportRangeForMember(ctx.SourceFile, node); ok {
+		ctx.ReportRange(reportRange, buildMissingThisMessage())
+		return
+	}
 	ctx.ReportNode(node, buildMissingThisMessage())
 }
 
