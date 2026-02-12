@@ -14,7 +14,7 @@ func TestNamingConventionRule(t *testing.T) {
 		{
 			Code: `class userName {}; const UserName = 1;`,
 			Errors: []rule_tester.InvalidTestCaseError{
-				{MessageId: "doesNotMatchFormat", Line: 1, Column: 1},
+				{MessageId: "doesNotMatchFormat", Line: 1, Column: 7},
 				{MessageId: "doesNotMatchFormat", Line: 1, Column: 26},
 			},
 		},
