@@ -18,7 +18,7 @@ func TestNoUnusedVarsRule(t *testing.T) {
 		{Code: `function foo(bar) {} foo(1);`, Options: map[string]interface{}{"args": "none"}},
 		{Code: `try {} catch (e) {}`, Options: map[string]interface{}{"caughtErrors": "none"}},
 		{Code: `export const foo = 1;`},
-		{Code: `import type { Foo } from "./foo"; const bar: Foo = {};`},
+		{Code: `import type { Foo } from "./foo"; const bar: Foo = {}; console.log(bar);`},
 		{Code: `interface Base {} const a: Base = {}; console.log(a);`},
 		{Code: `interface Foo { bar: string; } export const Foo = "bar";`},
 		{Code: `enum FormFieldIds { PHONE = "phone", EMAIL = "email" } export interface IFoo { fieldName: FormFieldIds; }`},
@@ -47,7 +47,7 @@ func TestNoUnusedVarsRule(t *testing.T) {
 		},
 		{
 			Code:   `let foo = 5; foo = 10;`,
-			Errors: []rule_tester.InvalidTestCaseError{{MessageId: "unusedVar", Line: 1, Column: 5}},
+			Errors: []rule_tester.InvalidTestCaseError{{MessageId: "unusedVar", Line: 1, Column: 14}},
 		},
 		{
 			Code:    `const foo = 1; type Bar = typeof foo;`,

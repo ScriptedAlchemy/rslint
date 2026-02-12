@@ -209,7 +209,7 @@ func isPartOfAssignment(node *ast.Node) bool {
 			return false
 		}
 		// Check if this is the left side of an assignment - assignments should not count as usage
-		if binaryExpr.OperatorToken.Kind == ast.KindEqualsToken && binaryExpr.Left == node {
+		if isAssignmentOperator(binaryExpr.OperatorToken.Kind) && binaryExpr.Left == node {
 			return true
 		}
 	}
@@ -290,7 +290,7 @@ func isAmbientParameter(param *ast.Node) bool {
 		return false
 	}
 	switch param.Parent.Kind {
-	case ast.KindFunctionType, ast.KindCallSignature, ast.KindConstructSignature, ast.KindMethodSignature:
+	case ast.KindFunctionType, ast.KindCallSignature, ast.KindConstructSignature, ast.KindMethodSignature, ast.KindConstructorType, ast.KindIndexSignature:
 		return true
 	}
 
@@ -306,6 +306,12 @@ func isAmbientParameter(param *ast.Node) bool {
 			return true
 		}
 	}
+	if param.Parent.Kind == ast.KindConstructor {
+		constructorDeclaration := param.Parent.AsConstructorDeclaration()
+		if constructorDeclaration != nil && constructorDeclaration.Body == nil {
+			return true
+		}
+	}
 	if param.Parent.Kind == ast.KindMethodDeclaration {
 		methodDeclaration := param.Parent.AsMethodDeclaration()
 		if methodDeclaration != nil && methodDeclaration.Body == nil {
@@ -316,12 +322,26 @@ func isAmbientParameter(param *ast.Node) bool {
 	return false
 }
 
+func isParameterProperty(param *ast.Node) bool {
+	if param == nil || param.Kind != ast.KindParameter {
+		return false
+	}
+	modifierFlags := ast.GetCombinedModifierFlags(param)
+	return modifierFlags&ast.ModifierFlagsPrivate != 0 ||
+		modifierFlags&ast.ModifierFlagsProtected != 0 ||
+		modifierFlags&ast.ModifierFlagsPublic != 0 ||
+		modifierFlags&ast.ModifierFlagsReadonly != 0
+}
+
 func isAmbientDefinition(definition *ast.Node) bool {
 	if definition == nil {
 		return false
 	}
 	if isTypeOnlyDefinition(definition) {
 		return false
+	}
+	if definition.Kind == ast.KindVariableDeclaration {
+		return enclosingDeclareModule(definition) != nil && isInDeclareModuleContext(definition)
 	}
 	for current := definition; current != nil; current = current.Parent {
 		if utils.IncludesModifier(current, ast.KindDeclareKeyword) {
@@ -356,6 +376,9 @@ func isParameterUsed(param *ast.Node, allUsages map[string][]*ast.Node) bool {
 	if param == nil {
 		return false
 	}
+	if isParameterProperty(param) {
+		return true
+	}
 	decl := param.AsParameterDeclaration()
 	if decl == nil || decl.Name() == nil || decl.Name().Kind != ast.KindIdentifier {
 		return true
@@ -377,9 +400,15 @@ func shouldIgnoreParameter(varName string, varInfo *VariableInfo, opts Config, a
 	if varInfo == nil || varInfo.Definition == nil {
 		return false
 	}
+	if varName == "this" {
+		return true
+	}
 	param := varInfo.Definition
 
 	if isAmbientParameter(param) {
+		return true
+	}
+	if isParameterProperty(param) {
 		return true
 	}
 	if param.Parent != nil && param.Parent.Kind == ast.KindSetAccessor {
@@ -438,16 +467,6 @@ func isExported(varInfo *VariableInfo) bool {
 		modifierFlags := ast.GetCombinedModifierFlags(varInfo.Definition)
 		if modifierFlags&ast.ModifierFlagsExport != 0 {
 			return true
-		}
-
-		// Also check parent nodes for export modifiers
-		parent := varInfo.Definition.Parent
-		for parent != nil {
-			modifierFlags := ast.GetCombinedModifierFlags(parent)
-			if modifierFlags&ast.ModifierFlagsExport != 0 {
-				return true
-			}
-			parent = parent.Parent
 		}
 	}
 
@@ -734,6 +753,33 @@ func collectVariableUsages(node *ast.Node, usages map[string][]*ast.Node) {
 	})
 }
 
+func collectVariableWrites(node *ast.Node, writes map[string][]*ast.Node) {
+	if node == nil {
+		return
+	}
+
+	if ast.IsIdentifier(node) {
+		identifier := node.AsIdentifier()
+		if identifier == nil {
+			return
+		}
+		name := identifier.Text
+		if isPartOfAssignment(node) {
+			writes[name] = append(writes[name], node)
+		} else if isPartOfDeclaration(node) && node.Parent != nil && node.Parent.Kind == ast.KindVariableDeclaration {
+			variableDeclaration := node.Parent.AsVariableDeclaration()
+			if variableDeclaration != nil && variableDeclaration.Initializer != nil {
+				writes[name] = append(writes[name], node)
+			}
+		}
+	}
+
+	node.ForEachChild(func(child *ast.Node) bool {
+		collectVariableWrites(child, writes)
+		return false
+	})
+}
+
 func collectValueDeclarations(node *ast.Node, declarations map[string][]*ast.Node) {
 	if node == nil {
 		return
@@ -796,6 +842,42 @@ func collectValueDeclarations(node *ast.Node, declarations map[string][]*ast.Nod
 	})
 }
 
+func collectTypeDeclarations(node *ast.Node, declarations map[string][]*ast.Node) {
+	if node == nil {
+		return
+	}
+
+	addNamed := func(name string) {
+		if name == "" {
+			return
+		}
+		declarations[name] = append(declarations[name], node)
+	}
+
+	switch node.Kind {
+	case ast.KindInterfaceDeclaration:
+		interfaceDeclaration := node.AsInterfaceDeclaration()
+		if interfaceDeclaration != nil && interfaceDeclaration.Name() != nil {
+			addNamed(interfaceDeclaration.Name().Text())
+		}
+	case ast.KindTypeAliasDeclaration:
+		typeAliasDeclaration := node.AsTypeAliasDeclaration()
+		if typeAliasDeclaration != nil && typeAliasDeclaration.Name() != nil {
+			addNamed(typeAliasDeclaration.Name().Text())
+		}
+	case ast.KindEnumDeclaration:
+		enumDeclaration := node.AsEnumDeclaration()
+		if enumDeclaration != nil && enumDeclaration.Name() != nil && enumDeclaration.Name().Kind == ast.KindIdentifier {
+			addNamed(enumDeclaration.Name().AsIdentifier().Text)
+		}
+	}
+
+	node.ForEachChild(func(child *ast.Node) bool {
+		collectTypeDeclarations(child, declarations)
+		return false
+	})
+}
+
 func hasOtherValueDeclaration(name string, definition *ast.Node, declarations map[string][]*ast.Node) bool {
 	if name == "" {
 		return false
@@ -806,6 +888,154 @@ func hasOtherValueDeclaration(name string, definition *ast.Node, declarations ma
 		}
 	}
 	return false
+}
+
+func hasEarlierTypeDeclaration(name string, definition *ast.Node, declarations map[string][]*ast.Node) bool {
+	if name == "" || definition == nil {
+		return false
+	}
+	for _, declNode := range declarations[name] {
+		if declNode == nil || declNode == definition || declNode.Kind != definition.Kind {
+			continue
+		}
+		if declNode.Pos() < definition.Pos() {
+			return true
+		}
+	}
+	return false
+}
+
+func declarationNameText(node *ast.Node) string {
+	if node == nil {
+		return ""
+	}
+	switch node.Kind {
+	case ast.KindInterfaceDeclaration:
+		interfaceDeclaration := node.AsInterfaceDeclaration()
+		if interfaceDeclaration != nil && interfaceDeclaration.Name() != nil {
+			return interfaceDeclaration.Name().Text()
+		}
+	case ast.KindTypeAliasDeclaration:
+		typeAliasDeclaration := node.AsTypeAliasDeclaration()
+		if typeAliasDeclaration != nil && typeAliasDeclaration.Name() != nil {
+			return typeAliasDeclaration.Name().Text()
+		}
+	case ast.KindEnumDeclaration:
+		enumDeclaration := node.AsEnumDeclaration()
+		if enumDeclaration != nil && enumDeclaration.Name() != nil && enumDeclaration.Name().Kind == ast.KindIdentifier {
+			return enumDeclaration.Name().AsIdentifier().Text
+		}
+	case ast.KindModuleDeclaration:
+		moduleDeclaration := node.AsModuleDeclaration()
+		if moduleDeclaration != nil && moduleDeclaration.Name() != nil && moduleDeclaration.Name().Kind == ast.KindIdentifier {
+			return moduleDeclaration.Name().AsIdentifier().Text
+		}
+	}
+	return ""
+}
+
+func usageInSameNamedTypeDeclaration(usage *ast.Node, definition *ast.Node, name string) bool {
+	if usage == nil || definition == nil || name == "" {
+		return false
+	}
+	for current := usage.Parent; current != nil; current = current.Parent {
+		if !isTypeOnlyDefinition(current) {
+			continue
+		}
+		if declarationNameText(current) != name {
+			continue
+		}
+		return current != definition
+	}
+	return false
+}
+
+func isAssignmentOperator(kind ast.Kind) bool {
+	switch kind {
+	case ast.KindEqualsToken,
+		ast.KindPlusEqualsToken,
+		ast.KindMinusEqualsToken,
+		ast.KindAsteriskEqualsToken,
+		ast.KindSlashEqualsToken,
+		ast.KindPercentEqualsToken,
+		ast.KindAsteriskAsteriskEqualsToken,
+		ast.KindAmpersandEqualsToken,
+		ast.KindBarEqualsToken,
+		ast.KindCaretEqualsToken,
+		ast.KindLessThanLessThanEqualsToken,
+		ast.KindGreaterThanGreaterThanEqualsToken,
+		ast.KindGreaterThanGreaterThanGreaterThanEqualsToken:
+		return true
+	default:
+		return false
+	}
+}
+
+func isSelfAssignmentUsage(usage *ast.Node, name string) bool {
+	if usage == nil || name == "" {
+		return false
+	}
+	for current := usage.Parent; current != nil; current = current.Parent {
+		if current.Kind != ast.KindBinaryExpression {
+			continue
+		}
+		binaryExpression := current.AsBinaryExpression()
+		if binaryExpression == nil || !isAssignmentOperator(binaryExpression.OperatorToken.Kind) {
+			continue
+		}
+		if binaryExpression.Left == nil || binaryExpression.Left.Kind != ast.KindIdentifier {
+			return false
+		}
+		if binaryExpression.Left.AsIdentifier().Text != name {
+			return false
+		}
+		return binaryExpression.Left != usage
+	}
+	return false
+}
+
+func functionLikeBodyNode(node *ast.Node) *ast.Node {
+	if node == nil {
+		return nil
+	}
+	switch node.Kind {
+	case ast.KindFunctionDeclaration:
+		functionDeclaration := node.AsFunctionDeclaration()
+		if functionDeclaration != nil {
+			return functionDeclaration.Body
+		}
+	case ast.KindFunctionExpression:
+		functionExpression := node.AsFunctionExpression()
+		if functionExpression != nil {
+			return functionExpression.Body
+		}
+	case ast.KindMethodDeclaration:
+		methodDeclaration := node.AsMethodDeclaration()
+		if methodDeclaration != nil {
+			return methodDeclaration.Body
+		}
+	case ast.KindConstructor:
+		constructorDeclaration := node.AsConstructorDeclaration()
+		if constructorDeclaration != nil {
+			return constructorDeclaration.Body
+		}
+	case ast.KindGetAccessor:
+		getAccessorDeclaration := node.AsGetAccessorDeclaration()
+		if getAccessorDeclaration != nil {
+			return getAccessorDeclaration.Body
+		}
+	case ast.KindSetAccessor:
+		setAccessorDeclaration := node.AsSetAccessorDeclaration()
+		if setAccessorDeclaration != nil {
+			return setAccessorDeclaration.Body
+		}
+	case ast.KindArrowFunction:
+		arrowFunction := node.AsArrowFunction()
+		if arrowFunction != nil {
+			return arrowFunction.Body
+		}
+	}
+	return nil
 }
 
 func sourceFileHasJSX(root *ast.Node) bool {
@@ -966,6 +1196,43 @@ func moduleHasInnerSameNameDeclaration(moduleNode *ast.Node, name string) bool {
 	return false
 }
 
+func hasOwnExportModifier(definition *ast.Node) bool {
+	if definition == nil {
+		return false
+	}
+	return ast.GetCombinedModifierFlags(definition)&ast.ModifierFlagsExport != 0
+}
+
+func isDottedNamespaceContinuation(ctx rule.RuleContext, node *ast.Node) bool {
+	if node == nil || node.Parent == nil || node.Parent.Kind != ast.KindModuleDeclaration {
+		return false
+	}
+	parent := node.Parent.AsModuleDeclaration()
+	if parent == nil || parent.Name() == nil {
+		return false
+	}
+	start := parent.Name().End()
+	end := node.Pos()
+	sourceText := ctx.SourceFile.Text()
+	if start < 0 || end < 0 || end < start || end > len(sourceText) {
+		return false
+	}
+	return strings.Contains(sourceText[start:end], ".")
+}
+
+func isDottedNamespaceContainer(ctx rule.RuleContext, node *ast.Node, moduleDeclaration *ast.ModuleDeclaration) bool {
+	if node == nil || moduleDeclaration == nil || moduleDeclaration.Name() == nil || moduleDeclaration.Body == nil || moduleDeclaration.Body.Kind != ast.KindModuleDeclaration {
+		return false
+	}
+	start := moduleDeclaration.Name().End()
+	end := moduleDeclaration.Body.Pos()
+	sourceText := ctx.SourceFile.Text()
+	if start < 0 || end < 0 || end < start || end > len(sourceText) {
+		return false
+	}
+	return strings.Contains(sourceText[start:end], ".")
+}
+
 func isInDeclareModuleContext(node *ast.Node) bool {
 	for current := node; current != nil; current = current.Parent {
 		if current.Kind == ast.KindModuleDeclaration && utils.IncludesModifier(current, ast.KindDeclareKeyword) {
@@ -975,7 +1242,7 @@ func isInDeclareModuleContext(node *ast.Node) bool {
 	return false
 }
 
-func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, definition *ast.Node, opts Config, allUsages map[string][]*ast.Node, allValueDeclarations map[string][]*ast.Node, sourceHasJSX bool) {
+func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, definition *ast.Node, opts Config, allUsages map[string][]*ast.Node, allWrites map[string][]*ast.Node, allValueDeclarations map[string][]*ast.Node, allTypeDeclarations map[string][]*ast.Node, sourceHasJSX bool) {
 	if nameNode == nil || name == "" {
 		return
 	}
@@ -987,15 +1254,6 @@ func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, defi
 		OnlyUsedAsType: false,
 		References:     []*ast.Node{},
 		Definition:     definition,
-	}
-
-	// Check if variable has a type annotation (makes it implicitly "used")
-	hasTypeAnnotation := false
-	if definition != nil && definition.Kind == ast.KindVariableDeclaration {
-		varDecl := definition.AsVariableDeclaration()
-		if varDecl != nil && varDecl.Type != nil {
-			hasTypeAnnotation = true
-		}
 	}
 
 	// Check if this variable is used
@@ -1016,6 +1274,25 @@ func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, defi
 				if moduleHasInnerShadow || !isInTypeContext(usage) {
 					continue
 				}
+			}
+			if definition != nil && definition.Kind == ast.KindParameter {
+				if definition.Parent == nil || !isDescendantOf(usage, definition.Parent) {
+					continue
+				}
+				bodyNode := functionLikeBodyNode(definition.Parent)
+				if bodyNode != nil {
+					if usage != bodyNode && !isDescendantOf(usage, bodyNode) {
+						continue
+					}
+				} else if usage.Pos() <= definition.End() {
+					continue
+				}
+			}
+			if isSelfAssignmentUsage(usage, name) {
+				continue
+			}
+			if isTypeOnlyDefinition(definition) && usageInSameNamedTypeDeclaration(usage, definition, name) {
+				continue
 			}
 			if isTypeOnlyDefinition(definition) && (definition == nil || definition.Kind != ast.KindModuleDeclaration) && isDescendantOf(usage, definition) {
 				continue
@@ -1045,11 +1322,6 @@ func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, defi
 		}
 	}
 
-	// If variable has type annotation, consider it used
-	if hasTypeAnnotation {
-		varInfo.Used = true
-		varInfo.OnlyUsedAsType = false
-	}
 	if !varInfo.Used && isTypeOnlyDefinition(definition) && (definition == nil || definition.Kind != ast.KindModuleDeclaration) && hasOtherValueDeclaration(name, definition, allValueDeclarations) {
 		varInfo.Used = true
 		varInfo.OnlyUsedAsType = false
@@ -1075,6 +1347,10 @@ func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, defi
 		if isExported(varInfo) {
 			return
 		}
+	} else {
+		if hasOwnExportModifier(definition) {
+			return
+		}
 	}
 
 	if !varInfo.Used && isTypeOnlyDefinition(definition) {
@@ -1098,8 +1374,25 @@ func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, defi
 		// Variable is only used in type contexts
 		ctx.ReportNode(varInfo.Variable, buildUsedOnlyAsTypeMessage(name))
 	} else if !varInfo.Used {
+		if isTypeOnlyDefinition(definition) && hasEarlierTypeDeclaration(name, definition, allTypeDeclarations) {
+			return
+		}
+		reportNode := varInfo.Variable
+		if writeNodes, ok := allWrites[name]; ok {
+			for _, writeNode := range writeNodes {
+				if writeNode == nil {
+					continue
+				}
+				if reportNode == nil || writeNode.Pos() > reportNode.Pos() {
+					reportNode = writeNode
+				}
+			}
+		}
+		if reportNode == nil {
+			reportNode = varInfo.Variable
+		}
 		// Variable is not used at all
-		ctx.ReportNode(varInfo.Variable, buildUnusedVarMessage(name))
+		ctx.ReportNode(reportNode, buildUnusedVarMessage(name))
 	} else if varInfo.Used && opts.ReportUsedIgnorePattern {
 		// Check if used but matches ignore pattern and should be reported
 		if opts.VarsIgnorePattern != "" {
@@ -1117,7 +1410,9 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 
 		// We need to collect all variable usages once per source file
 		allUsages := make(map[string][]*ast.Node)
+		allWrites := make(map[string][]*ast.Node)
 		allValueDeclarations := make(map[string][]*ast.Node)
+		allTypeDeclarations := make(map[string][]*ast.Node)
 		collected := false
 		sourceHasJSX := false
 
@@ -1149,12 +1444,14 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 					if !collected {
 						sourceFile := getRootSourceFile(node)
 						collectVariableUsages(sourceFile, allUsages)
+						collectVariableWrites(sourceFile, allWrites)
 						collectValueDeclarations(sourceFile, allValueDeclarations)
+						collectTypeDeclarations(sourceFile, allTypeDeclarations)
 						sourceHasJSX = sourceFileHasJSX(sourceFile)
 						collected = true
 					}
 
-					processVariable(ctx, nameNode, name, node, opts, allUsages, allValueDeclarations, sourceHasJSX)
+					processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, sourceHasJSX)
 				}
 			},
 
@@ -1176,12 +1473,14 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 					if !collected {
 						sourceFile := getRootSourceFile(node)
 						collectVariableUsages(sourceFile, allUsages)
+						collectVariableWrites(sourceFile, allWrites)
 						collectValueDeclarations(sourceFile, allValueDeclarations)
+						collectTypeDeclarations(sourceFile, allTypeDeclarations)
 						sourceHasJSX = sourceFileHasJSX(sourceFile)
 						collected = true
 					}
 
-					processVariable(ctx, nameNode, name, node, opts, allUsages, allValueDeclarations, sourceHasJSX)
+					processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, sourceHasJSX)
 				}
 			},
 
@@ -1203,12 +1502,14 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 					if !collected {
 						sourceFile := getRootSourceFile(node)
 						collectVariableUsages(sourceFile, allUsages)
+						collectVariableWrites(sourceFile, allWrites)
 						collectValueDeclarations(sourceFile, allValueDeclarations)
+						collectTypeDeclarations(sourceFile, allTypeDeclarations)
 						sourceHasJSX = sourceFileHasJSX(sourceFile)
 						collected = true
 					}
 
-					processVariable(ctx, nameNode, name, node, opts, allUsages, allValueDeclarations, sourceHasJSX)
+					processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, sourceHasJSX)
 				}
 			},
 
@@ -1230,12 +1531,14 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 					if !collected {
 						sourceFile := getRootSourceFile(node)
 						collectVariableUsages(sourceFile, allUsages)
+						collectVariableWrites(sourceFile, allWrites)
 						collectValueDeclarations(sourceFile, allValueDeclarations)
+						collectTypeDeclarations(sourceFile, allTypeDeclarations)
 						sourceHasJSX = sourceFileHasJSX(sourceFile)
 						collected = true
 					}
 
-					processVariable(ctx, nameNode, name, nameNode, opts, allUsages, allValueDeclarations, sourceHasJSX)
+					processVariable(ctx, nameNode, name, nameNode, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, sourceHasJSX)
 				}
 			},
 
@@ -1249,11 +1552,13 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 				if !collected {
 					sourceFile := getRootSourceFile(node)
 					collectVariableUsages(sourceFile, allUsages)
+					collectVariableWrites(sourceFile, allWrites)
 					collectValueDeclarations(sourceFile, allValueDeclarations)
+					collectTypeDeclarations(sourceFile, allTypeDeclarations)
 					sourceHasJSX = sourceFileHasJSX(sourceFile)
 					collected = true
 				}
-				processVariable(ctx, nameNode, name, node, opts, allUsages, allValueDeclarations, sourceHasJSX)
+				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, sourceHasJSX)
 			},
 
 			ast.KindImportSpecifier: func(node *ast.Node) {
@@ -1266,11 +1571,13 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 				if !collected {
 					sourceFile := getRootSourceFile(node)
 					collectVariableUsages(sourceFile, allUsages)
+					collectVariableWrites(sourceFile, allWrites)
 					collectValueDeclarations(sourceFile, allValueDeclarations)
+					collectTypeDeclarations(sourceFile, allTypeDeclarations)
 					sourceHasJSX = sourceFileHasJSX(sourceFile)
 					collected = true
 				}
-				processVariable(ctx, nameNode, name, node, opts, allUsages, allValueDeclarations, sourceHasJSX)
+				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, sourceHasJSX)
 			},
 
 			ast.KindNamespaceImport: func(node *ast.Node) {
@@ -1283,11 +1590,32 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 				if !collected {
 					sourceFile := getRootSourceFile(node)
 					collectVariableUsages(sourceFile, allUsages)
+					collectVariableWrites(sourceFile, allWrites)
 					collectValueDeclarations(sourceFile, allValueDeclarations)
+					collectTypeDeclarations(sourceFile, allTypeDeclarations)
 					sourceHasJSX = sourceFileHasJSX(sourceFile)
 					collected = true
 				}
-				processVariable(ctx, nameNode, name, node, opts, allUsages, allValueDeclarations, sourceHasJSX)
+				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, sourceHasJSX)
+			},
+
+			ast.KindImportEqualsDeclaration: func(node *ast.Node) {
+				importEqualsDeclaration := node.AsImportEqualsDeclaration()
+				if importEqualsDeclaration == nil || importEqualsDeclaration.Name() == nil {
+					return
+				}
+				nameNode := importEqualsDeclaration.Name()
+				name := importEqualsDeclaration.Name().Text()
+				if !collected {
+					sourceFile := getRootSourceFile(node)
+					collectVariableUsages(sourceFile, allUsages)
+					collectVariableWrites(sourceFile, allWrites)
+					collectValueDeclarations(sourceFile, allValueDeclarations)
+					collectTypeDeclarations(sourceFile, allTypeDeclarations)
+					sourceHasJSX = sourceFileHasJSX(sourceFile)
+					collected = true
+				}
+				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, sourceHasJSX)
 			},
 
 			ast.KindEnumDeclaration: func(node *ast.Node) {
@@ -1300,11 +1628,13 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 				if !collected {
 					sourceFile := getRootSourceFile(node)
 					collectVariableUsages(sourceFile, allUsages)
+					collectVariableWrites(sourceFile, allWrites)
 					collectValueDeclarations(sourceFile, allValueDeclarations)
+					collectTypeDeclarations(sourceFile, allTypeDeclarations)
 					sourceHasJSX = sourceFileHasJSX(sourceFile)
 					collected = true
 				}
-				processVariable(ctx, nameNode, name, node, opts, allUsages, allValueDeclarations, sourceHasJSX)
+				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, sourceHasJSX)
 			},
 
 			ast.KindClassDeclaration: func(node *ast.Node) {
@@ -1317,11 +1647,13 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 				if !collected {
 					sourceFile := getRootSourceFile(node)
 					collectVariableUsages(sourceFile, allUsages)
+					collectVariableWrites(sourceFile, allWrites)
 					collectValueDeclarations(sourceFile, allValueDeclarations)
+					collectTypeDeclarations(sourceFile, allTypeDeclarations)
 					sourceHasJSX = sourceFileHasJSX(sourceFile)
 					collected = true
 				}
-				processVariable(ctx, nameNode, name, node, opts, allUsages, allValueDeclarations, sourceHasJSX)
+				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, sourceHasJSX)
 			},
 
 			ast.KindInterfaceDeclaration: func(node *ast.Node) {
@@ -1334,11 +1666,13 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 				if !collected {
 					sourceFile := getRootSourceFile(node)
 					collectVariableUsages(sourceFile, allUsages)
+					collectVariableWrites(sourceFile, allWrites)
 					collectValueDeclarations(sourceFile, allValueDeclarations)
+					collectTypeDeclarations(sourceFile, allTypeDeclarations)
 					sourceHasJSX = sourceFileHasJSX(sourceFile)
 					collected = true
 				}
-				processVariable(ctx, nameNode, name, node, opts, allUsages, allValueDeclarations, sourceHasJSX)
+				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, sourceHasJSX)
 			},
 
 			ast.KindTypeAliasDeclaration: func(node *ast.Node) {
@@ -1351,11 +1685,13 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 				if !collected {
 					sourceFile := getRootSourceFile(node)
 					collectVariableUsages(sourceFile, allUsages)
+					collectVariableWrites(sourceFile, allWrites)
 					collectValueDeclarations(sourceFile, allValueDeclarations)
+					collectTypeDeclarations(sourceFile, allTypeDeclarations)
 					sourceHasJSX = sourceFileHasJSX(sourceFile)
 					collected = true
 				}
-				processVariable(ctx, nameNode, name, node, opts, allUsages, allValueDeclarations, sourceHasJSX)
+				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, sourceHasJSX)
 			},
 
 			ast.KindModuleDeclaration: func(node *ast.Node) {
@@ -1363,10 +1699,10 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 				if moduleDeclaration == nil || moduleDeclaration.Name() == nil || moduleDeclaration.Name().Kind != ast.KindIdentifier {
 					return
 				}
-				if node.Parent != nil && node.Parent.Kind == ast.KindModuleDeclaration {
+				if isDottedNamespaceContainer(ctx, node, moduleDeclaration) {
 					return
 				}
-				if moduleDeclaration.Body != nil && moduleDeclaration.Body.Kind == ast.KindModuleDeclaration {
+				if isDottedNamespaceContinuation(ctx, node) {
 					return
 				}
 				nameNode := moduleDeclaration.Name()
@@ -1375,10 +1711,11 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 					sourceFile := getRootSourceFile(node)
 					collectVariableUsages(sourceFile, allUsages)
 					collectValueDeclarations(sourceFile, allValueDeclarations)
+					collectTypeDeclarations(sourceFile, allTypeDeclarations)
 					sourceHasJSX = sourceFileHasJSX(sourceFile)
 					collected = true
 				}
-				processVariable(ctx, nameNode, name, node, opts, allUsages, allValueDeclarations, sourceHasJSX)
+				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, sourceHasJSX)
 			},
 		}
 	},
