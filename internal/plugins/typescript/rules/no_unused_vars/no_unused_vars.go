@@ -1159,6 +1159,56 @@ func moduleDeclarationHasExportMarker(node *ast.Node) bool {
 				continue
 			}
 			return true
+		case ast.KindModuleDeclaration:
+			if moduleDeclarationHasExportMarker(statement) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func moduleDeclarationHasOwnExportMarker(node *ast.Node) bool {
+	if node == nil || node.Kind != ast.KindModuleDeclaration {
+		return false
+	}
+	moduleDeclaration := node.AsModuleDeclaration()
+	if moduleDeclaration == nil || moduleDeclaration.Body == nil || moduleDeclaration.Body.Kind != ast.KindModuleBlock {
+		return false
+	}
+	moduleBlock := moduleDeclaration.Body.AsModuleBlock()
+	if moduleBlock == nil || moduleBlock.Statements == nil {
+		return false
+	}
+	for _, statement := range moduleBlock.Statements.Nodes {
+		if statement == nil {
+			continue
+		}
+		if statement.Kind == ast.KindExportAssignment || statement.Kind == ast.KindExportDeclaration {
+			return true
+		}
+	}
+	return false
+}
+
+func moduleDeclarationHasDirectNestedNamespaceWithValues(node *ast.Node) bool {
+	if node == nil || node.Kind != ast.KindModuleDeclaration {
+		return false
+	}
+	moduleDeclaration := node.AsModuleDeclaration()
+	if moduleDeclaration == nil || moduleDeclaration.Body == nil || moduleDeclaration.Body.Kind != ast.KindModuleBlock {
+		return false
+	}
+	moduleBlock := moduleDeclaration.Body.AsModuleBlock()
+	if moduleBlock == nil || moduleBlock.Statements == nil {
+		return false
+	}
+	for _, statement := range moduleBlock.Statements.Nodes {
+		if statement == nil || statement.Kind != ast.KindModuleDeclaration {
+			continue
+		}
+		if moduleDeclarationHasValueStatements(statement) {
+			return true
 		}
 	}
 	return false
@@ -1313,6 +1363,28 @@ func hasOwnDeclareVariableModifier(definition *ast.Node) bool {
 	return utils.IncludesModifier(variableStatement, ast.KindDeclareKeyword)
 }
 
+func isTypeDeclarationMergedWithExportedNamespace(definition *ast.Node, name string) bool {
+	if definition == nil || name == "" {
+		return false
+	}
+	for current := definition.Parent; current != nil; current = current.Parent {
+		if current.Kind != ast.KindModuleDeclaration {
+			continue
+		}
+		moduleDeclaration := current.AsModuleDeclaration()
+		if moduleDeclaration == nil || moduleDeclaration.Name() == nil || moduleDeclaration.Name().Kind != ast.KindIdentifier {
+			continue
+		}
+		if moduleDeclaration.Name().AsIdentifier().Text != name {
+			continue
+		}
+		if hasOwnExportModifier(current) {
+			return true
+		}
+	}
+	return false
+}
+
 func isTopLevelVariableDeclaration(definition *ast.Node) bool {
 	if definition == nil || definition.Kind != ast.KindVariableDeclaration || definition.Parent == nil {
 		return false
@@ -1449,6 +1521,10 @@ func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, defi
 		varInfo.Used = true
 		varInfo.OnlyUsedAsType = false
 	}
+	if !varInfo.Used && isTypeOnlyDefinition(definition) && isTypeDeclarationMergedWithExportedNamespace(definition, name) {
+		varInfo.Used = true
+		varInfo.OnlyUsedAsType = false
+	}
 	if !varInfo.Used && isJSXPragmaImportUsed(ctx, definition, name, sourceHasJSX) {
 		varInfo.Used = true
 		varInfo.OnlyUsedAsType = false
@@ -1475,8 +1551,18 @@ func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, defi
 			return
 		}
 	}
+	if ctx.SourceFile != nil && ctx.SourceFile.IsDeclarationFile && isTypeOnlyDefinition(definition) {
+		enclosingModule := enclosingModuleDeclaration(definition)
+		if enclosingModule != nil {
+			if !moduleDeclarationHasExportMarker(enclosingModule) {
+				return
+			}
+		} else if !sourceFileHasExportMarker(ctx.SourceFile) {
+			return
+		}
+	}
 	if isAmbientDefinition(definition) {
-		if definition != nil && hasOwnDeclareModifier(definition) && ctx.SourceFile != nil && !ctx.SourceFile.IsDeclarationFile && sourceFileHasExportMarker(ctx.SourceFile) {
+		if definition != nil && hasOwnDeclareModifier(definition) && ctx.SourceFile != nil && sourceFileHasExportMarker(ctx.SourceFile) {
 			// In source modules that explicitly export, declare'd values are still tracked.
 		} else {
 			return
@@ -1486,8 +1572,17 @@ func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, defi
 		if hasOwnDeclareModifier(definition) {
 			return
 		}
-		parentModule := parentModuleDeclaration(definition)
-		if parentModule == nil || !moduleDeclarationHasExportMarker(parentModule) {
+		if moduleDeclarationHasOwnExportMarker(definition) {
+			if moduleDeclarationHasDirectNestedNamespaceWithValues(definition) {
+				return
+			}
+		} else {
+			parentModule := parentModuleDeclaration(definition)
+			if parentModule == nil || !moduleDeclarationHasOwnExportMarker(parentModule) || !moduleDeclarationHasValueStatements(definition) {
+				return
+			}
+		}
+		if !moduleDeclarationHasValueStatements(definition) {
 			return
 		}
 	}
@@ -1505,7 +1600,7 @@ func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, defi
 
 	if !varInfo.Used && isTypeOnlyDefinition(definition) {
 		declareModule := enclosingDeclareModule(definition)
-		if declareModule != nil && !moduleDeclarationHasValueStatements(declareModule) {
+		if declareModule != nil && !moduleDeclarationHasExportMarker(declareModule) {
 			return
 		}
 	}
