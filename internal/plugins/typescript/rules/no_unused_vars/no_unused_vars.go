@@ -390,7 +390,7 @@ func shouldIgnoreVariable(varName string, varInfo *VariableInfo, opts Config, al
 
 	// Check if it's a function parameter and should be ignored
 	if parameterNode := parameterNodeForDefinition(varInfo.Definition); parameterNode != nil {
-		return shouldIgnoreParameter(varName, varInfo, parameterNode, opts, allUsages, allValueDeclarations, forcedUsedNames)
+		return shouldIgnoreParameter(varName, varInfo, varInfo.Definition, parameterNode, opts, allUsages, allValueDeclarations, forcedUsedNames)
 	}
 
 	if exportedNames[varName] && isProgramLevelDefinition(varInfo.Definition) {
@@ -813,7 +813,7 @@ func isParameterUsed(param *ast.Node, allUsages map[string][]*ast.Node, allValue
 	return false
 }
 
-func shouldIgnoreParameter(varName string, varInfo *VariableInfo, param *ast.Node, opts Config, allUsages map[string][]*ast.Node, allValueDeclarations map[string][]*ast.Node, forcedUsedNames map[string]bool) bool {
+func shouldIgnoreParameter(varName string, varInfo *VariableInfo, definition *ast.Node, param *ast.Node, opts Config, allUsages map[string][]*ast.Node, allValueDeclarations map[string][]*ast.Node, forcedUsedNames map[string]bool) bool {
 	if varInfo == nil || param == nil {
 		return false
 	}
@@ -843,7 +843,7 @@ func shouldIgnoreParameter(varName string, varInfo *VariableInfo, param *ast.Nod
 
 	if opts.Args == "after-used" {
 		index, params := parameterIndexInParent(param)
-		if index >= 0 {
+		if index >= 0 && (definition == nil || definition.Kind != ast.KindBindingElement) {
 			lastUsedIndex := -1
 			for idx, sibling := range params {
 				if isParameterUsed(sibling, allUsages, allValueDeclarations, forcedUsedNames) {
@@ -1769,6 +1769,9 @@ func isSelfAssignmentUsage(usage *ast.Node, name string) bool {
 			return true
 		}
 		if functionLikeAncestor := functionLikeAncestorWithin(usage, binaryExpression.Right); functionLikeAncestor != nil {
+			if functionLikeAncestor.Kind == ast.KindFunctionDeclaration && functionDeclarationHasExternalReference(functionLikeAncestor, binaryExpression.Right) {
+				return false
+			}
 			if isFunctionLikePassedAsArgument(functionLikeAncestor, binaryExpression.Right) {
 				return false
 			}
@@ -1796,6 +1799,44 @@ func functionLikeAncestorWithin(node *ast.Node, stop *ast.Node) *ast.Node {
 		}
 	}
 	return nil
+}
+
+func functionDeclarationHasExternalReference(functionDeclarationNode *ast.Node, stop *ast.Node) bool {
+	if functionDeclarationNode == nil || stop == nil || functionDeclarationNode.Kind != ast.KindFunctionDeclaration {
+		return false
+	}
+	functionDeclaration := functionDeclarationNode.AsFunctionDeclaration()
+	if functionDeclaration == nil || functionDeclaration.Name() == nil || functionDeclaration.Name().Kind != ast.KindIdentifier {
+		return false
+	}
+	name := functionDeclaration.Name().AsIdentifier().Text
+	if name == "" {
+		return false
+	}
+	found := false
+	var visit func(node *ast.Node)
+	visit = func(node *ast.Node) {
+		if node == nil || found {
+			return
+		}
+		if node.Kind == ast.KindIdentifier {
+			identifier := node.AsIdentifier()
+			if identifier != nil && identifier.Text == name {
+				if functionDeclaration.Name() == nil || node.Pos() != functionDeclaration.Name().Pos() {
+					if !isPartOfDeclaration(node) {
+						found = true
+						return
+					}
+				}
+			}
+		}
+		node.ForEachChild(func(child *ast.Node) bool {
+			visit(child)
+			return found
+		})
+	}
+	visit(stop)
+	return found
 }
 
 func isFunctionLikePassedAsArgument(functionLikeAncestor *ast.Node, right *ast.Node) bool {
