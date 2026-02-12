@@ -966,6 +966,15 @@ func moduleHasInnerSameNameDeclaration(moduleNode *ast.Node, name string) bool {
 	return false
 }
 
+func isInDeclareModuleContext(node *ast.Node) bool {
+	for current := node; current != nil; current = current.Parent {
+		if current.Kind == ast.KindModuleDeclaration && utils.IncludesModifier(current, ast.KindDeclareKeyword) {
+			return true
+		}
+	}
+	return false
+}
+
 func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, definition *ast.Node, opts Config, allUsages map[string][]*ast.Node, allValueDeclarations map[string][]*ast.Node, sourceHasJSX bool) {
 	if nameNode == nil || name == "" {
 		return
@@ -1003,8 +1012,10 @@ func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, defi
 			if varInfo.Variable != nil && usage.Pos() == varInfo.Variable.Pos() {
 				continue
 			}
-			if definition != nil && definition.Kind == ast.KindModuleDeclaration && moduleHasInnerShadow && isDescendantOf(usage, definition) {
-				continue
+			if definition != nil && definition.Kind == ast.KindModuleDeclaration && isDescendantOf(usage, definition) {
+				if moduleHasInnerShadow || !isInTypeContext(usage) {
+					continue
+				}
 			}
 			if isTypeOnlyDefinition(definition) && (definition == nil || definition.Kind != ast.KindModuleDeclaration) && isDescendantOf(usage, definition) {
 				continue
@@ -1053,6 +1064,9 @@ func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, defi
 		return
 	}
 	if isAmbientDefinition(definition) {
+		return
+	}
+	if definition != nil && definition.Kind == ast.KindModuleDeclaration && isInDeclareModuleContext(definition) {
 		return
 	}
 
