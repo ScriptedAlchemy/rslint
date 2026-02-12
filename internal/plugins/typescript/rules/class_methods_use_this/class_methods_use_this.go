@@ -1,6 +1,8 @@
 package class_methods_use_this
 
 import (
+	"strings"
+
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/web-infra-dev/rslint/internal/rule"
 	"github.com/web-infra-dev/rslint/internal/utils"
@@ -82,7 +84,11 @@ func getMemberName(node *ast.Node) string {
 	case ast.KindIdentifier:
 		return nameNode.AsIdentifier().Text
 	case ast.KindPrivateIdentifier:
-		return "#" + nameNode.AsPrivateIdentifier().Text
+		privateName := nameNode.AsPrivateIdentifier().Text
+		if strings.HasPrefix(privateName, "#") {
+			return privateName
+		}
+		return "#" + privateName
 	case ast.KindStringLiteral:
 		return nameNode.AsStringLiteral().Text
 	case ast.KindNumericLiteral:
@@ -250,6 +256,9 @@ func checkMember(node *ast.Node, ctx rule.RuleContext, opts classMethodsUseThisO
 	}
 
 	parentClass := classNode(node.Parent)
+	if parentClass == nil {
+		return
+	}
 	if shouldIgnoreForImplementsOption(parentClass, node, opts.ignoreClassesThatImplementInterface) {
 		return
 	}
