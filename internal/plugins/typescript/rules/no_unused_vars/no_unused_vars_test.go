@@ -46,6 +46,24 @@ b;
 				"ignoreRestSiblings":             true,
 			},
 		},
+		{
+			Code: `
+let _x, y;
+_x = 1;
+[_x, y] = foo;
+y;
+let _a, b;
+_a = 1;
+({ _a, ...b } = foo);
+b;
+			`,
+			Options: []interface{}{
+				map[string]interface{}{
+					"destructuredArrayIgnorePattern": "^_",
+					"ignoreRestSiblings":             true,
+				},
+			},
+		},
 	}
 
 	invalidTestCases := []rule_tester.InvalidTestCase{
