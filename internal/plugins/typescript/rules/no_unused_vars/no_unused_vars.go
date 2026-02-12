@@ -341,7 +341,19 @@ func isAmbientDefinition(definition *ast.Node) bool {
 		return false
 	}
 	if definition.Kind == ast.KindVariableDeclaration {
-		return enclosingDeclareModule(definition) != nil && isInDeclareModuleContext(definition)
+		declareModule := enclosingDeclareModule(definition)
+		if declareModule != nil && isInDeclareModuleContext(definition) {
+			enclosingModule := enclosingModuleDeclaration(definition)
+			if enclosingModule != nil && enclosingModule != declareModule {
+				return true
+			}
+			moduleDeclaration := declareModule.AsModuleDeclaration()
+			if moduleDeclaration != nil && moduleDeclaration.Name() != nil && moduleDeclaration.Name().Kind == ast.KindIdentifier {
+				return true
+			}
+			return !moduleDeclarationHasValueStatements(declareModule)
+		}
+		return false
 	}
 	for current := definition; current != nil; current = current.Parent {
 		if utils.IncludesModifier(current, ast.KindDeclareKeyword) {
@@ -1116,6 +1128,80 @@ func moduleDeclarationHasValueStatements(node *ast.Node) bool {
 	return false
 }
 
+func moduleDeclarationHasExportMarker(node *ast.Node) bool {
+	if node == nil || node.Kind != ast.KindModuleDeclaration {
+		return false
+	}
+	moduleDeclaration := node.AsModuleDeclaration()
+	if moduleDeclaration == nil || moduleDeclaration.Body == nil {
+		return false
+	}
+	if moduleDeclaration.Body.Kind == ast.KindModuleDeclaration {
+		return moduleDeclarationHasExportMarker(moduleDeclaration.Body)
+	}
+	if moduleDeclaration.Body.Kind != ast.KindModuleBlock {
+		return false
+	}
+	moduleBlock := moduleDeclaration.Body.AsModuleBlock()
+	if moduleBlock == nil || moduleBlock.Statements == nil {
+		return false
+	}
+	for _, statement := range moduleBlock.Statements.Nodes {
+		if statement == nil {
+			continue
+		}
+		switch statement.Kind {
+		case ast.KindExportAssignment:
+			return true
+		case ast.KindExportDeclaration:
+			exportDeclaration := statement.AsExportDeclaration()
+			if exportDeclaration == nil {
+				continue
+			}
+			return true
+		}
+	}
+	return false
+}
+
+func sourceFileHasExportMarker(sourceFile *ast.SourceFile) bool {
+	if sourceFile == nil || sourceFile.Statements == nil {
+		return false
+	}
+	for _, statement := range sourceFile.Statements.Nodes {
+		if statement == nil {
+			continue
+		}
+		switch statement.Kind {
+		case ast.KindExportAssignment, ast.KindExportDeclaration:
+			return true
+		}
+	}
+	return false
+}
+
+func enclosingModuleDeclaration(node *ast.Node) *ast.Node {
+	for current := node; current != nil; current = current.Parent {
+		if current.Kind == ast.KindModuleDeclaration {
+			return current
+		}
+	}
+	return nil
+}
+
+func parentModuleDeclaration(node *ast.Node) *ast.Node {
+	if node == nil || node.Parent == nil {
+		return nil
+	}
+	if node.Parent.Kind == ast.KindModuleDeclaration {
+		return node.Parent
+	}
+	if node.Parent.Kind == ast.KindModuleBlock && node.Parent.Parent != nil && node.Parent.Parent.Kind == ast.KindModuleDeclaration {
+		return node.Parent.Parent
+	}
+	return nil
+}
+
 func nodeDefinesName(node *ast.Node, name string) bool {
 	if node == nil || name == "" {
 		return false
@@ -1200,7 +1286,44 @@ func hasOwnExportModifier(definition *ast.Node) bool {
 	if definition == nil {
 		return false
 	}
-	return ast.GetCombinedModifierFlags(definition)&ast.ModifierFlagsExport != 0
+	return ast.HasSyntacticModifier(definition, ast.ModifierFlagsExport) || ast.HasSyntacticModifier(definition, ast.ModifierFlagsDefault)
+}
+
+func hasOwnDeclareModifier(definition *ast.Node) bool {
+	if definition == nil {
+		return false
+	}
+	return utils.IncludesModifier(definition, ast.KindDeclareKeyword)
+}
+
+func hasOwnDeclareVariableModifier(definition *ast.Node) bool {
+	if definition == nil || definition.Kind != ast.KindVariableDeclaration || definition.Parent == nil {
+		return false
+	}
+	if definition.Parent.Kind != ast.KindVariableDeclarationList || definition.Parent.Parent == nil {
+		return false
+	}
+	if definition.Parent.Parent.Kind != ast.KindVariableStatement {
+		return false
+	}
+	variableStatement := definition.Parent.Parent.AsVariableStatement()
+	if variableStatement == nil {
+		return false
+	}
+	return utils.IncludesModifier(variableStatement, ast.KindDeclareKeyword)
+}
+
+func isTopLevelVariableDeclaration(definition *ast.Node) bool {
+	if definition == nil || definition.Kind != ast.KindVariableDeclaration || definition.Parent == nil {
+		return false
+	}
+	if definition.Parent.Kind != ast.KindVariableDeclarationList || definition.Parent.Parent == nil {
+		return false
+	}
+	if definition.Parent.Parent.Kind != ast.KindVariableStatement || definition.Parent.Parent.Parent == nil {
+		return false
+	}
+	return definition.Parent.Parent.Parent.Kind == ast.KindSourceFile
 }
 
 func isDottedNamespaceContinuation(ctx rule.RuleContext, node *ast.Node) bool {
@@ -1335,11 +1458,38 @@ func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, defi
 	if shouldIgnoreVariable(name, varInfo, opts, allUsages) {
 		return
 	}
-	if isAmbientDefinition(definition) {
+	if ctx.SourceFile != nil && ctx.SourceFile.IsDeclarationFile && !ast.IsExternalModule(ctx.SourceFile) {
+		if definition != nil && definition.Parent != nil && definition.Parent.Kind == ast.KindSourceFile {
+			return
+		}
+	}
+	if ctx.SourceFile != nil && ctx.SourceFile.IsDeclarationFile && definition != nil && hasOwnDeclareVariableModifier(definition) {
 		return
 	}
+	if ctx.SourceFile != nil && ctx.SourceFile.IsDeclarationFile && definition != nil && definition.Kind == ast.KindVariableDeclaration {
+		if isTopLevelVariableDeclaration(definition) && !sourceFileHasExportMarker(ctx.SourceFile) {
+			return
+		}
+		enclosingModule := enclosingModuleDeclaration(definition)
+		if enclosingModule != nil && !moduleDeclarationHasExportMarker(enclosingModule) {
+			return
+		}
+	}
+	if isAmbientDefinition(definition) {
+		if definition != nil && hasOwnDeclareModifier(definition) && ctx.SourceFile != nil && !ctx.SourceFile.IsDeclarationFile && sourceFileHasExportMarker(ctx.SourceFile) {
+			// In source modules that explicitly export, declare'd values are still tracked.
+		} else {
+			return
+		}
+	}
 	if definition != nil && definition.Kind == ast.KindModuleDeclaration && isInDeclareModuleContext(definition) {
-		return
+		if hasOwnDeclareModifier(definition) {
+			return
+		}
+		parentModule := parentModuleDeclaration(definition)
+		if parentModule == nil || !moduleDeclarationHasExportMarker(parentModule) {
+			return
+		}
 	}
 
 	// Skip exported variables
