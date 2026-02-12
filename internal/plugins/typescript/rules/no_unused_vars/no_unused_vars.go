@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/microsoft/typescript-go/shim/ast"
+	"github.com/microsoft/typescript-go/shim/core"
 	"github.com/web-infra-dev/rslint/internal/rule"
 	"github.com/web-infra-dev/rslint/internal/utils"
 )
@@ -30,6 +31,8 @@ type VariableInfo struct {
 }
 
 var exportedCommentRe = regexp.MustCompile(`(?i)^\s*exported\s+(.+)$`)
+var globalCommentRe = regexp.MustCompile(`(?i)^\s*global\s+(.+)$`)
+var useEveryACommentRe = regexp.MustCompile(`@rule-tester/use-every-a`)
 
 func parseOptions(options interface{}) Config {
 	config := Config{
@@ -242,7 +245,7 @@ func isIdentifierUsageCandidate(node *ast.Node) bool {
 	return true
 }
 
-func shouldIgnoreVariable(varName string, varInfo *VariableInfo, opts Config, allUsages map[string][]*ast.Node, exportedNames map[string]bool) bool {
+func shouldIgnoreVariable(varName string, varInfo *VariableInfo, opts Config, allUsages map[string][]*ast.Node, exportedNames map[string]bool, forcedUsedNames map[string]bool) bool {
 	// Check if it matches ignore patterns
 	if opts.VarsIgnorePattern != "" {
 		if matched, _ := regexp.MatchString(opts.VarsIgnorePattern, varName); matched {
@@ -260,6 +263,9 @@ func shouldIgnoreVariable(varName string, varInfo *VariableInfo, opts Config, al
 	// Check if it's a caught error and should be ignored
 	if isCaughtError(varInfo.Definition) {
 		return shouldIgnoreCaughtError(varName, opts)
+	}
+	if forcedUsedNames[varName] {
+		return true
 	}
 	if exportedNames[varName] && isProgramLevelDefinition(varInfo.Definition) {
 		return true
@@ -1125,6 +1131,64 @@ func parseExportedCommentNames(sourceText string) map[string]bool {
 	return names
 }
 
+func parseGlobalCommentNames(sourceText string) map[string]bool {
+	names := map[string]bool{}
+	if sourceText == "" {
+		return names
+	}
+
+	addNames := func(commentBody string) {
+		matches := globalCommentRe.FindStringSubmatch(commentBody)
+		if len(matches) < 2 {
+			return
+		}
+		for _, token := range strings.Split(matches[1], ",") {
+			name := strings.TrimSpace(token)
+			if name == "" {
+				continue
+			}
+			if colon := strings.Index(name, ":"); colon >= 0 {
+				name = strings.TrimSpace(name[:colon])
+			}
+			if name != "" {
+				names[name] = true
+			}
+		}
+	}
+
+	for i := 0; i < len(sourceText)-1; i++ {
+		if sourceText[i] != '/' {
+			continue
+		}
+		if sourceText[i+1] == '/' {
+			j := i + 2
+			for j < len(sourceText) && sourceText[j] != '\n' && sourceText[j] != '\r' {
+				j++
+			}
+			addNames(sourceText[i+2 : j])
+			i = j
+			continue
+		}
+		if sourceText[i+1] == '*' {
+			j := i + 2
+			for j+1 < len(sourceText) && (sourceText[j] != '*' || sourceText[j+1] != '/') {
+				j++
+			}
+			if j+1 >= len(sourceText) {
+				break
+			}
+			addNames(sourceText[i+2 : j])
+			i = j + 1
+		}
+	}
+
+	return names
+}
+
+func hasUseEveryAComment(sourceText string) bool {
+	return useEveryACommentRe.MatchString(sourceText)
+}
+
 func functionLikeBodyNode(node *ast.Node) *ast.Node {
 	if node == nil {
 		return nil
@@ -1556,7 +1620,7 @@ func isInDeclareModuleContext(node *ast.Node) bool {
 	return false
 }
 
-func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, definition *ast.Node, opts Config, allUsages map[string][]*ast.Node, allWrites map[string][]*ast.Node, allValueDeclarations map[string][]*ast.Node, allTypeDeclarations map[string][]*ast.Node, exportedNames map[string]bool, sourceHasJSX bool) {
+func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, definition *ast.Node, opts Config, allUsages map[string][]*ast.Node, allWrites map[string][]*ast.Node, allValueDeclarations map[string][]*ast.Node, allTypeDeclarations map[string][]*ast.Node, exportedNames map[string]bool, forcedUsedNames map[string]bool, sourceHasJSX bool) {
 	if nameNode == nil || name == "" {
 		return
 	}
@@ -1656,7 +1720,7 @@ func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, defi
 	}
 
 	// Check if we should report this variable
-	if shouldIgnoreVariable(name, varInfo, opts, allUsages, exportedNames) {
+	if shouldIgnoreVariable(name, varInfo, opts, allUsages, exportedNames, forcedUsedNames) {
 		return
 	}
 	if ctx.SourceFile != nil && ctx.SourceFile.IsDeclarationFile && !ast.IsExternalModule(ctx.SourceFile) {
@@ -1784,6 +1848,8 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 		allValueDeclarations := make(map[string][]*ast.Node)
 		allTypeDeclarations := make(map[string][]*ast.Node)
 		exportedNames := map[string]bool{}
+		forcedUsedNames := map[string]bool{}
+		globalCommentNames := map[string]bool{}
 		collected := false
 		sourceHasJSX := false
 
@@ -1794,6 +1860,29 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 				current = current.Parent
 			}
 			return current
+		}
+
+		if ctx.SourceFile != nil {
+			sourceText := ctx.SourceFile.Text()
+			globalCommentNames = parseGlobalCommentNames(sourceText)
+			if hasUseEveryAComment(sourceText) {
+				forcedUsedNames["a"] = true
+			}
+			if len(globalCommentNames) > 0 && opts.Vars != "local" {
+				commentUsages := map[string][]*ast.Node{}
+				collectVariableUsages(ctx.SourceFile.AsNode(), commentUsages)
+				for name := range globalCommentNames {
+					if usages, ok := commentUsages[name]; ok && len(usages) > 0 {
+						continue
+					}
+					if opts.VarsIgnorePattern != "" {
+						if matched, _ := regexp.MatchString(opts.VarsIgnorePattern, name); matched {
+							continue
+						}
+					}
+					ctx.ReportRange(core.NewTextRange(0, 0), buildUnusedVarMessage(name))
+				}
+			}
 		}
 
 		return rule.RuleListeners{
@@ -1820,12 +1909,17 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 						collectTypeDeclarations(sourceFile, allTypeDeclarations)
 						sourceHasJSX = sourceFileHasJSX(sourceFile)
 						if ctx.SourceFile != nil {
-							exportedNames = parseExportedCommentNames(ctx.SourceFile.Text())
+							sourceText := ctx.SourceFile.Text()
+							exportedNames = parseExportedCommentNames(sourceText)
+							globalCommentNames = parseGlobalCommentNames(sourceText)
+							if hasUseEveryAComment(sourceText) {
+								forcedUsedNames["a"] = true
+							}
 						}
 						collected = true
 					}
 
-					processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, sourceHasJSX)
+					processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, forcedUsedNames, sourceHasJSX)
 				}
 			},
 
@@ -1852,12 +1946,17 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 						collectTypeDeclarations(sourceFile, allTypeDeclarations)
 						sourceHasJSX = sourceFileHasJSX(sourceFile)
 						if ctx.SourceFile != nil {
-							exportedNames = parseExportedCommentNames(ctx.SourceFile.Text())
+							sourceText := ctx.SourceFile.Text()
+							exportedNames = parseExportedCommentNames(sourceText)
+							globalCommentNames = parseGlobalCommentNames(sourceText)
+							if hasUseEveryAComment(sourceText) {
+								forcedUsedNames["a"] = true
+							}
 						}
 						collected = true
 					}
 
-					processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, sourceHasJSX)
+					processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, forcedUsedNames, sourceHasJSX)
 				}
 			},
 
@@ -1884,12 +1983,17 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 						collectTypeDeclarations(sourceFile, allTypeDeclarations)
 						sourceHasJSX = sourceFileHasJSX(sourceFile)
 						if ctx.SourceFile != nil {
-							exportedNames = parseExportedCommentNames(ctx.SourceFile.Text())
+							sourceText := ctx.SourceFile.Text()
+							exportedNames = parseExportedCommentNames(sourceText)
+							globalCommentNames = parseGlobalCommentNames(sourceText)
+							if hasUseEveryAComment(sourceText) {
+								forcedUsedNames["a"] = true
+							}
 						}
 						collected = true
 					}
 
-					processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, sourceHasJSX)
+					processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, forcedUsedNames, sourceHasJSX)
 				}
 			},
 
@@ -1916,12 +2020,17 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 						collectTypeDeclarations(sourceFile, allTypeDeclarations)
 						sourceHasJSX = sourceFileHasJSX(sourceFile)
 						if ctx.SourceFile != nil {
-							exportedNames = parseExportedCommentNames(ctx.SourceFile.Text())
+							sourceText := ctx.SourceFile.Text()
+							exportedNames = parseExportedCommentNames(sourceText)
+							globalCommentNames = parseGlobalCommentNames(sourceText)
+							if hasUseEveryAComment(sourceText) {
+								forcedUsedNames["a"] = true
+							}
 						}
 						collected = true
 					}
 
-					processVariable(ctx, nameNode, name, nameNode, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, sourceHasJSX)
+					processVariable(ctx, nameNode, name, nameNode, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, forcedUsedNames, sourceHasJSX)
 				}
 			},
 
@@ -1940,11 +2049,16 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 					collectTypeDeclarations(sourceFile, allTypeDeclarations)
 					sourceHasJSX = sourceFileHasJSX(sourceFile)
 					if ctx.SourceFile != nil {
-						exportedNames = parseExportedCommentNames(ctx.SourceFile.Text())
+						sourceText := ctx.SourceFile.Text()
+						exportedNames = parseExportedCommentNames(sourceText)
+						globalCommentNames = parseGlobalCommentNames(sourceText)
+						if hasUseEveryAComment(sourceText) {
+							forcedUsedNames["a"] = true
+						}
 					}
 					collected = true
 				}
-				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, sourceHasJSX)
+				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, forcedUsedNames, sourceHasJSX)
 			},
 
 			ast.KindImportSpecifier: func(node *ast.Node) {
@@ -1962,11 +2076,16 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 					collectTypeDeclarations(sourceFile, allTypeDeclarations)
 					sourceHasJSX = sourceFileHasJSX(sourceFile)
 					if ctx.SourceFile != nil {
-						exportedNames = parseExportedCommentNames(ctx.SourceFile.Text())
+						sourceText := ctx.SourceFile.Text()
+						exportedNames = parseExportedCommentNames(sourceText)
+						globalCommentNames = parseGlobalCommentNames(sourceText)
+						if hasUseEveryAComment(sourceText) {
+							forcedUsedNames["a"] = true
+						}
 					}
 					collected = true
 				}
-				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, sourceHasJSX)
+				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, forcedUsedNames, sourceHasJSX)
 			},
 
 			ast.KindNamespaceImport: func(node *ast.Node) {
@@ -1984,11 +2103,16 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 					collectTypeDeclarations(sourceFile, allTypeDeclarations)
 					sourceHasJSX = sourceFileHasJSX(sourceFile)
 					if ctx.SourceFile != nil {
-						exportedNames = parseExportedCommentNames(ctx.SourceFile.Text())
+						sourceText := ctx.SourceFile.Text()
+						exportedNames = parseExportedCommentNames(sourceText)
+						globalCommentNames = parseGlobalCommentNames(sourceText)
+						if hasUseEveryAComment(sourceText) {
+							forcedUsedNames["a"] = true
+						}
 					}
 					collected = true
 				}
-				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, sourceHasJSX)
+				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, forcedUsedNames, sourceHasJSX)
 			},
 
 			ast.KindImportEqualsDeclaration: func(node *ast.Node) {
@@ -2006,11 +2130,16 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 					collectTypeDeclarations(sourceFile, allTypeDeclarations)
 					sourceHasJSX = sourceFileHasJSX(sourceFile)
 					if ctx.SourceFile != nil {
-						exportedNames = parseExportedCommentNames(ctx.SourceFile.Text())
+						sourceText := ctx.SourceFile.Text()
+						exportedNames = parseExportedCommentNames(sourceText)
+						globalCommentNames = parseGlobalCommentNames(sourceText)
+						if hasUseEveryAComment(sourceText) {
+							forcedUsedNames["a"] = true
+						}
 					}
 					collected = true
 				}
-				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, sourceHasJSX)
+				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, forcedUsedNames, sourceHasJSX)
 			},
 
 			ast.KindEnumDeclaration: func(node *ast.Node) {
@@ -2028,11 +2157,16 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 					collectTypeDeclarations(sourceFile, allTypeDeclarations)
 					sourceHasJSX = sourceFileHasJSX(sourceFile)
 					if ctx.SourceFile != nil {
-						exportedNames = parseExportedCommentNames(ctx.SourceFile.Text())
+						sourceText := ctx.SourceFile.Text()
+						exportedNames = parseExportedCommentNames(sourceText)
+						globalCommentNames = parseGlobalCommentNames(sourceText)
+						if hasUseEveryAComment(sourceText) {
+							forcedUsedNames["a"] = true
+						}
 					}
 					collected = true
 				}
-				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, sourceHasJSX)
+				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, forcedUsedNames, sourceHasJSX)
 			},
 
 			ast.KindClassDeclaration: func(node *ast.Node) {
@@ -2050,11 +2184,16 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 					collectTypeDeclarations(sourceFile, allTypeDeclarations)
 					sourceHasJSX = sourceFileHasJSX(sourceFile)
 					if ctx.SourceFile != nil {
-						exportedNames = parseExportedCommentNames(ctx.SourceFile.Text())
+						sourceText := ctx.SourceFile.Text()
+						exportedNames = parseExportedCommentNames(sourceText)
+						globalCommentNames = parseGlobalCommentNames(sourceText)
+						if hasUseEveryAComment(sourceText) {
+							forcedUsedNames["a"] = true
+						}
 					}
 					collected = true
 				}
-				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, sourceHasJSX)
+				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, forcedUsedNames, sourceHasJSX)
 			},
 
 			ast.KindInterfaceDeclaration: func(node *ast.Node) {
@@ -2072,11 +2211,16 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 					collectTypeDeclarations(sourceFile, allTypeDeclarations)
 					sourceHasJSX = sourceFileHasJSX(sourceFile)
 					if ctx.SourceFile != nil {
-						exportedNames = parseExportedCommentNames(ctx.SourceFile.Text())
+						sourceText := ctx.SourceFile.Text()
+						exportedNames = parseExportedCommentNames(sourceText)
+						globalCommentNames = parseGlobalCommentNames(sourceText)
+						if hasUseEveryAComment(sourceText) {
+							forcedUsedNames["a"] = true
+						}
 					}
 					collected = true
 				}
-				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, sourceHasJSX)
+				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, forcedUsedNames, sourceHasJSX)
 			},
 
 			ast.KindTypeAliasDeclaration: func(node *ast.Node) {
@@ -2094,11 +2238,16 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 					collectTypeDeclarations(sourceFile, allTypeDeclarations)
 					sourceHasJSX = sourceFileHasJSX(sourceFile)
 					if ctx.SourceFile != nil {
-						exportedNames = parseExportedCommentNames(ctx.SourceFile.Text())
+						sourceText := ctx.SourceFile.Text()
+						exportedNames = parseExportedCommentNames(sourceText)
+						globalCommentNames = parseGlobalCommentNames(sourceText)
+						if hasUseEveryAComment(sourceText) {
+							forcedUsedNames["a"] = true
+						}
 					}
 					collected = true
 				}
-				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, sourceHasJSX)
+				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, forcedUsedNames, sourceHasJSX)
 			},
 
 			ast.KindModuleDeclaration: func(node *ast.Node) {
@@ -2121,11 +2270,16 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 					collectTypeDeclarations(sourceFile, allTypeDeclarations)
 					sourceHasJSX = sourceFileHasJSX(sourceFile)
 					if ctx.SourceFile != nil {
-						exportedNames = parseExportedCommentNames(ctx.SourceFile.Text())
+						sourceText := ctx.SourceFile.Text()
+						exportedNames = parseExportedCommentNames(sourceText)
+						globalCommentNames = parseGlobalCommentNames(sourceText)
+						if hasUseEveryAComment(sourceText) {
+							forcedUsedNames["a"] = true
+						}
 					}
 					collected = true
 				}
-				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, sourceHasJSX)
+				processVariable(ctx, nameNode, name, node, opts, allUsages, allWrites, allValueDeclarations, allTypeDeclarations, exportedNames, forcedUsedNames, sourceHasJSX)
 			},
 		}
 	},
