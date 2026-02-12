@@ -3,7 +3,9 @@ package no_unused_vars
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/microsoft/typescript-go/shim/core"
@@ -32,7 +34,7 @@ type VariableInfo struct {
 }
 
 var exportedCommentRe = regexp.MustCompile(`(?i)^\s*exported\s+(.+)$`)
-var globalCommentRe = regexp.MustCompile(`(?i)^\s*global\s+(.+)$`)
+var globalCommentRe = regexp.MustCompile(`(?is)^\s*globals?\s+(.+)$`)
 var useEveryACommentRe = regexp.MustCompile(`@rule-tester/use-every-a`)
 
 func parseOptions(options interface{}) Config {
@@ -253,6 +255,7 @@ func isAssignmentTargetWithinLeft(node *ast.Node, left *ast.Node) bool {
 		case ast.KindArrayLiteralExpression,
 			ast.KindObjectLiteralExpression,
 			ast.KindSpreadElement,
+			ast.KindSpreadAssignment,
 			ast.KindParenthesizedExpression,
 			ast.KindAsExpression,
 			ast.KindTypeAssertionExpression,
@@ -336,7 +339,7 @@ func shouldIgnoreVariable(varName string, varInfo *VariableInfo, opts Config, al
 
 	// Check if it's a function parameter and should be ignored
 	if parameterNode := parameterNodeForDefinition(varInfo.Definition); parameterNode != nil {
-		return shouldIgnoreParameter(varName, varInfo, parameterNode, opts, allUsages)
+		return shouldIgnoreParameter(varName, varInfo, parameterNode, opts, allUsages, forcedUsedNames)
 	}
 
 	// Check if it's a caught error and should be ignored
@@ -437,7 +440,7 @@ func isDestructuringAssignmentWrite(writeNode *ast.Node) bool {
 	if left == nil {
 		return false
 	}
-	return left.Kind == ast.KindArrayLiteralExpression || left.Kind == ast.KindObjectLiteralExpression
+	return left.Kind == ast.KindArrayLiteralExpression
 }
 
 func unwrapAssignmentTarget(node *ast.Node) *ast.Node {
@@ -669,7 +672,7 @@ func parameterIndexInParent(param *ast.Node) (int, []*ast.Node) {
 	return -1, params
 }
 
-func isParameterUsed(param *ast.Node, allUsages map[string][]*ast.Node) bool {
+func isParameterUsed(param *ast.Node, allUsages map[string][]*ast.Node, forcedUsedNames map[string]bool) bool {
 	if param == nil {
 		return false
 	}
@@ -681,6 +684,9 @@ func isParameterUsed(param *ast.Node, allUsages map[string][]*ast.Node) bool {
 		return true
 	}
 	name := decl.Name().AsIdentifier().Text
+	if forcedUsedNames[name] {
+		return true
+	}
 	for _, usage := range allUsages[name] {
 		if usage == nil || usage.Pos() == decl.Name().Pos() {
 			continue
@@ -693,7 +699,7 @@ func isParameterUsed(param *ast.Node, allUsages map[string][]*ast.Node) bool {
 	return false
 }
 
-func shouldIgnoreParameter(varName string, varInfo *VariableInfo, param *ast.Node, opts Config, allUsages map[string][]*ast.Node) bool {
+func shouldIgnoreParameter(varName string, varInfo *VariableInfo, param *ast.Node, opts Config, allUsages map[string][]*ast.Node, forcedUsedNames map[string]bool) bool {
 	if varInfo == nil || param == nil {
 		return false
 	}
@@ -726,7 +732,7 @@ func shouldIgnoreParameter(varName string, varInfo *VariableInfo, param *ast.Nod
 		if index >= 0 {
 			lastUsedIndex := -1
 			for idx, sibling := range params {
-				if isParameterUsed(sibling, allUsages) {
+				if isParameterUsed(sibling, allUsages, forcedUsedNames) {
 					lastUsedIndex = idx
 				}
 			}
@@ -1162,10 +1168,10 @@ func isForInOrOfIterationVariable(definition *ast.Node) bool {
 	switch variableDeclarationList.Parent.Kind {
 	case ast.KindForInStatement:
 		forInStatement := variableDeclarationList.Parent.AsForInOrOfStatement()
-		return forInStatement != nil && forInStatement.Initializer == variableDeclarationList
+		return forInStatement != nil && forInStatement.Initializer == variableDeclarationList && forInOrOfBodyHasOnlyReturn(forInStatement)
 	case ast.KindForOfStatement:
 		forOfStatement := variableDeclarationList.Parent.AsForInOrOfStatement()
-		return forOfStatement != nil && forOfStatement.Initializer == variableDeclarationList
+		return forOfStatement != nil && forOfStatement.Initializer == variableDeclarationList && forInOrOfBodyHasOnlyReturn(forOfStatement)
 	}
 	return false
 }
@@ -1216,6 +1222,9 @@ func collectVariableUsages(node *ast.Node, usages map[string][]*ast.Node) {
 
 	// Visit current node
 	if ast.IsIdentifier(node) && !isPartOfDeclaration(node) && isIdentifierUsageCandidate(node) {
+		if forInOrOfStatement := forInOrOfStatementForInitializerNode(node); forInOrOfStatement != nil && !forInOrOfBodyHasOnlyReturn(forInOrOfStatement) {
+			return
+		}
 		if isPartOfAssignment(node) && !isUsedAssignmentTarget(node) {
 			return
 		}
@@ -1321,9 +1330,12 @@ func collectVariableWrites(node *ast.Node, writes map[string][]*ast.Node) {
 		name := identifier.Text
 		if isPartOfDeclaration(node) && node.Parent != nil && node.Parent.Kind == ast.KindVariableDeclaration {
 			variableDeclaration := node.Parent.AsVariableDeclaration()
-			if variableDeclaration != nil && variableDeclaration.Initializer != nil {
+			if variableDeclaration != nil && (variableDeclaration.Initializer != nil || isForInOrOfInitializerVariableDeclaration(node.Parent)) {
 				writes[name] = append(writes[name], node)
 			}
+		}
+		if !isPartOfDeclaration(node) && isForInOrOfInitializerNode(node) {
+			writes[name] = append(writes[name], node)
 		}
 	}
 
@@ -1634,15 +1646,130 @@ func isSelfAssignmentUsage(usage *ast.Node, name string) bool {
 		if binaryExpression == nil || !isAssignmentOperator(binaryExpression.OperatorToken.Kind) {
 			continue
 		}
-		if binaryExpression.Left == nil || binaryExpression.Left.Kind != ast.KindIdentifier {
+		if binaryExpression.Left == nil || binaryExpression.Right == nil || binaryExpression.Left.Kind != ast.KindIdentifier {
 			return false
 		}
 		if binaryExpression.Left.AsIdentifier().Text != name {
 			return false
 		}
-		return binaryExpression.Left != usage
+		if binaryExpression.OperatorToken.Kind != ast.KindEqualsToken {
+			return false
+		}
+		if usage == binaryExpression.Left || !isDescendantOf(usage, binaryExpression.Right) {
+			return false
+		}
+		return !isConditionalOrLogicalSelfAssignmentRead(usage, binaryExpression.Right) && !isInLoopContext(current)
 	}
 	return false
+}
+
+func isConditionalOrLogicalSelfAssignmentRead(usage *ast.Node, right *ast.Node) bool {
+	if usage == nil || right == nil {
+		return false
+	}
+	for current := usage.Parent; current != nil && current != right; current = current.Parent {
+		switch current.Kind {
+		case ast.KindConditionalExpression:
+			return true
+		case ast.KindBinaryExpression:
+			binaryExpression := current.AsBinaryExpression()
+			if binaryExpression == nil {
+				continue
+			}
+			switch binaryExpression.OperatorToken.Kind {
+			case ast.KindBarBarToken, ast.KindAmpersandAmpersandToken, ast.KindQuestionQuestionToken:
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func isInLoopContext(node *ast.Node) bool {
+	if node == nil {
+		return false
+	}
+	for current := node.Parent; current != nil; current = current.Parent {
+		switch current.Kind {
+		case ast.KindForStatement,
+			ast.KindForInStatement,
+			ast.KindForOfStatement,
+			ast.KindWhileStatement,
+			ast.KindDoStatement:
+			return true
+		case ast.KindFunctionDeclaration,
+			ast.KindFunctionExpression,
+			ast.KindArrowFunction,
+			ast.KindMethodDeclaration,
+			ast.KindConstructor,
+			ast.KindGetAccessor,
+			ast.KindSetAccessor:
+			return false
+		}
+	}
+	return false
+}
+
+func forInOrOfStatementForInitializerNode(node *ast.Node) *ast.ForInOrOfStatement {
+	if node == nil {
+		return nil
+	}
+	for current := node.Parent; current != nil; current = current.Parent {
+		switch current.Kind {
+		case ast.KindForInStatement, ast.KindForOfStatement:
+			forInOrOfStatement := current.AsForInOrOfStatement()
+			if forInOrOfStatement == nil || forInOrOfStatement.Initializer == nil {
+				return nil
+			}
+			if node == forInOrOfStatement.Initializer || isDescendantOf(node, forInOrOfStatement.Initializer) {
+				return forInOrOfStatement
+			}
+			return nil
+		case ast.KindFunctionDeclaration,
+			ast.KindFunctionExpression,
+			ast.KindArrowFunction,
+			ast.KindMethodDeclaration,
+			ast.KindConstructor,
+			ast.KindGetAccessor,
+			ast.KindSetAccessor:
+			return nil
+		}
+	}
+	return nil
+}
+
+func isForInOrOfInitializerNode(node *ast.Node) bool {
+	return forInOrOfStatementForInitializerNode(node) != nil
+}
+
+func isForInOrOfInitializerVariableDeclaration(node *ast.Node) bool {
+	if node == nil || node.Kind != ast.KindVariableDeclaration || node.Parent == nil || node.Parent.Kind != ast.KindVariableDeclarationList || node.Parent.Parent == nil {
+		return false
+	}
+	switch node.Parent.Parent.Kind {
+	case ast.KindForInStatement, ast.KindForOfStatement:
+		forInOrOfStatement := node.Parent.Parent.AsForInOrOfStatement()
+		return forInOrOfStatement != nil && forInOrOfStatement.Initializer == node.Parent
+	default:
+		return false
+	}
+}
+
+func forInOrOfBodyHasOnlyReturn(statement *ast.ForInOrOfStatement) bool {
+	if statement == nil || statement.Statement == nil {
+		return false
+	}
+	if statement.Statement.Kind == ast.KindReturnStatement {
+		return true
+	}
+	if statement.Statement.Kind != ast.KindBlock {
+		return false
+	}
+	block := statement.Statement.AsBlock()
+	if block == nil || block.Statements == nil || len(block.Statements.Nodes) != 1 {
+		return false
+	}
+	return block.Statements.Nodes[0] != nil && block.Statements.Nodes[0].Kind == ast.KindReturnStatement
 }
 
 func parseExportedCommentNames(sourceText string) map[string]bool {
@@ -1701,25 +1828,57 @@ func parseExportedCommentNames(sourceText string) map[string]bool {
 
 func parseGlobalCommentNames(sourceText string) map[string]bool {
 	names := map[string]bool{}
+	for name := range parseGlobalCommentRanges(sourceText) {
+		names[name] = true
+	}
+	return names
+}
+
+func parseGlobalCommentRanges(sourceText string) map[string]core.TextRange {
+	ranges := map[string]core.TextRange{}
 	if sourceText == "" {
-		return names
+		return ranges
 	}
 
-	addNames := func(commentBody string) {
-		matches := globalCommentRe.FindStringSubmatch(commentBody)
-		if len(matches) < 2 {
+	addRanges := func(commentBody string, commentBodyStart int) {
+		matchIndexes := globalCommentRe.FindStringSubmatchIndex(commentBody)
+		if len(matchIndexes) < 4 {
 			return
 		}
-		for _, token := range strings.Split(matches[1], ",") {
-			name := strings.TrimSpace(token)
-			if name == "" {
-				continue
+		searchStart := matchIndexes[2]
+		if searchStart >= len(commentBody) {
+			return
+		}
+		rest := commentBody[searchStart:]
+		for idx := 0; idx < len(rest); {
+			for idx < len(rest) && isGlobalDirectiveDelimiter(rest[idx]) {
+				idx++
 			}
-			if colon := strings.Index(name, ":"); colon >= 0 {
-				name = strings.TrimSpace(name[:colon])
+			if idx >= len(rest) {
+				break
 			}
-			if name != "" {
-				names[name] = true
+			tokenStart := idx
+			for idx < len(rest) && !isGlobalDirectiveDelimiter(rest[idx]) && rest[idx] != ':' {
+				idx++
+			}
+			tokenEnd := idx
+			if tokenEnd > tokenStart {
+				start := searchStart + tokenStart
+				end := searchStart + tokenEnd
+				name := commentBody[start:end]
+				absoluteStart := commentBodyStart + start
+				absoluteEnd := commentBodyStart + end
+				if absoluteStart >= 0 && absoluteEnd > absoluteStart && absoluteEnd <= len(sourceText) {
+					if _, exists := ranges[name]; !exists {
+						ranges[name] = core.NewTextRange(byteIndexToUTF16Offset(sourceText, absoluteStart), byteIndexToUTF16Offset(sourceText, absoluteEnd))
+					}
+				}
+			}
+			if idx < len(rest) && rest[idx] == ':' {
+				idx++
+				for idx < len(rest) && !isGlobalDirectiveDelimiter(rest[idx]) {
+					idx++
+				}
 			}
 		}
 	}
@@ -1729,28 +1888,64 @@ func parseGlobalCommentNames(sourceText string) map[string]bool {
 			continue
 		}
 		if sourceText[i+1] == '/' {
-			j := i + 2
+			commentBodyStart := i + 2
+			j := commentBodyStart
 			for j < len(sourceText) && sourceText[j] != '\n' && sourceText[j] != '\r' {
 				j++
 			}
-			addNames(sourceText[i+2 : j])
+			addRanges(sourceText[commentBodyStart:j], commentBodyStart)
 			i = j
 			continue
 		}
 		if sourceText[i+1] == '*' {
-			j := i + 2
+			commentBodyStart := i + 2
+			j := commentBodyStart
 			for j+1 < len(sourceText) && (sourceText[j] != '*' || sourceText[j+1] != '/') {
 				j++
 			}
 			if j+1 >= len(sourceText) {
 				break
 			}
-			addNames(sourceText[i+2 : j])
+			addRanges(sourceText[commentBodyStart:j], commentBodyStart)
 			i = j + 1
 		}
 	}
 
-	return names
+	return ranges
+}
+
+func isGlobalDirectiveDelimiter(ch byte) bool {
+	switch ch {
+	case ' ', '\t', '\r', '\n', ',', '*':
+		return true
+	default:
+		return false
+	}
+}
+
+func byteIndexToUTF16Offset(text string, byteIndex int) int {
+	if byteIndex <= 0 {
+		return 0
+	}
+	if byteIndex > len(text) {
+		byteIndex = len(text)
+	}
+	offset := 0
+	for i := 0; i < byteIndex; {
+		r, size := utf8.DecodeRuneInString(text[i:])
+		if r == utf8.RuneError && size == 1 {
+			offset++
+			i++
+			continue
+		}
+		if r <= 0xFFFF {
+			offset++
+		} else {
+			offset += 2
+		}
+		i += size
+	}
+	return offset
 }
 
 func hasUseEveryAComment(sourceText string) bool {
@@ -1823,6 +2018,19 @@ func sourceFileHasJSX(root *ast.Node) bool {
 	}
 	visit(root)
 	return hasJSX
+}
+
+func classDeclarationHasStaticBlock(ctx rule.RuleContext, definition *ast.Node) bool {
+	if ctx.SourceFile == nil || definition == nil || definition.Kind != ast.KindClassDeclaration {
+		return false
+	}
+	sourceText := ctx.SourceFile.Text()
+	start := definition.Pos()
+	end := definition.End()
+	if start < 0 || end <= start || end > len(sourceText) {
+		return false
+	}
+	return strings.Contains(sourceText[start:end], "static {")
 }
 
 func enclosingDeclareModule(node *ast.Node) *ast.Node {
@@ -2293,6 +2501,10 @@ func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, defi
 		varInfo.Used = true
 		varInfo.OnlyUsedAsType = false
 	}
+	if !varInfo.Used && classDeclarationHasStaticBlock(ctx, definition) {
+		varInfo.Used = true
+		varInfo.OnlyUsedAsType = false
+	}
 
 	// Check if we should report this variable
 	if shouldIgnoreVariable(name, varInfo, opts, allUsages, allWrites, exportedNames, forcedUsedNames) {
@@ -2436,6 +2648,7 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 		exportedNames := map[string]bool{}
 		forcedUsedNames := map[string]bool{}
 		globalCommentNames := map[string]bool{}
+		globalCommentRanges := map[string]core.TextRange{}
 		collected := false
 		sourceHasJSX := false
 
@@ -2451,13 +2664,35 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 		if ctx.SourceFile != nil {
 			sourceText := ctx.SourceFile.Text()
 			globalCommentNames = parseGlobalCommentNames(sourceText)
+			globalCommentRanges = parseGlobalCommentRanges(sourceText)
 			if hasUseEveryAComment(sourceText) {
 				forcedUsedNames["a"] = true
 			}
 			if len(globalCommentNames) > 0 && opts.Vars != "local" {
 				commentUsages := map[string][]*ast.Node{}
 				collectVariableUsages(ctx.SourceFile.AsNode(), commentUsages)
+				globalNames := make([]string, 0, len(globalCommentNames))
 				for name := range globalCommentNames {
+					globalNames = append(globalNames, name)
+				}
+				sort.Slice(globalNames, func(i, j int) bool {
+					rangeI, okI := globalCommentRanges[globalNames[i]]
+					rangeJ, okJ := globalCommentRanges[globalNames[j]]
+					if okI && okJ {
+						if rangeI.Pos() == rangeJ.Pos() {
+							return globalNames[i] < globalNames[j]
+						}
+						return rangeI.Pos() < rangeJ.Pos()
+					}
+					if okI {
+						return true
+					}
+					if okJ {
+						return false
+					}
+					return globalNames[i] < globalNames[j]
+				})
+				for _, name := range globalNames {
 					if usages, ok := commentUsages[name]; ok && len(usages) > 0 {
 						continue
 					}
@@ -2466,7 +2701,12 @@ var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
 							continue
 						}
 					}
-					ctx.ReportRange(core.NewTextRange(0, 0), buildUnusedVarMessage(name))
+					reportRange, hasRange := globalCommentRanges[name]
+					if hasRange {
+						ctx.ReportRange(reportRange, buildUnusedVarMessage(name))
+					} else {
+						ctx.ReportRange(core.NewTextRange(0, 0), buildUnusedVarMessage(name))
+					}
 				}
 			}
 		}

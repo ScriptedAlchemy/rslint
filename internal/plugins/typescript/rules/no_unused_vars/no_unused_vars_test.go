@@ -64,6 +64,15 @@ b;
 				},
 			},
 		},
+		{
+			Code: `
+var _timer;
+function f() {
+  _timer = setTimeout(function () {}, _timer ? 100 : 0);
+}
+f();
+			`,
+		},
 	}
 
 	invalidTestCases := []rule_tester.InvalidTestCase{
@@ -129,6 +138,20 @@ foo.forEach(item => {
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "unusedVar", Line: 2, Column: 5},
 				{MessageId: "unusedVar", Line: 2, Column: 9},
+			},
+		},
+		{
+			Code: `
+(function (obj) {
+  var name;
+  for (name in obj) {
+    i();
+    return;
+  }
+})({});
+			`,
+			Errors: []rule_tester.InvalidTestCaseError{
+				{MessageId: "unusedVar", Line: 4, Column: 8},
 			},
 		},
 	}
