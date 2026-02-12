@@ -1,0 +1,478 @@
+// Rstest Snapshot v1
+
+exports[`member-ordering-alphabetically-case-insensitive-order > invalid 1`] = `
+{
+  "code": "
+interface Foo {
+  c: string;
+  B: string;
+  a: string;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Member order is incorrect.",
+      "messageId": "incorrectOrder",
+      "range": {
+        "end": {
+          "column": 13,
+          "line": 4,
+        },
+        "start": {
+          "column": 3,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/member-ordering-alphabetically-case-insensitive-order",
+    },
+    {
+      "message": "Member order is incorrect.",
+      "messageId": "incorrectOrder",
+      "range": {
+        "end": {
+          "column": 13,
+          "line": 5,
+        },
+        "start": {
+          "column": 3,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/member-ordering-alphabetically-case-insensitive-order",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`member-ordering-alphabetically-case-insensitive-order > invalid 2`] = `
+{
+  "code": "
+interface Foo {
+  B: b;
+  a: b;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Member order is incorrect.",
+      "messageId": "incorrectOrder",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 4,
+        },
+        "start": {
+          "column": 3,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/member-ordering-alphabetically-case-insensitive-order",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`member-ordering-alphabetically-case-insensitive-order > invalid 3`] = `
+{
+  "code": "
+type Foo = {
+  B: b;
+  a: b;
+};
+      ",
+  "diagnostics": [
+    {
+      "message": "Member order is incorrect.",
+      "messageId": "incorrectOrder",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 4,
+        },
+        "start": {
+          "column": 3,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/member-ordering-alphabetically-case-insensitive-order",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`member-ordering-alphabetically-case-insensitive-order > invalid 4`] = `
+{
+  "code": "
+class Foo {
+  public static B: string;
+  public static a: string;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Member order is incorrect.",
+      "messageId": "incorrectOrder",
+      "range": {
+        "end": {
+          "column": 27,
+          "line": 4,
+        },
+        "start": {
+          "column": 3,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/member-ordering-alphabetically-case-insensitive-order",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`member-ordering-alphabetically-case-insensitive-order > invalid 5`] = `
+{
+  "code": "
+const foo = class Foo {
+  public static B: string;
+  public static a: string;
+};
+      ",
+  "diagnostics": [
+    {
+      "message": "Member order is incorrect.",
+      "messageId": "incorrectOrder",
+      "range": {
+        "end": {
+          "column": 27,
+          "line": 4,
+        },
+        "start": {
+          "column": 3,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/member-ordering-alphabetically-case-insensitive-order",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`member-ordering-alphabetically-case-insensitive-order > invalid 6`] = `
+{
+  "code": "
+interface Foo {
+  [a: string]: number;
+
+  a: x;
+  B: x;
+  c: x;
+
+  c(): void;
+  B(): void;
+  a(): void;
+
+  (): Baz;
+
+  new (): Bar;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Member order is incorrect.",
+      "messageId": "incorrectOrder",
+      "range": {
+        "end": {
+          "column": 13,
+          "line": 10,
+        },
+        "start": {
+          "column": 3,
+          "line": 10,
+        },
+      },
+      "ruleName": "@typescript-eslint/member-ordering-alphabetically-case-insensitive-order",
+    },
+    {
+      "message": "Member order is incorrect.",
+      "messageId": "incorrectOrder",
+      "range": {
+        "end": {
+          "column": 13,
+          "line": 11,
+        },
+        "start": {
+          "column": 3,
+          "line": 11,
+        },
+      },
+      "ruleName": "@typescript-eslint/member-ordering-alphabetically-case-insensitive-order",
+    },
+    {
+      "message": "Member group order is incorrect.",
+      "messageId": "incorrectGroupOrder",
+      "range": {
+        "end": {
+          "column": 11,
+          "line": 13,
+        },
+        "start": {
+          "column": 3,
+          "line": 13,
+        },
+      },
+      "ruleName": "@typescript-eslint/member-ordering-alphabetically-case-insensitive-order",
+    },
+    {
+      "message": "Member group order is incorrect.",
+      "messageId": "incorrectGroupOrder",
+      "range": {
+        "end": {
+          "column": 15,
+          "line": 15,
+        },
+        "start": {
+          "column": 3,
+          "line": 15,
+        },
+      },
+      "ruleName": "@typescript-eslint/member-ordering-alphabetically-case-insensitive-order",
+    },
+  ],
+  "errorCount": 4,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`member-ordering-alphabetically-case-insensitive-order > invalid 7`] = `
+{
+  "code": "
+type Foo = {
+  [a: string]: number;
+
+  a: x;
+  B: x;
+  c: x;
+
+  c(): void;
+  B(): void;
+  a(): void;
+
+  (): Baz;
+
+  new (): Bar;
+};
+      ",
+  "diagnostics": [
+    {
+      "message": "Member order is incorrect.",
+      "messageId": "incorrectOrder",
+      "range": {
+        "end": {
+          "column": 13,
+          "line": 10,
+        },
+        "start": {
+          "column": 3,
+          "line": 10,
+        },
+      },
+      "ruleName": "@typescript-eslint/member-ordering-alphabetically-case-insensitive-order",
+    },
+    {
+      "message": "Member order is incorrect.",
+      "messageId": "incorrectOrder",
+      "range": {
+        "end": {
+          "column": 13,
+          "line": 11,
+        },
+        "start": {
+          "column": 3,
+          "line": 11,
+        },
+      },
+      "ruleName": "@typescript-eslint/member-ordering-alphabetically-case-insensitive-order",
+    },
+    {
+      "message": "Member group order is incorrect.",
+      "messageId": "incorrectGroupOrder",
+      "range": {
+        "end": {
+          "column": 11,
+          "line": 13,
+        },
+        "start": {
+          "column": 3,
+          "line": 13,
+        },
+      },
+      "ruleName": "@typescript-eslint/member-ordering-alphabetically-case-insensitive-order",
+    },
+    {
+      "message": "Member group order is incorrect.",
+      "messageId": "incorrectGroupOrder",
+      "range": {
+        "end": {
+          "column": 15,
+          "line": 15,
+        },
+        "start": {
+          "column": 3,
+          "line": 15,
+        },
+      },
+      "ruleName": "@typescript-eslint/member-ordering-alphabetically-case-insensitive-order",
+    },
+  ],
+  "errorCount": 4,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`member-ordering-alphabetically-case-insensitive-order > invalid 8`] = `
+{
+  "code": "
+class Foo {
+  public static c: string = '';
+  public static B: string = '';
+  public static a: string;
+
+  constructor() {}
+
+  public d: string = '';
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Member order is incorrect.",
+      "messageId": "incorrectOrder",
+      "range": {
+        "end": {
+          "column": 32,
+          "line": 4,
+        },
+        "start": {
+          "column": 3,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/member-ordering-alphabetically-case-insensitive-order",
+    },
+    {
+      "message": "Member order is incorrect.",
+      "messageId": "incorrectOrder",
+      "range": {
+        "end": {
+          "column": 27,
+          "line": 5,
+        },
+        "start": {
+          "column": 3,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/member-ordering-alphabetically-case-insensitive-order",
+    },
+    {
+      "message": "Member group order is incorrect.",
+      "messageId": "incorrectGroupOrder",
+      "range": {
+        "end": {
+          "column": 25,
+          "line": 9,
+        },
+        "start": {
+          "column": 3,
+          "line": 9,
+        },
+      },
+      "ruleName": "@typescript-eslint/member-ordering-alphabetically-case-insensitive-order",
+    },
+  ],
+  "errorCount": 3,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`member-ordering-alphabetically-case-insensitive-order > invalid 9`] = `
+{
+  "code": "
+const foo = class Foo {
+  public static c: string = '';
+  public static B: string = '';
+  public static a: string;
+
+  constructor() {}
+
+  public d: string = '';
+};
+      ",
+  "diagnostics": [
+    {
+      "message": "Member order is incorrect.",
+      "messageId": "incorrectOrder",
+      "range": {
+        "end": {
+          "column": 32,
+          "line": 4,
+        },
+        "start": {
+          "column": 3,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/member-ordering-alphabetically-case-insensitive-order",
+    },
+    {
+      "message": "Member order is incorrect.",
+      "messageId": "incorrectOrder",
+      "range": {
+        "end": {
+          "column": 27,
+          "line": 5,
+        },
+        "start": {
+          "column": 3,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/member-ordering-alphabetically-case-insensitive-order",
+    },
+    {
+      "message": "Member group order is incorrect.",
+      "messageId": "incorrectGroupOrder",
+      "range": {
+        "end": {
+          "column": 25,
+          "line": 9,
+        },
+        "start": {
+          "column": 3,
+          "line": 9,
+        },
+      },
+      "ruleName": "@typescript-eslint/member-ordering-alphabetically-case-insensitive-order",
+    },
+  ],
+  "errorCount": 3,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
