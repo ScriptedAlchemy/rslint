@@ -69,8 +69,121 @@ func defaultConfig() memberOrderingConfig {
 	return memberOrderingConfig{
 		memberTypes: []memberTypeGroup{
 			{"signature"},
+			{"call-signature"},
+			{"public-static-field"},
+			{"protected-static-field"},
+			{"private-static-field"},
+			{"#private-static-field"},
+			{"public-decorated-field"},
+			{"protected-decorated-field"},
+			{"private-decorated-field"},
+			{"public-instance-field"},
+			{"protected-instance-field"},
+			{"private-instance-field"},
+			{"#private-instance-field"},
+			{"public-abstract-field"},
+			{"protected-abstract-field"},
+			{"public-field"},
+			{"protected-field"},
+			{"private-field"},
+			{"#private-field"},
+			{"static-field"},
+			{"instance-field"},
+			{"abstract-field"},
+			{"decorated-field"},
 			{"field"},
+			{"static-initialization"},
+			{"public-constructor"},
+			{"protected-constructor"},
+			{"private-constructor"},
 			{"constructor"},
+			{"public-static-accessor"},
+			{"protected-static-accessor"},
+			{"private-static-accessor"},
+			{"#private-static-accessor"},
+			{"public-decorated-accessor"},
+			{"protected-decorated-accessor"},
+			{"private-decorated-accessor"},
+			{"public-instance-accessor"},
+			{"protected-instance-accessor"},
+			{"private-instance-accessor"},
+			{"#private-instance-accessor"},
+			{"public-abstract-accessor"},
+			{"protected-abstract-accessor"},
+			{"public-accessor"},
+			{"protected-accessor"},
+			{"private-accessor"},
+			{"#private-accessor"},
+			{"static-accessor"},
+			{"instance-accessor"},
+			{"abstract-accessor"},
+			{"decorated-accessor"},
+			{"accessor"},
+			{"public-static-get"},
+			{"protected-static-get"},
+			{"private-static-get"},
+			{"#private-static-get"},
+			{"public-decorated-get"},
+			{"protected-decorated-get"},
+			{"private-decorated-get"},
+			{"public-instance-get"},
+			{"protected-instance-get"},
+			{"private-instance-get"},
+			{"#private-instance-get"},
+			{"public-abstract-get"},
+			{"protected-abstract-get"},
+			{"public-get"},
+			{"protected-get"},
+			{"private-get"},
+			{"#private-get"},
+			{"static-get"},
+			{"instance-get"},
+			{"abstract-get"},
+			{"decorated-get"},
+			{"get"},
+			{"public-static-set"},
+			{"protected-static-set"},
+			{"private-static-set"},
+			{"#private-static-set"},
+			{"public-decorated-set"},
+			{"protected-decorated-set"},
+			{"private-decorated-set"},
+			{"public-instance-set"},
+			{"protected-instance-set"},
+			{"private-instance-set"},
+			{"#private-instance-set"},
+			{"public-abstract-set"},
+			{"protected-abstract-set"},
+			{"public-set"},
+			{"protected-set"},
+			{"private-set"},
+			{"#private-set"},
+			{"static-set"},
+			{"instance-set"},
+			{"abstract-set"},
+			{"decorated-set"},
+			{"set"},
+			{"public-static-method"},
+			{"protected-static-method"},
+			{"private-static-method"},
+			{"#private-static-method"},
+			{"public-decorated-method"},
+			{"protected-decorated-method"},
+			{"private-decorated-method"},
+			{"public-instance-method"},
+			{"protected-instance-method"},
+			{"private-instance-method"},
+			{"#private-instance-method"},
+			{"public-abstract-method"},
+			{"protected-abstract-method"},
+			{"public-method"},
+			{"protected-method"},
+			{"private-method"},
+			{"#private-method"},
+			{"static-method"},
+			{"instance-method"},
+			{"abstract-method"},
+			{"decorated-method"},
 			{"method"},
 		},
 		order: "as-written",
@@ -102,27 +215,39 @@ func parseOptions(options any) memberOrderingOptions {
 		return parsed
 	}
 
-	if defaultMap, ok := optsMap["default"].(map[string]interface{}); ok {
-		cfg := parseMemberOrderingConfig(defaultMap, parsed.defaultConfig)
-		parsed.defaultConfig = cfg
+	if defaultRaw, ok := optsMap["default"]; ok {
+		parsed.defaultConfig = parseMemberOrderingConfigRaw(defaultRaw, parsed.defaultConfig)
 	}
-	if classesMap, ok := optsMap["classes"].(map[string]interface{}); ok {
-		cfg := parseMemberOrderingConfig(classesMap, parsed.defaultConfig)
+	if classesRaw, ok := optsMap["classes"]; ok {
+		cfg := parseMemberOrderingConfigRaw(classesRaw, parsed.defaultConfig)
 		parsed.classesConfig = &cfg
 	}
-	if classExprMap, ok := optsMap["classExpressions"].(map[string]interface{}); ok {
-		cfg := parseMemberOrderingConfig(classExprMap, parsed.defaultConfig)
+	if classExprRaw, ok := optsMap["classExpressions"]; ok {
+		cfg := parseMemberOrderingConfigRaw(classExprRaw, parsed.defaultConfig)
 		parsed.classExprConfig = &cfg
 	}
-	if interfacesMap, ok := optsMap["interfaces"].(map[string]interface{}); ok {
-		cfg := parseMemberOrderingConfig(interfacesMap, parsed.defaultConfig)
+	if interfacesRaw, ok := optsMap["interfaces"]; ok {
+		cfg := parseMemberOrderingConfigRaw(interfacesRaw, parsed.defaultConfig)
 		parsed.interfacesConfig = &cfg
 	}
-	if typeLiteralsMap, ok := optsMap["typeLiterals"].(map[string]interface{}); ok {
-		cfg := parseMemberOrderingConfig(typeLiteralsMap, parsed.defaultConfig)
+	if typeLiteralsRaw, ok := optsMap["typeLiterals"]; ok {
+		cfg := parseMemberOrderingConfigRaw(typeLiteralsRaw, parsed.defaultConfig)
 		parsed.typeLiteralsConfig = &cfg
 	}
 	return parsed
+}
+
+func parseMemberOrderingConfigRaw(raw interface{}, base memberOrderingConfig) memberOrderingConfig {
+	switch value := raw.(type) {
+	case map[string]interface{}:
+		return parseMemberOrderingConfig(value, base)
+	case string, []interface{}:
+		return parseMemberOrderingConfig(map[string]interface{}{
+			"memberTypes": value,
+		}, base)
+	default:
+		return base
+	}
 }
 
 func parseMemberOrderingConfig(configMap map[string]interface{}, base memberOrderingConfig) memberOrderingConfig {
@@ -263,8 +388,18 @@ func buildMemberInfo(ctx rule.RuleContext, node *ast.Node) memberInfo {
 	if info.name == "" {
 		info.name = info.kind
 	}
-	info.nameKey = strings.TrimSpace(info.name)
+	info.nameKey = normalizeMemberNameForSorting(info.name)
 	return info
+}
+
+func normalizeMemberNameForSorting(name string) string {
+	name = strings.TrimSpace(name)
+	if len(name) >= 2 {
+		if (name[0] == '"' && name[len(name)-1] == '"') || (name[0] == '\'' && name[len(name)-1] == '\'') {
+			name = name[1 : len(name)-1]
+		}
+	}
+	return name
 }
 
 func memberName(ctx rule.RuleContext, node *ast.Node) string {
@@ -279,6 +414,20 @@ func memberName(ctx rule.RuleContext, node *ast.Node) string {
 	case ast.KindClassStaticBlockDeclaration:
 		return "static"
 	case ast.KindIndexSignature:
+		indexSignature := node.AsIndexSignatureDeclaration()
+		if indexSignature != nil && indexSignature.Parameters != nil && len(indexSignature.Parameters.Nodes) > 0 {
+			parameter := indexSignature.Parameters.Nodes[0]
+			if parameter != nil && parameter.Name() != nil {
+				switch parameter.Name().Kind {
+				case ast.KindIdentifier:
+					return parameter.Name().AsIdentifier().Text
+				case ast.KindStringLiteral:
+					return parameter.Name().AsStringLiteral().Text
+				case ast.KindNumericLiteral:
+					return parameter.Name().AsNumericLiteral().Text
+				}
+			}
+		}
 		return "index"
 	}
 	nameNode := node.Name()
@@ -295,6 +444,18 @@ func memberKind(node *ast.Node) string {
 	}
 	switch node.Kind {
 	case ast.KindPropertyDeclaration, ast.KindPropertySignature:
+		if utils.IncludesModifier(node, ast.KindAccessorKeyword) {
+			return "accessor"
+		}
+		if node.Kind == ast.KindPropertyDeclaration {
+			propertyDeclaration := node.AsPropertyDeclaration()
+			if propertyDeclaration != nil && propertyDeclaration.Initializer != nil {
+				switch propertyDeclaration.Initializer.Kind {
+				case ast.KindArrowFunction, ast.KindFunctionExpression:
+					return "method"
+				}
+			}
+		}
 		return "field"
 	case ast.KindMethodDeclaration, ast.KindMethodSignature:
 		return "method"
@@ -302,12 +463,14 @@ func memberKind(node *ast.Node) string {
 		return "get"
 	case ast.KindSetAccessor:
 		return "set"
-	case ast.KindConstructor, ast.KindConstructSignature:
+	case ast.KindConstructor:
 		return "constructor"
+	case ast.KindConstructSignature:
+		return "construct-signature"
 	case ast.KindCallSignature:
 		return "call-signature"
 	case ast.KindIndexSignature:
-		return "index-signature"
+		return "signature"
 	case ast.KindClassStaticBlockDeclaration:
 		return "static-initialization"
 	}
@@ -460,17 +623,17 @@ func memberMatchesBase(member memberInfo, base string) bool {
 	case "set":
 		return member.kind == "set"
 	case "accessor":
-		return member.kind == "get" || member.kind == "set" || member.kind == "accessor"
+		return member.kind == "accessor"
 	case "constructor":
-		return member.kind == "constructor"
+		return member.kind == "constructor" || member.kind == "construct-signature" || member.nameKey == "new"
 	case "construct-signature":
 		return member.node != nil && member.node.Kind == ast.KindConstructSignature
 	case "call-signature":
 		return member.kind == "call-signature"
 	case "index-signature":
-		return member.kind == "index-signature"
+		return member.kind == "signature"
 	case "signature":
-		return member.kind == "call-signature" || member.kind == "index-signature" || (member.node != nil && member.node.Kind == ast.KindConstructSignature)
+		return member.kind == "signature"
 	case "static-initialization":
 		return member.kind == "static-initialization"
 	default:
@@ -614,6 +777,9 @@ func checkOrdering(ctx rule.RuleContext, members []memberInfo, cfg memberOrderin
 	if !cfg.memberTypesNever && len(cfg.memberTypes) > 0 {
 		maxSeenGroup := -1
 		for _, member := range members {
+			if member.groupIndex >= len(cfg.memberTypes) {
+				continue
+			}
 			if member.groupIndex < maxSeenGroup {
 				ctx.ReportNode(member.node, buildIncorrectGroupOrderMessage())
 				continue
@@ -633,6 +799,9 @@ func checkOrdering(ctx rule.RuleContext, members []memberInfo, cfg memberOrderin
 		stateByGroup := map[int]*optionalityState{}
 		for i := range members {
 			member := &members[i]
+			if !cfg.memberTypesNever && len(cfg.memberTypes) > 0 && member.groupIndex >= len(cfg.memberTypes) {
+				continue
+			}
 			state, ok := stateByGroup[member.groupIndex]
 			if !ok {
 				state = &optionalityState{}
@@ -671,6 +840,9 @@ func checkOrdering(ctx rule.RuleContext, members []memberInfo, cfg memberOrderin
 
 	previousByKey := map[string]memberInfo{}
 	for _, member := range members {
+		if !cfg.memberTypesNever && len(cfg.memberTypes) > 0 && member.groupIndex >= len(cfg.memberTypes) {
+			continue
+		}
 		if !isNameComparableMember(member) {
 			continue
 		}
