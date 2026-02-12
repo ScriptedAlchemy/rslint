@@ -23,6 +23,13 @@ func TestNoUnusedVarsRule(t *testing.T) {
 		{Code: `interface Foo { bar: string; } export const Foo = "bar";`},
 		{Code: `enum FormFieldIds { PHONE = "phone", EMAIL = "email" } export interface IFoo { fieldName: FormFieldIds; }`},
 		{Code: `namespace foo.bar { export interface User { name: string; } }`},
+		{
+			Code: `let _a, b; _a = 1; ({ _a, ...b } = foo); b;`,
+			Options: map[string]interface{}{
+				"destructuredArrayIgnorePattern": "^_",
+				"ignoreRestSiblings":             true,
+			},
+		},
 	}
 
 	invalidTestCases := []rule_tester.InvalidTestCase{
@@ -74,6 +81,21 @@ func TestNoUnusedVarsRule(t *testing.T) {
 		{
 			Code:   `namespace Foo { const Foo = 1; console.log(Foo); }`,
 			Errors: []rule_tester.InvalidTestCaseError{{MessageId: "unusedVar", Line: 1, Column: 11}},
+		},
+		{
+			Code: `
+let _a, b;
+foo.forEach(item => {
+  [a, b] = item;
+});
+			`,
+			Options: map[string]interface{}{
+				"destructuredArrayIgnorePattern": "^_",
+			},
+			Errors: []rule_tester.InvalidTestCaseError{
+				{MessageId: "unusedVar", Line: 2, Column: 5},
+				{MessageId: "unusedVar", Line: 2, Column: 9},
+			},
 		},
 	}
 
