@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { RslintBinPath } from './utils';
-export function setupStatusBar(context: vscode.ExtensionContext) {
+export function setupStatusBar(context: vscode.ExtensionContext): void {
   const statusBar = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
     100,

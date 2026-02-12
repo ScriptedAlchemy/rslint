@@ -2,7 +2,7 @@ import * as path from 'path';
 
 import { runTests } from '@vscode/test-electron';
 
-async function main() {
+async function main(): Promise<void> {
   try {
     const extensionDevelopmentPath = path.resolve(__dirname, '..');
     const testWorkspace = path.resolve(
@@ -35,4 +35,4 @@ async function main() {
   }
 }
 
-main();
+void main();

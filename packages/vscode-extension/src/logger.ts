@@ -83,14 +83,14 @@ export class Logger {
 
     const timestamp = new Date().toISOString();
     const levelName = LogLevel[level].padEnd(5);
-    const formattedMessage = this.formatMessage(message, ...args);
+    const formattedMessage = Logger.formatMessage(message, ...args);
 
     this.outputChannel.appendLine(
       `[${timestamp}] ${levelName} ${formattedMessage}`,
     );
   }
 
-  private formatMessage(message: string, ...args: unknown[]): string {
+  private static formatMessage(message: string, ...args: unknown[]): string {
     if (args.length === 0) {
       return message;
     }

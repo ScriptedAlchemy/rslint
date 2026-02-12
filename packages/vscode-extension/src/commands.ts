@@ -3,7 +3,7 @@ export function RegisterCommands(
   context: vscode.ExtensionContext,
   outputChannel: vscode.OutputChannel,
   traceOutputChannel: vscode.OutputChannel,
-) {
+): void {
   context.subscriptions.push(
     vscode.commands.registerCommand('rslint.showMenu', showCommands),
   );

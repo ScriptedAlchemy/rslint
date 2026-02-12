@@ -24,7 +24,7 @@ function checkDiagnosticEqual(
     };
   }[],
   tsDiagnostic: TsDiagnostic[],
-) {
+): void {
   assert(
     rslintDiagnostic.length === tsDiagnostic.length,
     `Length mismatch: ${rslintDiagnostic.length} !== ${tsDiagnostic.length}`,
@@ -82,7 +82,8 @@ export class RuleTester {
       valid: ValidTestCase[];
       invalid: InvalidTestCase[];
     },
-  ) {
+  ): void {
+    void this;
     describe(ruleName, () => {
       const cwd = path.resolve(import.meta.dirname);
       const config = path.resolve(cwd, './rslint.json');

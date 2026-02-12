@@ -18,8 +18,18 @@ export namespace TSESLint {
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     constructor(options: { configType: string }) {}
     // eslint-disable-next-line @typescript-eslint/no-empty-function
-    defineParser(name: string, parser: any) {}
+    defineParser(name: string, parser: any): void {
+      void this;
+      void name;
+      void parser;
+    }
     // eslint-disable-next-line @typescript-eslint/no-empty-function
-    verifyAndFix(code: string, options: any, options2: any): any {}
+    verifyAndFix(code: string, options: any, options2: any): any {
+      void this;
+      void code;
+      void options;
+      void options2;
+      return undefined;
+    }
   }
 }
