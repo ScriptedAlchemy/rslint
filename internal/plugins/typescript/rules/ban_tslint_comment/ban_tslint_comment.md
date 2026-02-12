@@ -30,4 +30,3 @@ someCode(); // tslint:disable-line
 // regular comment
 const value = 1;
 ```
-

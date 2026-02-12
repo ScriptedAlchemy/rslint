@@ -12,4 +12,3 @@ Require or disallow initialization in variable declarations.
 
 - `declare` variable declarations are ignored in `"always"` mode.
 - variable declarations inside `declare namespace` blocks are ignored in `"always"` mode.
-
