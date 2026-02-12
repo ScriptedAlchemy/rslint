@@ -19,6 +19,10 @@ func TestNoUnusedVarsRule(t *testing.T) {
 		{Code: `try {} catch (e) {}`, Options: map[string]interface{}{"caughtErrors": "none"}},
 		{Code: `export const foo = 1;`},
 		{Code: `import type { Foo } from "./foo"; const bar: Foo = {};`},
+		{Code: `interface Base {} const a: Base = {}; console.log(a);`},
+		{Code: `interface Foo { bar: string; } export const Foo = "bar";`},
+		{Code: `enum FormFieldIds { PHONE = "phone", EMAIL = "email" } export interface IFoo { fieldName: FormFieldIds; }`},
+		{Code: `namespace foo.bar { export interface User { name: string; } }`},
 	}
 
 	invalidTestCases := []rule_tester.InvalidTestCase{
@@ -62,6 +66,14 @@ func TestNoUnusedVarsRule(t *testing.T) {
 			Code:    `const _foo = 1; console.log(_foo);`,
 			Options: map[string]interface{}{"varsIgnorePattern": "^_", "reportUsedIgnorePattern": true},
 			Errors:  []rule_tester.InvalidTestCaseError{{MessageId: "usedIgnoredVar", Line: 1, Column: 7}},
+		},
+		{
+			Code:   `interface Foo { bar: string; baz: Foo["bar"]; }`,
+			Errors: []rule_tester.InvalidTestCaseError{{MessageId: "unusedVar", Line: 1, Column: 11}},
+		},
+		{
+			Code:   `namespace Foo { const Foo = 1; console.log(Foo); }`,
+			Errors: []rule_tester.InvalidTestCaseError{{MessageId: "unusedVar", Line: 1, Column: 11}},
 		},
 	}
 
