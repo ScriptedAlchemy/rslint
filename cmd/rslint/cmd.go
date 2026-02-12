@@ -110,8 +110,8 @@ func printDiagnosticGitHub(d rule.RuleDiagnostic, w *bufio.Writer, comparePathOp
 	diagnosticStart := d.Range.Pos()
 	diagnosticEnd := d.Range.End()
 
-	startLine, startColumn := scanner.GetECMALineAndCharacterOfPosition(d.SourceFile, diagnosticStart)
-	endLine, endColumn := scanner.GetECMALineAndCharacterOfPosition(d.SourceFile, diagnosticEnd)
+	startLine, startColumn := getUTF16LineAndCharacterOfPosition(d.SourceFile, diagnosticStart)
+	endLine, endColumn := getUTF16LineAndCharacterOfPosition(d.SourceFile, diagnosticEnd)
 
 	filePath := tspath.ConvertToRelativePath(d.SourceFile.FileName(), comparePathOptions)
 	output := fmt.Sprintf(
@@ -150,8 +150,8 @@ func printDiagnosticJsonLine(d rule.RuleDiagnostic, w *bufio.Writer, comparePath
 	diagnosticStart := d.Range.Pos()
 	diagnosticEnd := d.Range.End()
 
-	startLine, startColumn := scanner.GetECMALineAndCharacterOfPosition(d.SourceFile, diagnosticStart)
-	endLine, endColumn := scanner.GetECMALineAndCharacterOfPosition(d.SourceFile, diagnosticEnd)
+	startLine, startColumn := getUTF16LineAndCharacterOfPosition(d.SourceFile, diagnosticStart)
+	endLine, endColumn := getUTF16LineAndCharacterOfPosition(d.SourceFile, diagnosticEnd)
 
 	type Location struct {
 		Line   int `json:"line"`
@@ -212,8 +212,8 @@ func printDiagnosticDefault(d rule.RuleDiagnostic, w *bufio.Writer, comparePathO
 	diagnosticStart := d.Range.Pos()
 	diagnosticEnd := d.Range.End()
 
-	diagnosticStartLine, diagnosticStartColumn := scanner.GetECMALineAndCharacterOfPosition(d.SourceFile, diagnosticStart)
-	diagnosticEndline, _ := scanner.GetECMALineAndCharacterOfPosition(d.SourceFile, diagnosticEnd)
+	diagnosticStartLine, diagnosticStartColumn := getUTF16LineAndCharacterOfPosition(d.SourceFile, diagnosticStart)
+	diagnosticEndline, _ := getUTF16LineAndCharacterOfPosition(d.SourceFile, diagnosticEnd)
 
 	lineMap := scanner.GetECMALineStarts(d.SourceFile)
 	text := d.SourceFile.Text()

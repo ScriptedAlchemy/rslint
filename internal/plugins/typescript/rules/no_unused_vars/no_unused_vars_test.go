@@ -7,6 +7,26 @@ import (
 	"github.com/web-infra-dev/rslint/internal/rule_tester"
 )
 
+func TestParseGlobalCommentRangesUnicodeColumns(t *testing.T) {
+	ranges := parseGlobalCommentRanges("/*global 変数, 数*/\n変数;")
+	r, ok := ranges["数"]
+	if !ok {
+		t.Fatalf("expected range for 数")
+	}
+	if r.Pos() != 17 {
+		t.Fatalf("expected 数 start byte offset 17, got %d", r.Pos())
+	}
+
+	surrogateRanges := parseGlobalCommentRanges("/*global 𠮷𩸽, 𠮷*/\n𠮷𩸽;")
+	surrogateRange, ok := surrogateRanges["𠮷"]
+	if !ok {
+		t.Fatalf("expected range for 𠮷")
+	}
+	if surrogateRange.Pos() != 19 {
+		t.Fatalf("expected 𠮷 start byte offset 19, got %d", surrogateRange.Pos())
+	}
+}
+
 func TestNoUnusedVarsRule(t *testing.T) {
 	validTestCases := []rule_tester.ValidTestCase{
 		{Code: `const foo = 5; console.log(foo);`},
@@ -152,6 +172,24 @@ foo.forEach(item => {
 			`,
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "unusedVar", Line: 4, Column: 8},
+			},
+		},
+		{
+			Code: `
+var a = 0;
+a++;
+			`,
+			Errors: []rule_tester.InvalidTestCaseError{
+				{MessageId: "unusedVar", Line: 3, Column: 1},
+			},
+		},
+		{
+			Code: `
+var a = 0;
+a += a + 1;
+			`,
+			Errors: []rule_tester.InvalidTestCaseError{
+				{MessageId: "unusedVar", Line: 3, Column: 1},
 			},
 		},
 	}

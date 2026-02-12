@@ -26,6 +26,39 @@ import (
 	"github.com/web-infra-dev/rslint/internal/utils"
 )
 
+func getUTF16LineAndCharacterOfPosition(sourceFile *ast.SourceFile, pos int) (line int, character int) {
+	lineStarts := scanner.GetECMALineStarts(sourceFile)
+	line = scanner.ComputeLineOfPosition(lineStarts, pos)
+	if line < 0 || line >= len(lineStarts) {
+		return line, 0
+	}
+
+	lineStart := int(lineStarts[line])
+	if lineStart < 0 {
+		lineStart = 0
+	}
+
+	sourceText := sourceFile.Text()
+	if pos < lineStart {
+		pos = lineStart
+	}
+	if pos > len(sourceText) {
+		pos = len(sourceText)
+	}
+	if lineStart > len(sourceText) {
+		return line, 0
+	}
+
+	for _, r := range sourceText[lineStart:pos] {
+		if r <= 0xFFFF {
+			character++
+		} else {
+			character += 2
+		}
+	}
+	return line, character
+}
+
 // IPCHandler implements the ipc.Handler interface
 type IPCHandler struct{}
 
@@ -232,8 +265,8 @@ func (h *IPCHandler) HandleLint(req api.LintRequest) (*api.LintResponse, error) 
 		diagnosticStart := d.Range.Pos()
 		diagnosticEnd := d.Range.End()
 
-		startLine, startColumn := scanner.GetECMALineAndCharacterOfPosition(d.SourceFile, diagnosticStart)
-		endLine, endColumn := scanner.GetECMALineAndCharacterOfPosition(d.SourceFile, diagnosticEnd)
+		startLine, startColumn := getUTF16LineAndCharacterOfPosition(d.SourceFile, diagnosticStart)
+		endLine, endColumn := getUTF16LineAndCharacterOfPosition(d.SourceFile, diagnosticEnd)
 
 		diagnostic := api.Diagnostic{
 			RuleName:  d.RuleName,

@@ -5,7 +5,6 @@ import (
 	"regexp"
 	"sort"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/microsoft/typescript-go/shim/core"
@@ -219,6 +218,51 @@ func isPartOfAssignment(node *ast.Node) bool {
 	return assignmentTargetExpressionForNode(node) != nil
 }
 
+func isUpdateExpressionTarget(node *ast.Node) bool {
+	return updateExpressionForTarget(node) != nil
+}
+
+func updateExpressionForTarget(node *ast.Node) *ast.Node {
+	if node == nil || node.Parent == nil {
+		return nil
+	}
+	switch node.Parent.Kind {
+	case ast.KindPrefixUnaryExpression:
+		prefixUnaryExpression := node.Parent.AsPrefixUnaryExpression()
+		if prefixUnaryExpression != nil &&
+			(prefixUnaryExpression.Operator == ast.KindPlusPlusToken || prefixUnaryExpression.Operator == ast.KindMinusMinusToken) &&
+			isAssignmentTargetWithinLeft(node, prefixUnaryExpression.Operand) {
+			return node.Parent
+		}
+	case ast.KindPostfixUnaryExpression:
+		postfixUnaryExpression := node.Parent.AsPostfixUnaryExpression()
+		if postfixUnaryExpression != nil &&
+			(postfixUnaryExpression.Operator == ast.KindPlusPlusToken || postfixUnaryExpression.Operator == ast.KindMinusMinusToken) &&
+			isAssignmentTargetWithinLeft(node, postfixUnaryExpression.Operand) {
+			return node.Parent
+		}
+	default:
+		return nil
+	}
+	return nil
+}
+
+func isUsedUpdateExpressionTarget(node *ast.Node) bool {
+	updateExpression := updateExpressionForTarget(node)
+	if updateExpression == nil {
+		return false
+	}
+	consumed := false
+	for current := updateExpression.Parent; current != nil; current = current.Parent {
+		if current.Kind == ast.KindParenthesizedExpression {
+			continue
+		}
+		consumed = current.Kind != ast.KindExpressionStatement
+		break
+	}
+	return consumed
+}
+
 func assignmentTargetExpressionForNode(node *ast.Node) *ast.BinaryExpression {
 	if node == nil {
 		return nil
@@ -304,6 +348,13 @@ func isIdentifierUsageCandidate(node *ast.Node) bool {
 }
 
 func shouldIgnoreVariable(varName string, varInfo *VariableInfo, opts Config, allUsages map[string][]*ast.Node, allWrites map[string][]*ast.Node, exportedNames map[string]bool, forcedUsedNames map[string]bool) bool {
+	if isCaughtError(varInfo.Definition) {
+		if forcedUsedNames[varName] {
+			return true
+		}
+		return shouldIgnoreCaughtError(varName, opts)
+	}
+
 	// Check if it matches ignore patterns
 	if opts.VarsIgnorePattern != "" {
 		if matched, _ := regexp.MatchString(opts.VarsIgnorePattern, varName); matched {
@@ -342,10 +393,6 @@ func shouldIgnoreVariable(varName string, varInfo *VariableInfo, opts Config, al
 		return shouldIgnoreParameter(varName, varInfo, parameterNode, opts, allUsages, forcedUsedNames)
 	}
 
-	// Check if it's a caught error and should be ignored
-	if isCaughtError(varInfo.Definition) {
-		return shouldIgnoreCaughtError(varName, opts)
-	}
 	if exportedNames[varName] && isProgramLevelDefinition(varInfo.Definition) {
 		return true
 	}
@@ -1222,6 +1269,9 @@ func collectVariableUsages(node *ast.Node, usages map[string][]*ast.Node) {
 
 	// Visit current node
 	if ast.IsIdentifier(node) && !isPartOfDeclaration(node) && isIdentifierUsageCandidate(node) {
+		if isUpdateExpressionTarget(node) && !isUsedUpdateExpressionTarget(node) {
+			return
+		}
 		if forInOrOfStatement := forInOrOfStatementForInitializerNode(node); forInOrOfStatement != nil && !forInOrOfBodyHasOnlyReturn(forInOrOfStatement) {
 			return
 		}
@@ -1335,6 +1385,9 @@ func collectVariableWrites(node *ast.Node, writes map[string][]*ast.Node) {
 			}
 		}
 		if !isPartOfDeclaration(node) && isForInOrOfInitializerNode(node) {
+			writes[name] = append(writes[name], node)
+		}
+		if !isPartOfDeclaration(node) && isUpdateExpressionTarget(node) {
 			writes[name] = append(writes[name], node)
 		}
 	}
@@ -1629,16 +1682,6 @@ func isSelfAssignmentUsage(usage *ast.Node, name string) bool {
 		return false
 	}
 	for current := usage.Parent; current != nil; current = current.Parent {
-		switch current.Kind {
-		case ast.KindFunctionDeclaration,
-			ast.KindFunctionExpression,
-			ast.KindArrowFunction,
-			ast.KindMethodDeclaration,
-			ast.KindConstructor,
-			ast.KindGetAccessor,
-			ast.KindSetAccessor:
-			return false
-		}
 		if current.Kind != ast.KindBinaryExpression {
 			continue
 		}
@@ -1652,13 +1695,99 @@ func isSelfAssignmentUsage(usage *ast.Node, name string) bool {
 		if binaryExpression.Left.AsIdentifier().Text != name {
 			return false
 		}
-		if binaryExpression.OperatorToken.Kind != ast.KindEqualsToken {
-			return false
-		}
 		if usage == binaryExpression.Left || !isDescendantOf(usage, binaryExpression.Right) {
 			return false
 		}
+		if binaryExpression.OperatorToken.Kind != ast.KindEqualsToken {
+			return true
+		}
+		if functionLikeAncestor := functionLikeAncestorWithin(usage, binaryExpression.Right); functionLikeAncestor != nil {
+			if isFunctionLikePassedAsArgument(functionLikeAncestor, binaryExpression.Right) {
+				return false
+			}
+			return true
+		}
 		return !isConditionalOrLogicalSelfAssignmentRead(usage, binaryExpression.Right) && !isInLoopContext(current)
+	}
+	return false
+}
+
+func functionLikeAncestorWithin(node *ast.Node, stop *ast.Node) *ast.Node {
+	if node == nil || stop == nil {
+		return nil
+	}
+	for current := node.Parent; current != nil && current != stop; current = current.Parent {
+		switch current.Kind {
+		case ast.KindFunctionDeclaration,
+			ast.KindFunctionExpression,
+			ast.KindArrowFunction,
+			ast.KindMethodDeclaration,
+			ast.KindConstructor,
+			ast.KindGetAccessor,
+			ast.KindSetAccessor:
+			return current
+		}
+	}
+	return nil
+}
+
+func isFunctionLikePassedAsArgument(functionLikeAncestor *ast.Node, right *ast.Node) bool {
+	if functionLikeAncestor == nil || right == nil {
+		return false
+	}
+	for current := functionLikeAncestor; current != nil && current != right; current = current.Parent {
+		parent := current.Parent
+		if parent == nil {
+			return false
+		}
+		switch parent.Kind {
+		case ast.KindParenthesizedExpression,
+			ast.KindAsExpression,
+			ast.KindTypeAssertionExpression,
+			ast.KindSatisfiesExpression,
+			ast.KindNonNullExpression:
+			continue
+		case ast.KindCallExpression:
+			callExpression := parent.AsCallExpression()
+			if callExpression == nil {
+				return false
+			}
+			if callExpression.Expression == current || isDescendantOf(current, callExpression.Expression) {
+				return false
+			}
+			if callExpression.Arguments != nil {
+				for _, argument := range callExpression.Arguments.Nodes {
+					if argument == nil {
+						continue
+					}
+					if argument == current || isDescendantOf(current, argument) {
+						return true
+					}
+				}
+			}
+			return false
+		case ast.KindNewExpression:
+			newExpression := parent.AsNewExpression()
+			if newExpression == nil {
+				return false
+			}
+			if newExpression.Expression == current || isDescendantOf(current, newExpression.Expression) {
+				return false
+			}
+			if newExpression.Arguments != nil {
+				for _, argument := range newExpression.Arguments.Nodes {
+					if argument == nil {
+						continue
+					}
+					if argument == current || isDescendantOf(current, argument) {
+						return true
+					}
+				}
+			}
+			return false
+		default:
+			return false
+		}
 	}
 	return false
 }
@@ -1870,7 +1999,7 @@ func parseGlobalCommentRanges(sourceText string) map[string]core.TextRange {
 				absoluteEnd := commentBodyStart + end
 				if absoluteStart >= 0 && absoluteEnd > absoluteStart && absoluteEnd <= len(sourceText) {
 					if _, exists := ranges[name]; !exists {
-						ranges[name] = core.NewTextRange(byteIndexToUTF16Offset(sourceText, absoluteStart), byteIndexToUTF16Offset(sourceText, absoluteEnd))
+						ranges[name] = core.NewTextRange(absoluteStart, absoluteEnd)
 					}
 				}
 			}
@@ -1921,31 +2050,6 @@ func isGlobalDirectiveDelimiter(ch byte) bool {
 	default:
 		return false
 	}
-}
-
-func byteIndexToUTF16Offset(text string, byteIndex int) int {
-	if byteIndex <= 0 {
-		return 0
-	}
-	if byteIndex > len(text) {
-		byteIndex = len(text)
-	}
-	offset := 0
-	for i := 0; i < byteIndex; {
-		r, size := utf8.DecodeRuneInString(text[i:])
-		if r == utf8.RuneError && size == 1 {
-			offset++
-			i++
-			continue
-		}
-		if r <= 0xFFFF {
-			offset++
-		} else {
-			offset += 2
-		}
-		i += size
-	}
-	return offset
 }
 
 func hasUseEveryAComment(sourceText string) bool {
