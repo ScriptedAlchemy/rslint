@@ -1306,15 +1306,20 @@ func collectVariableWrites(node *ast.Node, writes map[string][]*ast.Node) {
 		return
 	}
 
+	if node.Kind == ast.KindBinaryExpression {
+		binaryExpression := node.AsBinaryExpression()
+		if binaryExpression != nil && isAssignmentOperator(binaryExpression.OperatorToken.Kind) {
+			collectAssignmentTargetWrites(binaryExpression.Left, writes)
+		}
+	}
+
 	if ast.IsIdentifier(node) {
 		identifier := node.AsIdentifier()
 		if identifier == nil {
 			return
 		}
 		name := identifier.Text
-		if isAssignmentTarget(node) {
-			writes[name] = append(writes[name], node)
-		} else if isPartOfDeclaration(node) && node.Parent != nil && node.Parent.Kind == ast.KindVariableDeclaration {
+		if isPartOfDeclaration(node) && node.Parent != nil && node.Parent.Kind == ast.KindVariableDeclaration {
 			variableDeclaration := node.Parent.AsVariableDeclaration()
 			if variableDeclaration != nil && variableDeclaration.Initializer != nil {
 				writes[name] = append(writes[name], node)
@@ -1326,6 +1331,89 @@ func collectVariableWrites(node *ast.Node, writes map[string][]*ast.Node) {
 		collectVariableWrites(child, writes)
 		return false
 	})
+}
+
+func collectAssignmentTargetWrites(target *ast.Node, writes map[string][]*ast.Node) {
+	if target == nil {
+		return
+	}
+	switch target.Kind {
+	case ast.KindIdentifier:
+		identifier := target.AsIdentifier()
+		if identifier != nil {
+			writes[identifier.Text] = append(writes[identifier.Text], target)
+		}
+	case ast.KindArrayLiteralExpression:
+		arrayLiteralExpression := target.AsArrayLiteralExpression()
+		if arrayLiteralExpression == nil || arrayLiteralExpression.Elements == nil {
+			return
+		}
+		for _, element := range arrayLiteralExpression.Elements.Nodes {
+			if element == nil {
+				continue
+			}
+			if element.Kind == ast.KindSpreadElement {
+				spreadElement := element.AsSpreadElement()
+				if spreadElement != nil {
+					collectAssignmentTargetWrites(spreadElement.Expression, writes)
+				}
+				continue
+			}
+			collectAssignmentTargetWrites(element, writes)
+		}
+	case ast.KindObjectLiteralExpression:
+		objectLiteralExpression := target.AsObjectLiteralExpression()
+		if objectLiteralExpression == nil || objectLiteralExpression.Properties == nil {
+			return
+		}
+		for _, property := range objectLiteralExpression.Properties.Nodes {
+			if property == nil {
+				continue
+			}
+			switch property.Kind {
+			case ast.KindPropertyAssignment:
+				propertyAssignment := property.AsPropertyAssignment()
+				if propertyAssignment != nil {
+					collectAssignmentTargetWrites(propertyAssignment.Initializer, writes)
+				}
+			case ast.KindShorthandPropertyAssignment:
+				shorthandPropertyAssignment := property.AsShorthandPropertyAssignment()
+				if shorthandPropertyAssignment != nil && shorthandPropertyAssignment.Name() != nil {
+					collectAssignmentTargetWrites(shorthandPropertyAssignment.Name(), writes)
+				}
+			case ast.KindSpreadAssignment:
+				spreadAssignment := property.AsSpreadAssignment()
+				if spreadAssignment != nil {
+					collectAssignmentTargetWrites(spreadAssignment.Expression, writes)
+				}
+			}
+		}
+	case ast.KindParenthesizedExpression:
+		parenthesizedExpression := target.AsParenthesizedExpression()
+		if parenthesizedExpression != nil {
+			collectAssignmentTargetWrites(parenthesizedExpression.Expression, writes)
+		}
+	case ast.KindAsExpression:
+		asExpression := target.AsAsExpression()
+		if asExpression != nil {
+			collectAssignmentTargetWrites(asExpression.Expression, writes)
+		}
+	case ast.KindTypeAssertionExpression:
+		typeAssertionExpression := target.AsTypeAssertion()
+		if typeAssertionExpression != nil {
+			collectAssignmentTargetWrites(typeAssertionExpression.Expression, writes)
+		}
+	case ast.KindSatisfiesExpression:
+		satisfiesExpression := target.AsSatisfiesExpression()
+		if satisfiesExpression != nil {
+			collectAssignmentTargetWrites(satisfiesExpression.Expression, writes)
+		}
+	case ast.KindNonNullExpression:
+		nonNullExpression := target.AsNonNullExpression()
+		if nonNullExpression != nil {
+			collectAssignmentTargetWrites(nonNullExpression.Expression, writes)
+		}
+	}
 }
 
 func isAssignmentTarget(node *ast.Node) bool {
