@@ -276,7 +276,7 @@ func isExpressionValueConsumed(expression *ast.Node) bool {
 			if binaryExpression.Left != nil && (current == binaryExpression.Left || isDescendantOf(current, binaryExpression.Left)) {
 				return false
 			}
-			if binaryExpression.Right == nil || !(current == binaryExpression.Right || isDescendantOf(current, binaryExpression.Right)) {
+			if binaryExpression.Right == nil || (current != binaryExpression.Right && !isDescendantOf(current, binaryExpression.Right)) {
 				return false
 			}
 			current = parent
