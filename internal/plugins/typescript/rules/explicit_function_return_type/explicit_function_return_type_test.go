@@ -12,7 +12,7 @@ func TestExplicitFunctionReturnTypeRule(t *testing.T) {
 		{Code: `function test(): number { return 1; }`},
 		{Code: `const fn: () => number = () => 1;`, Options: []interface{}{map[string]interface{}{"allowTypedFunctionExpressions": true}}},
 		{Code: `const fn = () => 1 as const;`, Options: []interface{}{map[string]interface{}{"allowDirectConstAssertionInArrowFunctions": true}}},
-		{Code: `const fn = () => () => 1;`, Options: []interface{}{map[string]interface{}{"allowHigherOrderFunctions": true}}},
+		{Code: `const foo = (function () { return 1; })();`, Options: []interface{}{map[string]interface{}{"allowIIFEs": true}}},
 	}, []rule_tester.InvalidTestCase{
 		{
 			Code:   `function test() { return 1; }`,
@@ -29,6 +29,10 @@ func TestExplicitFunctionReturnTypeRule(t *testing.T) {
 		},
 		{
 			Code:   `class A { method() { return 1; } }`,
+			Errors: []rule_tester.InvalidTestCaseError{{MessageId: "missingReturnType"}},
+		},
+		{
+			Code:   `const foo = (function () { return 1; })();`,
 			Errors: []rule_tester.InvalidTestCaseError{{MessageId: "missingReturnType"}},
 		},
 	})
