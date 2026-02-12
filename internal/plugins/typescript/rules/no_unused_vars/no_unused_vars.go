@@ -217,10 +217,6 @@ func isPartOfAssignment(node *ast.Node) bool {
 	return assignmentTargetExpressionForNode(node) != nil
 }
 
-func isSameOrDescendantOf(node *ast.Node, ancestor *ast.Node) bool {
-	return node == ancestor || isDescendantOf(node, ancestor)
-}
-
 func assignmentTargetExpressionForNode(node *ast.Node) *ast.BinaryExpression {
 	if node == nil {
 		return nil
@@ -536,10 +532,6 @@ func isProgramLevelDefinition(node *ast.Node) bool {
 		}
 	}
 	return false
-}
-
-func isParameter(node *ast.Node) bool {
-	return parameterNodeForDefinition(node) != nil
 }
 
 func parameterNodeForDefinition(node *ast.Node) *ast.Node {

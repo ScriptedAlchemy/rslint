@@ -479,26 +479,6 @@ func hasNoTypeParameters(node *ast.Node) bool {
 	return len(node.TypeParameters()) == 0
 }
 
-func isDirectlyReturnedFunction(node *ast.Node) bool {
-	if node == nil {
-		return false
-	}
-	for current := node.Parent; current != nil; current = current.Parent {
-		if current.Kind == ast.KindParenthesizedExpression {
-			continue
-		}
-		if current.Kind == ast.KindReturnStatement {
-			return true
-		}
-		if current.Kind == ast.KindArrowFunction {
-			arrowFunction := current.AsArrowFunction()
-			return arrowFunction != nil && arrowFunction.Body != nil && arrowFunction.Body.AsNode() == node
-		}
-		return false
-	}
-	return false
-}
-
 func arrowOperatorRange(sourceFile *ast.SourceFile, arrow *ast.ArrowFunction) core.TextRange {
 	if sourceFile == nil || arrow == nil || arrow.Body == nil {
 		return core.NewTextRange(0, 0)
