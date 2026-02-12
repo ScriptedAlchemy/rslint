@@ -189,8 +189,6 @@ func groupOrderIndex(groupOrder []group, g group) int {
 	return math.MaxInt32
 }
 
-var insensitiveCollator = collate.New(language.English, collate.Numeric, collate.IgnoreCase)
-
 func compareText(a, b string, caseSensitive bool) int {
 	if caseSensitive {
 		if a < b {
@@ -202,6 +200,7 @@ func compareText(a, b string, caseSensitive bool) int {
 		return 0
 	}
 
+	insensitiveCollator := collate.New(language.English, collate.Numeric, collate.IgnoreCase)
 	cmp := insensitiveCollator.CompareString(a, b)
 	if cmp != 0 {
 		return cmp
