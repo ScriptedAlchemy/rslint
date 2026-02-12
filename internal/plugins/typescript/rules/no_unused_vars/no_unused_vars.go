@@ -1416,10 +1416,6 @@ func collectAssignmentTargetWrites(target *ast.Node, writes map[string][]*ast.No
 	}
 }
 
-func isAssignmentTarget(node *ast.Node) bool {
-	return assignmentTargetExpressionForNode(node) != nil
-}
-
 func collectValueDeclarations(node *ast.Node, declarations map[string][]*ast.Node) {
 	if node == nil {
 		return
