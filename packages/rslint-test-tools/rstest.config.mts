@@ -61,7 +61,7 @@ export default defineConfig({
     // './tests/typescript-eslint/rules/naming-convention/cases/typeAlias.test.ts',
     // './tests/typescript-eslint/rules/naming-convention/cases/typeParameter.test.ts',
     // './tests/typescript-eslint/rules/naming-convention/cases/variable.test.ts',
-    // './tests/typescript-eslint/rules/naming-convention/naming-convention.test.ts',
+    './tests/typescript-eslint/rules/naming-convention/naming-convention.test.ts',
     './tests/typescript-eslint/rules/no-array-constructor.test.ts',
     './tests/typescript-eslint/rules/no-array-delete.test.ts',
     './tests/typescript-eslint/rules/no-base-to-string.test.ts',
