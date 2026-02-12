@@ -80,7 +80,7 @@
     "build": "node scripts/build.js",
     "watch": "node scripts/build.js --watch",
     "package": "vsce package",
-    "test": "tsgo -p tsconfig.spec.json && node .vscode-test-out/runTest.js"
+    "test": "node scripts/run-tests.js"
   },
   "devDependencies": {
     "@rslint/core": "workspace:*",
