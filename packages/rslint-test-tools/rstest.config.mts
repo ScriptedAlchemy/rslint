@@ -128,7 +128,7 @@ export default defineConfig({
     './tests/typescript-eslint/rules/no-unsafe-unary-minus.test.ts',
     './tests/typescript-eslint/rules/no-unused-expressions.test.ts',
     './tests/typescript-eslint/rules/no-unused-private-class-members.test.ts',
-    // './tests/typescript-eslint/rules/no-unused-vars/no-unused-vars-eslint.test.ts',
+    './tests/typescript-eslint/rules/no-unused-vars/no-unused-vars-eslint.test.ts',
     './tests/typescript-eslint/rules/no-unused-vars/no-unused-vars.test.ts',
     './tests/typescript-eslint/rules/no-use-before-define.test.ts',
     './tests/typescript-eslint/rules/no-useless-constructor.test.ts',

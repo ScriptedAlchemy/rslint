@@ -21,6 +21,7 @@ type Config struct {
 	CaughtErrors                   string `json:"caughtErrors"`
 	CaughtErrorsIgnorePattern      string `json:"caughtErrorsIgnorePattern"`
 	IgnoreRestSiblings             bool   `json:"ignoreRestSiblings"`
+	IgnoreClassWithStaticInitBlock bool   `json:"ignoreClassWithStaticInitBlock"`
 	ReportUsedIgnorePattern        bool   `json:"reportUsedIgnorePattern"`
 }
 
@@ -46,6 +47,7 @@ func parseOptions(options interface{}) Config {
 		CaughtErrors:                   "all",
 		CaughtErrorsIgnorePattern:      "",
 		IgnoreRestSiblings:             false,
+		IgnoreClassWithStaticInitBlock: false,
 		ReportUsedIgnorePattern:        false,
 	}
 
@@ -77,6 +79,9 @@ func parseOptions(options interface{}) Config {
 		}
 		if val, ok := optsMap["ignoreRestSiblings"].(bool); ok {
 			config.IgnoreRestSiblings = val
+		}
+		if val, ok := optsMap["ignoreClassWithStaticInitBlock"].(bool); ok {
+			config.IgnoreClassWithStaticInitBlock = val
 		}
 		if val, ok := optsMap["reportUsedIgnorePattern"].(bool); ok {
 			config.ReportUsedIgnorePattern = val
@@ -377,7 +382,7 @@ func shouldIgnoreVariable(varName string, varInfo *VariableInfo, opts Config, al
 		if forcedUsedNames[varName] {
 			return true
 		}
-		return shouldIgnoreCaughtError(varName, opts)
+		return shouldIgnoreCaughtError(varName, varInfo, opts)
 	}
 
 	if forcedUsedNames[varName] {
@@ -861,7 +866,9 @@ func shouldIgnoreParameter(varName string, varInfo *VariableInfo, definition *as
 
 	if opts.ArgsIgnorePattern != "" {
 		if matched, _ := regexp.MatchString(opts.ArgsIgnorePattern, varName); matched {
-			return true
+			if !varInfo.Used || !opts.ReportUsedIgnorePattern {
+				return true
+			}
 		}
 	}
 
@@ -883,14 +890,14 @@ func shouldIgnoreParameter(varName string, varInfo *VariableInfo, definition *as
 	return false
 }
 
-func shouldIgnoreCaughtError(varName string, opts Config) bool {
+func shouldIgnoreCaughtError(varName string, varInfo *VariableInfo, opts Config) bool {
 	if opts.CaughtErrors == "none" {
 		return true
 	}
 
 	if opts.CaughtErrorsIgnorePattern != "" {
 		if matched, _ := regexp.MatchString(opts.CaughtErrorsIgnorePattern, varName); matched {
-			return true
+			return varInfo == nil || !varInfo.Used || !opts.ReportUsedIgnorePattern
 		}
 	}
 
@@ -2881,7 +2888,7 @@ func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, defi
 		varInfo.Used = true
 		varInfo.OnlyUsedAsType = false
 	}
-	if !varInfo.Used && classDeclarationHasStaticBlock(ctx, definition) {
+	if !varInfo.Used && opts.IgnoreClassWithStaticInitBlock && classDeclarationHasStaticBlock(ctx, definition) {
 		varInfo.Used = true
 		varInfo.OnlyUsedAsType = false
 	}
@@ -3022,13 +3029,42 @@ func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, defi
 		// Variable is not used at all
 		ctx.ReportNode(reportNode, buildUnusedVarMessage(name))
 	} else if varInfo.Used && opts.ReportUsedIgnorePattern {
-		// Check if used but matches ignore pattern and should be reported
-		if opts.VarsIgnorePattern != "" {
-			if matched, _ := regexp.MatchString(opts.VarsIgnorePattern, name); matched {
-				ctx.ReportNode(varInfo.Variable, buildUsedIgnoredVarMessage(name))
-			}
+		if shouldReportUsedIgnoredVariable(name, definition, opts, allWrites) {
+			ctx.ReportNode(varInfo.Variable, buildUsedIgnoredVarMessage(name))
 		}
 	}
+}
+
+func shouldReportUsedIgnoredVariable(name string, definition *ast.Node, opts Config, allWrites map[string][]*ast.Node) bool {
+	if name == "" || definition == nil || !opts.ReportUsedIgnorePattern {
+		return false
+	}
+	if opts.VarsIgnorePattern != "" {
+		if matched, _ := regexp.MatchString(opts.VarsIgnorePattern, name); matched {
+			return true
+		}
+	}
+	if parameterNodeForDefinition(definition) != nil && opts.ArgsIgnorePattern != "" {
+		if matched, _ := regexp.MatchString(opts.ArgsIgnorePattern, name); matched {
+			return true
+		}
+	}
+	if isCaughtError(definition) && opts.CaughtErrorsIgnorePattern != "" {
+		if matched, _ := regexp.MatchString(opts.CaughtErrorsIgnorePattern, name); matched {
+			return true
+		}
+	}
+	if isArrayBindingElementDefinition(definition) && opts.DestructuredArrayIgnorePattern != "" {
+		if matched, _ := regexp.MatchString(opts.DestructuredArrayIgnorePattern, name); matched {
+			return true
+		}
+	}
+	if opts.DestructuredArrayIgnorePattern != "" && hasArrayDestructuringWrite(name, allWrites) {
+		if matched, _ := regexp.MatchString(opts.DestructuredArrayIgnorePattern, name); matched {
+			return true
+		}
+	}
+	return false
 }
 
 var NoUnusedVarsRule = rule.CreateRule(rule.Rule{
