@@ -565,8 +565,13 @@ func memberMatchesGroup(member memberInfo, group string) bool {
 	prefix := strings.TrimSuffix(group, base)
 	prefix = strings.TrimSuffix(prefix, "-")
 	if prefix == "" {
+		if member.isAbstract || member.isDecorated {
+			return false
+		}
 		return true
 	}
+	hasAbstract := false
+	hasDecorated := false
 	for _, token := range strings.Split(prefix, "-") {
 		switch token {
 		case "public":
@@ -594,10 +599,12 @@ func memberMatchesGroup(member memberInfo, group string) bool {
 				return false
 			}
 		case "abstract":
+			hasAbstract = true
 			if !member.isAbstract {
 				return false
 			}
 		case "decorated":
+			hasDecorated = true
 			if !member.isDecorated {
 				return false
 			}
@@ -608,6 +615,12 @@ func memberMatchesGroup(member memberInfo, group string) bool {
 		default:
 			return false
 		}
+	}
+	if member.isAbstract && !hasAbstract {
+		return false
+	}
+	if member.isDecorated && !hasDecorated {
+		return false
 	}
 	return true
 }
@@ -646,11 +659,7 @@ func compareMemberName(left, right string, order string) int {
 	case "alphabetically":
 		return strings.Compare(left, right)
 	case "alphabetically-case-insensitive":
-		cmp := strings.Compare(strings.ToLower(left), strings.ToLower(right))
-		if cmp != 0 {
-			return cmp
-		}
-		return strings.Compare(left, right)
+		return strings.Compare(strings.ToLower(left), strings.ToLower(right))
 	case "natural":
 		return compareNatural(left, right, false)
 	case "natural-case-insensitive":
@@ -692,12 +701,6 @@ func compareNatural(left, right string, caseInsensitive bool) int {
 		if partCompare != 0 {
 			return partCompare
 		}
-		if caseInsensitive {
-			partCompare = strings.Compare(leftPart, rightPart)
-			if partCompare != 0 {
-				return partCompare
-			}
-		}
 	}
 
 	if len(leftParts) != len(rightParts) {
@@ -705,6 +708,9 @@ func compareNatural(left, right string, caseInsensitive bool) int {
 			return -1
 		}
 		return 1
+	}
+	if caseInsensitive {
+		return 0
 	}
 	return strings.Compare(left, right)
 }
@@ -847,6 +853,13 @@ func checkOrdering(ctx rule.RuleContext, members []memberInfo, cfg memberOrderin
 			continue
 		}
 		key := fmt.Sprintf("%d:%d", member.groupIndex, optionalityKey(member, cfg.optionalityOrder))
+		if cfg.memberTypesNever {
+			bucket := memberNameOrderBucket(member)
+			if bucket == "" {
+				continue
+			}
+			key = fmt.Sprintf("never:%s:%d", bucket, optionalityKey(member, cfg.optionalityOrder))
+		}
 		prev, exists := previousByKey[key]
 		if exists && compareMemberName(prev.nameKey, member.nameKey, cfg.order) > 0 {
 			ctx.ReportNode(member.node, buildIncorrectOrderMessage())
@@ -855,9 +868,23 @@ func checkOrdering(ctx rule.RuleContext, members []memberInfo, cfg memberOrderin
 	}
 }
 
-func isNameComparableMember(member memberInfo) bool {
+func memberNameOrderBucket(member memberInfo) string {
 	switch member.kind {
-	case "field", "method", "get", "set", "accessor":
+	case "signature":
+		return ""
+	case "call-signature", "construct-signature", "constructor":
+		return "signature-call-construct"
+	default:
+		return "main"
+	}
+}
+
+func isNameComparableMember(member memberInfo) bool {
+	if member.kind == "static-initialization" {
+		return false
+	}
+	switch member.kind {
+	case "field", "method", "get", "set", "accessor", "call-signature", "construct-signature", "constructor":
 		return true
 	default:
 		return false
