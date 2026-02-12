@@ -334,6 +334,9 @@ func shouldIgnoreVariable(varName string, varInfo *VariableInfo, opts Config, al
 	if isIgnoredByRestSibling(varInfo.Definition, opts) {
 		return true
 	}
+	if opts.IgnoreRestSiblings && hasObjectRestSiblingWrite(varName, allWrites) {
+		return true
+	}
 
 	// Check if it's a function parameter and should be ignored
 	if parameterNode := parameterNodeForDefinition(varInfo.Definition); parameterNode != nil {
@@ -367,11 +370,119 @@ func hasArrayDestructuringWrite(varName string, allWrites map[string][]*ast.Node
 		if assignmentExpression == nil || assignmentExpression.Left == nil {
 			continue
 		}
-		if assignmentExpression.Left.Kind == ast.KindArrayLiteralExpression {
+		left := unwrapAssignmentTarget(assignmentExpression.Left)
+		if left != nil && left.Kind == ast.KindArrayLiteralExpression {
 			return true
 		}
 	}
 	return false
+}
+
+func hasObjectRestSiblingWrite(varName string, allWrites map[string][]*ast.Node) bool {
+	for _, write := range allWrites[varName] {
+		if write == nil {
+			continue
+		}
+		assignmentExpression := assignmentTargetExpressionForNode(write)
+		if assignmentExpression == nil || assignmentExpression.Left == nil {
+			continue
+		}
+		left := unwrapAssignmentTarget(assignmentExpression.Left)
+		if left == nil || left.Kind != ast.KindObjectLiteralExpression {
+			continue
+		}
+		objectLiteralExpression := left.AsObjectLiteralExpression()
+		if objectLiteralExpression == nil || objectLiteralExpression.Properties == nil {
+			continue
+		}
+		var containingProperty *ast.Node
+		for current := write.Parent; current != nil && current != left; current = current.Parent {
+			if current.Parent != left {
+				continue
+			}
+			switch current.Kind {
+			case ast.KindPropertyAssignment, ast.KindShorthandPropertyAssignment:
+				containingProperty = current
+			}
+			break
+		}
+		if containingProperty == nil {
+			continue
+		}
+		seenCurrent := false
+		for _, property := range objectLiteralExpression.Properties.Nodes {
+			if property == nil {
+				continue
+			}
+			if property == containingProperty {
+				seenCurrent = true
+				continue
+			}
+			if !seenCurrent {
+				continue
+			}
+			if property.Kind == ast.KindSpreadAssignment || property.Kind == ast.KindSpreadElement {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func isDestructuringAssignmentWrite(writeNode *ast.Node) bool {
+	if writeNode == nil {
+		return false
+	}
+	assignmentExpression := assignmentTargetExpressionForNode(writeNode)
+	if assignmentExpression == nil || assignmentExpression.Left == nil {
+		return false
+	}
+	left := unwrapAssignmentTarget(assignmentExpression.Left)
+	if left == nil {
+		return false
+	}
+	return left.Kind == ast.KindArrayLiteralExpression || left.Kind == ast.KindObjectLiteralExpression
+}
+
+func unwrapAssignmentTarget(node *ast.Node) *ast.Node {
+	current := node
+	for current != nil {
+		switch current.Kind {
+		case ast.KindParenthesizedExpression:
+			parenthesizedExpression := current.AsParenthesizedExpression()
+			if parenthesizedExpression == nil || parenthesizedExpression.Expression == nil {
+				return current
+			}
+			current = parenthesizedExpression.Expression
+		case ast.KindAsExpression:
+			asExpression := current.AsAsExpression()
+			if asExpression == nil || asExpression.Expression == nil {
+				return current
+			}
+			current = asExpression.Expression
+		case ast.KindTypeAssertionExpression:
+			typeAssertionExpression := current.AsTypeAssertion()
+			if typeAssertionExpression == nil || typeAssertionExpression.Expression == nil {
+				return current
+			}
+			current = typeAssertionExpression.Expression
+		case ast.KindSatisfiesExpression:
+			satisfiesExpression := current.AsSatisfiesExpression()
+			if satisfiesExpression == nil || satisfiesExpression.Expression == nil {
+				return current
+			}
+			current = satisfiesExpression.Expression
+		case ast.KindNonNullExpression:
+			nonNullExpression := current.AsNonNullExpression()
+			if nonNullExpression == nil || nonNullExpression.Expression == nil {
+				return current
+			}
+			current = nonNullExpression.Expression
+		default:
+			return current
+		}
+	}
+	return nil
 }
 
 func isIgnoredByRestSibling(definition *ast.Node, opts Config) bool {
@@ -2201,8 +2312,19 @@ func processVariable(ctx rule.RuleContext, nameNode *ast.Node, name string, defi
 		}
 		reportNode := varInfo.Variable
 		if writeNodes, ok := allWrites[name]; ok {
+			hasNonDestructuringWrite := false
+			for _, writeNode := range writeNodes {
+				if writeNode == nil || isDestructuringAssignmentWrite(writeNode) {
+					continue
+				}
+				hasNonDestructuringWrite = true
+				break
+			}
 			for _, writeNode := range writeNodes {
 				if writeNode == nil {
+					continue
+				}
+				if !hasNonDestructuringWrite && isDestructuringAssignmentWrite(writeNode) {
 					continue
 				}
 				if reportNode == nil || writeNode.Pos() > reportNode.Pos() {
