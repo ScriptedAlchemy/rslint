@@ -2621,11 +2621,11 @@ exports[`naming-convention > invalid 40`] = `
       "messageId": "doesNotMatchFormat",
       "range": {
         "end": {
-          "column": 20,
+          "column": 21,
           "line": 1,
         },
         "start": {
-          "column": 17,
+          "column": 18,
           "line": 1,
         },
       },
