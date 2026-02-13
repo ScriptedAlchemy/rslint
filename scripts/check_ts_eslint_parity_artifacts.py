@@ -346,6 +346,13 @@ def extract_prefixed_lines(text: str, prefixes: tuple[str, ...]) -> list[str]:
 	return [line.strip() for line in text.splitlines() if any(line.strip().startswith(prefix) for prefix in prefixes)]
 
 
+def assert_no_pnpm_lifecycle_noise(label: str, text: str) -> None:
+	if "rslint-monorepo@" in text:
+		fail(f"{label} contains pnpm lifecycle banner output; expected --silent wrapper output")
+	if re.search(r"^>\s", text, flags=re.MULTILINE):
+		fail(f"{label} contains pnpm lifecycle command echo output; expected --silent wrapper output")
+
+
 def main() -> None:
 	root = pathlib.Path("/workspace")
 	tracker_csv = root / "typescript-eslint-rule-parity-tracker.csv"
@@ -494,6 +501,8 @@ def main() -> None:
 	)
 	if status_cmd.returncode != 0:
 		fail(f"status command failed: exit={status_cmd.returncode}")
+	assert_no_pnpm_lifecycle_noise("status command stdout", status_cmd.stdout)
+	assert_no_pnpm_lifecycle_noise("status command stderr", status_cmd.stderr)
 	if "typescript-eslint-rule-parity-status.json" not in (status_cmd.stdout + status_cmd.stderr):
 		fail("status command output missing status artifact path token")
 	status_lines = extract_status_write_lines(status_cmd.stdout + status_cmd.stderr)
@@ -574,6 +583,8 @@ def main() -> None:
 			"status command strict exit-code mismatch: "
 			f"expected={expected_status_strict_exit} actual={status_cmd_strict.returncode}"
 		)
+	assert_no_pnpm_lifecycle_noise("status command strict stdout", status_cmd_strict.stdout)
+	assert_no_pnpm_lifecycle_noise("status command strict stderr", status_cmd_strict.stderr)
 	if "typescript-eslint-rule-parity-status.json" not in (status_cmd_strict.stdout + status_cmd_strict.stderr):
 		fail("status command strict output missing status artifact path token")
 	if expected_status_strict_exit == 2 and "[parity-status] ERROR:" not in status_cmd_strict.stderr:
@@ -599,6 +610,8 @@ def main() -> None:
 			"status command strict-yellow exit-code mismatch: "
 			f"expected={expected_status_strict_yellow_exit} actual={status_cmd_strict_yellow.returncode}"
 		)
+	assert_no_pnpm_lifecycle_noise("status command strict-yellow stdout", status_cmd_strict_yellow.stdout)
+	assert_no_pnpm_lifecycle_noise("status command strict-yellow stderr", status_cmd_strict_yellow.stderr)
 	if "typescript-eslint-rule-parity-status.json" not in (status_cmd_strict_yellow.stdout + status_cmd_strict_yellow.stderr):
 		fail("status command strict-yellow output missing status artifact path token")
 	if expected_status_strict_yellow_exit == 3 and "[parity-status] ERROR:" not in status_cmd_strict_yellow.stderr:
@@ -965,6 +978,8 @@ def main() -> None:
 			"parity gate quick exit-code mismatch: "
 			f"expected={expected_gate_red_exit} actual={gate_quick.returncode}"
 		)
+	assert_no_pnpm_lifecycle_noise("parity gate quick stdout", gate_quick.stdout)
+	assert_no_pnpm_lifecycle_noise("parity gate quick stderr", gate_quick.stderr)
 	if "[parity-gate] Skipping strict clean parity checks (--skip-checks)." not in (gate_quick.stdout + gate_quick.stderr):
 		fail("parity gate quick output missing skip-checks message")
 	if "[parity-gate] Applying red threshold gates" not in (gate_quick.stdout + gate_quick.stderr):
@@ -994,6 +1009,8 @@ def main() -> None:
 			"parity gate quick:red exit-code mismatch: "
 			f"expected={expected_gate_red_exit} actual={gate_quick_red.returncode}"
 		)
+	assert_no_pnpm_lifecycle_noise("parity gate quick:red stdout", gate_quick_red.stdout)
+	assert_no_pnpm_lifecycle_noise("parity gate quick:red stderr", gate_quick_red.stderr)
 	if "[parity-gate] Skipping strict clean parity checks (--skip-checks)." not in (gate_quick_red.stdout + gate_quick_red.stderr):
 		fail("parity gate quick:red output missing skip-checks message")
 	if "[parity-gate] Applying red threshold gates" not in (gate_quick_red.stdout + gate_quick_red.stderr):
@@ -1025,6 +1042,8 @@ def main() -> None:
 			"parity gate quick:yellow exit-code mismatch: "
 			f"expected={expected_gate_yellow_exit} actual={gate_quick_yellow.returncode}"
 		)
+	assert_no_pnpm_lifecycle_noise("parity gate quick:yellow stdout", gate_quick_yellow.stdout)
+	assert_no_pnpm_lifecycle_noise("parity gate quick:yellow stderr", gate_quick_yellow.stderr)
 	if "[parity-gate] Skipping strict clean parity checks (--skip-checks)." not in (gate_quick_yellow.stdout + gate_quick_yellow.stderr):
 		fail("parity gate quick:yellow output missing skip-checks message")
 	if "[parity-gate] Applying yellow threshold gates" not in (gate_quick_yellow.stdout + gate_quick_yellow.stderr):
@@ -1376,6 +1395,8 @@ def main() -> None:
 	)
 	if ci_summary_cmd.returncode != 0:
 		fail(f"ci summary command failed: exit={ci_summary_cmd.returncode}")
+	assert_no_pnpm_lifecycle_noise("ci summary command stdout", ci_summary_cmd.stdout)
+	assert_no_pnpm_lifecycle_noise("ci summary command stderr", ci_summary_cmd.stderr)
 	ci_summary_cmd_parsed = parse_ci_summary_markdown(ci_summary_cmd.stdout)
 	if ci_summary_cmd_parsed != ci_summary:
 		fail("ci summary command output mismatch with direct script output")
@@ -1389,6 +1410,8 @@ def main() -> None:
 	)
 	if ci_summary_json_cmd.returncode != 0:
 		fail(f"ci summary json command failed: exit={ci_summary_json_cmd.returncode}")
+	assert_no_pnpm_lifecycle_noise("ci summary json command stdout", ci_summary_json_cmd.stdout)
+	assert_no_pnpm_lifecycle_noise("ci summary json command stderr", ci_summary_json_cmd.stderr)
 	ci_summary_json_cmd_parsed = parse_ci_summary_json(ci_summary_json_cmd.stdout)
 	if ci_summary_json_cmd_parsed != ci_summary_json:
 		fail("ci summary json command output mismatch with direct script output")
@@ -1430,7 +1453,7 @@ def main() -> None:
 
 	# CI summary npm command wrapper checks
 	ci_summary_cmd_strict = subprocess.run(
-		["pnpm", "parity:ts-eslint:ci-summary:strict"],
+		["pnpm", "--silent", "parity:ts-eslint:ci-summary:strict"],
 		cwd=str(root),
 		check=False,
 		capture_output=True,
@@ -1441,6 +1464,8 @@ def main() -> None:
 			"ci summary command strict exit-code mismatch: "
 			f"expected={expected_ci_summary_strict_exit} actual={ci_summary_cmd_strict.returncode}"
 		)
+	assert_no_pnpm_lifecycle_noise("ci summary command strict stdout", ci_summary_cmd_strict.stdout)
+	assert_no_pnpm_lifecycle_noise("ci summary command strict stderr", ci_summary_cmd_strict.stderr)
 	ci_summary_cmd_strict_parsed = parse_ci_summary_markdown(ci_summary_cmd_strict.stdout)
 	if ci_summary_cmd_strict_parsed != ci_summary:
 		fail("ci summary command strict stdout mismatch with non-strict summary output")
@@ -1450,7 +1475,7 @@ def main() -> None:
 		fail("ci summary command strict stderr missing health+reason message")
 
 	ci_summary_cmd_strict_yellow = subprocess.run(
-		["pnpm", "parity:ts-eslint:ci-summary:strict:yellow"],
+		["pnpm", "--silent", "parity:ts-eslint:ci-summary:strict:yellow"],
 		cwd=str(root),
 		check=False,
 		capture_output=True,
@@ -1461,6 +1486,8 @@ def main() -> None:
 			"ci summary command strict-yellow exit-code mismatch: "
 			f"expected={expected_ci_summary_strict_yellow_exit} actual={ci_summary_cmd_strict_yellow.returncode}"
 		)
+	assert_no_pnpm_lifecycle_noise("ci summary command strict-yellow stdout", ci_summary_cmd_strict_yellow.stdout)
+	assert_no_pnpm_lifecycle_noise("ci summary command strict-yellow stderr", ci_summary_cmd_strict_yellow.stderr)
 	ci_summary_cmd_strict_yellow_parsed = parse_ci_summary_markdown(ci_summary_cmd_strict_yellow.stdout)
 	if ci_summary_cmd_strict_yellow_parsed != ci_summary:
 		fail("ci summary command strict-yellow stdout mismatch with non-strict summary output")
@@ -1567,6 +1594,8 @@ def main() -> None:
 	)
 	if doctor_cmd.returncode != 0:
 		fail(f"parity doctor command failed: exit={doctor_cmd.returncode}")
+	assert_no_pnpm_lifecycle_noise("parity doctor command stdout", doctor_cmd.stdout)
+	assert_no_pnpm_lifecycle_noise("parity doctor command stderr", doctor_cmd.stderr)
 	if parse_doctor_plain_output(doctor_cmd.stdout) != doctor_plain_data:
 		fail("parity doctor command output mismatch with direct script output")
 
@@ -1579,6 +1608,8 @@ def main() -> None:
 	)
 	if doctor_markdown_cmd.returncode != 0:
 		fail(f"parity doctor markdown command failed: exit={doctor_markdown_cmd.returncode}")
+	assert_no_pnpm_lifecycle_noise("parity doctor markdown command stdout", doctor_markdown_cmd.stdout)
+	assert_no_pnpm_lifecycle_noise("parity doctor markdown command stderr", doctor_markdown_cmd.stderr)
 	if parse_doctor_markdown_output(doctor_markdown_cmd.stdout) != doctor_md_data:
 		fail("parity doctor markdown command output mismatch with direct script output")
 
@@ -1591,6 +1622,8 @@ def main() -> None:
 	)
 	if doctor_json_cmd.returncode != 0:
 		fail(f"parity doctor json command failed: exit={doctor_json_cmd.returncode}")
+	assert_no_pnpm_lifecycle_noise("parity doctor json command stdout", doctor_json_cmd.stdout)
+	assert_no_pnpm_lifecycle_noise("parity doctor json command stderr", doctor_json_cmd.stderr)
 	if parse_doctor_json_output(doctor_json_cmd.stdout) != doctor_json_data:
 		fail("parity doctor json command output mismatch with direct script output")
 
@@ -1660,7 +1693,7 @@ def main() -> None:
 
 	# Doctor npm command wrapper checks
 	doctor_cmd_strict = subprocess.run(
-		["pnpm", "parity:ts-eslint:doctor:strict"],
+		["pnpm", "--silent", "parity:ts-eslint:doctor:strict"],
 		cwd=str(root),
 		check=False,
 		capture_output=True,
@@ -1671,6 +1704,8 @@ def main() -> None:
 			"parity doctor command strict exit-code mismatch: "
 			f"expected={expected_strict_exit} actual={doctor_cmd_strict.returncode}"
 		)
+	assert_no_pnpm_lifecycle_noise("parity doctor command strict stdout", doctor_cmd_strict.stdout)
+	assert_no_pnpm_lifecycle_noise("parity doctor command strict stderr", doctor_cmd_strict.stderr)
 	if parse_doctor_plain_output(doctor_cmd_strict.stdout) != doctor_plain_data:
 		fail("parity doctor command strict stdout mismatch with non-strict plain output")
 	if expected_strict_exit == 2 and "[parity-doctor] ERROR:" not in doctor_cmd_strict.stderr:
@@ -1679,7 +1714,7 @@ def main() -> None:
 		fail("parity doctor command strict stderr missing critical backlog message")
 
 	doctor_cmd_strict_yellow = subprocess.run(
-		["pnpm", "parity:ts-eslint:doctor:strict:yellow"],
+		["pnpm", "--silent", "parity:ts-eslint:doctor:strict:yellow"],
 		cwd=str(root),
 		check=False,
 		capture_output=True,
@@ -1690,6 +1725,8 @@ def main() -> None:
 			"parity doctor command strict-yellow exit-code mismatch: "
 			f"expected={expected_yellow_strict_exit} actual={doctor_cmd_strict_yellow.returncode}"
 		)
+	assert_no_pnpm_lifecycle_noise("parity doctor command strict-yellow stdout", doctor_cmd_strict_yellow.stdout)
+	assert_no_pnpm_lifecycle_noise("parity doctor command strict-yellow stderr", doctor_cmd_strict_yellow.stderr)
 	if parse_doctor_plain_output(doctor_cmd_strict_yellow.stdout) != doctor_plain_data:
 		fail("parity doctor command strict-yellow stdout mismatch with non-strict plain output")
 	if expected_yellow_strict_exit == 3 and "[parity-doctor] ERROR:" not in doctor_cmd_strict_yellow.stderr:
@@ -1709,6 +1746,8 @@ def main() -> None:
 			"parity doctor command json strict exit-code mismatch: "
 			f"expected={expected_strict_exit} actual={doctor_cmd_json_strict.returncode}"
 		)
+	assert_no_pnpm_lifecycle_noise("parity doctor command json strict stdout", doctor_cmd_json_strict.stdout)
+	assert_no_pnpm_lifecycle_noise("parity doctor command json strict stderr", doctor_cmd_json_strict.stderr)
 	if parse_doctor_json_output(doctor_cmd_json_strict.stdout) != doctor_json_data:
 		fail("parity doctor command json strict stdout mismatch with non-strict json output")
 	if expected_strict_exit == 2 and "[parity-doctor] ERROR:" not in doctor_cmd_json_strict.stderr:
@@ -1728,6 +1767,8 @@ def main() -> None:
 			"parity doctor command json strict-yellow exit-code mismatch: "
 			f"expected={expected_yellow_strict_exit} actual={doctor_cmd_json_strict_yellow.returncode}"
 		)
+	assert_no_pnpm_lifecycle_noise("parity doctor command json strict-yellow stdout", doctor_cmd_json_strict_yellow.stdout)
+	assert_no_pnpm_lifecycle_noise("parity doctor command json strict-yellow stderr", doctor_cmd_json_strict_yellow.stderr)
 	if parse_doctor_json_output(doctor_cmd_json_strict_yellow.stdout) != doctor_json_data:
 		fail("parity doctor command json strict-yellow stdout mismatch with non-strict json output")
 	if expected_yellow_strict_exit == 3 and "[parity-doctor] ERROR:" not in doctor_cmd_json_strict_yellow.stderr:
