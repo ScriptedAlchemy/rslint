@@ -89,6 +89,11 @@ pnpm parity:ts-eslint:gate
 pnpm parity:ts-eslint:gate:red
 pnpm parity:ts-eslint:gate:yellow
 
+# Quick unified gates (threshold-only status/doctor checks; skip strict clean checks)
+pnpm parity:ts-eslint:gate:quick
+pnpm parity:ts-eslint:gate:quick:red
+pnpm parity:ts-eslint:gate:quick:yellow
+
 # Refresh canonical markdown + JSON parity diff artifacts
 pnpm parity:ts-eslint:diff:refresh
 ```
