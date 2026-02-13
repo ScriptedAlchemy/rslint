@@ -90,7 +90,7 @@ The checkers validate:
 - parity command/docs/script synchronization,
 - exact parity command inventory in `package.json` vs checker expectations,
 - command reference row/backing-script mapping parity with `package.json`,
-- CI workflow wiring (required parity checks and uploaded artifact bundle paths),
+- CI workflow wiring (required parity checks, diff generation/upload paths, and uploaded artifact bundle paths),
 - status/badge schema, health reason, strict-exit behavior, and summary arithmetic coherence.
 
 `parity:ts-eslint:check:all` additionally runs metadata-pinned reproducibility verification when parity artifacts are clean.

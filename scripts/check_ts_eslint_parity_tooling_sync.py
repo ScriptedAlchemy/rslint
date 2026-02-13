@@ -265,6 +265,7 @@ def main() -> None:
 		"python3 scripts/check_ts_eslint_parity_tooling_sync.py",
 		"bash scripts/verify_ts_eslint_parity_clean.sh",
 		"--output-json \"typescript-eslint-rule-parity-diff.json\"",
+		"--output \"typescript-eslint-rule-parity-diff.md\"",
 		"python3 scripts/generate_ts_eslint_parity_ci_summary.py >> \"$GITHUB_STEP_SUMMARY\"",
 		"python3 scripts/generate_ts_eslint_parity_doctor.py --markdown >> \"$GITHUB_STEP_SUMMARY\"",
 		"name: typescript-eslint-parity-diff",
@@ -273,6 +274,34 @@ def main() -> None:
 	for token in required_workflow_tokens:
 		if token not in workflow_text:
 			fail(f"missing workflow wiring token: {token}")
+
+	diff_generation_step = re.search(
+		r"- name: Generate parity tracker diff against PR base(?P<body>.*?)(?:\n\s*- name:|\Z)",
+		workflow_text,
+		flags=re.DOTALL,
+	)
+	if not diff_generation_step:
+		fail("missing workflow step: Generate parity tracker diff against PR base")
+	diff_generation_body = diff_generation_step.group("body")
+	for token in [
+		"--base-ref \"origin/${{ github.base_ref }}\"",
+		"--output \"typescript-eslint-rule-parity-diff.md\"",
+		"--output-json \"typescript-eslint-rule-parity-diff.json\"",
+	]:
+		if token not in diff_generation_body:
+			fail(f"missing token in parity diff generation step: {token}")
+
+	diff_upload_step = re.search(
+		r"- name: Upload parity diff artifact(?P<body>.*?)(?:\n\s*- name:|\Z)",
+		workflow_text,
+		flags=re.DOTALL,
+	)
+	if not diff_upload_step:
+		fail("missing workflow step: Upload parity diff artifact")
+	diff_upload_body = diff_upload_step.group("body")
+	for artifact in ["typescript-eslint-rule-parity-diff.md", "typescript-eslint-rule-parity-diff.json"]:
+		if artifact not in diff_upload_body:
+			fail(f"missing diff artifact path in diff upload step: {artifact}")
 
 	required_bundle_artifacts = [
 		"typescript-eslint-rule-parity-report.md",
