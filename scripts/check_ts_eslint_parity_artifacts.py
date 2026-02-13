@@ -591,6 +591,13 @@ def main() -> None:
 		fail("status command strict stderr missing parity-status error prefix")
 	if expected_status_strict_exit == 2 and expected_health_reason_marker not in status_cmd_strict.stderr:
 		fail("status command strict stderr missing health+reason message")
+	status_strict_prefixed_lines = extract_prefixed_lines(status_strict.stdout + status_strict.stderr, ("[parity-status]",))
+	status_strict_yellow_prefixed_lines = extract_prefixed_lines(
+		status_strict_yellow.stdout + status_strict_yellow.stderr, ("[parity-status]",)
+	)
+	status_cmd_strict_prefixed_lines = extract_prefixed_lines(status_cmd_strict.stdout + status_cmd_strict.stderr, ("[parity-status]",))
+	if status_cmd_strict_prefixed_lines != status_strict_prefixed_lines:
+		fail("status command strict prefixed stderr output mismatch with direct strict mode")
 	status_cmd_strict_lines = extract_status_write_lines(status_cmd_strict.stdout + status_cmd_strict.stderr)
 	if status_cmd_strict_lines != status_strict_lines:
 		fail("status command strict write-line output mismatch with direct strict mode")
@@ -618,6 +625,11 @@ def main() -> None:
 		fail("status command strict-yellow stderr missing parity-status error prefix")
 	if expected_status_strict_yellow_exit == 3 and expected_health_reason_marker not in status_cmd_strict_yellow.stderr:
 		fail("status command strict-yellow stderr missing health+reason message")
+	status_cmd_strict_yellow_prefixed_lines = extract_prefixed_lines(
+		status_cmd_strict_yellow.stdout + status_cmd_strict_yellow.stderr, ("[parity-status]",)
+	)
+	if status_cmd_strict_yellow_prefixed_lines != status_strict_yellow_prefixed_lines:
+		fail("status command strict-yellow prefixed stderr output mismatch with direct strict-yellow mode")
 	status_cmd_strict_yellow_lines = extract_status_write_lines(status_cmd_strict_yellow.stdout + status_cmd_strict_yellow.stderr)
 	if status_cmd_strict_yellow_lines != status_strict_yellow_lines:
 		fail("status command strict-yellow write-line output mismatch with direct strict-yellow mode")
@@ -1473,6 +1485,14 @@ def main() -> None:
 		fail("ci summary command strict stderr missing parity-ci-summary error prefix")
 	if expected_ci_summary_strict_exit == 2 and expected_health_reason_marker not in ci_summary_cmd_strict.stderr:
 		fail("ci summary command strict stderr missing health+reason message")
+	ci_summary_strict_prefixed_lines = extract_prefixed_lines(
+		ci_summary_strict.stdout + ci_summary_strict.stderr, ("[parity-ci-summary]",)
+	)
+	ci_summary_cmd_strict_prefixed_lines = extract_prefixed_lines(
+		ci_summary_cmd_strict.stdout + ci_summary_cmd_strict.stderr, ("[parity-ci-summary]",)
+	)
+	if ci_summary_cmd_strict_prefixed_lines != ci_summary_strict_prefixed_lines:
+		fail("ci summary command strict prefixed stderr output mismatch with direct strict mode")
 
 	ci_summary_cmd_strict_yellow = subprocess.run(
 		["pnpm", "--silent", "parity:ts-eslint:ci-summary:strict:yellow"],
@@ -1495,6 +1515,14 @@ def main() -> None:
 		fail("ci summary command strict-yellow stderr missing parity-ci-summary error prefix")
 	if expected_ci_summary_strict_yellow_exit == 3 and expected_health_reason_marker not in ci_summary_cmd_strict_yellow.stderr:
 		fail("ci summary command strict-yellow stderr missing health+reason message")
+	ci_summary_strict_yellow_prefixed_lines = extract_prefixed_lines(
+		ci_summary_strict_yellow.stdout + ci_summary_strict_yellow.stderr, ("[parity-ci-summary]",)
+	)
+	ci_summary_cmd_strict_yellow_prefixed_lines = extract_prefixed_lines(
+		ci_summary_cmd_strict_yellow.stdout + ci_summary_cmd_strict_yellow.stderr, ("[parity-ci-summary]",)
+	)
+	if ci_summary_cmd_strict_yellow_prefixed_lines != ci_summary_strict_yellow_prefixed_lines:
+		fail("ci summary command strict-yellow prefixed stderr output mismatch with direct strict-yellow mode")
 
 	# Parity doctor output checks
 	try:
@@ -1712,6 +1740,12 @@ def main() -> None:
 		fail("parity doctor command strict stderr missing parity-doctor error prefix")
 	if expected_strict_exit == 2 and "A_critical backlog is non-zero" not in doctor_cmd_strict.stderr:
 		fail("parity doctor command strict stderr missing critical backlog message")
+	doctor_strict_prefixed_lines = extract_prefixed_lines(doctor_strict.stdout + doctor_strict.stderr, ("[parity-doctor]",))
+	doctor_cmd_strict_prefixed_lines = extract_prefixed_lines(
+		doctor_cmd_strict.stdout + doctor_cmd_strict.stderr, ("[parity-doctor]",)
+	)
+	if doctor_cmd_strict_prefixed_lines != doctor_strict_prefixed_lines:
+		fail("parity doctor command strict prefixed stderr output mismatch with direct strict mode")
 
 	doctor_cmd_strict_yellow = subprocess.run(
 		["pnpm", "--silent", "parity:ts-eslint:doctor:strict:yellow"],
@@ -1733,6 +1767,14 @@ def main() -> None:
 		fail("parity doctor command strict-yellow stderr missing parity-doctor error prefix")
 	if expected_yellow_strict_exit == 3 and expected_health_reason_marker not in doctor_cmd_strict_yellow.stderr:
 		fail("parity doctor command strict-yellow stderr missing health+reason message")
+	doctor_yellow_strict_prefixed_lines = extract_prefixed_lines(
+		doctor_yellow_strict.stdout + doctor_yellow_strict.stderr, ("[parity-doctor]",)
+	)
+	doctor_cmd_strict_yellow_prefixed_lines = extract_prefixed_lines(
+		doctor_cmd_strict_yellow.stdout + doctor_cmd_strict_yellow.stderr, ("[parity-doctor]",)
+	)
+	if doctor_cmd_strict_yellow_prefixed_lines != doctor_yellow_strict_prefixed_lines:
+		fail("parity doctor command strict-yellow prefixed stderr output mismatch with direct strict-yellow mode")
 
 	doctor_cmd_json_strict = subprocess.run(
 		["pnpm", "--silent", "parity:ts-eslint:doctor:json:strict"],
@@ -1754,6 +1796,14 @@ def main() -> None:
 		fail("parity doctor command json strict stderr missing parity-doctor error prefix")
 	if expected_strict_exit == 2 and "A_critical backlog is non-zero" not in doctor_cmd_json_strict.stderr:
 		fail("parity doctor command json strict stderr missing critical backlog message")
+	doctor_json_strict_prefixed_lines = extract_prefixed_lines(
+		doctor_json_strict.stdout + doctor_json_strict.stderr, ("[parity-doctor]",)
+	)
+	doctor_cmd_json_strict_prefixed_lines = extract_prefixed_lines(
+		doctor_cmd_json_strict.stdout + doctor_cmd_json_strict.stderr, ("[parity-doctor]",)
+	)
+	if doctor_cmd_json_strict_prefixed_lines != doctor_json_strict_prefixed_lines:
+		fail("parity doctor command json strict prefixed stderr output mismatch with direct json strict mode")
 
 	doctor_cmd_json_strict_yellow = subprocess.run(
 		["pnpm", "--silent", "parity:ts-eslint:doctor:json:strict:yellow"],
@@ -1775,6 +1825,14 @@ def main() -> None:
 		fail("parity doctor command json strict-yellow stderr missing parity-doctor error prefix")
 	if expected_yellow_strict_exit == 3 and expected_health_reason_marker not in doctor_cmd_json_strict_yellow.stderr:
 		fail("parity doctor command json strict-yellow stderr missing health+reason message")
+	doctor_json_yellow_strict_prefixed_lines = extract_prefixed_lines(
+		doctor_json_yellow_strict.stdout + doctor_json_yellow_strict.stderr, ("[parity-doctor]",)
+	)
+	doctor_cmd_json_strict_yellow_prefixed_lines = extract_prefixed_lines(
+		doctor_cmd_json_strict_yellow.stdout + doctor_cmd_json_strict_yellow.stderr, ("[parity-doctor]",)
+	)
+	if doctor_cmd_json_strict_yellow_prefixed_lines != doctor_json_yellow_strict_prefixed_lines:
+		fail("parity doctor command json strict-yellow prefixed stderr output mismatch with direct json strict-yellow mode")
 
 	doctor_json_strict_data = parse_doctor_json_output(doctor_json_strict.stdout)
 	doctor_json_yellow_strict_data = parse_doctor_json_output(doctor_json_yellow_strict.stdout)
