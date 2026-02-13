@@ -71,6 +71,7 @@ The checkers validate:
 - issue-body structure/counts,
 - CI summary rendering consistency,
 - parity doctor output consistency (plain + markdown forms),
+- parity doctor strict-mode exit behavior (`--fail-on-critical`),
 - parity command/docs/script synchronization,
 - exact parity command inventory in `package.json` vs checker expectations,
 - CI workflow wiring (required parity checks and uploaded artifact bundle paths),

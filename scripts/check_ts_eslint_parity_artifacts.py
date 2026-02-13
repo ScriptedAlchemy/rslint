@@ -734,6 +734,22 @@ def main() -> None:
 	if doctor_md_data["top_rules"] != expected_doctor_top:
 		fail("parity doctor markdown top rules mismatch")
 
+	# Parity doctor strict-mode exit-code checks
+	doctor_strict = subprocess.run(
+		["python3", str(root / "scripts/generate_ts_eslint_parity_doctor.py"), "--fail-on-critical"],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	expected_strict_exit = 2 if int(phase_counter.get("A_critical", 0)) > 0 else 0
+	if doctor_strict.returncode != expected_strict_exit:
+		fail(
+			"parity doctor strict exit-code mismatch: "
+			f"expected={expected_strict_exit} actual={doctor_strict.returncode}"
+		)
+	if expected_strict_exit == 2 and "A_critical backlog is non-zero" not in doctor_strict.stderr:
+		fail("parity doctor strict stderr missing critical backlog message")
+
 	print("[parity-check] OK: all parity artifacts are consistent.")
 
 
