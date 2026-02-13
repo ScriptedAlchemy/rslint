@@ -695,6 +695,8 @@ def main() -> None:
 		)
 	if expected_gate_red_exit == 2 and "health is red" not in gate_inline_red.stderr:
 		fail("parity gate inline red stderr missing red-health message")
+	if "[parity-gate] Running strict clean parity checks" in (gate_inline_red.stdout + gate_inline_red.stderr):
+		fail("parity gate inline red should not run strict clean checks in --skip-checks mode")
 
 	gate_inline_yellow = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--threshold=yellow", "--skip-checks"],
@@ -709,6 +711,8 @@ def main() -> None:
 		)
 	if expected_gate_yellow_exit == 3 and "health is" not in gate_inline_yellow.stderr:
 		fail("parity gate inline yellow stderr missing health message")
+	if "[parity-gate] Running strict clean parity checks" in (gate_inline_yellow.stdout + gate_inline_yellow.stderr):
+		fail("parity gate inline yellow should not run strict clean checks in --skip-checks mode")
 
 	gate_skip_only_default_red = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--skip-checks"],
@@ -723,6 +727,8 @@ def main() -> None:
 		)
 	if expected_gate_red_exit == 2 and "health is red" not in gate_skip_only_default_red.stderr:
 		fail("parity gate skip-only default-red stderr missing red-health message")
+	if "[parity-gate] Running strict clean parity checks" in (gate_skip_only_default_red.stdout + gate_skip_only_default_red.stderr):
+		fail("parity gate skip-only default-red should not run strict clean checks in --skip-checks mode")
 
 	gate_reordered_flags = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--skip-checks", "--threshold=yellow"],
@@ -737,6 +743,8 @@ def main() -> None:
 		)
 	if expected_gate_yellow_exit == 3 and "health is" not in gate_reordered_flags.stderr:
 		fail("parity gate reordered-flags yellow stderr missing health message")
+	if "[parity-gate] Running strict clean parity checks" in (gate_reordered_flags.stdout + gate_reordered_flags.stderr):
+		fail("parity gate reordered-flags should not run strict clean checks in --skip-checks mode")
 
 	gate_unknown_arg = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--not-a-real-flag"],
@@ -781,6 +789,8 @@ def main() -> None:
 		fail("parity gate quick output missing skip-checks message")
 	if "[parity-gate] Applying red threshold gates" not in (gate_quick.stdout + gate_quick.stderr):
 		fail("parity gate quick output missing red-threshold marker")
+	if "[parity-gate] Running strict clean parity checks" in (gate_quick.stdout + gate_quick.stderr):
+		fail("parity gate quick should not run strict clean checks")
 	if expected_gate_red_exit == 2 and "health is red" not in gate_quick.stderr:
 		fail("parity gate quick stderr missing red-health message")
 
@@ -800,6 +810,8 @@ def main() -> None:
 		fail("parity gate quick:red output missing skip-checks message")
 	if "[parity-gate] Applying red threshold gates" not in (gate_quick_red.stdout + gate_quick_red.stderr):
 		fail("parity gate quick:red output missing red-threshold marker")
+	if "[parity-gate] Running strict clean parity checks" in (gate_quick_red.stdout + gate_quick_red.stderr):
+		fail("parity gate quick:red should not run strict clean checks")
 	if expected_gate_red_exit == 2 and "health is red" not in gate_quick_red.stderr:
 		fail("parity gate quick:red stderr missing red-health message")
 
@@ -819,6 +831,8 @@ def main() -> None:
 		fail("parity gate quick:yellow output missing skip-checks message")
 	if "[parity-gate] Applying yellow threshold gates" not in (gate_quick_yellow.stdout + gate_quick_yellow.stderr):
 		fail("parity gate quick:yellow output missing yellow-threshold marker")
+	if "[parity-gate] Running strict clean parity checks" in (gate_quick_yellow.stdout + gate_quick_yellow.stderr):
+		fail("parity gate quick:yellow should not run strict clean checks")
 	if expected_gate_yellow_exit == 3 and "health is" not in gate_quick_yellow.stderr:
 		fail("parity gate quick:yellow stderr missing health message")
 
