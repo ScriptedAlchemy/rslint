@@ -477,6 +477,21 @@ def main() -> None:
 	if status.get("upstream_ref_requested") != metadata.get("upstream_ref_requested"):
 		fail("status upstream_ref_requested mismatch with metadata")
 
+	status_cmd = subprocess.run(
+		["pnpm", "--silent", "parity:ts-eslint:status"],
+		cwd=str(root),
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if status_cmd.returncode != 0:
+		fail(f"status command failed: exit={status_cmd.returncode}")
+	if "typescript-eslint-rule-parity-status.json" not in (status_cmd.stdout + status_cmd.stderr):
+		fail("status command output missing status artifact path token")
+	status_after_cmd = json.loads(status_json.read_text())
+	if status_after_cmd != status:
+		fail("status command output mutated status artifact unexpectedly")
+
 	expected_health, expected_reason = compute_health_reason(
 		critical=int(phase_counts_meta.get("A_critical", 0)),
 		high=int(phase_counts_meta.get("B_high", 0)),
@@ -1285,6 +1300,32 @@ def main() -> None:
 	elif ci_summary_json.get("diff_metrics"):
 		fail("ci summary json should not include diff metrics when parity diff artifact is absent")
 
+	ci_summary_cmd = subprocess.run(
+		["pnpm", "--silent", "parity:ts-eslint:ci-summary"],
+		cwd=str(root),
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if ci_summary_cmd.returncode != 0:
+		fail(f"ci summary command failed: exit={ci_summary_cmd.returncode}")
+	ci_summary_cmd_parsed = parse_ci_summary_markdown(ci_summary_cmd.stdout)
+	if ci_summary_cmd_parsed != ci_summary:
+		fail("ci summary command output mismatch with direct script output")
+
+	ci_summary_json_cmd = subprocess.run(
+		["pnpm", "--silent", "parity:ts-eslint:ci-summary:json"],
+		cwd=str(root),
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if ci_summary_json_cmd.returncode != 0:
+		fail(f"ci summary json command failed: exit={ci_summary_json_cmd.returncode}")
+	ci_summary_json_cmd_parsed = parse_ci_summary_json(ci_summary_json_cmd.stdout)
+	if ci_summary_json_cmd_parsed != ci_summary_json:
+		fail("ci summary json command output mismatch with direct script output")
+
 	# CI summary strict-mode exit-code checks
 	ci_summary_strict = subprocess.run(
 		["python3", str(root / "scripts/generate_ts_eslint_parity_ci_summary.py"), "--fail-on-red"],
@@ -1443,6 +1484,42 @@ def main() -> None:
 		expected = int(summary.get(key, -1))
 		if int(doctor_json_summary.get(key, -2)) != expected:
 			fail(f"parity doctor json summary mismatch for {key}")
+
+	doctor_cmd = subprocess.run(
+		["pnpm", "--silent", "parity:ts-eslint:doctor"],
+		cwd=str(root),
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if doctor_cmd.returncode != 0:
+		fail(f"parity doctor command failed: exit={doctor_cmd.returncode}")
+	if parse_doctor_plain_output(doctor_cmd.stdout) != doctor_plain_data:
+		fail("parity doctor command output mismatch with direct script output")
+
+	doctor_markdown_cmd = subprocess.run(
+		["pnpm", "--silent", "parity:ts-eslint:doctor:markdown"],
+		cwd=str(root),
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if doctor_markdown_cmd.returncode != 0:
+		fail(f"parity doctor markdown command failed: exit={doctor_markdown_cmd.returncode}")
+	if parse_doctor_markdown_output(doctor_markdown_cmd.stdout) != doctor_md_data:
+		fail("parity doctor markdown command output mismatch with direct script output")
+
+	doctor_json_cmd = subprocess.run(
+		["pnpm", "--silent", "parity:ts-eslint:doctor:json"],
+		cwd=str(root),
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if doctor_json_cmd.returncode != 0:
+		fail(f"parity doctor json command failed: exit={doctor_json_cmd.returncode}")
+	if parse_doctor_json_output(doctor_json_cmd.stdout) != doctor_json_data:
+		fail("parity doctor json command output mismatch with direct script output")
 
 	# Parity doctor strict-mode exit-code checks
 	doctor_strict = subprocess.run(
