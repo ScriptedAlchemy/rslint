@@ -54,6 +54,7 @@ PARITY_OFFLINE=1 TS_ESLINT_REF=main pnpm parity:ts-eslint
 pnpm parity:ts-eslint:check
 pnpm parity:ts-eslint:check:tooling
 pnpm parity:ts-eslint:commands
+pnpm parity:ts-eslint:badges
 pnpm parity:ts-eslint:doctor
 ```
 
@@ -128,6 +129,7 @@ python3 scripts/generate_ts_eslint_parity_tracker.py
 python3 scripts/generate_ts_eslint_parity_worklist.py
 python3 scripts/generate_ts_eslint_parity_top.py
 python3 scripts/generate_ts_eslint_parity_commands.py
+python3 scripts/generate_ts_eslint_parity_badges.py
 python3 scripts/generate_ts_eslint_parity_doctor.py
 python3 scripts/generate_ts_eslint_parity_summary.py
 python3 scripts/generate_ts_eslint_parity_metadata.py

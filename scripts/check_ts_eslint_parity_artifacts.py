@@ -183,6 +183,7 @@ def main() -> None:
 	commands_md = root / "typescript-eslint-rule-parity-commands.md"
 	summary_md = root / "typescript-eslint-rule-parity-summary.md"
 	metadata_json = root / "typescript-eslint-rule-parity-metadata.json"
+	badges_json = root / "typescript-eslint-rule-parity-badges.json"
 	index_md = root / "typescript-eslint-rule-parity-index.md"
 	issue_plan_md = root / "typescript-eslint-rule-parity-issue-plan.md"
 	manifest_json = root / "typescript-eslint-rule-parity-manifest.json"
@@ -203,6 +204,7 @@ def main() -> None:
 		commands_md,
 		summary_md,
 		metadata_json,
+		badges_json,
 		index_md,
 		issue_plan_md,
 		manifest_json,
@@ -237,6 +239,7 @@ def main() -> None:
 		fail(f"CSV/JSON rule-set mismatch: missing_in_csv={missing_in_csv[:5]} missing_in_json={missing_in_json[:5]}")
 
 	metadata = json.loads(metadata_json.read_text())
+	badges = json.loads(badges_json.read_text())
 	summary = metadata.get("summary", {})
 	phase_counts_meta = metadata.get("phase_counts", {})
 	flag_counts_meta = metadata.get("flag_counts", {})
@@ -245,6 +248,17 @@ def main() -> None:
 		fail("metadata missing upstream_ref_requested")
 	if not metadata.get("upstream_commit"):
 		fail("metadata missing upstream_commit")
+
+	# Badge data checks
+	badge_metrics = badges.get("metrics", {})
+	if int(badge_metrics.get("total_rules", -1)) != int(summary.get("total_rules", -2)):
+		fail("badges total_rules mismatch with metadata summary")
+	if int(badge_metrics.get("flagged_rules", -1)) != int(summary.get("flagged_rules", -2)):
+		fail("badges flagged_rules mismatch with metadata summary")
+	if int(badge_metrics.get("aligned_rules", -1)) != int(summary.get("aligned_rules", -2)):
+		fail("badges aligned_rules mismatch with metadata summary")
+	if int(badge_metrics.get("critical_rules", -1)) != int(metadata.get("phase_counts", {}).get("A_critical", -2)):
+		fail("badges critical_rules mismatch with metadata phase counts")
 
 	flagged = [row for row in tracker_rows if int(row.get("priority_score", 0)) > 0]
 	aligned = len(tracker_rows) - len(flagged)
@@ -367,6 +381,7 @@ def main() -> None:
 		"typescript-eslint-rule-parity-commands.md",
 		"typescript-eslint-rule-parity-summary.md",
 		"typescript-eslint-rule-parity-metadata.json",
+		"typescript-eslint-rule-parity-badges.json",
 		"typescript-eslint-rule-parity-index.md",
 		"typescript-eslint-rule-parity-issue-plan.md",
 		"typescript-eslint-rule-parity-tasklist-<phase>.md",
@@ -405,10 +420,12 @@ def main() -> None:
 		"typescript-eslint-rule-parity-worklist.md",
 		"typescript-eslint-rule-parity-top.md",
 		"typescript-eslint-rule-parity-commands.md",
+		"typescript-eslint-rule-parity-badges.json",
 		"typescript-eslint-rule-parity-issue-plan.md",
 		"typescript-eslint-rule-parity-tracker.csv",
 		"typescript-eslint-rule-parity-tracker.json",
 		"typescript-eslint-rule-parity-metadata.json",
+		"typescript-eslint-rule-parity-badges.json",
 		"typescript-eslint-rule-parity-tasklist-A_critical.md",
 		"typescript-eslint-rule-parity-tasklist-B_high.md",
 		"typescript-eslint-rule-parity-tasklist-C_medium.md",

@@ -4,18 +4,18 @@
   "files": [
     {
       "path": "typescript-eslint-rule-parity-report.md",
-      "sha256": "cf77fcd9b679d4c9ac98f5c801fd9a77cbfc9b738bb206531422a7bd21fe1be3",
-      "bytes": 40378
+      "sha256": "bdfa9e9b1b7635703399c5bdb617be929c470a7c60b143e81c6326f5c4deac88",
+      "bytes": 40505
     },
     {
       "path": "typescript-eslint-rule-parity-guide.md",
-      "sha256": "74c580ecfc2017198eaa525ce0c9bf2ea2cbdce88c3482766608ff9669085310",
-      "bytes": 6546
+      "sha256": "67d7b3bc6ad03648e849cbef0e657034677008fb8ad3df9c130e54e6f3a47116",
+      "bytes": 6627
     },
     {
       "path": "typescript-eslint-rule-parity-index.md",
-      "sha256": "26eeb50bb55a8440003fd59e4b07a367d1dad64da2606bf511fec1a1b656246a",
-      "bytes": 2965
+      "sha256": "33fdd0104ed8e72c9c19173d3cd14d7b61d21fdcc4569457150c874634023611",
+      "bytes": 3080
     },
     {
       "path": "typescript-eslint-rule-parity-summary.md",
@@ -29,13 +29,18 @@
     },
     {
       "path": "typescript-eslint-rule-parity-top.md",
-      "sha256": "02649da492b4da94f76410eeb18eb7d908ed54afc642eed505f0d9620bffc8c2",
+      "sha256": "40f134667fb7e59aa045577cf2c44d4427b269ff8deae06f5d8e443e4ccd5b5c",
       "bytes": 2367
     },
     {
       "path": "typescript-eslint-rule-parity-commands.md",
-      "sha256": "28fdac4c5d473d280c0424e283e327cc7ad29f97ef5c33157e2f73f159db9e84",
-      "bytes": 2256
+      "sha256": "8317bd5c6f2725f5a2a36a9c5399cf39e033d9f7da478d9bda3227a587f5bd03",
+      "bytes": 2394
+    },
+    {
+      "path": "typescript-eslint-rule-parity-badges.json",
+      "sha256": "3b43de3b0f01650e2823138b43e76d0d4d204894a8222448d1cea638786cdfd6",
+      "bytes": 523
     },
     {
       "path": "typescript-eslint-rule-parity-issue-plan.md",
@@ -54,7 +59,7 @@
     },
     {
       "path": "typescript-eslint-rule-parity-metadata.json",
-      "sha256": "2f516aba77ed53f58151aa4f3c079fed861ac6f83e3126a597709e779c40cdc9",
+      "sha256": "8cd9d6185e0e685db42688e992579d663d9633ae034a60ab7e7e5a83531a5366",
       "bytes": 3553
     },
     {

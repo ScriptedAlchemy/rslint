@@ -1,6 +1,6 @@
 # TypeScript-ESLint Parity Top Priorities
 
-_Generated: 2026-02-13T11:21:41.809980+00:00_
+_Generated: 2026-02-13T11:25:52.075324+00:00_
 
 - Upstream ref: `main`
 - Upstream commit: `68a074fb61a10c3627f09678859fb4d42a3b88f5`
