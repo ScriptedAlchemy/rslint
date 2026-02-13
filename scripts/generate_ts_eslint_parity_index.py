@@ -76,6 +76,7 @@ def main() -> None:
 	lines.append("pnpm parity:ts-eslint:tasklist:all")
 	lines.append("pnpm parity:ts-eslint:manifest")
 	lines.append("pnpm parity:ts-eslint:rebuild-metadata")
+	lines.append("pnpm parity:ts-eslint:verify-clean")
 	lines.append("```")
 	lines.append("")
 

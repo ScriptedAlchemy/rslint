@@ -52,12 +52,7 @@ jobs:
         run: python3 scripts/check_ts_eslint_parity_artifacts.py
 
       - name: Rebuild from metadata commit and ensure clean diff
-        run: |
-          bash scripts/rebuild_ts_eslint_parity_from_metadata.sh
-          git diff --exit-code -- \
-            "typescript-eslint-rule-parity-*.md" \
-            "typescript-eslint-rule-parity-*.json" \
-            "typescript-eslint-rule-parity-*.csv"
+        run: bash scripts/verify_ts_eslint_parity_clean.sh
 
       - name: Generate parity tracker diff against PR base
         if: github.event_name == 'pull_request'

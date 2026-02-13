@@ -69,11 +69,20 @@ Outputs:
 
 ```bash
 pnpm parity:ts-eslint:rebuild-metadata
+pnpm parity:ts-eslint:verify-clean
 ```
 
 This rebuilds artifacts using `upstream_commit` from
 `typescript-eslint-rule-parity-metadata.json` and is useful for
 reproducibility checks.
+
+`parity:ts-eslint:verify-clean` additionally asserts there is no parity-artifact diff after rebuild.
+
+By default it expects parity artifacts to be clean before running. To bypass precheck:
+
+```bash
+PARITY_VERIFY_ALLOW_DIRTY=1 pnpm parity:ts-eslint:verify-clean
+```
 
 ### Generate GitHub issue tasklist snippets by phase
 
@@ -103,6 +112,7 @@ python3 scripts/check_ts_eslint_parity_artifacts.py
 python3 scripts/compare_ts_eslint_parity_trackers.py --base-ref HEAD~1
 python3 scripts/generate_ts_eslint_parity_issue_tasklist.py --phase A_critical
 bash scripts/rebuild_ts_eslint_parity_from_metadata.sh
+bash scripts/verify_ts_eslint_parity_clean.sh
 python3 scripts/generate_ts_eslint_parity_ci_summary.py
 ```
 

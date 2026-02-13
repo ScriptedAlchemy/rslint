@@ -34,6 +34,19 @@ def get_upstream_commit(upstream_dir: pathlib.Path) -> str | None:
 		return None
 
 
+def get_existing_value(output_json: pathlib.Path, key: str) -> str | None:
+	if not output_json.exists():
+		return None
+	try:
+		existing = json.loads(output_json.read_text())
+		value = existing.get(key)
+		if value is None:
+			return None
+		return str(value)
+	except Exception:
+		return None
+
+
 def resolve_generated_at(output_json: pathlib.Path) -> str:
 	if os.environ.get("PARITY_REPRO_MODE") == "1" and output_json.exists():
 		try:
@@ -66,10 +79,15 @@ def main() -> None:
 	flagged = [row for row in rows if row.get("priority_score", 0) > 0]
 	top_rules = sorted(flagged, key=lambda r: (-r.get("priority_score", 0), r.get("rule", "")))[:20]
 
+	if os.environ.get("PARITY_REPRO_MODE") == "1":
+		upstream_ref_requested = get_existing_value(output_json, "upstream_ref_requested") or os.environ.get("TS_ESLINT_REF", "main")
+	else:
+		upstream_ref_requested = os.environ.get("TS_ESLINT_REF", "main")
+
 	metadata = {
 		"generated_at_utc": resolve_generated_at(output_json),
 		"upstream_repo": "https://github.com/typescript-eslint/typescript-eslint",
-		"upstream_ref_requested": os.environ.get("TS_ESLINT_REF", "main"),
+		"upstream_ref_requested": upstream_ref_requested,
 		"upstream_commit": get_upstream_commit(upstream_dir),
 		"tracker_file": str(tracker_json.name),
 		"summary": {

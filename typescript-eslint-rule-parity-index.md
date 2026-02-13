@@ -1,6 +1,6 @@
 # TypeScript-ESLint Parity Artifact Index
 
-_Generated: 2026-02-13T10:43:32.876058+00:00_
+_Generated: 2026-02-13T10:47:29.355057+00:00_
 
 ## Snapshot
 - Upstream ref requested: `main`
@@ -46,5 +46,6 @@ pnpm parity:ts-eslint:tasklist --phase A_critical
 pnpm parity:ts-eslint:tasklist:all
 pnpm parity:ts-eslint:manifest
 pnpm parity:ts-eslint:rebuild-metadata
+pnpm parity:ts-eslint:verify-clean
 ```
 

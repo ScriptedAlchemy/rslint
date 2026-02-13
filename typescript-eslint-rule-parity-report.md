@@ -52,6 +52,7 @@ pnpm parity:ts-eslint:tasklist --phase A_critical
 pnpm parity:ts-eslint:tasklist:all
 pnpm parity:ts-eslint:manifest
 pnpm parity:ts-eslint:rebuild-metadata
+pnpm parity:ts-eslint:verify-clean
 
 # Optional: pin upstream ref (branch/tag/SHA) for reproducible comparisons
 TS_ESLINT_REF=main pnpm parity:ts-eslint
