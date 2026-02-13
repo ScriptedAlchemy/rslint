@@ -69,7 +69,7 @@ pnpm parity:ts-eslint:doctor:strict
 The checkers validate:
 - tracker/worklist/summary/metadata/manifest/index/issue-plan coherence,
 - issue-body structure/counts,
-- CI summary rendering consistency,
+- CI summary rendering consistency (including optional diff metrics when diff artifact exists),
 - parity doctor output consistency (plain + markdown forms),
 - parity doctor strict-mode exit behavior (`--fail-on-critical`),
 - parity command/docs/script synchronization,

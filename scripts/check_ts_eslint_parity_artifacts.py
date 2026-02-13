@@ -187,6 +187,39 @@ def parse_ci_summary_markdown(summary_text: str) -> dict:
 		phase_counts[phase] = int(match.group(1))
 	parsed["phase_counts"] = phase_counts
 
+	diff_metrics = {}
+	if "### Diff vs baseline" in summary_text:
+		diff_patterns = {
+			"net_flagged_change": r"- Net flagged change:\s+\*\*([+-]?\d+)\*\*",
+			"improved_rules": r"- Improved rules:\s+\*\*(\d+)\*\*",
+			"regressed_rules": r"- Regressed rules:\s+\*\*(\d+)\*\*",
+			"resolved_rules": r"- Resolved rules:\s+\*\*(\d+)\*\*",
+			"newly_flagged_rules": r"- Newly flagged rules:\s+\*\*(\d+)\*\*",
+		}
+		for key, pattern in diff_patterns.items():
+			match = re.search(pattern, summary_text)
+			if not match:
+				fail(f"ci summary diff section missing field: {key}")
+			diff_metrics[key] = int(match.group(1))
+	parsed["diff_metrics"] = diff_metrics
+
+	return parsed
+
+
+def parse_diff_markdown_summary(diff_text: str) -> dict:
+	patterns = {
+		"net_flagged_change": r"Net flagged change:\s+\*\*([+-]?\d+)\*\*",
+		"improved_rules": r"Improved rules .*:\s+\*\*(\d+)\*\*",
+		"regressed_rules": r"Regressed rules .*:\s+\*\*(\d+)\*\*",
+		"resolved_rules": r"Resolved rules .*:\s+\*\*(\d+)\*\*",
+		"newly_flagged_rules": r"Newly flagged rules .*:\s+\*\*(\d+)\*\*",
+	}
+	parsed = {}
+	for key, pattern in patterns.items():
+		match = re.search(pattern, diff_text)
+		if not match:
+			fail(f"parity diff markdown missing summary field: {key}")
+		parsed[key] = int(match.group(1))
 	return parsed
 
 
@@ -276,6 +309,7 @@ def main() -> None:
 	issue_body_b_md = root / "typescript-eslint-rule-parity-issue-body-B_high.md"
 	issue_body_c_md = root / "typescript-eslint-rule-parity-issue-body-C_medium.md"
 	issue_body_d_md = root / "typescript-eslint-rule-parity-issue-body-D_low.md"
+	diff_md = root / "typescript-eslint-rule-parity-diff.md"
 
 	required = [
 		tracker_csv,
@@ -684,6 +718,12 @@ def main() -> None:
 		fail("ci summary health reason mismatch")
 	if ci_summary["phase_counts"] != dict(phase_counter):
 		fail("ci summary phase_counts mismatch")
+	if diff_md.exists():
+		expected_diff = parse_diff_markdown_summary(diff_md.read_text())
+		if ci_summary["diff_metrics"] != expected_diff:
+			fail("ci summary diff metrics mismatch with parity diff artifact")
+	elif ci_summary["diff_metrics"]:
+		fail("ci summary should not include diff metrics when parity diff artifact is absent")
 
 	# Parity doctor output checks
 	try:
