@@ -42,7 +42,7 @@ func TestConsistentIndexedObjectStyleRule(t *testing.T) {
 		// Circular type references (should not convert)
 		{Code: "interface Foo { [key: string]: Foo; }"},
 		{Code: "interface Foo { [key: string]: Foo | string; }"},
-		{Code: "interface Foo { [key: string]: Foo[] | string; }", Skip: true},
+		{Code: "interface Foo { [key: string]: Foo[] | string; }"},
 		{Code: "type Foo = { [key: string]: Foo; }"},
 
 		// Mapped types that reference the key

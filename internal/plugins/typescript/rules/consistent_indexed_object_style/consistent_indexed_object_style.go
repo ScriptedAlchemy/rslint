@@ -499,6 +499,13 @@ func checkTypeReference(
 		}
 		return false
 
+	case ast.KindArrayType:
+		arrayType := typeNode.AsArrayTypeNode()
+		if arrayType != nil && arrayType.ElementType != nil {
+			return checkTypeReference(targetName, arrayType.ElementType, declarations, visited)
+		}
+		return false
+
 	case ast.KindParenthesizedType:
 		parenthesizedType := typeNode.AsParenthesizedTypeNode()
 		if parenthesizedType != nil && parenthesizedType.Type != nil {

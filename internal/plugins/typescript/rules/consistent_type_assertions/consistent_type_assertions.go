@@ -223,14 +223,15 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 			return
 		}
 
+		if isConst {
+			return
+		}
+
 		if opts.AssertionStyle == AssertionStyleAngleBracket {
 			ctx.ReportNode(node, rule.RuleMessage{
 				Id:          "angle-bracket",
 				Description: "Use angle-bracket type assertions instead of 'as' assertions.",
 			})
-			return
-		}
-		if isConst {
 			return
 		}
 
@@ -327,6 +328,10 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 			return
 		}
 
+		if isConst {
+			return
+		}
+
 		// Check object literal assertions BEFORE checking assertion style
 		if isObjectLiteral(expression) && !isAnyOrUnknown(typeNode) {
 			if opts.ObjectLiteralTypeAssertions == LiteralAssertionNever {
@@ -403,9 +408,6 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 				Id:          "as",
 				Description: "Use 'as' assertions instead of angle-bracket type assertions.",
 			})
-			return
-		}
-		if isConst {
 			return
 		}
 	}

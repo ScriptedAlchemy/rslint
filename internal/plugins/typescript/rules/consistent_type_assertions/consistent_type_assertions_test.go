@@ -15,9 +15,9 @@ func TestConsistentTypeAssertionsRule(t *testing.T) {
 		{Code: `const x = 'string' as a | b;`},
 		{Code: `const x = () => ({ bar: 5 }) as Foo;`},
 		{Code: `const x = { key: 'value' } as const;`},
-		{Code: `const x = <const>{ key: 'value' };`, Skip: true},
+		{Code: `const x = <const>{ key: 'value' };`},
 		{Code: `const x = [1] as const;`},
-		{Code: `const x = <const>[1];`, Skip: true},
+		{Code: `const x = <const>[1];`},
 		{Code: `const x = { foo: 1 } as Foo;`},
 		{Code: `const x = [] as Foo[];`},
 		{Code: `const x = new Generic<int>() as Foo;`},
@@ -30,9 +30,9 @@ func TestConsistentTypeAssertionsRule(t *testing.T) {
 		{Code: `const x = <a | b>'string';`, Options: []interface{}{map[string]interface{}{"assertionStyle": "angle-bracket"}}},
 		{Code: `const x = <Foo>(() => ({ bar: 5 }));`, Options: []interface{}{map[string]interface{}{"assertionStyle": "angle-bracket"}}},
 		{Code: `const x = <const>{ key: 'value' };`, Options: []interface{}{map[string]interface{}{"assertionStyle": "angle-bracket"}}},
-		{Code: `const x = { key: 'value' } as const;`, Options: []interface{}{map[string]interface{}{"assertionStyle": "angle-bracket"}}, Skip: true},
+		{Code: `const x = { key: 'value' } as const;`, Options: []interface{}{map[string]interface{}{"assertionStyle": "angle-bracket"}}},
 		{Code: `const x = <const>[1];`, Options: []interface{}{map[string]interface{}{"assertionStyle": "angle-bracket"}}},
-		{Code: `const x = [1] as const;`, Options: []interface{}{map[string]interface{}{"assertionStyle": "angle-bracket"}}, Skip: true},
+		{Code: `const x = [1] as const;`, Options: []interface{}{map[string]interface{}{"assertionStyle": "angle-bracket"}}},
 		{Code: `const x = <Foo>{ foo: 1 };`, Options: []interface{}{map[string]interface{}{"assertionStyle": "angle-bracket"}}},
 		{Code: `const x = <Foo[]>[];`, Options: []interface{}{map[string]interface{}{"assertionStyle": "angle-bracket"}}},
 
@@ -90,13 +90,13 @@ func TestConsistentTypeAssertionsRule(t *testing.T) {
 		{Code: `const x: Foo = { bar: 5 };`, Options: []interface{}{map[string]interface{}{"assertionStyle": "angle-bracket", "objectLiteralTypeAssertions": "never"}}},
 		{Code: `const x = <any>{ bar: 5 };`, Options: []interface{}{map[string]interface{}{"assertionStyle": "angle-bracket", "objectLiteralTypeAssertions": "never"}}},
 		{Code: `const x = <unknown>{ bar: 5 };`, Options: []interface{}{map[string]interface{}{"assertionStyle": "angle-bracket", "objectLiteralTypeAssertions": "never"}}},
-		{Code: `const x = <const>{ bar: 5 };`, Options: []interface{}{map[string]interface{}{"assertionStyle": "angle-bracket", "objectLiteralTypeAssertions": "never"}}, Skip: true},
+		{Code: `const x = <const>{ bar: 5 };`, Options: []interface{}{map[string]interface{}{"assertionStyle": "angle-bracket", "objectLiteralTypeAssertions": "never"}}},
 
 		// angle-bracket with arrayLiteralTypeAssertions: 'never'
 		{Code: `const x: string[] = [];`, Options: []interface{}{map[string]interface{}{"assertionStyle": "angle-bracket", "arrayLiteralTypeAssertions": "never"}}},
 		{Code: `const x = <any>[];`, Options: []interface{}{map[string]interface{}{"assertionStyle": "angle-bracket", "arrayLiteralTypeAssertions": "never"}}},
 		{Code: `const x = <unknown>[];`, Options: []interface{}{map[string]interface{}{"assertionStyle": "angle-bracket", "arrayLiteralTypeAssertions": "never"}}},
-		{Code: `const x = <const>[];`, Options: []interface{}{map[string]interface{}{"assertionStyle": "angle-bracket", "arrayLiteralTypeAssertions": "never"}}, Skip: true},
+		{Code: `const x = <const>[];`, Options: []interface{}{map[string]interface{}{"assertionStyle": "angle-bracket", "arrayLiteralTypeAssertions": "never"}}},
 
 		// Additional edge cases
 		{Code: `const x = value as string | number;`},

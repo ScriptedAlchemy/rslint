@@ -222,7 +222,6 @@ func TestBanTsCommentRule(t *testing.T) {
 
 		// Multi-line comments
 		{
-			Skip:    true,
 			Code:    "/*\n@ts-expect-error\n*/\nconst a = 0;",
 			Options: map[string]interface{}{"ts-expect-error": true},
 			Errors: []rule_tester.InvalidTestCaseError{

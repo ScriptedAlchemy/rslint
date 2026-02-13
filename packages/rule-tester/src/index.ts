@@ -32,11 +32,9 @@ function checkDiagnosticEqual(
   for (let i = 0; i < rslintDiagnostic.length; i++) {
     const rslintDiag = rslintDiagnostic[i];
     const tsDiag = tsDiagnostic[i];
-    const normalizedRslintMessageId = toCamelCase(rslintDiag.messageId);
     // check rule match
     assert(
-      normalizedRslintMessageId === tsDiag.messageId ||
-        rslintDiag.messageId === tsDiag.messageId,
+      toCamelCase(rslintDiag.messageId) === tsDiag.messageId,
       `Message mismatch: ${rslintDiag.messageId} !== ${tsDiag.messageId}`,
     );
 

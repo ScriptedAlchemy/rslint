@@ -255,8 +255,18 @@ func checkComment(
 
 	if isMultiLine {
 		lines := strings.Split(commentValue, "\n")
-		lastLine := lines[len(lines)-1]
-		match := multiLineDirectiveRegex.FindStringSubmatch(lastLine)
+		lastNonEmptyLine := ""
+		for i := len(lines) - 1; i >= 0; i-- {
+			if strings.TrimSpace(lines[i]) == "" {
+				continue
+			}
+			lastNonEmptyLine = lines[i]
+			break
+		}
+		if lastNonEmptyLine == "" {
+			return
+		}
+		match := multiLineDirectiveRegex.FindStringSubmatch(lastNonEmptyLine)
 		if match == nil {
 			return
 		}
