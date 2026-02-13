@@ -104,11 +104,14 @@ Note: `pnpm parity:ts-eslint` generates all four phase tasklist files automatica
 
 ```bash
 pnpm parity:ts-eslint:issue-body --phase A_critical
+pnpm parity:ts-eslint:issue-body:all
 ```
 
 Outputs:
 
 - `typescript-eslint-rule-parity-issue-body-<phase>.md`
+
+Note: `pnpm parity:ts-eslint` generates all four phase issue-body files automatically.
 
 ### Direct script usage
 

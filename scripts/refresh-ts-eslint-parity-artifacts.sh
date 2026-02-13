@@ -40,6 +40,7 @@ python3 scripts/generate_ts_eslint_parity_metadata.py
 python3 scripts/generate_ts_eslint_parity_index.py
 python3 scripts/generate_ts_eslint_parity_issue_plan.py
 bash scripts/generate_ts_eslint_parity_tasklists_all.sh
+bash scripts/generate_ts_eslint_parity_issue_bodies_all.sh
 python3 scripts/generate_ts_eslint_parity_top.py
 python3 scripts/generate_ts_eslint_parity_manifest.py
 
@@ -59,5 +60,9 @@ echo "  - typescript-eslint-rule-parity-tasklist-A_critical.md"
 echo "  - typescript-eslint-rule-parity-tasklist-B_high.md"
 echo "  - typescript-eslint-rule-parity-tasklist-C_medium.md"
 echo "  - typescript-eslint-rule-parity-tasklist-D_low.md"
+echo "  - typescript-eslint-rule-parity-issue-body-A_critical.md"
+echo "  - typescript-eslint-rule-parity-issue-body-B_high.md"
+echo "  - typescript-eslint-rule-parity-issue-body-C_medium.md"
+echo "  - typescript-eslint-rule-parity-issue-body-D_low.md"
 echo "  - typescript-eslint-rule-parity-top.md"
 echo "  - typescript-eslint-rule-parity-manifest.json"

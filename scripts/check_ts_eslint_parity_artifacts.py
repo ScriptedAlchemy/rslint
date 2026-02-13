@@ -160,6 +160,10 @@ def main() -> None:
 	tasklist_b_md = root / "typescript-eslint-rule-parity-tasklist-B_high.md"
 	tasklist_c_md = root / "typescript-eslint-rule-parity-tasklist-C_medium.md"
 	tasklist_d_md = root / "typescript-eslint-rule-parity-tasklist-D_low.md"
+	issue_body_a_md = root / "typescript-eslint-rule-parity-issue-body-A_critical.md"
+	issue_body_b_md = root / "typescript-eslint-rule-parity-issue-body-B_high.md"
+	issue_body_c_md = root / "typescript-eslint-rule-parity-issue-body-C_medium.md"
+	issue_body_d_md = root / "typescript-eslint-rule-parity-issue-body-D_low.md"
 
 	required = [
 		tracker_csv,
@@ -175,6 +179,10 @@ def main() -> None:
 		tasklist_b_md,
 		tasklist_c_md,
 		tasklist_d_md,
+		issue_body_a_md,
+		issue_body_b_md,
+		issue_body_c_md,
+		issue_body_d_md,
 	]
 	for path in required:
 		if not path.exists():
@@ -330,6 +338,10 @@ def main() -> None:
 		"typescript-eslint-rule-parity-index.md",
 		"typescript-eslint-rule-parity-issue-plan.md",
 		"typescript-eslint-rule-parity-tasklist-<phase>.md",
+		"typescript-eslint-rule-parity-issue-body-A_critical.md",
+		"typescript-eslint-rule-parity-issue-body-B_high.md",
+		"typescript-eslint-rule-parity-issue-body-C_medium.md",
+		"typescript-eslint-rule-parity-issue-body-D_low.md",
 		"typescript-eslint-rule-parity-issue-body-<phase>.md",
 	]
 	for artifact_name in required_artifact_mentions:
@@ -368,6 +380,10 @@ def main() -> None:
 		"typescript-eslint-rule-parity-tasklist-B_high.md",
 		"typescript-eslint-rule-parity-tasklist-C_medium.md",
 		"typescript-eslint-rule-parity-tasklist-D_low.md",
+		"typescript-eslint-rule-parity-issue-body-A_critical.md",
+		"typescript-eslint-rule-parity-issue-body-B_high.md",
+		"typescript-eslint-rule-parity-issue-body-C_medium.md",
+		"typescript-eslint-rule-parity-issue-body-D_low.md",
 	}
 	if set(manifest_map) != expected_manifest_paths:
 		fail("manifest path set mismatch with expected parity artifacts")
@@ -398,6 +414,22 @@ def main() -> None:
 		expected = phase_counter.get(phase, 0)
 		if task_count != expected:
 			fail(f"tasklist count mismatch for {phase}: expected={expected} actual={task_count}")
+
+	# Issue body checks
+	issue_body_by_phase = {
+		"A_critical": issue_body_a_md,
+		"B_high": issue_body_b_md,
+		"C_medium": issue_body_c_md,
+		"D_low": issue_body_d_md,
+	}
+	for phase, path in issue_body_by_phase.items():
+		text = path.read_text()
+		if f"## TypeScript-ESLint Parity — {phase}" not in text:
+			fail(f"issue body missing title heading for {phase}: {path.name}")
+		if "### Tasklist" not in text:
+			fail(f"issue body missing tasklist section for {phase}: {path.name}")
+		if "### Acceptance criteria" not in text:
+			fail(f"issue body missing acceptance criteria section for {phase}: {path.name}")
 
 	# Top priorities markdown checks
 	top_text = top_md.read_text()

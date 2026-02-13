@@ -25,6 +25,11 @@ _Generated: 2026-02-13 09:47 UTC_
   - `typescript-eslint-rule-parity-tasklist-B_high.md`
   - `typescript-eslint-rule-parity-tasklist-C_medium.md`
   - `typescript-eslint-rule-parity-tasklist-D_low.md`
+- Generated phase issue-body drafts:
+  - `typescript-eslint-rule-parity-issue-body-A_critical.md`
+  - `typescript-eslint-rule-parity-issue-body-B_high.md`
+  - `typescript-eslint-rule-parity-issue-body-C_medium.md`
+  - `typescript-eslint-rule-parity-issue-body-D_low.md`
 - CI guard: `.github/workflows/parity-artifacts-check.yml`
 - CI summary renderer: `scripts/generate_ts_eslint_parity_ci_summary.py`
 - PR CI uploads:
@@ -56,6 +61,7 @@ pnpm parity:ts-eslint:diff -- --base-ref HEAD~1
 pnpm parity:ts-eslint:tasklist --phase A_critical
 pnpm parity:ts-eslint:tasklist:all
 pnpm parity:ts-eslint:issue-body --phase A_critical
+pnpm parity:ts-eslint:issue-body:all
 pnpm parity:ts-eslint:top
 pnpm parity:ts-eslint:manifest
 pnpm parity:ts-eslint:rebuild-metadata

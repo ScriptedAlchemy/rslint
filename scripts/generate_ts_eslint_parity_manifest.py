@@ -40,6 +40,10 @@ def main() -> None:
 		"typescript-eslint-rule-parity-tasklist-B_high.md",
 		"typescript-eslint-rule-parity-tasklist-C_medium.md",
 		"typescript-eslint-rule-parity-tasklist-D_low.md",
+		"typescript-eslint-rule-parity-issue-body-A_critical.md",
+		"typescript-eslint-rule-parity-issue-body-B_high.md",
+		"typescript-eslint-rule-parity-issue-body-C_medium.md",
+		"typescript-eslint-rule-parity-issue-body-D_low.md",
 	]
 
 	files = []
