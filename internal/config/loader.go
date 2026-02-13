@@ -3,7 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
-	iofs "io/fs"
+	fs "io/fs"
 	"os"
 	"sort"
 	"strings"
@@ -138,7 +138,7 @@ func (loader *ConfigLoader) resolveProjectPaths(baseDir string, projectPath stri
 	}
 
 	matches := []string{}
-	walkErr := loader.fs.WalkDir(baseDir, func(path string, d iofs.DirEntry, err error) error {
+	walkErr := loader.fs.WalkDir(baseDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
