@@ -68,6 +68,27 @@ def main() -> None:
 			if token not in text:
 				fail(f"`{token}` missing in parity {doc_name} documentation")
 
+	required_artifacts = [
+		"typescript-eslint-rule-parity-report.md",
+		"typescript-eslint-rule-parity-tracker.csv",
+		"typescript-eslint-rule-parity-tracker.json",
+		"typescript-eslint-rule-parity-worklist.md",
+		"typescript-eslint-rule-parity-top.md",
+		"typescript-eslint-rule-parity-commands.md",
+		"typescript-eslint-rule-parity-summary.md",
+		"typescript-eslint-rule-parity-metadata.json",
+		"typescript-eslint-rule-parity-badges.json",
+		"typescript-eslint-rule-parity-status.json",
+		"typescript-eslint-rule-parity-manifest.json",
+		"typescript-eslint-rule-parity-index.md",
+		"typescript-eslint-rule-parity-issue-plan.md",
+	]
+	for artifact in required_artifacts:
+		for doc_name in ("guide", "index"):
+			text = documents[doc_name]
+			if artifact not in text:
+				fail(f"`{artifact}` missing in parity {doc_name} documentation")
+
 	commands_text = commands_md.read_text() if commands_md.exists() else ""
 	if not commands_text:
 		fail("missing or empty parity commands reference markdown")

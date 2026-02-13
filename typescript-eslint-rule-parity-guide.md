@@ -15,6 +15,7 @@ After running the refresh command, the following artifacts are generated at repo
 - `typescript-eslint-rule-parity-commands.md` — generated command reference.
 - `typescript-eslint-rule-parity-summary.md` — dashboard with headline metrics and top priorities.
 - `typescript-eslint-rule-parity-metadata.json` — run metadata (timestamp, upstream SHA, requested ref, counters).
+- `typescript-eslint-rule-parity-badges.json` — badge-friendly metrics JSON (including health + badge color).
 - `typescript-eslint-rule-parity-status.json` — compact health/status summary for automation.
 - `typescript-eslint-rule-parity-manifest.json` — deterministic checksums for core parity artifacts.
 - `typescript-eslint-rule-parity-index.md` — central index linking all parity artifacts.

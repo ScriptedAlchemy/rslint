@@ -57,7 +57,7 @@ def main() -> None:
 	lines.append("- `typescript-eslint-rule-parity-commands.md` — generated parity command reference.")
 	lines.append("- `typescript-eslint-rule-parity-summary.md` — concise dashboard.")
 	lines.append("- `typescript-eslint-rule-parity-metadata.json` — run metadata and counters.")
-	lines.append("- `typescript-eslint-rule-parity-badges.json` — badge-friendly parity metrics JSON.")
+	lines.append("- `typescript-eslint-rule-parity-badges.json` — badge-friendly metrics JSON (including health + badge color).")
 	lines.append("- `typescript-eslint-rule-parity-status.json` — compact health/status summary JSON.")
 	lines.append("- `typescript-eslint-rule-parity-manifest.json` — deterministic checksums for parity artifacts.")
 	lines.append("- `typescript-eslint-rule-parity-issue-plan.md` — issue-friendly phase plans.")

@@ -11,11 +11,17 @@
     "critical_rules": 5,
     "high_rules": 6,
     "medium_rules": 18,
-    "low_rules": 31
+    "low_rules": 31,
+    "health": "red",
+    "health_reason": "critical backlog is non-zero"
   },
   "badges": {
     "parity_aligned_percent": "55.6%",
     "parity_flagged_rules": "60",
-    "parity_critical_rules": "5"
+    "parity_critical_rules": "5",
+    "parity_health": "red"
+  },
+  "badge_colors": {
+    "parity_health": "red"
   }
 }

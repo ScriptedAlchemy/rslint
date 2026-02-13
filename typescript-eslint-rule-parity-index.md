@@ -28,7 +28,7 @@ _Generated: 2026-02-13T11:25:52.075324+00:00_
 - `typescript-eslint-rule-parity-commands.md` — generated parity command reference.
 - `typescript-eslint-rule-parity-summary.md` — concise dashboard.
 - `typescript-eslint-rule-parity-metadata.json` — run metadata and counters.
-- `typescript-eslint-rule-parity-badges.json` — badge-friendly parity metrics JSON.
+- `typescript-eslint-rule-parity-badges.json` — badge-friendly metrics JSON (including health + badge color).
 - `typescript-eslint-rule-parity-status.json` — compact health/status summary JSON.
 - `typescript-eslint-rule-parity-manifest.json` — deterministic checksums for parity artifacts.
 - `typescript-eslint-rule-parity-issue-plan.md` — issue-friendly phase plans.

@@ -268,6 +268,18 @@ def main() -> None:
 		fail("badges aligned_rules mismatch with metadata summary")
 	if int(badge_metrics.get("critical_rules", -1)) != int(metadata.get("phase_counts", {}).get("A_critical", -2)):
 		fail("badges critical_rules mismatch with metadata phase counts")
+	if badge_metrics.get("health", "") != status.get("health", ""):
+		fail("badges health mismatch with status artifact")
+	if badge_metrics.get("health_reason", "") != status.get("reason", ""):
+		fail("badges health_reason mismatch with status artifact")
+	badge_names = badges.get("badges", {})
+	if badge_names.get("parity_health", "") != status.get("health", ""):
+		fail("badges parity_health mismatch with status artifact")
+	color_map = {"green": "brightgreen", "yellow": "yellow", "red": "red"}
+	expected_color = color_map.get(status.get("health", ""), "lightgrey")
+	badge_colors = badges.get("badge_colors", {})
+	if badge_colors.get("parity_health", "") != expected_color:
+		fail("badges parity_health color mismatch")
 
 	# Status data checks
 	status_summary = status.get("summary", {})
