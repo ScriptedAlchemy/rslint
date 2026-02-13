@@ -1718,6 +1718,43 @@ def main() -> None:
 	)
 	if extract_nonempty_lines(gate_duplicate_threshold_then_short_help_spaced.stderr) != gate_duplicate_threshold_lines:
 		fail("parity gate duplicate-threshold-then-short-help-spaced stderr mismatch with duplicate-threshold baseline")
+	gate_duplicate_threshold_then_malformed_then_help_cases = [
+		(
+			"parity gate duplicate-threshold-then-missing-threshold-then-help",
+			["--threshold=red", "--threshold", "--help"],
+		),
+		(
+			"parity gate duplicate-threshold-then-empty-threshold-then-help",
+			["--threshold=red", "--threshold=", "--help"],
+		),
+		(
+			"parity gate duplicate-threshold-then-missing-threshold-then-short-help",
+			["--threshold=red", "--threshold", "-h"],
+		),
+		(
+			"parity gate duplicate-threshold-then-empty-threshold-then-short-help",
+			["--threshold=red", "--threshold=", "-h"],
+		),
+	]
+	for label, extra_args in gate_duplicate_threshold_then_malformed_then_help_cases:
+		proc = subprocess.run(
+			["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), *extra_args],
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		if proc.returncode != 1:
+			fail(f"{label} exit code must be 1")
+		if proc.stdout.strip():
+			fail(f"{label} stdout must be empty")
+		assert_exact_error_plus_usage(
+			f"{label} stderr",
+			proc.stderr,
+			expected_gate_duplicate_threshold_line,
+			expected_gate_usage_line,
+		)
+		if extract_nonempty_lines(proc.stderr) != gate_duplicate_threshold_lines:
+			fail(f"{label} stderr mismatch with duplicate-threshold baseline")
 	gate_duplicate_skip_checks_then_help = subprocess.run(
 		[
 			"bash",
@@ -3252,6 +3289,31 @@ def main() -> None:
 		)
 		if precedence_lines != baseline_lines:
 			fail(f"{label} stderr output mismatch with duplicate-vs-help precedence baseline")
+	gate_wrapper_duplicate_threshold_tail_tokens = [
+		("missing-threshold", ["--threshold"]),
+		("empty-threshold", ["--threshold="]),
+	]
+	for base_label, base_command in gate_wrapper_help_base_commands:
+		for tail_label, tail_tokens in gate_wrapper_duplicate_threshold_tail_tokens:
+			for help_flag, help_label in [("--help", "help"), ("-h", "short-help")]:
+				proc = subprocess.run(
+					[*base_command, *tail_tokens, help_flag],
+					cwd=str(root),
+					check=False,
+					capture_output=True,
+					text=True,
+				)
+				lines = assert_gate_wrapper_unknown_arg_contract(
+					f"{base_label} duplicate-threshold-then-{tail_label}-then-{help_label}",
+					proc,
+					expected_gate_duplicate_threshold_line,
+					expected_gate_usage_line,
+				)
+				if lines != gate_wrapper_duplicate_threshold_baseline:
+					fail(
+						f"{base_label} duplicate-threshold-then-{tail_label}-then-{help_label} "
+						"stderr output mismatch with duplicate-threshold baseline"
+					)
 	gate_wrapper_duplicate_skip_then_malformed_threshold_cases = [
 		(
 			"parity gate command duplicate-skip-checks then missing-threshold",
