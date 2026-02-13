@@ -764,6 +764,10 @@ def main() -> None:
 	assert_gate_success_contract("parity gate yellow", gate_yellow, "yellow", expected_gate_yellow_exit)
 	gate_red_lines = extract_nonempty_lines(gate_red.stdout + gate_red.stderr)
 	gate_yellow_lines = extract_nonempty_lines(gate_yellow.stdout + gate_yellow.stderr)
+	gate_red_stdout_lines = extract_nonempty_lines(gate_red.stdout)
+	gate_red_stderr_lines = extract_nonempty_lines(gate_red.stderr)
+	gate_yellow_stdout_lines = extract_nonempty_lines(gate_yellow.stdout)
+	gate_yellow_stderr_lines = extract_nonempty_lines(gate_yellow.stderr)
 	gate_red_prefixed_lines = extract_prefixed_lines(
 		gate_red.stdout + gate_red.stderr,
 		("[parity-gate]", "[parity-status]", "[parity-doctor]"),
@@ -1083,6 +1087,8 @@ def main() -> None:
 	if "[parity-gate] Running strict clean parity checks" in (gate_inline_red.stdout + gate_inline_red.stderr):
 		fail("parity gate inline red should not run strict clean checks in --skip-checks mode")
 	assert_exact_nonempty_lines("parity gate inline red combined output", gate_inline_red.stdout + gate_inline_red.stderr, gate_red_lines)
+	assert_exact_nonempty_lines("parity gate inline red stdout", gate_inline_red.stdout, gate_red_stdout_lines)
+	assert_exact_nonempty_lines("parity gate inline red stderr", gate_inline_red.stderr, gate_red_stderr_lines)
 	gate_inline_red_prefixed_lines = extract_prefixed_lines(
 		gate_inline_red.stdout + gate_inline_red.stderr,
 		("[parity-gate]", "[parity-status]", "[parity-doctor]"),
@@ -1113,6 +1119,8 @@ def main() -> None:
 		gate_inline_yellow.stdout + gate_inline_yellow.stderr,
 		gate_yellow_lines,
 	)
+	assert_exact_nonempty_lines("parity gate inline yellow stdout", gate_inline_yellow.stdout, gate_yellow_stdout_lines)
+	assert_exact_nonempty_lines("parity gate inline yellow stderr", gate_inline_yellow.stderr, gate_yellow_stderr_lines)
 	gate_inline_yellow_prefixed_lines = extract_prefixed_lines(
 		gate_inline_yellow.stdout + gate_inline_yellow.stderr,
 		("[parity-gate]", "[parity-status]", "[parity-doctor]"),
@@ -1145,6 +1153,8 @@ def main() -> None:
 		gate_skip_only_default_red.stdout + gate_skip_only_default_red.stderr,
 		gate_red_lines,
 	)
+	assert_exact_nonempty_lines("parity gate skip-only default-red stdout", gate_skip_only_default_red.stdout, gate_red_stdout_lines)
+	assert_exact_nonempty_lines("parity gate skip-only default-red stderr", gate_skip_only_default_red.stderr, gate_red_stderr_lines)
 	gate_skip_only_default_red_prefixed_lines = extract_prefixed_lines(
 		gate_skip_only_default_red.stdout + gate_skip_only_default_red.stderr,
 		("[parity-gate]", "[parity-status]", "[parity-doctor]"),
@@ -1175,6 +1185,8 @@ def main() -> None:
 		gate_reordered_flags.stdout + gate_reordered_flags.stderr,
 		gate_yellow_lines,
 	)
+	assert_exact_nonempty_lines("parity gate reordered-flags stdout", gate_reordered_flags.stdout, gate_yellow_stdout_lines)
+	assert_exact_nonempty_lines("parity gate reordered-flags stderr", gate_reordered_flags.stderr, gate_yellow_stderr_lines)
 	gate_reordered_flags_prefixed_lines = extract_prefixed_lines(
 		gate_reordered_flags.stdout + gate_reordered_flags.stderr,
 		("[parity-gate]", "[parity-status]", "[parity-doctor]"),
@@ -1265,6 +1277,8 @@ def main() -> None:
 		fail("parity gate quick stderr missing health+reason message")
 	assert_gate_success_contract("parity gate quick", gate_quick, "red", expected_gate_red_exit)
 	assert_exact_nonempty_lines("parity gate quick combined output", gate_quick.stdout + gate_quick.stderr, gate_red_lines)
+	assert_exact_nonempty_lines("parity gate quick stdout", gate_quick.stdout, gate_red_stdout_lines)
+	assert_exact_nonempty_lines("parity gate quick stderr", gate_quick.stderr, gate_red_stderr_lines)
 	gate_quick_prefixed_lines = extract_prefixed_lines(
 		gate_quick.stdout + gate_quick.stderr,
 		("[parity-gate]", "[parity-status]", "[parity-doctor]"),
@@ -1296,6 +1310,8 @@ def main() -> None:
 		fail("parity gate quick:red stderr missing health+reason message")
 	assert_gate_success_contract("parity gate quick:red", gate_quick_red, "red", expected_gate_red_exit)
 	assert_exact_nonempty_lines("parity gate quick:red combined output", gate_quick_red.stdout + gate_quick_red.stderr, gate_red_lines)
+	assert_exact_nonempty_lines("parity gate quick:red stdout", gate_quick_red.stdout, gate_red_stdout_lines)
+	assert_exact_nonempty_lines("parity gate quick:red stderr", gate_quick_red.stderr, gate_red_stderr_lines)
 	gate_quick_red_prefixed_lines = extract_prefixed_lines(
 		gate_quick_red.stdout + gate_quick_red.stderr,
 		("[parity-gate]", "[parity-status]", "[parity-doctor]"),
@@ -1335,6 +1351,8 @@ def main() -> None:
 		gate_quick_yellow.stdout + gate_quick_yellow.stderr,
 		gate_yellow_lines,
 	)
+	assert_exact_nonempty_lines("parity gate quick:yellow stdout", gate_quick_yellow.stdout, gate_yellow_stdout_lines)
+	assert_exact_nonempty_lines("parity gate quick:yellow stderr", gate_quick_yellow.stderr, gate_yellow_stderr_lines)
 	gate_quick_yellow_prefixed_lines = extract_prefixed_lines(
 		gate_quick_yellow.stdout + gate_quick_yellow.stderr,
 		("[parity-gate]", "[parity-status]", "[parity-doctor]"),
