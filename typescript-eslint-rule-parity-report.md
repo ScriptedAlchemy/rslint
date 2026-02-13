@@ -67,6 +67,8 @@ pnpm parity:ts-eslint:check:all
 pnpm parity:ts-eslint:check:clean
 pnpm parity:ts-eslint:check:strict
 pnpm parity:ts-eslint:check:strict:clean
+pnpm parity:ts-eslint:gate:red
+pnpm parity:ts-eslint:gate:yellow
 pnpm parity:ts-eslint:check:tooling
 pnpm parity:ts-eslint:commands
 pnpm parity:ts-eslint:badges

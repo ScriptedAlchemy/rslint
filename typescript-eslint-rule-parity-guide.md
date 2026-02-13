@@ -58,6 +58,8 @@ pnpm parity:ts-eslint:check:all
 pnpm parity:ts-eslint:check:clean
 pnpm parity:ts-eslint:check:strict
 pnpm parity:ts-eslint:check:strict:clean
+pnpm parity:ts-eslint:gate:red
+pnpm parity:ts-eslint:gate:yellow
 pnpm parity:ts-eslint:check:tooling
 pnpm parity:ts-eslint:commands
 pnpm parity:ts-eslint:badges
@@ -94,6 +96,8 @@ The checkers validate:
 `parity:ts-eslint:check:clean` enforces a clean parity-artifact tree before reproducibility verification.
 `parity:ts-eslint:check:strict` additionally fails when critical backlog remains.
 `parity:ts-eslint:check:strict:clean` combines strict critical-backlog gating with clean-tree reproducibility enforcement.
+`parity:ts-eslint:gate:red` runs strict clean checks then applies red-threshold status+doctor gates.
+`parity:ts-eslint:gate:yellow` runs strict clean checks then applies yellow-threshold status+doctor gates.
 `parity:ts-eslint:status:strict` additionally fails when computed parity health is red.
 `parity:ts-eslint:status:strict:yellow` additionally fails when computed parity health is yellow or red.
 `parity:ts-eslint:ci-summary:strict` additionally fails when computed parity health is red.

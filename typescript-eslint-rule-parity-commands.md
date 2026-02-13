@@ -27,6 +27,8 @@ Generated from `package.json` parity scripts.
 | `pnpm parity:ts-eslint:doctor:markdown` | Print parity doctor output in markdown format. | `python3 scripts/generate_ts_eslint_parity_doctor.py --markdown` |
 | `pnpm parity:ts-eslint:doctor:strict` | Print parity health diagnosis and fail if critical backlog exists. | `python3 scripts/generate_ts_eslint_parity_doctor.py --fail-on-critical` |
 | `pnpm parity:ts-eslint:doctor:strict:yellow` | Print parity doctor output and fail if health is yellow or red. | `python3 scripts/generate_ts_eslint_parity_doctor.py --fail-on-yellow` |
+| `pnpm parity:ts-eslint:gate:red` | Run strict clean checks plus red-threshold health gates. | `bash scripts/run_ts_eslint_parity_gate.sh --threshold red` |
+| `pnpm parity:ts-eslint:gate:yellow` | Run strict clean checks plus yellow-threshold health gates. | `bash scripts/run_ts_eslint_parity_gate.sh --threshold yellow` |
 | `pnpm parity:ts-eslint:issue-body` | Generate one phase issue body draft from tasklist. | `python3 scripts/generate_ts_eslint_parity_issue_body.py` |
 | `pnpm parity:ts-eslint:issue-body:all` | Generate issue body drafts for all parity phases. | `bash scripts/generate_ts_eslint_parity_issue_bodies_all.sh` |
 | `pnpm parity:ts-eslint:manifest` | Generate checksum manifest for parity artifacts. | `python3 scripts/generate_ts_eslint_parity_manifest.py` |
