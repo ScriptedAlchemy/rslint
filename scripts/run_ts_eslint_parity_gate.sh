@@ -1,14 +1,23 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+usage() {
+  echo "[parity-gate] Usage: bash scripts/run_ts_eslint_parity_gate.sh --threshold red|yellow [--skip-checks]" >&2
+}
+
 threshold="red"
 skip_checks="0"
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    -h|--help)
+      usage
+      exit 0
+      ;;
     --threshold)
       shift
       if [[ $# -eq 0 || "$1" == --* ]]; then
         echo "[parity-gate] ERROR: --threshold requires a value (red|yellow)." >&2
+        usage
         exit 1
       fi
       threshold="$1"
@@ -18,7 +27,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     *)
       echo "[parity-gate] ERROR: unknown argument: $1" >&2
-      echo "[parity-gate] Usage: bash scripts/run_ts_eslint_parity_gate.sh --threshold red|yellow [--skip-checks]" >&2
+      usage
       exit 1
       ;;
   esac
@@ -27,6 +36,7 @@ done
 
 if [[ "${threshold}" != "red" && "${threshold}" != "yellow" ]]; then
   echo "[parity-gate] ERROR: invalid threshold '${threshold}'. Expected red|yellow." >&2
+  usage
   exit 1
 fi
 

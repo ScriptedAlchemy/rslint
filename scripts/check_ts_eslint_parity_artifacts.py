@@ -549,6 +549,17 @@ def main() -> None:
 		fail("parity gate yellow stderr missing health message")
 
 	# Unified gate script argument validation checks
+	gate_help = subprocess.run(
+		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--help"],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if gate_help.returncode != 0:
+		fail("parity gate --help exit code must be 0")
+	if "Usage: bash scripts/run_ts_eslint_parity_gate.sh" not in (gate_help.stdout + gate_help.stderr):
+		fail("parity gate --help missing usage message")
+
 	gate_invalid_threshold = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--threshold", "blue", "--skip-checks"],
 		check=False,
