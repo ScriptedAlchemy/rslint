@@ -105,5 +105,30 @@ It summarizes the most important parity findings and remediation priorities.
 - Confirm no unintended increase in skip counts or TODO/FIXME markers.
 - Update this report snapshot numbers when backlog counts materially change.
 
+## Immediate execution batch (recommended first 10 tasks)
+Use this as a practical handoff checklist for the first implementation wave.
+
+| Order | Rule | Primary objective | Acceptance signal |
+|---:|---|---|---|
+| 1 | `no-useless-default-assignment` | Recover invalid/fix parity depth | Invalid + fix assertions match upstream intent |
+| 2 | `no-duplicate-enum-values` | Close severe invalid/test-size gap | Invalid-case parity restored |
+| 3 | `no-unused-private-class-members` | Close severe invalid/test-size gap | Invalid-case parity restored |
+| 4 | `strict-void-return` | Close severe invalid/test-size gap | Invalid-case parity restored |
+| 5 | `no-unused-vars` | Restore missing JS artifact + fix/suggestion parity | Missing file added; fix/suggestion assertions restored |
+| 6 | `await-thenable` | Recover invalid-case deficit | Invalid coverage gap removed |
+| 7 | `no-loss-of-precision` | Add missing Go tests | Go tests exist and pass for representative cases |
+| 8 | `prefer-optional-chain` | Improve moderate invalid/fix/suggestion parity | Key invalid + fix/suggestion branches asserted |
+| 9 | `no-confusing-void-expression` | Remove skip/TODO debt | Skip count reduced; TODO debt reduced |
+| 10 | `no-duplicate-type-constituents` | Remove skip/TODO debt | Skip count reduced; TODO debt reduced |
+
+## Reporting cadence recommendation
+- Update this report after each completed batch of 3–5 rules.
+- Track, at minimum, these counters each update:
+  - flagged rules remaining,
+  - phase distribution (`A/B/C/D/aligned`),
+  - `go_skips`,
+  - `todo_markers`,
+  - missing test artifacts (JS/Go).
+
 ## Final retained markdown deliverables
 - `typescript-eslint-rule-parity-report.md` (this file)
