@@ -1666,6 +1666,91 @@ def main() -> None:
 	for label, lines in gate_wrapper_duplicate_skip_checks_lines.items():
 		if lines != gate_wrapper_duplicate_skip_checks_baseline:
 			fail(f"{label} stderr output mismatch with gate wrapper duplicate-skip-checks baseline")
+	gate_wrapper_conflict_threshold_first_cases = [
+		(
+			"parity gate quick conflict threshold-first",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick", "--threshold=blue", "--skip-checks"],
+		),
+		(
+			"parity gate quick:red conflict threshold-first",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:red", "--threshold=blue", "--skip-checks"],
+		),
+		(
+			"parity gate quick:yellow conflict threshold-first",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow", "--threshold=blue", "--skip-checks"],
+		),
+	]
+	gate_wrapper_conflict_threshold_first_lines: dict[str, list[str]] = {}
+	gate_wrapper_conflict_threshold_first_codes: dict[str, int] = {}
+	for label, command in gate_wrapper_conflict_threshold_first_cases:
+		proc = subprocess.run(
+			command,
+			cwd=str(root),
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		conflict_lines = assert_gate_wrapper_unknown_arg_contract(
+			label,
+			proc,
+			expected_gate_duplicate_threshold_line,
+			expected_gate_usage_line,
+		)
+		gate_wrapper_conflict_threshold_first_lines[label] = conflict_lines
+		gate_wrapper_conflict_threshold_first_codes[label] = proc.returncode
+		if conflict_lines != gate_wrapper_duplicate_threshold_baseline:
+			fail(f"{label} stderr output mismatch with duplicate-threshold precedence baseline")
+	if gate_wrapper_conflict_threshold_first_codes["parity gate quick conflict threshold-first"] != gate_wrapper_conflict_threshold_first_codes[
+		"parity gate quick:red conflict threshold-first"
+	]:
+		fail("parity gate quick threshold-first conflict alias return code mismatch with quick:red")
+	if gate_wrapper_conflict_threshold_first_lines["parity gate quick conflict threshold-first"] != gate_wrapper_conflict_threshold_first_lines[
+		"parity gate quick:red conflict threshold-first"
+	]:
+		fail("parity gate quick threshold-first conflict alias stderr mismatch with quick:red")
+
+	gate_wrapper_conflict_skip_first_cases = [
+		(
+			"parity gate quick conflict skip-first",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick", "--skip-checks", "--threshold=blue"],
+		),
+		(
+			"parity gate quick:red conflict skip-first",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:red", "--skip-checks", "--threshold=blue"],
+		),
+		(
+			"parity gate quick:yellow conflict skip-first",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow", "--skip-checks", "--threshold=blue"],
+		),
+	]
+	gate_wrapper_conflict_skip_first_lines: dict[str, list[str]] = {}
+	gate_wrapper_conflict_skip_first_codes: dict[str, int] = {}
+	for label, command in gate_wrapper_conflict_skip_first_cases:
+		proc = subprocess.run(
+			command,
+			cwd=str(root),
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		conflict_lines = assert_gate_wrapper_unknown_arg_contract(
+			label,
+			proc,
+			expected_gate_duplicate_skip_checks_line,
+			expected_gate_usage_line,
+		)
+		gate_wrapper_conflict_skip_first_lines[label] = conflict_lines
+		gate_wrapper_conflict_skip_first_codes[label] = proc.returncode
+		if conflict_lines != gate_wrapper_duplicate_skip_checks_baseline:
+			fail(f"{label} stderr output mismatch with duplicate-skip-checks precedence baseline")
+	if gate_wrapper_conflict_skip_first_codes["parity gate quick conflict skip-first"] != gate_wrapper_conflict_skip_first_codes[
+		"parity gate quick:red conflict skip-first"
+	]:
+		fail("parity gate quick skip-first conflict alias return code mismatch with quick:red")
+	if gate_wrapper_conflict_skip_first_lines["parity gate quick conflict skip-first"] != gate_wrapper_conflict_skip_first_lines[
+		"parity gate quick:red conflict skip-first"
+	]:
+		fail("parity gate quick skip-first conflict alias stderr mismatch with quick:red")
 
 	# Gate npm command wrappers in skip-check mode
 	gate_cmd = subprocess.run(
