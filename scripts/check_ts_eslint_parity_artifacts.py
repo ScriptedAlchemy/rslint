@@ -150,6 +150,7 @@ def main() -> None:
 	tracker_csv = root / "typescript-eslint-rule-parity-tracker.csv"
 	tracker_json = root / "typescript-eslint-rule-parity-tracker.json"
 	worklist_md = root / "typescript-eslint-rule-parity-worklist.md"
+	top_md = root / "typescript-eslint-rule-parity-top.md"
 	summary_md = root / "typescript-eslint-rule-parity-summary.md"
 	metadata_json = root / "typescript-eslint-rule-parity-metadata.json"
 	index_md = root / "typescript-eslint-rule-parity-index.md"
@@ -164,6 +165,7 @@ def main() -> None:
 		tracker_csv,
 		tracker_json,
 		worklist_md,
+		top_md,
 		summary_md,
 		metadata_json,
 		index_md,
@@ -322,6 +324,7 @@ def main() -> None:
 		"typescript-eslint-rule-parity-tracker.csv",
 		"typescript-eslint-rule-parity-tracker.json",
 		"typescript-eslint-rule-parity-worklist.md",
+		"typescript-eslint-rule-parity-top.md",
 		"typescript-eslint-rule-parity-summary.md",
 		"typescript-eslint-rule-parity-metadata.json",
 		"typescript-eslint-rule-parity-index.md",
@@ -355,6 +358,7 @@ def main() -> None:
 		"typescript-eslint-rule-parity-index.md",
 		"typescript-eslint-rule-parity-summary.md",
 		"typescript-eslint-rule-parity-worklist.md",
+		"typescript-eslint-rule-parity-top.md",
 		"typescript-eslint-rule-parity-issue-plan.md",
 		"typescript-eslint-rule-parity-tracker.csv",
 		"typescript-eslint-rule-parity-tracker.json",
@@ -393,6 +397,29 @@ def main() -> None:
 		expected = phase_counter.get(phase, 0)
 		if task_count != expected:
 			fail(f"tasklist count mismatch for {phase}: expected={expected} actual={task_count}")
+
+	# Top priorities markdown checks
+	top_text = top_md.read_text()
+	top_rows = []
+	for match in re.finditer(r"\|\s*(\d+)\s*\|\s*`([^`]+)`\s*\|\s*(\d+)\s*\|\s*`([^`]*)`\s*\|", top_text):
+		top_rows.append(
+			{
+				"rank": int(match.group(1)),
+				"rule": match.group(2),
+				"priority_score": int(match.group(3)),
+				"phase": match.group(4),
+			}
+		)
+	expected_top = sorted(flagged, key=lambda r: (-int(r.get("priority_score", 0)), r.get("rule", "")))[:25]
+	if len(top_rows) != len(expected_top):
+		fail(f"top markdown row count mismatch: expected={len(expected_top)} actual={len(top_rows)}")
+	for expected, actual in zip(expected_top, top_rows):
+		if expected.get("rule") != actual["rule"]:
+			fail(f"top markdown rule mismatch: expected={expected.get('rule')} actual={actual['rule']}")
+		if int(expected.get("priority_score", 0)) != actual["priority_score"]:
+			fail(f"top markdown score mismatch for {actual['rule']}")
+		if str(expected.get("recommended_phase", "")) != actual["phase"]:
+			fail(f"top markdown phase mismatch for {actual['rule']}")
 
 	# CI summary script output checks
 	try:

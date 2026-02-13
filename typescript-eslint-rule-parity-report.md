@@ -11,6 +11,7 @@ _Generated: 2026-02-13 09:47 UTC_
 - `typescript-eslint-rule-parity-tracker.csv`
 - `typescript-eslint-rule-parity-tracker.json`
 - `typescript-eslint-rule-parity-worklist.md`
+- `typescript-eslint-rule-parity-top.md`
 - `typescript-eslint-rule-parity-summary.md`
 - `typescript-eslint-rule-parity-metadata.json`
 - `typescript-eslint-rule-parity-manifest.json`
@@ -50,6 +51,7 @@ pnpm parity:ts-eslint:check
 pnpm parity:ts-eslint:diff -- --base-ref HEAD~1
 pnpm parity:ts-eslint:tasklist --phase A_critical
 pnpm parity:ts-eslint:tasklist:all
+pnpm parity:ts-eslint:top
 pnpm parity:ts-eslint:manifest
 pnpm parity:ts-eslint:rebuild-metadata
 pnpm parity:ts-eslint:verify-clean
@@ -63,6 +65,7 @@ PARITY_OFFLINE=1 TS_ESLINT_REF=main pnpm parity:ts-eslint
 # or run steps directly:
 python3 scripts/generate_ts_eslint_parity_tracker.py
 python3 scripts/generate_ts_eslint_parity_worklist.py
+python3 scripts/generate_ts_eslint_parity_top.py
 python3 scripts/generate_ts_eslint_parity_summary.py
 python3 scripts/generate_ts_eslint_parity_metadata.py
 python3 scripts/generate_ts_eslint_parity_manifest.py
