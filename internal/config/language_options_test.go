@@ -156,3 +156,42 @@ func TestResolveLanguageOptionsForFileRespectsFilesPatterns(t *testing.T) {
 		t.Fatalf("expected script parser options for scripts/build.ts, got %#v", scriptsResolved.ParserOptions)
 	}
 }
+
+func TestMergeParserOptionsProjectOverrideSemantics(t *testing.T) {
+	var base ParserOptions
+	if err := json.Unmarshal([]byte(`{
+		"project": ["./tsconfig.base.json"]
+	}`), &base); err != nil {
+		t.Fatalf("failed to unmarshal base parser options: %v", err)
+	}
+
+	var clearOverride ParserOptions
+	if err := json.Unmarshal([]byte(`{
+		"project": []
+	}`), &clearOverride); err != nil {
+		t.Fatalf("failed to unmarshal clear override parser options: %v", err)
+	}
+
+	mergedCleared := mergeParserOptions(&base, &clearOverride)
+	if mergedCleared == nil {
+		t.Fatalf("expected merged parser options for clear override")
+	}
+	if len(mergedCleared.Project) != 0 {
+		t.Fatalf("expected explicit empty project override to clear projects, got %#v", mergedCleared.Project)
+	}
+
+	var keepOverride ParserOptions
+	if err := json.Unmarshal([]byte(`{
+		"sourceType": "module"
+	}`), &keepOverride); err != nil {
+		t.Fatalf("failed to unmarshal keep override parser options: %v", err)
+	}
+
+	mergedKept := mergeParserOptions(&base, &keepOverride)
+	if mergedKept == nil {
+		t.Fatalf("expected merged parser options for keep override")
+	}
+	if len(mergedKept.Project) != 1 || mergedKept.Project[0] != "./tsconfig.base.json" {
+		t.Fatalf("expected missing project override to keep base project, got %#v", mergedKept.Project)
+	}
+}

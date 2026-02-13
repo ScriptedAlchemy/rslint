@@ -237,7 +237,7 @@ func mergeParserOptions(base *api.ParserOptions, override *api.ParserOptions) *a
 		result.ProjectService = override.ProjectService
 		result.ProjectServiceSet = override.ProjectServiceSet || override.ProjectService
 	}
-	if len(override.Project) > 0 {
+	if override.Project != nil {
 		result.Project = append(api.ProjectPaths(nil), override.Project...)
 	}
 	if override.TsconfigRootDir != "" {
