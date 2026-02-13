@@ -235,6 +235,31 @@ def parse_diff_markdown_summary(diff_text: str) -> dict:
 	return parsed
 
 
+def parse_diff_json_summary(diff_json_text: str) -> dict:
+	try:
+		parsed = json.loads(diff_json_text)
+	except json.JSONDecodeError as err:
+		fail(f"parity diff json output invalid JSON: {err}")
+	if not isinstance(parsed, dict):
+		fail("parity diff json output must be an object")
+	if int(parsed.get("schema_version", -1)) != 1:
+		fail("parity diff json schema_version must be 1")
+	summary = parsed.get("summary", {})
+	fields = {
+		"net_flagged_change": "net_flagged_change",
+		"improved_rules": "improved_rules",
+		"regressed_rules": "regressed_rules",
+		"resolved_rules": "resolved_rules",
+		"newly_flagged_rules": "newly_flagged_rules",
+	}
+	out = {}
+	for out_key, summary_key in fields.items():
+		if summary_key not in summary:
+			fail(f"parity diff json missing summary field: {summary_key}")
+		out[out_key] = int(summary.get(summary_key, 0))
+	return out
+
+
 def parse_doctor_plain_output(text: str) -> dict:
 	patterns = {
 		"total_rules": r"Total rules\s*:\s*(\d+)",
@@ -344,6 +369,7 @@ def main() -> None:
 	issue_body_c_md = root / "typescript-eslint-rule-parity-issue-body-C_medium.md"
 	issue_body_d_md = root / "typescript-eslint-rule-parity-issue-body-D_low.md"
 	diff_md = root / "typescript-eslint-rule-parity-diff.md"
+	diff_json = root / "typescript-eslint-rule-parity-diff.json"
 
 	required = [
 		tracker_csv,
@@ -604,6 +630,8 @@ def main() -> None:
 		"typescript-eslint-rule-parity-status.json",
 		"typescript-eslint-rule-parity-index.md",
 		"typescript-eslint-rule-parity-issue-plan.md",
+		"typescript-eslint-rule-parity-diff.md",
+		"typescript-eslint-rule-parity-diff.json",
 		"typescript-eslint-rule-parity-tasklist-<phase>.md",
 		"typescript-eslint-rule-parity-issue-body-A_critical.md",
 		"typescript-eslint-rule-parity-issue-body-B_high.md",
@@ -774,8 +802,13 @@ def main() -> None:
 		fail("ci summary json health reason mismatch")
 	if ci_summary_json.get("phase_counts", {}) != dict(phase_counter):
 		fail("ci summary json phase_counts mismatch")
-	if diff_md.exists():
-		expected_diff = parse_diff_markdown_summary(diff_md.read_text())
+	diff_md_metrics = parse_diff_markdown_summary(diff_md.read_text()) if diff_md.exists() else {}
+	diff_json_metrics = parse_diff_json_summary(diff_json.read_text()) if diff_json.exists() else {}
+	expected_diff = diff_md_metrics or diff_json_metrics
+	if diff_md_metrics and diff_json_metrics and diff_md_metrics != diff_json_metrics:
+		fail("parity diff markdown/json summary mismatch")
+
+	if expected_diff:
 		if ci_summary["diff_metrics"] != expected_diff:
 			fail("ci summary diff metrics mismatch with parity diff artifact")
 		if ci_summary_json.get("diff_metrics", {}) != expected_diff:

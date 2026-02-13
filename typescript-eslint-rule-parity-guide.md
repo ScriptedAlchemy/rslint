@@ -73,6 +73,7 @@ The checkers validate:
 - tracker/worklist/summary/metadata/manifest/index/issue-plan coherence,
 - issue-body structure/counts,
 - CI summary rendering consistency (markdown + JSON, including optional diff metrics when diff artifact exists),
+- optional diff artifact summary consistency between markdown and JSON outputs,
 - parity doctor output consistency (plain + markdown + JSON forms),
 - parity doctor strict-mode exit behavior (`--fail-on-critical`),
 - parity command/docs/script synchronization,
