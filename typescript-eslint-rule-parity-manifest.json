@@ -4,17 +4,17 @@
   "files": [
     {
       "path": "typescript-eslint-rule-parity-report.md",
-      "sha256": "76a94a7e8c0ff847a71060660e94103ffe8b588825f86e0d6d2a2b1ce883f497",
-      "bytes": 39979
+      "sha256": "d8c7e4205bd6f453979eb3af77526e1f9a9b19aa261abd2e9d229a9bfe630fd6",
+      "bytes": 40000
     },
     {
       "path": "typescript-eslint-rule-parity-guide.md",
-      "sha256": "cb62196c39d3ec11370e31db1b00e150daff5e559634a863091ec6d965c56857",
-      "bytes": 6069
+      "sha256": "66b6e9d1169c27c622809ec0d9d1de23c83c393bd0905efe7f6136d4abda27f7",
+      "bytes": 6099
     },
     {
       "path": "typescript-eslint-rule-parity-index.md",
-      "sha256": "6d58c454b483b0b058782b58abb37e7d640f41ac024cdbb737013157e5c99d55",
+      "sha256": "5f2ae4493b71582571fa33dd2b643939431c1d48e9933b12eadfb35e99f0626f",
       "bytes": 2783
     },
     {
@@ -29,7 +29,7 @@
     },
     {
       "path": "typescript-eslint-rule-parity-top.md",
-      "sha256": "e4b1fd74faded4645a46b5b62eaa1513dd6cf2a39726a31ec85922d54b5c6250",
+      "sha256": "16b3363e83e55ca6cbe2ba37ee957f02147cde7caa34a96271c5cb9dd26fa8d5",
       "bytes": 2367
     },
     {
@@ -49,7 +49,7 @@
     },
     {
       "path": "typescript-eslint-rule-parity-metadata.json",
-      "sha256": "aac756935de5aa015d303c33df90fd0a91499f732fd908632a6bc1e269e772e7",
+      "sha256": "47c1e54c2d3ceeeaebd85af9d28dc1605c3566d4b67361c3042156f1cdfc881c",
       "bytes": 3553
     },
     {

@@ -1,6 +1,6 @@
 # TypeScript-ESLint Parity Artifact Index
 
-_Generated: 2026-02-13T11:07:45.473402+00:00_
+_Generated: 2026-02-13T11:10:30.274301+00:00_
 
 ## Snapshot
 - Upstream ref requested: `main`

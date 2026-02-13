@@ -115,6 +115,35 @@ def parse_phase_tasklist_markdown(tasklist_text: str) -> int:
 	return count
 
 
+def parse_issue_body_markdown(issue_body_text: str, phase: str) -> dict:
+	title_match = re.search(rf"^##\s+TypeScript-ESLint Parity — {phase}$", issue_body_text, flags=re.MULTILINE)
+	if not title_match:
+		fail(f"issue body missing title for {phase}")
+
+	priority = phase.split("_", 1)[1]
+	priority_label_match = re.search(rf"-\s+`priority:{priority}`", issue_body_text)
+	if not priority_label_match:
+		fail(f"issue body missing priority label for {phase}")
+
+	tasklist_heading_match = re.search(rf"###\s+{phase}\s+parity tasks", issue_body_text)
+	if not tasklist_heading_match:
+		fail(f"issue body missing tasklist heading for {phase}")
+
+	tasklist_block_match = re.search(rf"```\[tasklist\]\s*###\s+{phase}\s+parity tasks(?P<body>.*?)```", issue_body_text, flags=re.DOTALL)
+	if not tasklist_block_match:
+		fail(f"issue body missing tasklist code block for {phase}")
+	tasklist_block = tasklist_block_match.group("body")
+	task_count = len(re.findall(r"^- \[ \] .+$", tasklist_block, flags=re.MULTILINE))
+	acceptance_checks = len(
+		re.findall(r"^- \[ \] (Go tests pass for touched rules\.|JS parity tests pass for touched rules\.|Parity artifacts regenerated .+|Consistency checks pass .+)$", issue_body_text, flags=re.MULTILINE)
+	)
+
+	if "### Acceptance criteria" not in issue_body_text:
+		fail(f"issue body missing acceptance criteria section for {phase}")
+
+	return {"task_count": task_count, "acceptance_checks": acceptance_checks}
+
+
 def parse_ci_summary_markdown(summary_text: str) -> dict:
 	patterns = {
 		"upstream_ref": r"- Upstream ref:\s+`([^`]+)`",
@@ -424,12 +453,12 @@ def main() -> None:
 	}
 	for phase, path in issue_body_by_phase.items():
 		text = path.read_text()
-		if f"## TypeScript-ESLint Parity — {phase}" not in text:
-			fail(f"issue body missing title heading for {phase}: {path.name}")
-		if "### Tasklist" not in text:
-			fail(f"issue body missing tasklist section for {phase}: {path.name}")
-		if "### Acceptance criteria" not in text:
-			fail(f"issue body missing acceptance criteria section for {phase}: {path.name}")
+		parsed = parse_issue_body_markdown(text, phase)
+		expected = phase_counter.get(phase, 0)
+		if parsed["task_count"] != expected:
+			fail(f"issue body task count mismatch for {phase}: expected={expected} actual={parsed['task_count']}")
+		if parsed["acceptance_checks"] != 4:
+			fail(f"issue body acceptance checklist mismatch for {phase}: expected=4 actual={parsed['acceptance_checks']}")
 
 	# Top priorities markdown checks
 	top_text = top_md.read_text()
