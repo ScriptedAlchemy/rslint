@@ -21,15 +21,44 @@ func TestNoUselessDefaultAssignmentRule(t *testing.T) {
 	}, []rule_tester.InvalidTestCase{
 		{
 			Code:   `function basic(a: number = 1) { return a; }`,
+			Output: []string{`function basic(a: number) { return a; }`},
 			Errors: []rule_tester.InvalidTestCaseError{{MessageId: "uselessDefaultAssignment"}},
 		},
 		{
 			Code:   `function optional(a: number | undefined = undefined) { return a; }`,
+			Output: []string{`function optional(a?: number | undefined) { return a; }`},
 			Errors: []rule_tester.InvalidTestCaseError{{MessageId: "preferOptionalSyntax"}},
 		},
 		{
 			Code:   `const { a = undefined }: { a?: number } = {};`,
+			Output: []string{`const { a }: { a?: number } = {};`},
 			Errors: []rule_tester.InvalidTestCaseError{{MessageId: "uselessUndefined"}},
+		},
+		{
+			Code:   `function withObject({ foo = "" }: { foo: string }) { return foo; }`,
+			Output: []string{`function withObject({ foo }: { foo: string }) { return foo; }`},
+			Errors: []rule_tester.InvalidTestCaseError{{MessageId: "uselessDefaultAssignment"}},
+		},
+		{
+			Code: `
+interface B {
+	foo: (b: boolean | string) => void;
+}
+
+const h: B = {
+	foo: (b = false) => {},
+};
+			`,
+			Output: []string{`
+interface B {
+	foo: (b: boolean | string) => void;
+}
+
+const h: B = {
+	foo: (b) => {},
+};
+			`},
+			Errors: []rule_tester.InvalidTestCaseError{{MessageId: "uselessDefaultAssignment"}},
 		},
 		{
 			Code:     `const value = 1;`,

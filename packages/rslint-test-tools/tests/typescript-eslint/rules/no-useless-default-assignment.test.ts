@@ -22,6 +22,14 @@ function withOptional(a: number | undefined = 1) {
     `
 const { a = 1 }: { a?: number } = {};
     `,
+    `
+[1, 2, 3, undefined].map((a = 42) => a + 1);
+    `,
+    `
+function test(a: any = 'default') {
+  return a;
+}
+    `,
   ],
   invalid: [
     {
@@ -43,6 +51,38 @@ function optional(a: number | undefined = undefined) {
     {
       code: `
 const { a = undefined }: { a?: number } = {};
+      `,
+      errors: [{ messageId: 'uselessUndefined' }],
+    },
+    {
+      code: `
+function withObject({ foo = '' }: { foo: string }) {
+  return foo;
+}
+      `,
+      errors: [{ messageId: 'uselessDefaultAssignment' }],
+    },
+    {
+      code: `
+[1, 2, 3].map((a = 42) => a + 1);
+      `,
+      errors: [{ messageId: 'uselessDefaultAssignment' }],
+    },
+    {
+      code: `
+interface B {
+  foo: (b: boolean | string) => void;
+}
+
+const h: B = {
+  foo: (b = false) => {},
+};
+      `,
+      errors: [{ messageId: 'uselessDefaultAssignment' }],
+    },
+    {
+      code: `
+const [a = undefined] = [];
       `,
       errors: [{ messageId: 'uselessUndefined' }],
     },

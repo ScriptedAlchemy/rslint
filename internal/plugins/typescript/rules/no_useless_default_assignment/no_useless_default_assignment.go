@@ -3,6 +3,7 @@ package no_useless_default_assignment
 import (
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/microsoft/typescript-go/shim/checker"
+	"github.com/microsoft/typescript-go/shim/core"
 	"github.com/web-infra-dev/rslint/internal/rule"
 	"github.com/web-infra-dev/rslint/internal/utils"
 )
@@ -349,6 +350,56 @@ func bindingElementSourceType(ctx rule.RuleContext, bindingElementNode *ast.Node
 	return ctx.TypeChecker.GetTypeAtLocation(bindingElementNode)
 }
 
+func defaultAssignmentRange(sourceFile *ast.SourceFile, initializer *ast.Node) (core.TextRange, bool) {
+	if sourceFile == nil || initializer == nil {
+		return core.NewTextRange(0, 0), false
+	}
+
+	text := sourceFile.Text()
+	if len(text) == 0 {
+		return core.NewTextRange(0, 0), false
+	}
+
+	start := initializer.Pos() - 1
+	if start >= len(text) {
+		start = len(text) - 1
+	}
+
+	for start >= 0 && text[start] != '=' {
+		start--
+	}
+	if start < 0 {
+		return core.NewTextRange(0, 0), false
+	}
+
+	trimmedStart := start
+	for trimmedStart > 0 {
+		ch := text[trimmedStart-1]
+		if ch == ' ' || ch == '\t' {
+			trimmedStart--
+			continue
+		}
+		break
+	}
+
+	end := initializer.End()
+	if end <= trimmedStart || end > len(text) {
+		return core.NewTextRange(0, 0), false
+	}
+
+	return core.NewTextRange(trimmedStart, end), true
+}
+
+func parameterOptionalQuestionFix(parameter *ast.ParameterDeclaration) (rule.RuleFix, bool) {
+	if parameter == nil || parameter.QuestionToken != nil || parameter.Name() == nil {
+		return rule.RuleFix{}, false
+	}
+	if parameter.Name().Kind != ast.KindIdentifier {
+		return rule.RuleFix{}, false
+	}
+	return rule.RuleFixInsertAfter(parameter.Name(), "?"), true
+}
+
 var NoUselessDefaultAssignmentRule = rule.CreateRule(rule.Rule{
 	Name: "no-useless-default-assignment",
 	Run: func(ctx rule.RuleContext, options any) rule.RuleListeners {
@@ -372,17 +423,38 @@ var NoUselessDefaultAssignmentRule = rule.CreateRule(rule.Rule{
 				return
 			}
 
+			defaultRange, hasDefaultRange := defaultAssignmentRange(ctx.SourceFile, parameter.Initializer)
+
 			if isUndefinedIdentifier(parameter.Initializer) {
 				if canBeUndefined(declaredType) {
-					ctx.ReportNode(parameter.Initializer, buildPreferOptionalSyntaxMessage())
+					var fixes []rule.RuleFix
+					if hasDefaultRange {
+						fixes = append(fixes, rule.RuleFixRemoveRange(defaultRange))
+					}
+					if optionalFix, ok := parameterOptionalQuestionFix(parameter); ok {
+						fixes = append(fixes, optionalFix)
+					}
+					if len(fixes) == 0 {
+						ctx.ReportNode(parameter.Initializer, buildPreferOptionalSyntaxMessage())
+					} else {
+						ctx.ReportNodeWithFixes(parameter.Initializer, buildPreferOptionalSyntaxMessage(), fixes...)
+					}
 				} else {
-					ctx.ReportNode(parameter.Initializer, buildUselessUndefinedMessage("parameter"))
+					if hasDefaultRange {
+						ctx.ReportNodeWithFixes(parameter.Initializer, buildUselessUndefinedMessage("parameter"), rule.RuleFixRemoveRange(defaultRange))
+					} else {
+						ctx.ReportNode(parameter.Initializer, buildUselessUndefinedMessage("parameter"))
+					}
 				}
 				return
 			}
 
 			if !canBeUndefined(declaredType) {
-				ctx.ReportNode(parameter.Initializer, buildUselessDefaultAssignmentMessage("parameter"))
+				if hasDefaultRange {
+					ctx.ReportNodeWithFixes(parameter.Initializer, buildUselessDefaultAssignmentMessage("parameter"), rule.RuleFixRemoveRange(defaultRange))
+				} else {
+					ctx.ReportNode(parameter.Initializer, buildUselessDefaultAssignmentMessage("parameter"))
+				}
 			}
 		}
 
@@ -392,8 +464,14 @@ var NoUselessDefaultAssignmentRule = rule.CreateRule(rule.Rule{
 				return
 			}
 
+			defaultRange, hasDefaultRange := defaultAssignmentRange(ctx.SourceFile, bindingElement.Initializer)
+
 			if isUndefinedIdentifier(bindingElement.Initializer) {
-				ctx.ReportNode(bindingElement.Initializer, buildUselessUndefinedMessage("property"))
+				if hasDefaultRange {
+					ctx.ReportNodeWithFixes(bindingElement.Initializer, buildUselessUndefinedMessage("property"), rule.RuleFixRemoveRange(defaultRange))
+				} else {
+					ctx.ReportNode(bindingElement.Initializer, buildUselessUndefinedMessage("property"))
+				}
 				return
 			}
 
@@ -403,7 +481,11 @@ var NoUselessDefaultAssignmentRule = rule.CreateRule(rule.Rule{
 			}
 
 			if !canBeUndefined(declaredType) {
-				ctx.ReportNode(bindingElement.Initializer, buildUselessDefaultAssignmentMessage("property"))
+				if hasDefaultRange {
+					ctx.ReportNodeWithFixes(bindingElement.Initializer, buildUselessDefaultAssignmentMessage("property"), rule.RuleFixRemoveRange(defaultRange))
+				} else {
+					ctx.ReportNode(bindingElement.Initializer, buildUselessDefaultAssignmentMessage("property"))
+				}
 			}
 		}
 
