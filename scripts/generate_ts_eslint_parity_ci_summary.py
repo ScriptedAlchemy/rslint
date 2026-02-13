@@ -4,6 +4,7 @@ Emit a concise markdown summary for CI job output.
 
 Reads:
   - typescript-eslint-rule-parity-metadata.json (required)
+  - typescript-eslint-rule-parity-status.json (optional; falls back to computed health)
   - typescript-eslint-rule-parity-diff.md (optional)
   - typescript-eslint-rule-parity-diff.json (optional)
 
@@ -17,6 +18,8 @@ import argparse
 import json
 import pathlib
 import re
+
+from parity_health import compute_health_reason
 
 
 def read_diff_metrics_from_markdown(diff_path: pathlib.Path) -> dict[str, int]:
@@ -75,8 +78,13 @@ def main() -> None:
 	phase_counts = metadata.get("phase_counts", {})
 	upstream_ref = metadata.get("upstream_ref_requested", "unknown")
 	upstream_commit = metadata.get("upstream_commit", "unknown")
-	health = status.get("health")
-	reason = status.get("reason")
+	health_default, reason_default = compute_health_reason(
+		critical=int(phase_counts.get("A_critical", 0)),
+		high=int(phase_counts.get("B_high", 0)),
+		flagged=int(summary.get("flagged_rules", 0)),
+	)
+	health = status.get("health", health_default)
+	reason = status.get("reason", reason_default)
 
 	try:
 		diff_metrics = read_optional_diff_metrics(diff_md_path, diff_json_path)
@@ -117,11 +125,10 @@ def main() -> None:
 	lines.append(f"- Total rules: **{summary.get('total_rules', 0)}**")
 	lines.append(f"- Flagged rules: **{summary.get('flagged_rules', 0)}**")
 	lines.append(f"- Aligned rules: **{summary.get('aligned_rules', 0)}**")
-	if health:
-		health_line = f"- Health: **{health}**"
-		if reason:
-			health_line += f" — {reason}"
-		lines.append(health_line)
+	health_line = f"- Health: **{health}**"
+	if reason:
+		health_line += f" — {reason}"
+	lines.append(health_line)
 	lines.append("")
 	lines.append("| Phase | Rules |")
 	lines.append("|---|---:|")
