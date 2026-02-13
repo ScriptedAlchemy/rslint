@@ -164,3 +164,7 @@ target/
 
 # generated rule manifest
 website/generated/
+
+# python cache artifacts
+__pycache__/
+*.py[cod]
