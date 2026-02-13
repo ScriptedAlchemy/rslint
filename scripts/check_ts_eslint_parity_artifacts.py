@@ -583,6 +583,19 @@ def main() -> None:
 	if "Usage: bash scripts/run_ts_eslint_parity_gate.sh" not in gate_invalid_threshold.stderr:
 		fail("parity gate invalid-threshold stderr missing usage message")
 
+	gate_invalid_inline_threshold = subprocess.run(
+		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--threshold=blue", "--skip-checks"],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if gate_invalid_inline_threshold.returncode != 1:
+		fail("parity gate invalid-inline-threshold exit code must be 1")
+	if "invalid threshold" not in gate_invalid_inline_threshold.stderr:
+		fail("parity gate invalid-inline-threshold stderr missing message")
+	if "Usage: bash scripts/run_ts_eslint_parity_gate.sh" not in gate_invalid_inline_threshold.stderr:
+		fail("parity gate invalid-inline-threshold stderr missing usage message")
+
 	gate_missing_threshold_value = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--threshold", "--skip-checks"],
 		check=False,
@@ -608,6 +621,26 @@ def main() -> None:
 		fail("parity gate missing-inline-threshold-value stderr missing message")
 	if "Usage: bash scripts/run_ts_eslint_parity_gate.sh" not in gate_missing_inline_threshold_value.stderr:
 		fail("parity gate missing-inline-threshold-value stderr missing usage message")
+
+	gate_duplicate_threshold = subprocess.run(
+		[
+			"bash",
+			str(root / "scripts/run_ts_eslint_parity_gate.sh"),
+			"--threshold",
+			"red",
+			"--threshold=yellow",
+			"--skip-checks",
+		],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if gate_duplicate_threshold.returncode != 1:
+		fail("parity gate duplicate-threshold exit code must be 1")
+	if "duplicate --threshold argument" not in gate_duplicate_threshold.stderr:
+		fail("parity gate duplicate-threshold stderr missing message")
+	if "Usage: bash scripts/run_ts_eslint_parity_gate.sh" not in gate_duplicate_threshold.stderr:
+		fail("parity gate duplicate-threshold stderr missing usage message")
 
 	gate_inline_red = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--threshold=red", "--skip-checks"],

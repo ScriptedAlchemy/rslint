@@ -6,6 +6,7 @@ usage() {
 }
 
 threshold="red"
+threshold_set="0"
 skip_checks="0"
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -14,6 +15,11 @@ while [[ $# -gt 0 ]]; do
       exit 0
       ;;
     --threshold)
+      if [[ "${threshold_set}" == "1" ]]; then
+        echo "[parity-gate] ERROR: duplicate --threshold argument." >&2
+        usage
+        exit 1
+      fi
       shift
       if [[ $# -eq 0 || "$1" == --* ]]; then
         echo "[parity-gate] ERROR: --threshold requires a value (red|yellow)." >&2
@@ -21,14 +27,21 @@ while [[ $# -gt 0 ]]; do
         exit 1
       fi
       threshold="$1"
+      threshold_set="1"
       ;;
     --threshold=*)
+      if [[ "${threshold_set}" == "1" ]]; then
+        echo "[parity-gate] ERROR: duplicate --threshold argument." >&2
+        usage
+        exit 1
+      fi
       threshold="${1#*=}"
       if [[ -z "${threshold}" ]]; then
         echo "[parity-gate] ERROR: --threshold requires a value (red|yellow)." >&2
         usage
         exit 1
       fi
+      threshold_set="1"
       ;;
     --skip-checks)
       skip_checks="1"
