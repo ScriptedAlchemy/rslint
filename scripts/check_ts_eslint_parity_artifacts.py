@@ -642,6 +642,46 @@ def main() -> None:
 	if "Usage: bash scripts/run_ts_eslint_parity_gate.sh" not in gate_duplicate_threshold.stderr:
 		fail("parity gate duplicate-threshold stderr missing usage message")
 
+	gate_duplicate_threshold_spaced = subprocess.run(
+		[
+			"bash",
+			str(root / "scripts/run_ts_eslint_parity_gate.sh"),
+			"--threshold",
+			"red",
+			"--threshold",
+			"yellow",
+			"--skip-checks",
+		],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if gate_duplicate_threshold_spaced.returncode != 1:
+		fail("parity gate duplicate-threshold-spaced exit code must be 1")
+	if "duplicate --threshold argument" not in gate_duplicate_threshold_spaced.stderr:
+		fail("parity gate duplicate-threshold-spaced stderr missing message")
+	if "Usage: bash scripts/run_ts_eslint_parity_gate.sh" not in gate_duplicate_threshold_spaced.stderr:
+		fail("parity gate duplicate-threshold-spaced stderr missing usage message")
+
+	gate_duplicate_threshold_inline = subprocess.run(
+		[
+			"bash",
+			str(root / "scripts/run_ts_eslint_parity_gate.sh"),
+			"--threshold=red",
+			"--threshold=yellow",
+			"--skip-checks",
+		],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if gate_duplicate_threshold_inline.returncode != 1:
+		fail("parity gate duplicate-threshold-inline exit code must be 1")
+	if "duplicate --threshold argument" not in gate_duplicate_threshold_inline.stderr:
+		fail("parity gate duplicate-threshold-inline stderr missing message")
+	if "Usage: bash scripts/run_ts_eslint_parity_gate.sh" not in gate_duplicate_threshold_inline.stderr:
+		fail("parity gate duplicate-threshold-inline stderr missing usage message")
+
 	gate_inline_red = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--threshold=red", "--skip-checks"],
 		check=False,
