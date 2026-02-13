@@ -44,6 +44,9 @@ func (loader *ConfigLoader) LoadRslintConfig(configPath string) (RslintConfig, s
 
 	// Update current directory to the config file's directory
 	configDirectory := tspath.GetDirectoryPath(configFileName)
+	for i := range config {
+		config[i].ConfigDirectory = configDirectory
+	}
 	return config, configDirectory, nil
 }
 
@@ -63,9 +66,31 @@ func (loader *ConfigLoader) LoadDefaultRslintConfig() (RslintConfig, string, err
 
 // LoadTsConfigsFromRslintConfig extracts and validates TypeScript configuration paths from rslint config
 func (loader *ConfigLoader) LoadTsConfigsFromRslintConfig(rslintConfig RslintConfig, configDirectory string) ([]string, error) {
+	return loader.loadTsConfigsFromRslintConfig(rslintConfig, configDirectory, nil)
+}
+
+func (loader *ConfigLoader) LoadTsConfigsFromRslintConfigForFiles(rslintConfig RslintConfig, configDirectory string, targetFiles []string) ([]string, error) {
+	return loader.loadTsConfigsFromRslintConfig(rslintConfig, configDirectory, targetFiles)
+}
+
+func (loader *ConfigLoader) loadTsConfigsFromRslintConfig(rslintConfig RslintConfig, configDirectory string, targetFiles []string) ([]string, error) {
 	tsConfigs := []string{}
+	seenConfigs := map[string]bool{}
 
 	for _, entry := range rslintConfig {
+		if len(targetFiles) > 0 {
+			isApplicable := false
+			for _, filePath := range targetFiles {
+				if configEntryMatchesFile(entry, filePath) {
+					isApplicable = true
+					break
+				}
+			}
+			if !isApplicable {
+				continue
+			}
+		}
+
 		if entry.LanguageOptions == nil || entry.LanguageOptions.ParserOptions == nil {
 			continue
 		}
@@ -81,6 +106,10 @@ func (loader *ConfigLoader) LoadTsConfigsFromRslintConfig(rslintConfig RslintCon
 				return nil, fmt.Errorf("tsconfig file %q doesn't exist", tsconfigPath)
 			}
 
+			if seenConfigs[tsconfigPath] {
+				continue
+			}
+			seenConfigs[tsconfigPath] = true
 			tsConfigs = append(tsConfigs, tsconfigPath)
 		}
 	}

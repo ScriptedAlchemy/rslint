@@ -308,11 +308,27 @@ func mergeLanguageOptions(base *api.LanguageOptions, override *api.LanguageOptio
 }
 
 func patternMatchesFile(pattern string, filePath string, normalizedPath string) bool {
-	candidates := []string{normalizedPath, strings.ReplaceAll(normalizedPath, "\\", "/"), filePath, strings.ReplaceAll(filePath, "\\", "/")}
-	for _, candidate := range candidates {
+	candidates := []string{}
+	appendCandidate := func(candidate string) {
 		if candidate == "" {
+			return
+		}
+		candidates = append(candidates, candidate)
+		if !strings.HasPrefix(candidate, "./") {
+			candidates = append(candidates, "./"+candidate)
+		}
+	}
+	appendCandidate(normalizedPath)
+	appendCandidate(strings.ReplaceAll(normalizedPath, "\\", "/"))
+	appendCandidate(filePath)
+	appendCandidate(strings.ReplaceAll(filePath, "\\", "/"))
+
+	seen := map[string]bool{}
+	for _, candidate := range candidates {
+		if seen[candidate] {
 			continue
 		}
+		seen[candidate] = true
 		if matched, err := doublestar.Match(pattern, candidate); err == nil && matched {
 			return true
 		}
@@ -363,6 +379,48 @@ func resolveRuleLanguageOptionsForFile(requestOptions *api.LanguageOptions, conf
 	return mergeLanguageOptions(resolved, requestOptions)
 }
 
+func entryMatchesAnyTargetFile(entry rslintconfig.ConfigEntry, targetFiles []string, configDirectory string) bool {
+	if len(targetFiles) == 0 {
+		return true
+	}
+	for _, targetFile := range targetFiles {
+		if configEntryMatchesFile(entry, targetFile, configDirectory) {
+			return true
+		}
+	}
+	return false
+}
+
+func collectTsConfigsForRequest(configEntries rslintconfig.RslintConfig, requestOptions *api.LanguageOptions, configDirectory string, fs interface{ FileExists(path string) bool }, targetFiles []string) ([]string, bool) {
+	hasExplicitProjectOverride := requestOptions != nil && requestOptions.ParserOptions != nil && requestOptions.ParserOptions.Project != nil
+	collected := []string{}
+	seen := map[string]bool{}
+
+	for _, entry := range configEntries {
+		if !entryMatchesAnyTargetFile(entry, targetFiles, configDirectory) {
+			continue
+		}
+		effectiveLanguageOptions := mergeLanguageOptions(configLanguageOptionsToAPI(entry.LanguageOptions), requestOptions)
+		if effectiveLanguageOptions == nil || effectiveLanguageOptions.ParserOptions == nil {
+			continue
+		}
+		baseDir := configDirectory
+		if effectiveLanguageOptions.ParserOptions.TsconfigRootDir != "" {
+			baseDir = tspath.ResolvePath(configDirectory, effectiveLanguageOptions.ParserOptions.TsconfigRootDir)
+		}
+		for _, config := range effectiveLanguageOptions.ParserOptions.Project {
+			tsconfigPath := tspath.ResolvePath(baseDir, config)
+			if !fs.FileExists(tsconfigPath) || seen[tsconfigPath] {
+				continue
+			}
+			seen[tsconfigPath] = true
+			collected = append(collected, tsconfigPath)
+		}
+	}
+
+	return collected, hasExplicitProjectOverride
+}
+
 // Global program cache for AST info requests
 var astInfoProgramCache = &programCache{}
 
@@ -405,29 +463,32 @@ func (h *IPCHandler) HandleLint(req api.LintRequest) (*api.LintResponse, error) 
 	rslintconfig.RegisterAllRules()
 
 	// Load rslint configuration and determine which tsconfig files to use
-	rslintConfig, tsConfigs, configDirectory := rslintconfig.LoadConfigurationWithFallback(req.Config, currentDirectory, fs)
+	loader := rslintconfig.NewConfigLoader(fs, currentDirectory)
+	var (
+		rslintConfig    rslintconfig.RslintConfig
+		configDirectory string
+	)
+	if req.Config != "" {
+		rslintConfig, configDirectory, err = loader.LoadRslintConfig(req.Config)
+	} else {
+		rslintConfig, configDirectory, err = loader.LoadDefaultRslintConfig()
+	}
+	if err != nil {
+		return nil, fmt.Errorf("error loading config: %w", err)
+	}
 
-	// Merge languageOptions from request with config file if provided
-	if req.LanguageOptions != nil && len(rslintConfig) > 0 {
-		// Re-extract tsconfig files with updated languageOptions
-		overrideTsconfigs := []string{}
-		for index, entry := range rslintConfig {
-			effectiveLanguageOptions := configLanguageOptionsToAPI(entry.LanguageOptions)
-			if index == 0 {
-				effectiveLanguageOptions = mergeLanguageOptions(effectiveLanguageOptions, req.LanguageOptions)
-			}
-			if effectiveLanguageOptions != nil && effectiveLanguageOptions.ParserOptions != nil {
-				baseDir := configDirectory
-				if effectiveLanguageOptions.ParserOptions.TsconfigRootDir != "" {
-					baseDir = tspath.ResolvePath(configDirectory, effectiveLanguageOptions.ParserOptions.TsconfigRootDir)
-				}
-				for _, config := range effectiveLanguageOptions.ParserOptions.Project {
-					tsconfigPath := tspath.ResolvePath(baseDir, config)
-					if fs.FileExists(tsconfigPath) {
-						overrideTsconfigs = append(overrideTsconfigs, tsconfigPath)
-					}
-				}
-			}
+	var tsConfigs []string
+	overrideTsconfigs, hasExplicitProjectOverride := collectTsConfigsForRequest(rslintConfig, req.LanguageOptions, configDirectory, fs, allowedFiles)
+	if hasExplicitProjectOverride {
+		tsConfigs = overrideTsconfigs
+	} else {
+		if len(allowedFiles) > 0 {
+			tsConfigs, err = loader.LoadTsConfigsFromRslintConfigForFiles(rslintConfig, configDirectory, allowedFiles)
+		} else {
+			tsConfigs, err = loader.LoadTsConfigsFromRslintConfig(rslintConfig, configDirectory)
+		}
+		if err != nil {
+			return nil, fmt.Errorf("error resolving tsconfig files: %w", err)
 		}
 		if len(overrideTsconfigs) > 0 {
 			tsConfigs = overrideTsconfigs

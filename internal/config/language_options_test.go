@@ -103,8 +103,9 @@ func TestBuildRuleGlobals(t *testing.T) {
 func TestResolveLanguageOptionsForFileRespectsFilesPatterns(t *testing.T) {
 	cfg := RslintConfig{
 		{
-			Language: "javascript",
-			Files:    []string{"src/**/*.ts"},
+			Language:        "javascript",
+			Files:           []string{"src/**/*.ts"},
+			ConfigDirectory: "/repo",
 			LanguageOptions: &LanguageOptions{
 				Globals: map[string]interface{}{
 					"SrcGlobal": "readonly",
@@ -115,8 +116,9 @@ func TestResolveLanguageOptionsForFileRespectsFilesPatterns(t *testing.T) {
 			},
 		},
 		{
-			Language: "javascript",
-			Files:    []string{"scripts/**/*.ts"},
+			Language:        "javascript",
+			Files:           []string{"scripts/**/*.ts"},
+			ConfigDirectory: "/repo",
 			LanguageOptions: &LanguageOptions{
 				Globals: map[string]interface{}{
 					"ScriptsGlobal": "readonly",
@@ -154,6 +156,53 @@ func TestResolveLanguageOptionsForFileRespectsFilesPatterns(t *testing.T) {
 	}
 	if scriptsResolved.ParserOptions == nil || scriptsResolved.ParserOptions.SourceType != "script" {
 		t.Fatalf("expected script parser options for scripts/build.ts, got %#v", scriptsResolved.ParserOptions)
+	}
+}
+
+func TestConfigEntryMatchesFileSupportsDotPrefixedPatterns(t *testing.T) {
+	entry := ConfigEntry{
+		Language:        "javascript",
+		Files:           []string{"./src/**/*.ts"},
+		ConfigDirectory: "/repo",
+	}
+
+	if !configEntryMatchesFile(entry, "/repo/src/main.ts") {
+		t.Fatalf("expected ./src/**/*.ts to match /repo/src/main.ts")
+	}
+
+	if configEntryMatchesFile(entry, "/repo/scripts/main.ts") {
+		t.Fatalf("did not expect ./src/**/*.ts to match /repo/scripts/main.ts")
+	}
+}
+
+func TestGetRulesForFileRespectsEntryFiles(t *testing.T) {
+	cfg := RslintConfig{
+		{
+			Language:        "javascript",
+			Files:           []string{"src/**/*.ts"},
+			ConfigDirectory: "/repo",
+			Rules: Rules{
+				"no-debugger": "error",
+			},
+		},
+		{
+			Language:        "javascript",
+			Files:           []string{"scripts/**/*.ts"},
+			ConfigDirectory: "/repo",
+			Rules: Rules{
+				"no-debugger": "off",
+			},
+		},
+	}
+
+	srcRules := cfg.GetRulesForFile("/repo/src/main.ts")
+	if srcRules["no-debugger"] == nil || srcRules["no-debugger"].Level != "error" {
+		t.Fatalf("expected src rule level error, got %#v", srcRules["no-debugger"])
+	}
+
+	scriptRules := cfg.GetRulesForFile("/repo/scripts/build.ts")
+	if scriptRules["no-debugger"] == nil || scriptRules["no-debugger"].Level != "off" {
+		t.Fatalf("expected scripts rule level off, got %#v", scriptRules["no-debugger"])
 	}
 }
 

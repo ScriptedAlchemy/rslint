@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
-	"github.com/bmatcuk/doublestar/v4"
 	"github.com/microsoft/typescript-go/shim/tspath"
 	importPlugin "github.com/web-infra-dev/rslint/internal/plugins/import"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/adjacent_overload_signatures"
@@ -174,6 +172,7 @@ type ConfigEntry struct {
 	LanguageOptions *LanguageOptions `json:"languageOptions,omitempty"`
 	Rules           Rules            `json:"rules"`
 	Plugins         []string         `json:"plugins,omitempty"` // List of plugin names
+	ConfigDirectory string           `json:"-"`
 }
 
 // LanguageOptions contains language-specific configuration options
@@ -430,48 +429,39 @@ func (config RslintConfig) GetRulesForFile(filePath string) map[string]*RuleConf
 	enabledRules := make(map[string]*RuleConfig)
 
 	for _, entry := range config {
-		// First check if the file should be ignored
-		if isFileIgnored(filePath, entry.Ignores) {
-			continue // Skip this config entry for ignored files
+		if !configEntryMatchesFile(entry, filePath) {
+			continue
 		}
 
-		// Check if the file matches the files pattern
-		matches := true
-
-		if matches {
-
-			/// Merge rules from plugin
-			for _, plugin := range entry.Plugins {
-
-				for _, rule := range GetAllRulesForPlugin(plugin) {
-					enabledRules[rule.Name] = &RuleConfig{Level: "error"} // Default level for plugin rules
-				}
+		/// Merge rules from plugin
+		for _, plugin := range entry.Plugins {
+			for _, rule := range GetAllRulesForPlugin(plugin) {
+				enabledRules[rule.Name] = &RuleConfig{Level: "error"} // Default level for plugin rules
 			}
-			// Merge rules from this entry
-			for ruleName, ruleValue := range entry.Rules {
-
-				switch v := ruleValue.(type) {
-				case string:
-					// Handle simple string values like "error", "warn", "off"
-					enabledRules[ruleName] = &RuleConfig{Level: v}
-				case map[string]interface{}:
-					// Handle object configuration
-					ruleConfig := &RuleConfig{}
-					if level, ok := v["level"].(string); ok {
-						ruleConfig.Level = level
-					}
-					if options, ok := v["options"].(map[string]interface{}); ok {
-						ruleConfig.Options = options
-					}
-					if ruleConfig.IsEnabled() {
-						enabledRules[ruleName] = ruleConfig
-					}
-				case []interface{}:
-					// Handle array format like ["error", {...options}] or ["warn"] or ["off"]
-					ruleConfig := parseArrayRuleConfig(v)
-					if ruleConfig != nil && ruleConfig.IsEnabled() {
-						enabledRules[ruleName] = ruleConfig
-					}
+		}
+		// Merge rules from this entry
+		for ruleName, ruleValue := range entry.Rules {
+			switch v := ruleValue.(type) {
+			case string:
+				// Handle simple string values like "error", "warn", "off"
+				enabledRules[ruleName] = &RuleConfig{Level: v}
+			case map[string]interface{}:
+				// Handle object configuration
+				ruleConfig := &RuleConfig{}
+				if level, ok := v["level"].(string); ok {
+					ruleConfig.Level = level
+				}
+				if options, ok := v["options"].(map[string]interface{}); ok {
+					ruleConfig.Options = options
+				}
+				if ruleConfig.IsEnabled() {
+					enabledRules[ruleName] = ruleConfig
+				}
+			case []interface{}:
+				// Handle array format like ["error", {...options}] or ["warn"] or ["off"]
+				ruleConfig := parseArrayRuleConfig(v)
+				if ruleConfig != nil && ruleConfig.IsEnabled() {
+					enabledRules[ruleName] = ruleConfig
 				}
 			}
 		}
@@ -666,35 +656,22 @@ func getAllTypeScriptEslintPluginRules() []rule.Rule {
 
 // isFileIgnored checks if a file should be ignored based on ignore patterns
 func isFileIgnored(filePath string, ignorePatterns []string) bool {
-	// Get current working directory for relative path resolution
+	baseDir := ""
 	cwd, err := os.Getwd()
-	if err != nil {
-		// If we can't get cwd, fall back to simple matching
-		return isFileIgnoredSimple(filePath, ignorePatterns)
+	if err == nil {
+		baseDir = cwd
 	}
+	return isFileIgnoredWithBase(filePath, ignorePatterns, baseDir)
+}
 
-	// Normalize the file path relative to cwd
-	normalizedPath := normalizePath(filePath, cwd)
-
+func isFileIgnoredWithBase(filePath string, ignorePatterns []string, baseDir string) bool {
+	normalizedPath := filePath
+	if baseDir != "" {
+		normalizedPath = normalizePath(filePath, baseDir)
+	}
 	for _, pattern := range ignorePatterns {
-		// Try matching against normalized path
-		if matched, err := doublestar.Match(pattern, normalizedPath); err == nil && matched {
+		if patternMatchesFile(pattern, filePath, normalizedPath) {
 			return true
-		}
-
-		// Also try matching against original path for absolute patterns
-		if normalizedPath != filePath {
-			if matched, err := doublestar.Match(pattern, filePath); err == nil && matched {
-				return true
-			}
-		}
-
-		// Try Unix-style path for cross-platform compatibility
-		unixPath := strings.ReplaceAll(normalizedPath, "\\", "/")
-		if unixPath != normalizedPath {
-			if matched, err := doublestar.Match(pattern, unixPath); err == nil && matched {
-				return true
-			}
 		}
 	}
 	return false
@@ -706,16 +683,6 @@ func normalizePath(filePath, cwd string) string {
 		UseCaseSensitiveFileNames: true,
 		CurrentDirectory:          cwd,
 	}))
-}
-
-// isFileIgnoredSimple provides fallback matching when cwd is unavailable
-func isFileIgnoredSimple(filePath string, ignorePatterns []string) bool {
-	for _, pattern := range ignorePatterns {
-		if matched, err := doublestar.Match(pattern, filePath); err == nil && matched {
-			return true
-		}
-	}
-	return false
 }
 
 // initialize a default config in the directory

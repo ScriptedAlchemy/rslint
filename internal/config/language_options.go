@@ -159,7 +159,13 @@ func ResolveLanguageOptionsForFile(config RslintConfig, filePath string) *Langua
 }
 
 func configEntryMatchesFile(entry ConfigEntry, filePath string) bool {
-	if isFileIgnored(filePath, entry.Ignores) {
+	baseDir := entry.ConfigDirectory
+	if baseDir == "" {
+		if cwd, err := os.Getwd(); err == nil {
+			baseDir = cwd
+		}
+	}
+	if isFileIgnoredWithBase(filePath, entry.Ignores, baseDir) {
 		return false
 	}
 	if len(entry.Files) == 0 {
@@ -167,8 +173,8 @@ func configEntryMatchesFile(entry ConfigEntry, filePath string) bool {
 	}
 
 	normalizedPath := filePath
-	if cwd, err := os.Getwd(); err == nil {
-		normalizedPath = normalizePath(filePath, cwd)
+	if baseDir != "" {
+		normalizedPath = normalizePath(filePath, baseDir)
 	}
 
 	for _, filePattern := range entry.Files {
@@ -180,16 +186,27 @@ func configEntryMatchesFile(entry ConfigEntry, filePath string) bool {
 }
 
 func patternMatchesFile(pattern string, filePath string, normalizedPath string) bool {
-	candidates := []string{
-		normalizedPath,
-		strings.ReplaceAll(normalizedPath, "\\", "/"),
-		filePath,
-		strings.ReplaceAll(filePath, "\\", "/"),
-	}
-	for _, candidate := range candidates {
+	candidates := []string{}
+	appendCandidate := func(candidate string) {
 		if candidate == "" {
+			return
+		}
+		candidates = append(candidates, candidate)
+		if !strings.HasPrefix(candidate, "./") {
+			candidates = append(candidates, "./"+candidate)
+		}
+	}
+	appendCandidate(normalizedPath)
+	appendCandidate(strings.ReplaceAll(normalizedPath, "\\", "/"))
+	appendCandidate(filePath)
+	appendCandidate(strings.ReplaceAll(filePath, "\\", "/"))
+
+	seen := map[string]bool{}
+	for _, candidate := range candidates {
+		if seen[candidate] {
 			continue
 		}
+		seen[candidate] = true
 		if matched, err := doublestar.Match(pattern, candidate); err == nil && matched {
 			return true
 		}

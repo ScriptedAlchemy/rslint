@@ -9,6 +9,12 @@ import (
 	rslintconfig "github.com/web-infra-dev/rslint/internal/config"
 )
 
+type testFileExistsFS map[string]bool
+
+func (fs testFileExistsFS) FileExists(path string) bool {
+	return fs[path]
+}
+
 func TestBuildRuleGlobals(t *testing.T) {
 	tests := []struct {
 		name            string
@@ -252,5 +258,93 @@ func TestMergeParserOptionsProjectOverrideSemantics(t *testing.T) {
 	}
 	if len(mergedKept.Project) != 1 || mergedKept.Project[0] != "./tsconfig.base.json" {
 		t.Fatalf("expected missing project override to keep base project, got %#v", mergedKept.Project)
+	}
+}
+
+func TestPatternMatchesFileSupportsDotPrefixedPatterns(t *testing.T) {
+	if !patternMatchesFile("./src/**/*.ts", "/repo/src/main.ts", "src/main.ts") {
+		t.Fatalf("expected ./src/**/*.ts to match src/main.ts")
+	}
+	if patternMatchesFile("./src/**/*.ts", "/repo/scripts/main.ts", "scripts/main.ts") {
+		t.Fatalf("did not expect ./src/**/*.ts to match scripts/main.ts")
+	}
+}
+
+func TestCollectTsConfigsForRequestAppliesOverrideToAllEntries(t *testing.T) {
+	configEntries := rslintconfig.RslintConfig{
+		{
+			Files: []string{"src/**/*.ts"},
+			LanguageOptions: &rslintconfig.LanguageOptions{
+				ParserOptions: &rslintconfig.ParserOptions{
+					Project: rslintconfig.ProjectPaths{"./src.tsconfig.json"},
+				},
+			},
+		},
+		{
+			Files: []string{"scripts/**/*.ts"},
+			LanguageOptions: &rslintconfig.LanguageOptions{
+				ParserOptions: &rslintconfig.ParserOptions{
+					Project: rslintconfig.ProjectPaths{"./scripts.tsconfig.json"},
+				},
+			},
+		},
+	}
+
+	requestOptions := &ipc.LanguageOptions{
+		ParserOptions: &ipc.ParserOptions{
+			Project: ipc.ProjectPaths{"./override.tsconfig.json"},
+		},
+	}
+
+	tsconfigs, hasExplicitOverride := collectTsConfigsForRequest(
+		configEntries,
+		requestOptions,
+		"/repo",
+		testFileExistsFS{
+			"/repo/override.tsconfig.json": true,
+			"/repo/src.tsconfig.json":      true,
+			"/repo/scripts.tsconfig.json":  true,
+		},
+		[]string{"/repo/src/main.ts", "/repo/scripts/build.ts"},
+	)
+	if !hasExplicitOverride {
+		t.Fatalf("expected explicit project override to be detected")
+	}
+	if len(tsconfigs) != 1 || tsconfigs[0] != "/repo/override.tsconfig.json" {
+		t.Fatalf("expected only override tsconfig path, got %#v", tsconfigs)
+	}
+}
+
+func TestCollectTsConfigsForRequestSupportsExplicitEmptyProject(t *testing.T) {
+	configEntries := rslintconfig.RslintConfig{
+		{
+			LanguageOptions: &rslintconfig.LanguageOptions{
+				ParserOptions: &rslintconfig.ParserOptions{
+					Project: rslintconfig.ProjectPaths{"./tsconfig.json"},
+				},
+			},
+		},
+	}
+
+	requestOptions := &ipc.LanguageOptions{
+		ParserOptions: &ipc.ParserOptions{
+			Project: ipc.ProjectPaths{},
+		},
+	}
+
+	tsconfigs, hasExplicitOverride := collectTsConfigsForRequest(
+		configEntries,
+		requestOptions,
+		"/repo",
+		testFileExistsFS{
+			"/repo/tsconfig.json": true,
+		},
+		nil,
+	)
+	if !hasExplicitOverride {
+		t.Fatalf("expected explicit project override to be detected")
+	}
+	if len(tsconfigs) != 0 {
+		t.Fatalf("expected explicit empty project override to clear tsconfigs, got %#v", tsconfigs)
 	}
 }
