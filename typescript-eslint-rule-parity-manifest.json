@@ -9,8 +9,8 @@
     },
     {
       "path": "typescript-eslint-rule-parity-guide.md",
-      "sha256": "2e039a954934792f5917c38b11e5f58466daaf0c71d24f20b07f8748e50b1f97",
-      "bytes": 7512
+      "sha256": "98bebb70cb75c006be0843d21c24538dbbbf7687b6ff67f805c7a18f4e8b6cf2",
+      "bytes": 7568
     },
     {
       "path": "typescript-eslint-rule-parity-index.md",
@@ -34,8 +34,8 @@
     },
     {
       "path": "typescript-eslint-rule-parity-commands.md",
-      "sha256": "336cda06a0e45899f2471b9f50114f2dc379400aaa39e207cc5c5bb8f0cff3b1",
-      "bytes": 3087
+      "sha256": "fbfcee6506ca8e7aacec0a0bb901f81cd802eb7e06809c30344d763db06ef836",
+      "bytes": 3089
     },
     {
       "path": "typescript-eslint-rule-parity-badges.json",

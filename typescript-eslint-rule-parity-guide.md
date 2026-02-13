@@ -97,7 +97,8 @@ This rebuilds artifacts using `upstream_commit` from
 `typescript-eslint-rule-parity-metadata.json` and is useful for
 reproducibility checks.
 
-`parity:ts-eslint:verify-clean` additionally asserts there is no parity-artifact diff after rebuild.
+`parity:ts-eslint:verify-clean` additionally asserts parity artifact status is clean after rebuild
+(including modified and untracked parity artifact files).
 
 By default it expects parity artifacts to be clean before running. To bypass precheck:
 

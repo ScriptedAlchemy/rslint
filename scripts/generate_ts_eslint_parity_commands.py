@@ -41,7 +41,7 @@ def main() -> None:
 		"parity:ts-eslint:top": "Generate top-priority ranked parity list.",
 		"parity:ts-eslint:manifest": "Generate checksum manifest for parity artifacts.",
 		"parity:ts-eslint:rebuild-metadata": "Rebuild artifacts pinned to metadata upstream commit.",
-		"parity:ts-eslint:verify-clean": "Rebuild from metadata and assert parity artifact diff is clean.",
+		"parity:ts-eslint:verify-clean": "Rebuild from metadata and assert parity artifact status is clean.",
 	}
 
 	lines: list[str] = []

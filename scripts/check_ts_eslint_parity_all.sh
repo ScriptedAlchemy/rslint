@@ -1,16 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+parity_artifacts_dirty() {
+  [[ -n "$(git -C /workspace status --porcelain -- \
+    "typescript-eslint-rule-parity-*.md" \
+    "typescript-eslint-rule-parity-*.json" \
+    "typescript-eslint-rule-parity-*.csv")" ]]
+}
+
 echo "[parity-check-all] Running artifact consistency check"
 python3 /workspace/scripts/check_ts_eslint_parity_artifacts.py
 
 echo "[parity-check-all] Running tooling/docs synchronization check"
 python3 /workspace/scripts/check_ts_eslint_parity_tooling_sync.py
 
-if git -C /workspace diff --quiet -- \
-  "typescript-eslint-rule-parity-*.md" \
-  "typescript-eslint-rule-parity-*.json" \
-  "typescript-eslint-rule-parity-*.csv"; then
+if ! parity_artifacts_dirty; then
   echo "[parity-check-all] Running reproducibility verification"
   bash /workspace/scripts/verify_ts_eslint_parity_clean.sh
 else

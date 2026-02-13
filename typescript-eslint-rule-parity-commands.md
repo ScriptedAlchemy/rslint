@@ -22,5 +22,5 @@ Generated from `package.json` parity scripts.
 | `pnpm parity:ts-eslint:tasklist` | Generate one phase tasklist snippet. | `python3 scripts/generate_ts_eslint_parity_issue_tasklist.py` |
 | `pnpm parity:ts-eslint:tasklist:all` | Generate tasklist snippets for all parity phases. | `bash scripts/generate_ts_eslint_parity_tasklists_all.sh` |
 | `pnpm parity:ts-eslint:top` | Generate top-priority ranked parity list. | `python3 scripts/generate_ts_eslint_parity_top.py` |
-| `pnpm parity:ts-eslint:verify-clean` | Rebuild from metadata and assert parity artifact diff is clean. | `bash scripts/verify_ts_eslint_parity_clean.sh` |
+| `pnpm parity:ts-eslint:verify-clean` | Rebuild from metadata and assert parity artifact status is clean. | `bash scripts/verify_ts_eslint_parity_clean.sh` |
 
