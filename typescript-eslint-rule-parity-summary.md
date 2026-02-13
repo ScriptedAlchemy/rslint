@@ -1,6 +1,5 @@
 # TypeScript-ESLint Rule Parity Summary Dashboard
-
-Generated from `typescript-eslint-rule-parity-tracker.json`.
+Snapshot retained as part of the cleaned markdown-only parity deliverables.
 
 ## Headline metrics
 - Total tracked rules: **135**
