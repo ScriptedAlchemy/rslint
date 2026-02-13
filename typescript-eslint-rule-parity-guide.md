@@ -39,6 +39,12 @@ To pin a specific upstream ref (branch/tag/SHA) for comparison:
 TS_ESLINT_REF=main pnpm parity:ts-eslint
 ```
 
+To run without network fetch (uses refs already available in `/tmp/typescript-eslint`):
+
+```bash
+PARITY_OFFLINE=1 TS_ESLINT_REF=main pnpm parity:ts-eslint
+```
+
 ### Run consistency checks only
 
 ```bash

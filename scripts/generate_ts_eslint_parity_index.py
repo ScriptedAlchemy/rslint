@@ -68,6 +68,7 @@ def main() -> None:
 	lines.append("## Commands")
 	lines.append("```bash")
 	lines.append("pnpm parity:ts-eslint")
+	lines.append("PARITY_OFFLINE=1 TS_ESLINT_REF=main pnpm parity:ts-eslint")
 	lines.append("pnpm parity:ts-eslint:check")
 	lines.append("pnpm parity:ts-eslint:diff -- --base-ref HEAD~1")
 	lines.append("pnpm parity:ts-eslint:tasklist --phase A_critical")

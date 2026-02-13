@@ -52,6 +52,9 @@ pnpm parity:ts-eslint:rebuild-metadata
 # Optional: pin upstream ref (branch/tag/SHA) for reproducible comparisons
 TS_ESLINT_REF=main pnpm parity:ts-eslint
 
+# Optional: offline mode (skip fetch; ref must exist locally)
+PARITY_OFFLINE=1 TS_ESLINT_REF=main pnpm parity:ts-eslint
+
 # or run steps directly:
 python3 scripts/generate_ts_eslint_parity_tracker.py
 python3 scripts/generate_ts_eslint_parity_worklist.py
