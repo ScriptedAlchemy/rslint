@@ -900,6 +900,12 @@ var NoShadowRule = rule.CreateRule(rule.Rule{
 				continue
 			}
 			if opts.BuiltinGlobals && isBuiltinGlobalName(decl.Name, ctx.Globals) {
+				if opts.IgnoreTypeValueShadow && decl.IsType && !decl.IsValue {
+					continue
+				}
+				if opts.IgnoreFunctionTypeParameterNameValueShadow && decl.IsFunctionTypeParameter {
+					continue
+				}
 				ctx.ReportNode(decl.Identifier, buildNoShadowGlobalMessage(decl.Name))
 			}
 		}

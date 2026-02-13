@@ -1,6 +1,7 @@
 use std::env;
 use std::ffi::OsStr;
 use std::path::PathBuf;
+use std::sync::OnceLock;
 use tsgo_client::Api;
 use tsgo_client::client::{Client, Options};
 use tsgo_client::symbolflags::SymbolFlags;
@@ -10,11 +11,22 @@ use serde::Serialize;
 /// Get the path to the tsgo executable for testing.
 /// Tries to build tsgo from cmd/tsgo or finds an existing binary.
 fn get_tsgo_path() -> Option<PathBuf> {
+    static TSGO_PATH: OnceLock<Result<PathBuf, String>> = OnceLock::new();
+    match TSGO_PATH.get_or_init(build_tsgo_path) {
+        Ok(path) => Some(path.clone()),
+        Err(err) => {
+            eprintln!("Failed to resolve tsgo path: {err}");
+            None
+        }
+    }
+}
+
+fn build_tsgo_path() -> Result<PathBuf, String> {
     let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let repo_root = manifest_dir
         .parent()
         .and_then(|p| p.parent())
-        .expect("Could not find repo root");
+        .ok_or_else(|| "Could not find repo root".to_string())?;
 
     // Try to build tsgo from cmd/tsgo (this is the correct version for tsgo-client)
     let tsgo_output = repo_root.join("target/tsgo");
@@ -27,12 +39,15 @@ fn get_tsgo_path() -> Option<PathBuf> {
             .arg(&tsgo_output)
             .arg("./cmd/tsgo")
             .current_dir(repo_root)
-            .status();
+            .status()
+            .map_err(|err| format!("Failed to invoke go build: {err}"))?;
 
-        if status.is_ok() && tsgo_output.exists() {
+        if status.success() && tsgo_output.exists() {
             eprintln!("✓ Built tsgo successfully");
-            return Some(tsgo_output);
+            return Ok(tsgo_output);
         }
+
+        return Err(format!("go build for tsgo failed with status: {status}"));
     }
 
     // Fall back to searching for existing binaries
@@ -41,11 +56,11 @@ fn get_tsgo_path() -> Option<PathBuf> {
     for path in &possible_paths {
         let full_path = repo_root.join(path);
         if full_path.exists() {
-            return Some(full_path);
+            return Ok(full_path);
         }
     }
 
-    None
+    Err("Could not find tsgo executable".to_string())
 }
 
 /// Get the path to the test fixtures directory

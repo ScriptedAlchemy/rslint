@@ -4,6 +4,7 @@ import path from 'node:path';
 import { test, describe, expect } from '@rstest/core';
 import { applyFixes, lint, LintResponse, type Diagnostic } from '@rslint/core';
 import assert from 'node:assert';
+import type { LanguageOptions as RslintLanguageOptions } from '@rslint/core';
 
 interface TsDiagnostic {
   line?: number;
@@ -174,6 +175,30 @@ function mergeLanguageOptions(
   };
 }
 
+function toRslintLanguageOptions(
+  languageOptions?: RuleTesterOptions['languageOptions'],
+): RslintLanguageOptions | undefined {
+  if (!languageOptions) {
+    return undefined;
+  }
+
+  const parserOptions = languageOptions.parserOptions
+    ? {
+        ...languageOptions.parserOptions,
+        // rslint parserOptions expects string here; null means "unset" in upstream tests.
+        jsxPragma:
+          languageOptions.parserOptions.jsxPragma === null
+            ? undefined
+            : languageOptions.parserOptions.jsxPragma,
+      }
+    : undefined;
+
+  return {
+    globals: languageOptions.globals,
+    parserOptions,
+  };
+}
+
 function getTypescriptEslintFixturesRootDir(): string {
   return path.resolve(
     '../../packages/rslint-test-tools/tests/typescript-eslint/fixtures',
@@ -285,7 +310,7 @@ export class RuleTester {
             ruleOptions: {
               [ruleName]: options,
             },
-            languageOptions,
+            languageOptions: toRslintLanguageOptions(languageOptions),
           });
 
           assert(
@@ -335,7 +360,7 @@ export class RuleTester {
             ruleOptions: {
               [ruleName]: options,
             },
-            languageOptions,
+            languageOptions: toRslintLanguageOptions(languageOptions),
           });
 
           assert(
