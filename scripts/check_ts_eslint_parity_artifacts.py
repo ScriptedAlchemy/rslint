@@ -1371,6 +1371,29 @@ def main() -> None:
 	)
 	if extract_nonempty_lines(gate_help_then_duplicate_threshold.stderr) != gate_help_lines:
 		fail("parity gate help-then-duplicate-threshold stderr mismatch with help baseline")
+	gate_help_then_duplicate_threshold_spaced = subprocess.run(
+		[
+			"bash",
+			str(root / "scripts/run_ts_eslint_parity_gate.sh"),
+			"--help",
+			"--threshold",
+			"blue",
+		],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if gate_help_then_duplicate_threshold_spaced.returncode != 0:
+		fail("parity gate help-then-duplicate-threshold-spaced exit code must be 0")
+	if gate_help_then_duplicate_threshold_spaced.stdout.strip():
+		fail("parity gate help-then-duplicate-threshold-spaced stdout must be empty")
+	assert_exact_nonempty_lines(
+		"parity gate help-then-duplicate-threshold-spaced stderr",
+		gate_help_then_duplicate_threshold_spaced.stderr,
+		[expected_gate_usage_line],
+	)
+	if extract_nonempty_lines(gate_help_then_duplicate_threshold_spaced.stderr) != gate_help_lines:
+		fail("parity gate help-then-duplicate-threshold-spaced stderr mismatch with help baseline")
 	gate_short_help_then_duplicate_threshold = subprocess.run(
 		[
 			"bash",
@@ -1393,6 +1416,29 @@ def main() -> None:
 	)
 	if extract_nonempty_lines(gate_short_help_then_duplicate_threshold.stderr) != gate_help_lines:
 		fail("parity gate short-help-then-duplicate-threshold stderr mismatch with help baseline")
+	gate_short_help_then_duplicate_threshold_spaced = subprocess.run(
+		[
+			"bash",
+			str(root / "scripts/run_ts_eslint_parity_gate.sh"),
+			"-h",
+			"--threshold",
+			"blue",
+		],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if gate_short_help_then_duplicate_threshold_spaced.returncode != 0:
+		fail("parity gate short-help-then-duplicate-threshold-spaced exit code must be 0")
+	if gate_short_help_then_duplicate_threshold_spaced.stdout.strip():
+		fail("parity gate short-help-then-duplicate-threshold-spaced stdout must be empty")
+	assert_exact_nonempty_lines(
+		"parity gate short-help-then-duplicate-threshold-spaced stderr",
+		gate_short_help_then_duplicate_threshold_spaced.stderr,
+		[expected_gate_usage_line],
+	)
+	if extract_nonempty_lines(gate_short_help_then_duplicate_threshold_spaced.stderr) != gate_help_lines:
+		fail("parity gate short-help-then-duplicate-threshold-spaced stderr mismatch with help baseline")
 	gate_help_then_duplicate_skip_checks = subprocess.run(
 		[
 			"bash",
@@ -1512,6 +1558,32 @@ def main() -> None:
 	)
 	if extract_nonempty_lines(gate_duplicate_threshold_then_help.stderr) != gate_duplicate_threshold_lines:
 		fail("parity gate duplicate-threshold-then-help stderr mismatch with duplicate-threshold baseline")
+	gate_duplicate_threshold_then_help_spaced = subprocess.run(
+		[
+			"bash",
+			str(root / "scripts/run_ts_eslint_parity_gate.sh"),
+			"--threshold",
+			"red",
+			"--threshold",
+			"blue",
+			"--help",
+		],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if gate_duplicate_threshold_then_help_spaced.returncode != 1:
+		fail("parity gate duplicate-threshold-then-help-spaced exit code must be 1")
+	if gate_duplicate_threshold_then_help_spaced.stdout.strip():
+		fail("parity gate duplicate-threshold-then-help-spaced stdout must be empty")
+	assert_exact_error_plus_usage(
+		"parity gate duplicate-threshold-then-help-spaced stderr",
+		gate_duplicate_threshold_then_help_spaced.stderr,
+		expected_gate_duplicate_threshold_line,
+		expected_gate_usage_line,
+	)
+	if extract_nonempty_lines(gate_duplicate_threshold_then_help_spaced.stderr) != gate_duplicate_threshold_lines:
+		fail("parity gate duplicate-threshold-then-help-spaced stderr mismatch with duplicate-threshold baseline")
 	gate_duplicate_threshold_then_short_help = subprocess.run(
 		[
 			"bash",
@@ -1536,6 +1608,32 @@ def main() -> None:
 	)
 	if extract_nonempty_lines(gate_duplicate_threshold_then_short_help.stderr) != gate_duplicate_threshold_lines:
 		fail("parity gate duplicate-threshold-then-short-help stderr mismatch with duplicate-threshold baseline")
+	gate_duplicate_threshold_then_short_help_spaced = subprocess.run(
+		[
+			"bash",
+			str(root / "scripts/run_ts_eslint_parity_gate.sh"),
+			"--threshold",
+			"red",
+			"--threshold",
+			"blue",
+			"-h",
+		],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if gate_duplicate_threshold_then_short_help_spaced.returncode != 1:
+		fail("parity gate duplicate-threshold-then-short-help-spaced exit code must be 1")
+	if gate_duplicate_threshold_then_short_help_spaced.stdout.strip():
+		fail("parity gate duplicate-threshold-then-short-help-spaced stdout must be empty")
+	assert_exact_error_plus_usage(
+		"parity gate duplicate-threshold-then-short-help-spaced stderr",
+		gate_duplicate_threshold_then_short_help_spaced.stderr,
+		expected_gate_duplicate_threshold_line,
+		expected_gate_usage_line,
+	)
+	if extract_nonempty_lines(gate_duplicate_threshold_then_short_help_spaced.stderr) != gate_duplicate_threshold_lines:
+		fail("parity gate duplicate-threshold-then-short-help-spaced stderr mismatch with duplicate-threshold baseline")
 	gate_duplicate_skip_checks_then_help = subprocess.run(
 		[
 			"bash",
@@ -2123,6 +2221,36 @@ def main() -> None:
 			"help",
 		),
 		(
+			"parity gate command help-then-duplicate-threshold spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate", "--help", "--threshold", "blue"],
+			"help",
+		),
+		(
+			"parity gate command red help-then-duplicate-threshold spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:red", "--help", "--threshold", "blue"],
+			"help",
+		),
+		(
+			"parity gate command yellow help-then-duplicate-threshold spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:yellow", "--help", "--threshold", "blue"],
+			"help",
+		),
+		(
+			"parity gate quick command help-then-duplicate-threshold spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick", "--help", "--threshold", "blue"],
+			"help",
+		),
+		(
+			"parity gate quick command red help-then-duplicate-threshold spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:red", "--help", "--threshold", "blue"],
+			"help",
+		),
+		(
+			"parity gate quick command yellow help-then-duplicate-threshold spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow", "--help", "--threshold", "blue"],
+			"help",
+		),
+		(
 			"parity gate command short-help-then-duplicate-threshold",
 			["pnpm", "--silent", "parity:ts-eslint:gate", "-h", "--threshold=blue"],
 			"help",
@@ -2150,6 +2278,36 @@ def main() -> None:
 		(
 			"parity gate quick command yellow short-help-then-duplicate-threshold",
 			["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow", "-h", "--threshold=blue"],
+			"help",
+		),
+		(
+			"parity gate command short-help-then-duplicate-threshold spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate", "-h", "--threshold", "blue"],
+			"help",
+		),
+		(
+			"parity gate command red short-help-then-duplicate-threshold spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:red", "-h", "--threshold", "blue"],
+			"help",
+		),
+		(
+			"parity gate command yellow short-help-then-duplicate-threshold spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:yellow", "-h", "--threshold", "blue"],
+			"help",
+		),
+		(
+			"parity gate quick command short-help-then-duplicate-threshold spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick", "-h", "--threshold", "blue"],
+			"help",
+		),
+		(
+			"parity gate quick command red short-help-then-duplicate-threshold spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:red", "-h", "--threshold", "blue"],
+			"help",
+		),
+		(
+			"parity gate quick command yellow short-help-then-duplicate-threshold spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow", "-h", "--threshold", "blue"],
 			"help",
 		),
 		(
@@ -2680,6 +2838,42 @@ def main() -> None:
 			gate_wrapper_duplicate_threshold_baseline,
 		),
 		(
+			"parity gate command duplicate-threshold then help spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate", "--threshold", "blue", "--help"],
+			expected_gate_duplicate_threshold_line,
+			gate_wrapper_duplicate_threshold_baseline,
+		),
+		(
+			"parity gate command red duplicate-threshold then help spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:red", "--threshold", "blue", "--help"],
+			expected_gate_duplicate_threshold_line,
+			gate_wrapper_duplicate_threshold_baseline,
+		),
+		(
+			"parity gate command yellow duplicate-threshold then help spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:yellow", "--threshold", "blue", "--help"],
+			expected_gate_duplicate_threshold_line,
+			gate_wrapper_duplicate_threshold_baseline,
+		),
+		(
+			"parity gate quick command duplicate-threshold then help spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick", "--threshold", "blue", "--help"],
+			expected_gate_duplicate_threshold_line,
+			gate_wrapper_duplicate_threshold_baseline,
+		),
+		(
+			"parity gate quick command red duplicate-threshold then help spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:red", "--threshold", "blue", "--help"],
+			expected_gate_duplicate_threshold_line,
+			gate_wrapper_duplicate_threshold_baseline,
+		),
+		(
+			"parity gate quick command yellow duplicate-threshold then help spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow", "--threshold", "blue", "--help"],
+			expected_gate_duplicate_threshold_line,
+			gate_wrapper_duplicate_threshold_baseline,
+		),
+		(
 			"parity gate command duplicate-threshold then short-help",
 			["pnpm", "--silent", "parity:ts-eslint:gate", "--threshold=blue", "-h"],
 			expected_gate_duplicate_threshold_line,
@@ -2712,6 +2906,42 @@ def main() -> None:
 		(
 			"parity gate quick command yellow duplicate-threshold then short-help",
 			["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow", "--threshold=blue", "-h"],
+			expected_gate_duplicate_threshold_line,
+			gate_wrapper_duplicate_threshold_baseline,
+		),
+		(
+			"parity gate command duplicate-threshold then short-help spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate", "--threshold", "blue", "-h"],
+			expected_gate_duplicate_threshold_line,
+			gate_wrapper_duplicate_threshold_baseline,
+		),
+		(
+			"parity gate command red duplicate-threshold then short-help spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:red", "--threshold", "blue", "-h"],
+			expected_gate_duplicate_threshold_line,
+			gate_wrapper_duplicate_threshold_baseline,
+		),
+		(
+			"parity gate command yellow duplicate-threshold then short-help spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:yellow", "--threshold", "blue", "-h"],
+			expected_gate_duplicate_threshold_line,
+			gate_wrapper_duplicate_threshold_baseline,
+		),
+		(
+			"parity gate quick command duplicate-threshold then short-help spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick", "--threshold", "blue", "-h"],
+			expected_gate_duplicate_threshold_line,
+			gate_wrapper_duplicate_threshold_baseline,
+		),
+		(
+			"parity gate quick command red duplicate-threshold then short-help spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:red", "--threshold", "blue", "-h"],
+			expected_gate_duplicate_threshold_line,
+			gate_wrapper_duplicate_threshold_baseline,
+		),
+		(
+			"parity gate quick command yellow duplicate-threshold then short-help spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow", "--threshold", "blue", "-h"],
 			expected_gate_duplicate_threshold_line,
 			gate_wrapper_duplicate_threshold_baseline,
 		),
