@@ -66,6 +66,9 @@ pnpm parity:ts-eslint:check:strict
 # Strict gate + clean-tree enforcement for reproducibility verification
 pnpm parity:ts-eslint:check:strict:clean
 
+# Unified gate shorthand (equivalent to gate:red)
+pnpm parity:ts-eslint:gate
+
 # Unified gates (strict clean checks + thresholded health/doctor gates)
 pnpm parity:ts-eslint:gate:red
 pnpm parity:ts-eslint:gate:yellow

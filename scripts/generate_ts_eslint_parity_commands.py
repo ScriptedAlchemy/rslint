@@ -29,6 +29,7 @@ def main() -> None:
 		"parity:ts-eslint:check:clean": "Run check:all and require a clean parity-artifact tree for verify-clean.",
 		"parity:ts-eslint:check:strict": "Run full parity checks and fail if critical backlog exists.",
 		"parity:ts-eslint:check:strict:clean": "Run strict gate and require clean parity artifacts for verify-clean.",
+		"parity:ts-eslint:gate": "Run unified parity gate with default red threshold.",
 		"parity:ts-eslint:gate:red": "Run strict clean checks plus red-threshold health gates.",
 		"parity:ts-eslint:gate:yellow": "Run strict clean checks plus yellow-threshold health gates.",
 		"parity:ts-eslint:check:tooling": "Validate parity commands/docs/script synchronization.",
