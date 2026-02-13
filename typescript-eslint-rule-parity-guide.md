@@ -12,6 +12,7 @@ After running the refresh command, the following artifacts are generated at repo
 - `typescript-eslint-rule-parity-tracker.json` — JSON form of tracker data.
 - `typescript-eslint-rule-parity-worklist.md` — execution checklist grouped by phase.
 - `typescript-eslint-rule-parity-top.md` — ranked top priorities for immediate execution.
+- `typescript-eslint-rule-parity-commands.md` — generated command reference.
 - `typescript-eslint-rule-parity-summary.md` — dashboard with headline metrics and top priorities.
 - `typescript-eslint-rule-parity-metadata.json` — run metadata (timestamp, upstream SHA, requested ref, counters).
 - `typescript-eslint-rule-parity-manifest.json` — deterministic checksums for core parity artifacts.
@@ -52,6 +53,7 @@ PARITY_OFFLINE=1 TS_ESLINT_REF=main pnpm parity:ts-eslint
 ```bash
 pnpm parity:ts-eslint:check
 pnpm parity:ts-eslint:check:tooling
+pnpm parity:ts-eslint:commands
 ```
 
 The checkers validate:
@@ -124,6 +126,7 @@ Note: `pnpm parity:ts-eslint` generates all four phase issue-body files automati
 python3 scripts/generate_ts_eslint_parity_tracker.py
 python3 scripts/generate_ts_eslint_parity_worklist.py
 python3 scripts/generate_ts_eslint_parity_top.py
+python3 scripts/generate_ts_eslint_parity_commands.py
 python3 scripts/generate_ts_eslint_parity_summary.py
 python3 scripts/generate_ts_eslint_parity_metadata.py
 python3 scripts/generate_ts_eslint_parity_manifest.py

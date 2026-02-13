@@ -26,6 +26,7 @@ def main() -> None:
 	guide_md = root / "typescript-eslint-rule-parity-guide.md"
 	report_md = root / "typescript-eslint-rule-parity-report.md"
 	index_md = root / "typescript-eslint-rule-parity-index.md"
+	commands_md = root / "typescript-eslint-rule-parity-commands.md"
 
 	pkg = json.loads(package_json.read_text())
 	scripts = pkg.get("scripts", {})
@@ -34,6 +35,7 @@ def main() -> None:
 		"parity:ts-eslint": "refresh-ts-eslint-parity-artifacts.sh",
 		"parity:ts-eslint:check": "check_ts_eslint_parity_artifacts.py",
 		"parity:ts-eslint:check:tooling": "check_ts_eslint_parity_tooling_sync.py",
+		"parity:ts-eslint:commands": "generate_ts_eslint_parity_commands.py",
 		"parity:ts-eslint:diff": "compare_ts_eslint_parity_trackers.py",
 		"parity:ts-eslint:tasklist": "generate_ts_eslint_parity_issue_tasklist.py",
 		"parity:ts-eslint:tasklist:all": "generate_ts_eslint_parity_tasklists_all.sh",
@@ -63,11 +65,22 @@ def main() -> None:
 			if token not in text:
 				fail(f"`{token}` missing in parity {doc_name} documentation")
 
+	commands_text = commands_md.read_text() if commands_md.exists() else ""
+	if not commands_text:
+		fail("missing or empty parity commands reference markdown")
+	for script_name, expected_token in expected_scripts.items():
+		cmd_token = f"pnpm {script_name}"
+		if cmd_token not in commands_text:
+			fail(f"`{cmd_token}` missing in parity commands reference")
+		if expected_token not in commands_text:
+			fail(f"backing token `{expected_token}` missing in parity commands reference")
+
 	# Ensure all referenced helper scripts exist
 	required_scripts = {
 		"scripts/refresh-ts-eslint-parity-artifacts.sh",
 		"scripts/check_ts_eslint_parity_artifacts.py",
 		"scripts/check_ts_eslint_parity_tooling_sync.py",
+		"scripts/generate_ts_eslint_parity_commands.py",
 		"scripts/compare_ts_eslint_parity_trackers.py",
 		"scripts/generate_ts_eslint_parity_issue_tasklist.py",
 		"scripts/generate_ts_eslint_parity_tasklists_all.sh",

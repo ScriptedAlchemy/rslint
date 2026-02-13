@@ -37,6 +37,7 @@ python3 scripts/generate_ts_eslint_parity_tracker.py
 python3 scripts/generate_ts_eslint_parity_worklist.py
 python3 scripts/generate_ts_eslint_parity_summary.py
 python3 scripts/generate_ts_eslint_parity_metadata.py
+python3 scripts/generate_ts_eslint_parity_commands.py
 python3 scripts/generate_ts_eslint_parity_index.py
 python3 scripts/generate_ts_eslint_parity_issue_plan.py
 bash scripts/generate_ts_eslint_parity_tasklists_all.sh
@@ -55,6 +56,7 @@ echo "  - typescript-eslint-rule-parity-tracker.json"
 echo "  - typescript-eslint-rule-parity-worklist.md"
 echo "  - typescript-eslint-rule-parity-summary.md"
 echo "  - typescript-eslint-rule-parity-metadata.json"
+echo "  - typescript-eslint-rule-parity-commands.md"
 echo "  - typescript-eslint-rule-parity-index.md"
 echo "  - typescript-eslint-rule-parity-issue-plan.md"
 echo "  - typescript-eslint-rule-parity-tasklist-A_critical.md"

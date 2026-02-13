@@ -1,6 +1,6 @@
 # TypeScript-ESLint Parity Artifact Index
 
-_Generated: 2026-02-13T11:13:59.215405+00:00_
+_Generated: 2026-02-13T11:18:29.180614+00:00_
 
 ## Snapshot
 - Upstream ref requested: `main`
@@ -25,6 +25,7 @@ _Generated: 2026-02-13T11:13:59.215405+00:00_
 - `typescript-eslint-rule-parity-tracker.json` — JSON machine-readable dataset.
 - `typescript-eslint-rule-parity-worklist.md` — phase-based execution checklist.
 - `typescript-eslint-rule-parity-top.md` — ranked top-25 immediate priorities.
+- `typescript-eslint-rule-parity-commands.md` — generated parity command reference.
 - `typescript-eslint-rule-parity-summary.md` — concise dashboard.
 - `typescript-eslint-rule-parity-metadata.json` — run metadata and counters.
 - `typescript-eslint-rule-parity-manifest.json` — deterministic checksums for parity artifacts.
@@ -48,6 +49,7 @@ pnpm parity:ts-eslint
 PARITY_OFFLINE=1 TS_ESLINT_REF=main pnpm parity:ts-eslint
 pnpm parity:ts-eslint:check
 pnpm parity:ts-eslint:check:tooling
+pnpm parity:ts-eslint:commands
 pnpm parity:ts-eslint:diff -- --base-ref HEAD~1
 pnpm parity:ts-eslint:tasklist --phase A_critical
 pnpm parity:ts-eslint:tasklist:all

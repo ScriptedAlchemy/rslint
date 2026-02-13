@@ -180,6 +180,7 @@ def main() -> None:
 	tracker_json = root / "typescript-eslint-rule-parity-tracker.json"
 	worklist_md = root / "typescript-eslint-rule-parity-worklist.md"
 	top_md = root / "typescript-eslint-rule-parity-top.md"
+	commands_md = root / "typescript-eslint-rule-parity-commands.md"
 	summary_md = root / "typescript-eslint-rule-parity-summary.md"
 	metadata_json = root / "typescript-eslint-rule-parity-metadata.json"
 	index_md = root / "typescript-eslint-rule-parity-index.md"
@@ -199,6 +200,7 @@ def main() -> None:
 		tracker_json,
 		worklist_md,
 		top_md,
+		commands_md,
 		summary_md,
 		metadata_json,
 		index_md,
@@ -362,6 +364,7 @@ def main() -> None:
 		"typescript-eslint-rule-parity-tracker.json",
 		"typescript-eslint-rule-parity-worklist.md",
 		"typescript-eslint-rule-parity-top.md",
+		"typescript-eslint-rule-parity-commands.md",
 		"typescript-eslint-rule-parity-summary.md",
 		"typescript-eslint-rule-parity-metadata.json",
 		"typescript-eslint-rule-parity-index.md",
@@ -401,6 +404,7 @@ def main() -> None:
 		"typescript-eslint-rule-parity-summary.md",
 		"typescript-eslint-rule-parity-worklist.md",
 		"typescript-eslint-rule-parity-top.md",
+		"typescript-eslint-rule-parity-commands.md",
 		"typescript-eslint-rule-parity-issue-plan.md",
 		"typescript-eslint-rule-parity-tracker.csv",
 		"typescript-eslint-rule-parity-tracker.json",
