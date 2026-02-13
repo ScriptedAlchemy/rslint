@@ -74,6 +74,7 @@ The checkers validate:
 - parity doctor strict-mode exit behavior (`--fail-on-critical`),
 - parity command/docs/script synchronization,
 - exact parity command inventory in `package.json` vs checker expectations,
+- command reference row/backing-script mapping parity with `package.json`,
 - CI workflow wiring (required parity checks and uploaded artifact bundle paths),
 - status/badge schema, health reason, and summary arithmetic coherence.
 

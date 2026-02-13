@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import pathlib
+import re
 import sys
 
 
@@ -105,6 +106,23 @@ def main() -> None:
 	commands_text = commands_md.read_text() if commands_md.exists() else ""
 	if not commands_text:
 		fail("missing or empty parity commands reference markdown")
+
+	command_rows = {}
+	for line in commands_text.splitlines():
+		match = re.match(r"^\| `pnpm ([^`]+)` \| (.*) \| `([^`]*)` \|$", line)
+		if not match:
+			continue
+		command_rows[match.group(1)] = {
+			"description": match.group(2),
+			"backing_script": match.group(3),
+		}
+
+	if sorted(command_rows.keys()) != expected_parity_scripts:
+		fail(
+			"parity commands reference inventory mismatch: "
+			f"expected={expected_parity_scripts} actual={sorted(command_rows.keys())}"
+		)
+
 	for script_name, expected_token in expected_scripts.items():
 		cmd_token = f"pnpm {script_name}"
 		if cmd_token not in commands_text:
@@ -113,6 +131,14 @@ def main() -> None:
 			fail(f"backing token `{expected_token}` missing in parity commands reference")
 		if f"| `pnpm {script_name}` | No description provided." in commands_text:
 			fail(f"`pnpm {script_name}` is missing command description in parity commands reference")
+		row = command_rows.get(script_name)
+		if not row:
+			fail(f"`pnpm {script_name}` missing command row in parity commands reference")
+		if row["backing_script"] != scripts.get(script_name, ""):
+			fail(
+				f"`pnpm {script_name}` backing script mismatch in parity commands reference: "
+				f"expected=`{scripts.get(script_name, '')}` actual=`{row['backing_script']}`"
+			)
 
 	# Ensure all referenced helper scripts exist
 	required_scripts = {
