@@ -1317,12 +1317,24 @@ def main() -> None:
 			["--not-a-real-flag", "--threshold=red", "--skip-checks"],
 		),
 		(
+			"parity gate unknown-arg precedence leading-unknown spaced-threshold",
+			["--not-a-real-flag", "--threshold", "red", "--skip-checks"],
+		),
+		(
 			"parity gate unknown-arg precedence after-valid-threshold",
 			["--threshold=red", "--not-a-real-flag", "--skip-checks"],
 		),
 		(
+			"parity gate unknown-arg precedence after-valid-threshold spaced",
+			["--threshold", "red", "--not-a-real-flag", "--skip-checks"],
+		),
+		(
 			"parity gate unknown-arg precedence after-valid-skip",
 			["--skip-checks", "--not-a-real-flag", "--threshold=red"],
+		),
+		(
+			"parity gate unknown-arg precedence after-valid-skip spaced-threshold",
+			["--skip-checks", "--not-a-real-flag", "--threshold", "red"],
 		),
 	]
 	for label, extra_args in gate_unknown_precedence_cases:
@@ -1369,6 +1381,32 @@ def main() -> None:
 	)
 	if extract_nonempty_lines(gate_duplicate_threshold_then_unknown.stderr) != gate_duplicate_threshold_lines:
 		fail("parity gate duplicate-threshold-then-unknown stderr mismatch with duplicate-threshold baseline")
+	gate_duplicate_threshold_then_unknown_spaced = subprocess.run(
+		[
+			"bash",
+			str(root / "scripts/run_ts_eslint_parity_gate.sh"),
+			"--threshold",
+			"red",
+			"--threshold",
+			"blue",
+			"--not-a-real-flag",
+		],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if gate_duplicate_threshold_then_unknown_spaced.returncode != gate_duplicate_threshold_then_unknown.returncode:
+		fail("parity gate duplicate-threshold-then-unknown spaced exit code mismatch with inline form")
+	if gate_duplicate_threshold_then_unknown_spaced.stdout.strip():
+		fail("parity gate duplicate-threshold-then-unknown spaced stdout must be empty")
+	assert_exact_error_plus_usage(
+		"parity gate duplicate-threshold-then-unknown spaced stderr",
+		gate_duplicate_threshold_then_unknown_spaced.stderr,
+		expected_gate_duplicate_threshold_line,
+		expected_gate_usage_line,
+	)
+	if extract_nonempty_lines(gate_duplicate_threshold_then_unknown_spaced.stderr) != gate_duplicate_threshold_lines:
+		fail("parity gate duplicate-threshold-then-unknown spaced stderr mismatch with duplicate-threshold baseline")
 
 	gate_duplicate_skip_then_unknown = subprocess.run(
 		[
@@ -1681,6 +1719,26 @@ def main() -> None:
 		(
 			"parity gate quick command yellow unknown-arg precedence trailing-duplicates",
 			["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow", "--not-a-real-flag", "--threshold=blue", "--skip-checks"],
+		),
+		(
+			"parity gate quick command unknown-arg precedence trailing-duplicates spaced-threshold",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick", "--not-a-real-flag", "--threshold", "blue", "--skip-checks"],
+		),
+		(
+			"parity gate quick command red unknown-arg precedence trailing-duplicates spaced-threshold",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:red", "--not-a-real-flag", "--threshold", "blue", "--skip-checks"],
+		),
+		(
+			"parity gate quick command yellow unknown-arg precedence trailing-duplicates spaced-threshold",
+			[
+				"pnpm",
+				"--silent",
+				"parity:ts-eslint:gate:quick:yellow",
+				"--not-a-real-flag",
+				"--threshold",
+				"blue",
+				"--skip-checks",
+			],
 		),
 	]
 	for label, command in gate_wrapper_unknown_arg_precedence_cases:
@@ -2081,6 +2139,42 @@ def main() -> None:
 		(
 			"parity gate quick command yellow duplicate-threshold then unknown",
 			["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow", "--threshold=blue", "--not-a-real-flag"],
+			expected_gate_duplicate_threshold_line,
+			gate_wrapper_duplicate_threshold_baseline,
+		),
+		(
+			"parity gate command duplicate-threshold then unknown spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate", "--threshold", "blue", "--not-a-real-flag"],
+			expected_gate_duplicate_threshold_line,
+			gate_wrapper_duplicate_threshold_baseline,
+		),
+		(
+			"parity gate command red duplicate-threshold then unknown spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:red", "--threshold", "blue", "--not-a-real-flag"],
+			expected_gate_duplicate_threshold_line,
+			gate_wrapper_duplicate_threshold_baseline,
+		),
+		(
+			"parity gate command yellow duplicate-threshold then unknown spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:yellow", "--threshold", "blue", "--not-a-real-flag"],
+			expected_gate_duplicate_threshold_line,
+			gate_wrapper_duplicate_threshold_baseline,
+		),
+		(
+			"parity gate quick command duplicate-threshold then unknown spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick", "--threshold", "blue", "--not-a-real-flag"],
+			expected_gate_duplicate_threshold_line,
+			gate_wrapper_duplicate_threshold_baseline,
+		),
+		(
+			"parity gate quick command red duplicate-threshold then unknown spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:red", "--threshold", "blue", "--not-a-real-flag"],
+			expected_gate_duplicate_threshold_line,
+			gate_wrapper_duplicate_threshold_baseline,
+		),
+		(
+			"parity gate quick command yellow duplicate-threshold then unknown spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow", "--threshold", "blue", "--not-a-real-flag"],
 			expected_gate_duplicate_threshold_line,
 			gate_wrapper_duplicate_threshold_baseline,
 		),
