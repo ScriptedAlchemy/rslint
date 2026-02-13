@@ -1,6 +1,7 @@
 {
-  "generated_at_utc": "2026-02-13T10:01:14.251360+00:00",
+  "generated_at_utc": "2026-02-13T10:08:47.156128+00:00",
   "upstream_repo": "https://github.com/typescript-eslint/typescript-eslint",
+  "upstream_ref_requested": "main",
   "upstream_commit": "68a074fb61a10c3627f09678859fb4d42a3b88f5",
   "tracker_file": "typescript-eslint-rule-parity-tracker.json",
   "summary": {

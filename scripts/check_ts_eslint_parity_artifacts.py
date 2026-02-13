@@ -114,6 +114,10 @@ def main() -> None:
 	phase_counts_meta = metadata.get("phase_counts", {})
 	flag_counts_meta = metadata.get("flag_counts", {})
 	top_meta = metadata.get("top_priority_rules", [])
+	if not metadata.get("upstream_ref_requested"):
+		fail("metadata missing upstream_ref_requested")
+	if not metadata.get("upstream_commit"):
+		fail("metadata missing upstream_commit")
 
 	flagged = [row for row in tracker_rows if int(row.get("priority_score", 0)) > 0]
 	aligned = len(tracker_rows) - len(flagged)

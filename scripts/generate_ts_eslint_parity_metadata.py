@@ -14,6 +14,7 @@ from __future__ import annotations
 import collections
 import datetime
 import json
+import os
 import pathlib
 import subprocess
 
@@ -56,6 +57,7 @@ def main() -> None:
 	metadata = {
 		"generated_at_utc": datetime.datetime.now(datetime.UTC).isoformat(),
 		"upstream_repo": "https://github.com/typescript-eslint/typescript-eslint",
+		"upstream_ref_requested": os.environ.get("TS_ESLINT_REF", "main"),
 		"upstream_commit": get_upstream_commit(upstream_dir),
 		"tracker_file": str(tracker_json.name),
 		"summary": {

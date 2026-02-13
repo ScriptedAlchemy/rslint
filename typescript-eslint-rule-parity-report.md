@@ -35,6 +35,9 @@ Regenerate tracker artifacts:
 pnpm parity:ts-eslint
 pnpm parity:ts-eslint:check
 
+# Optional: pin upstream ref (branch/tag/SHA) for reproducible comparisons
+TS_ESLINT_REF=main pnpm parity:ts-eslint
+
 # or run steps directly:
 python3 scripts/generate_ts_eslint_parity_tracker.py
 python3 scripts/generate_ts_eslint_parity_worklist.py

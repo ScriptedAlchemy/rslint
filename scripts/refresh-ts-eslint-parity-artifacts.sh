@@ -3,6 +3,7 @@ set -euo pipefail
 
 UPSTREAM_DIR="/tmp/typescript-eslint"
 UPSTREAM_REPO="https://github.com/typescript-eslint/typescript-eslint"
+UPSTREAM_REF="${TS_ESLINT_REF:-main}"
 
 echo "==> Preparing upstream repository"
 if [[ ! -d "${UPSTREAM_DIR}/.git" ]]; then
@@ -10,9 +11,11 @@ if [[ ! -d "${UPSTREAM_DIR}/.git" ]]; then
   git clone --depth 1 "${UPSTREAM_REPO}" "${UPSTREAM_DIR}"
 else
   echo "Updating ${UPSTREAM_DIR}"
-  git -C "${UPSTREAM_DIR}" fetch --depth 1 origin main
-  git -C "${UPSTREAM_DIR}" reset --hard FETCH_HEAD
 fi
+echo "Using upstream ref: ${UPSTREAM_REF}"
+git -C "${UPSTREAM_DIR}" fetch --depth 1 origin "${UPSTREAM_REF}"
+git -C "${UPSTREAM_DIR}" checkout --detach FETCH_HEAD
+echo "Resolved upstream commit: $(git -C "${UPSTREAM_DIR}" rev-parse HEAD)"
 
 echo "==> Generating parity tracker artifacts"
 python3 scripts/generate_ts_eslint_parity_tracker.py

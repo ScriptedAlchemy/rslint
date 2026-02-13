@@ -12,7 +12,7 @@ After running the refresh command, the following artifacts are generated at repo
 - `typescript-eslint-rule-parity-tracker.json` — JSON form of tracker data.
 - `typescript-eslint-rule-parity-worklist.md` — execution checklist grouped by phase.
 - `typescript-eslint-rule-parity-summary.md` — dashboard with headline metrics and top priorities.
-- `typescript-eslint-rule-parity-metadata.json` — run metadata (timestamp, upstream SHA, counters).
+- `typescript-eslint-rule-parity-metadata.json` — run metadata (timestamp, upstream SHA, requested ref, counters).
 
 ## Commands
 
@@ -26,6 +26,12 @@ This command:
 1. Updates/clones upstream `typescript-eslint` under `/tmp/typescript-eslint`.
 2. Regenerates all parity artifacts.
 3. Runs artifact consistency checks.
+
+To pin a specific upstream ref (branch/tag/SHA) for comparison:
+
+```bash
+TS_ESLINT_REF=main pnpm parity:ts-eslint
+```
 
 ### Run consistency checks only
 
