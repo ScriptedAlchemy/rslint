@@ -492,6 +492,9 @@ def main() -> None:
 		fail(f"status command failed: exit={status_cmd.returncode}")
 	if "typescript-eslint-rule-parity-status.json" not in (status_cmd.stdout + status_cmd.stderr):
 		fail("status command output missing status artifact path token")
+	status_lines = extract_status_write_lines(status_cmd.stdout + status_cmd.stderr)
+	if not status_lines:
+		fail("status command output missing status artifact write line")
 	status_after_cmd = json.loads(status_json.read_text())
 	if status_after_cmd != status:
 		fail("status command output mutated status artifact unexpectedly")
@@ -540,6 +543,19 @@ def main() -> None:
 		fail("status strict-yellow stderr missing parity-status error prefix")
 	if expected_status_strict_yellow_exit == 3 and expected_health_reason_marker not in status_strict_yellow.stderr:
 		fail("status strict-yellow stderr missing health+reason message")
+	status_strict_lines = extract_status_write_lines(status_strict.stdout + status_strict.stderr)
+	status_strict_yellow_lines = extract_status_write_lines(status_strict_yellow.stdout + status_strict_yellow.stderr)
+	if not status_strict_lines:
+		fail("status strict output missing status artifact write line")
+	if not status_strict_yellow_lines:
+		fail("status strict-yellow output missing status artifact write line")
+	if status_strict_lines != status_lines:
+		fail("status strict write-line output mismatch with non-strict status command")
+	if status_strict_yellow_lines != status_lines:
+		fail("status strict-yellow write-line output mismatch with non-strict status command")
+	status_after_direct_strict = json.loads(status_json.read_text())
+	if status_after_direct_strict != status:
+		fail("status strict direct checks mutated status artifact unexpectedly")
 
 	# Status npm command wrapper checks
 	status_cmd_strict = subprocess.run(
@@ -560,10 +576,7 @@ def main() -> None:
 		fail("status command strict stderr missing parity-status error prefix")
 	if expected_status_strict_exit == 2 and expected_health_reason_marker not in status_cmd_strict.stderr:
 		fail("status command strict stderr missing health+reason message")
-	status_strict_lines = extract_status_write_lines(status_strict.stdout + status_strict.stderr)
 	status_cmd_strict_lines = extract_status_write_lines(status_cmd_strict.stdout + status_cmd_strict.stderr)
-	if not status_strict_lines:
-		fail("status strict output missing status artifact write line")
 	if status_cmd_strict_lines != status_strict_lines:
 		fail("status command strict write-line output mismatch with direct strict mode")
 	status_after_cmd_strict = json.loads(status_json.read_text())
@@ -588,10 +601,7 @@ def main() -> None:
 		fail("status command strict-yellow stderr missing parity-status error prefix")
 	if expected_status_strict_yellow_exit == 3 and expected_health_reason_marker not in status_cmd_strict_yellow.stderr:
 		fail("status command strict-yellow stderr missing health+reason message")
-	status_strict_yellow_lines = extract_status_write_lines(status_strict_yellow.stdout + status_strict_yellow.stderr)
 	status_cmd_strict_yellow_lines = extract_status_write_lines(status_cmd_strict_yellow.stdout + status_cmd_strict_yellow.stderr)
-	if not status_strict_yellow_lines:
-		fail("status strict-yellow output missing status artifact write line")
 	if status_cmd_strict_yellow_lines != status_strict_yellow_lines:
 		fail("status command strict-yellow write-line output mismatch with direct strict-yellow mode")
 	status_after_cmd_strict_yellow = json.loads(status_json.read_text())
