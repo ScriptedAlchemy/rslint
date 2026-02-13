@@ -12,6 +12,7 @@ _Generated: 2026-02-13 09:47 UTC_
 - `typescript-eslint-rule-parity-worklist.md`
 - `typescript-eslint-rule-parity-summary.md`
 - `typescript-eslint-rule-parity-metadata.json`
+- CI guard: `.github/workflows/parity-artifacts-check.yml`
 
 These machine-readable files mirror this report’s findings and include:
 - per-rule priority score,
@@ -30,6 +31,7 @@ Regenerate tracker artifacts:
 
 ```bash
 pnpm parity:ts-eslint
+pnpm parity:ts-eslint:check
 
 # or run steps directly:
 python3 scripts/generate_ts_eslint_parity_tracker.py

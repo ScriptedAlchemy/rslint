@@ -1,0 +1,42 @@
+name: parity-artifacts-check
+
+on:
+  pull_request:
+    paths:
+      - "typescript-eslint-rule-parity-*.md"
+      - "typescript-eslint-rule-parity-*.json"
+      - "typescript-eslint-rule-parity-*.csv"
+      - "scripts/generate_ts_eslint_parity_*.py"
+      - "scripts/check_ts_eslint_parity_artifacts.py"
+      - "scripts/refresh-ts-eslint-parity-artifacts.sh"
+      - ".github/workflows/parity-artifacts-check.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "typescript-eslint-rule-parity-*.md"
+      - "typescript-eslint-rule-parity-*.json"
+      - "typescript-eslint-rule-parity-*.csv"
+      - "scripts/generate_ts_eslint_parity_*.py"
+      - "scripts/check_ts_eslint_parity_artifacts.py"
+      - "scripts/refresh-ts-eslint-parity-artifacts.sh"
+      - ".github/workflows/parity-artifacts-check.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  check-parity-artifacts:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Validate parity artifacts consistency
+        run: python3 scripts/check_ts_eslint_parity_artifacts.py
