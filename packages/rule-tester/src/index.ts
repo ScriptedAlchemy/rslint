@@ -1,6 +1,7 @@
 // Forked and modified from https://github.com/typescript-eslint/typescript-eslint/blob/16c344ec7d274ea542157e0f19682dd1930ab838/packages/rule-tester/src/RuleTester.ts#L4
 
 import path from 'node:path';
+import fs from 'node:fs';
 import { test, describe, expect } from '@rstest/core';
 import { applyFixes, lint, LintResponse, type Diagnostic } from '@rslint/core';
 import assert from 'node:assert';
@@ -202,6 +203,56 @@ function getTypescriptEslintFixturesRootDir(): string {
     '../../packages/rslint-test-tools/tests/typescript-eslint/fixtures',
   );
 }
+
+let cachedKnownRuleNames: Set<string> | null = null;
+
+function getKnownRuleNames(): Set<string> {
+  if (cachedKnownRuleNames) {
+    return cachedKnownRuleNames;
+  }
+
+  const candidates = [
+    path.resolve(process.cwd(), '../../internal/plugins/typescript/rules'),
+    path.resolve(process.cwd(), '../../../internal/plugins/typescript/rules'),
+    path.resolve(process.cwd(), 'internal/plugins/typescript/rules'),
+  ];
+
+  for (const candidate of candidates) {
+    if (!fs.existsSync(candidate)) {
+      continue;
+    }
+
+    const names = new Set(
+      fs
+        .readdirSync(candidate, { withFileTypes: true })
+        .filter(entry => entry.isDirectory())
+        .map(entry => entry.name.replaceAll('_', '-')),
+    );
+    cachedKnownRuleNames = names;
+    return names;
+  }
+
+  cachedKnownRuleNames = new Set();
+  return cachedKnownRuleNames;
+}
+
+function resolveCanonicalRuleName(runLabel: string): string {
+  const known = getKnownRuleNames();
+  if (known.size === 0 || known.has(runLabel)) {
+    return runLabel;
+  }
+
+  let candidate = runLabel;
+  while (candidate.includes('-')) {
+    candidate = candidate.slice(0, candidate.lastIndexOf('-'));
+    if (known.has(candidate)) {
+      return candidate;
+    }
+  }
+
+  return runLabel;
+}
+
 const rootDir: string = getTypescriptEslintFixturesRootDir();
 const defaultRuleTesterOptions: RuleTesterOptions = {
   languageOptions: {
@@ -233,8 +284,9 @@ export class RuleTester {
   ) {
     const suiteName = ruleName;
     const normalizedRuleName = ruleName.trim().split(/\s+/)[0] || ruleName;
+    const canonicalRuleName = resolveCanonicalRuleName(normalizedRuleName);
     describe(suiteName, () => {
-      ruleName = '@typescript-eslint/' + normalizedRuleName;
+      ruleName = '@typescript-eslint/' + canonicalRuleName;
       let cwd =
         this.options.languageOptions?.parserOptions?.tsconfigRootDir ||
         process.cwd();
