@@ -28,6 +28,16 @@ def fail(msg: str) -> None:
 	sys.exit(1)
 
 
+def compute_health_reason(critical: int, high: int, flagged: int) -> tuple[str, str]:
+	if critical > 0:
+		return "red", "critical backlog is non-zero"
+	if high > 0:
+		return "yellow", "high backlog is non-zero"
+	if flagged > 0:
+		return "yellow", "non-critical flagged backlog remains"
+	return "green", "no flagged parity backlog"
+
+
 def sha256_file(path: pathlib.Path) -> str:
 	hasher = hashlib.sha256()
 	with path.open("rb") as f:
@@ -257,6 +267,18 @@ def main() -> None:
 		fail("metadata missing upstream_ref_requested")
 	if not metadata.get("upstream_commit"):
 		fail("metadata missing upstream_commit")
+	if int(badges.get("schema_version", -1)) != 1:
+		fail("badges schema_version must be 1")
+	if int(status.get("schema_version", -1)) != 1:
+		fail("status schema_version must be 1")
+	if badges.get("generated_at_utc") != metadata.get("generated_at_utc"):
+		fail("badges generated_at_utc mismatch with metadata")
+	if status.get("generated_at_utc") != metadata.get("generated_at_utc"):
+		fail("status generated_at_utc mismatch with metadata")
+	if badges.get("upstream_commit") != metadata.get("upstream_commit"):
+		fail("badges upstream_commit mismatch with metadata")
+	if badges.get("upstream_ref_requested") != metadata.get("upstream_ref_requested"):
+		fail("badges upstream_ref_requested mismatch with metadata")
 
 	# Badge data checks
 	badge_metrics = badges.get("metrics", {})
@@ -305,13 +327,15 @@ def main() -> None:
 	if status.get("upstream_ref_requested") != metadata.get("upstream_ref_requested"):
 		fail("status upstream_ref_requested mismatch with metadata")
 
-	expected_health = "green"
-	if int(phase_counts_meta.get("A_critical", 0)) > 0:
-		expected_health = "red"
-	elif int(phase_counts_meta.get("B_high", 0)) > 0 or int(summary.get("flagged_rules", 0)) > 0:
-		expected_health = "yellow"
+	expected_health, expected_reason = compute_health_reason(
+		critical=int(phase_counts_meta.get("A_critical", 0)),
+		high=int(phase_counts_meta.get("B_high", 0)),
+		flagged=int(summary.get("flagged_rules", 0)),
+	)
 	if status.get("health") != expected_health:
 		fail(f"status health mismatch: expected={expected_health} actual={status.get('health')}")
+	if status.get("reason", "") != expected_reason:
+		fail(f"status reason mismatch: expected={expected_reason} actual={status.get('reason', '')}")
 
 	flagged = [row for row in tracker_rows if int(row.get("priority_score", 0)) > 0]
 	aligned = len(tracker_rows) - len(flagged)
@@ -322,6 +346,16 @@ def main() -> None:
 		fail("metadata summary.flagged_rules mismatch")
 	if summary.get("aligned_rules") != aligned:
 		fail("metadata summary.aligned_rules mismatch")
+	if int(summary.get("aligned_rules", 0)) + int(summary.get("flagged_rules", 0)) != int(summary.get("total_rules", 0)):
+		fail("metadata summary arithmetic mismatch: aligned + flagged must equal total")
+	if int(status_summary.get("aligned_rules", 0)) + int(status_summary.get("flagged_rules", 0)) != int(
+		status_summary.get("total_rules", 0)
+	):
+		fail("status summary arithmetic mismatch: aligned + flagged must equal total")
+	if int(badge_metrics.get("aligned_rules", 0)) + int(badge_metrics.get("flagged_rules", 0)) != int(
+		badge_metrics.get("total_rules", 0)
+	):
+		fail("badges metrics arithmetic mismatch: aligned + flagged must equal total")
 
 	phase_counter = Counter(row.get("recommended_phase", "unknown") for row in tracker_rows)
 	if dict(phase_counter) != phase_counts_meta:

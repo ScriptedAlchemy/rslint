@@ -67,7 +67,8 @@ The checkers validate:
 - issue-body structure/counts,
 - CI summary rendering consistency,
 - parity command/docs/script synchronization,
-- CI workflow wiring (required parity checks and uploaded artifact bundle paths).
+- CI workflow wiring (required parity checks and uploaded artifact bundle paths),
+- status/badge schema, health reason, and summary arithmetic coherence.
 
 `parity:ts-eslint:check:all` additionally runs metadata-pinned reproducibility verification when parity artifacts are clean.
 
