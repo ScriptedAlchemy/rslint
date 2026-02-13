@@ -1322,6 +1322,10 @@ def main() -> None:
 		"parity gate quick command red --help"
 	]:
 		fail("parity gate quick help alias stderr mismatch with quick:red")
+	gate_wrapper_help_baseline = gate_wrapper_help_lines["parity gate command --help"]
+	for label, lines in gate_wrapper_help_lines.items():
+		if lines != gate_wrapper_help_baseline:
+			fail(f"{label} stderr output mismatch with gate wrapper help baseline")
 	gate_wrapper_short_help_cases = [
 		("parity gate command -h", ["pnpm", "--silent", "parity:ts-eslint:gate", "-h"], "parity gate command --help"),
 		(
@@ -1423,6 +1427,10 @@ def main() -> None:
 		"parity gate quick command red unknown-arg"
 	]:
 		fail("parity gate quick unknown-arg alias stderr mismatch with quick:red")
+	gate_wrapper_unknown_arg_baseline = gate_wrapper_unknown_arg_lines["parity gate command unknown-arg"]
+	for label, lines in gate_wrapper_unknown_arg_lines.items():
+		if lines != gate_wrapper_unknown_arg_baseline:
+			fail(f"{label} stderr output mismatch with gate wrapper unknown-arg baseline")
 
 	gate_wrapper_duplicate_threshold_cases = [
 		(
@@ -1483,6 +1491,12 @@ def main() -> None:
 		"parity gate quick command red duplicate-threshold"
 	]:
 		fail("parity gate quick duplicate-threshold alias stderr mismatch with quick:red")
+	gate_wrapper_duplicate_threshold_baseline = gate_wrapper_duplicate_threshold_lines[
+		"parity gate command duplicate-threshold"
+	]
+	for label, lines in gate_wrapper_duplicate_threshold_lines.items():
+		if lines != gate_wrapper_duplicate_threshold_baseline:
+			fail(f"{label} stderr output mismatch with gate wrapper duplicate-threshold baseline")
 
 	gate_wrapper_duplicate_skip_checks_cases = [
 		(
@@ -1543,6 +1557,12 @@ def main() -> None:
 		"parity gate quick command red duplicate-skip-checks"
 	]:
 		fail("parity gate quick duplicate-skip-checks alias stderr mismatch with quick:red")
+	gate_wrapper_duplicate_skip_checks_baseline = gate_wrapper_duplicate_skip_checks_lines[
+		"parity gate command duplicate-skip-checks"
+	]
+	for label, lines in gate_wrapper_duplicate_skip_checks_lines.items():
+		if lines != gate_wrapper_duplicate_skip_checks_baseline:
+			fail(f"{label} stderr output mismatch with gate wrapper duplicate-skip-checks baseline")
 
 	# Gate npm command wrappers in skip-check mode
 	gate_cmd = subprocess.run(
