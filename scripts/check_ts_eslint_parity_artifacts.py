@@ -592,35 +592,45 @@ def assert_wrapper_argparse_forwarding_contracts(
 			if wrapper_help_precedence_lines != wrapper_help_lines:
 				fail(f"{wrapper_label} {precedence_label} output mismatch with help baseline")
 
-		direct_unknown = subprocess.run(
-			["python3", str(script_path), *direct_args, "--not-a-real-flag"],
-			check=False,
-			capture_output=True,
-			text=True,
-		)
-		direct_unknown_lines = extract_nonempty_lines(direct_unknown.stderr)
-		if not direct_unknown_lines:
-			fail(f"direct {wrapper_label} unknown stderr must not be empty")
-		direct_unknown_error_line = direct_unknown_lines[-1]
-		direct_unknown_lines = assert_argparse_unknown_contract(
-			f"direct {wrapper_label} unknown",
-			direct_unknown,
-			direct_unknown_error_line,
-		)
-		wrapper_unknown = subprocess.run(
-			[*wrapper_command, "--not-a-real-flag"],
-			cwd=str(root),
-			check=False,
-			capture_output=True,
-			text=True,
-		)
-		wrapper_unknown_lines = assert_argparse_unknown_contract(
-			f"{wrapper_label} unknown",
-			wrapper_unknown,
-			direct_unknown_error_line,
-		)
-		if wrapper_unknown_lines != direct_unknown_lines:
-			fail(f"{wrapper_label} unknown-arg stderr mismatch with direct script baseline")
+		unknown_variant_cases = [
+			("unknown-at-end", [*direct_args, "--not-a-real-flag"]),
+			("unknown-at-start", ["--not-a-real-flag", *direct_args]),
+			("duplicate-unknown-at-end", [*direct_args, "--not-a-real-flag", "--not-a-real-flag"]),
+			(
+				"unknown-sandwich",
+				["--not-a-real-flag", *direct_args, "--still-not-a-real-flag"],
+			),
+		]
+		for unknown_label, unknown_args in unknown_variant_cases:
+			direct_unknown = subprocess.run(
+				["python3", str(script_path), *unknown_args],
+				check=False,
+				capture_output=True,
+				text=True,
+			)
+			direct_unknown_lines = extract_nonempty_lines(direct_unknown.stderr)
+			if not direct_unknown_lines:
+				fail(f"direct {wrapper_label} {unknown_label} stderr must not be empty")
+			direct_unknown_error_line = direct_unknown_lines[-1]
+			direct_unknown_lines = assert_argparse_unknown_contract(
+				f"direct {wrapper_label} {unknown_label}",
+				direct_unknown,
+				direct_unknown_error_line,
+			)
+			wrapper_unknown = subprocess.run(
+				[*wrapper_command, *unknown_args],
+				cwd=str(root),
+				check=False,
+				capture_output=True,
+				text=True,
+			)
+			wrapper_unknown_lines = assert_argparse_unknown_contract(
+				f"{wrapper_label} {unknown_label}",
+				wrapper_unknown,
+				direct_unknown_error_line,
+			)
+			if wrapper_unknown_lines != direct_unknown_lines:
+				fail(f"{wrapper_label} {unknown_label} stderr mismatch with direct script baseline")
 
 
 def main() -> None:
