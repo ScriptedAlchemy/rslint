@@ -1788,6 +1788,54 @@ def main() -> None:
 			"parity gate quick command yellow duplicate-threshold precedence empty-value with trailing skip-checks",
 			["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow", "--threshold=", "--skip-checks"],
 		),
+		(
+			"parity gate command duplicate-threshold precedence invalid-value with trailing skip-checks",
+			["pnpm", "--silent", "parity:ts-eslint:gate", "--threshold=blue", "--skip-checks"],
+		),
+		(
+			"parity gate command red duplicate-threshold precedence invalid-value with trailing skip-checks",
+			["pnpm", "--silent", "parity:ts-eslint:gate:red", "--threshold=blue", "--skip-checks"],
+		),
+		(
+			"parity gate command yellow duplicate-threshold precedence invalid-value with trailing skip-checks",
+			["pnpm", "--silent", "parity:ts-eslint:gate:yellow", "--threshold=blue", "--skip-checks"],
+		),
+		(
+			"parity gate quick command duplicate-threshold precedence invalid-value with trailing skip-checks",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick", "--threshold=blue", "--skip-checks"],
+		),
+		(
+			"parity gate quick command red duplicate-threshold precedence invalid-value with trailing skip-checks",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:red", "--threshold=blue", "--skip-checks"],
+		),
+		(
+			"parity gate quick command yellow duplicate-threshold precedence invalid-value with trailing skip-checks",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow", "--threshold=blue", "--skip-checks"],
+		),
+		(
+			"parity gate command duplicate-threshold precedence invalid-value-spaced with trailing skip-checks",
+			["pnpm", "--silent", "parity:ts-eslint:gate", "--threshold", "blue", "--skip-checks"],
+		),
+		(
+			"parity gate command red duplicate-threshold precedence invalid-value-spaced with trailing skip-checks",
+			["pnpm", "--silent", "parity:ts-eslint:gate:red", "--threshold", "blue", "--skip-checks"],
+		),
+		(
+			"parity gate command yellow duplicate-threshold precedence invalid-value-spaced with trailing skip-checks",
+			["pnpm", "--silent", "parity:ts-eslint:gate:yellow", "--threshold", "blue", "--skip-checks"],
+		),
+		(
+			"parity gate quick command duplicate-threshold precedence invalid-value-spaced with trailing skip-checks",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick", "--threshold", "blue", "--skip-checks"],
+		),
+		(
+			"parity gate quick command red duplicate-threshold precedence invalid-value-spaced with trailing skip-checks",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:red", "--threshold", "blue", "--skip-checks"],
+		),
+		(
+			"parity gate quick command yellow duplicate-threshold precedence invalid-value-spaced with trailing skip-checks",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow", "--threshold", "blue", "--skip-checks"],
+		),
 	]
 	for label, command in gate_wrapper_duplicate_threshold_precedence_cases:
 		proc = subprocess.run(
