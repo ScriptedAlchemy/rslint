@@ -16,6 +16,22 @@ It summarizes the most important parity findings and remediation priorities.
 - **C_medium:** 18
 - **D_low:** 31
 
+## Most common parity flags
+| Flag | Rules |
+|---|---:|
+| `todo_markers` | 22 |
+| `fix_gap_suspected` | 20 |
+| `suggestion_gap_suspected` | 20 |
+| `go_skips` | 11 |
+| `severe_invalid_gap` | 5 |
+| `severe_js_size_gap` | 4 |
+| `moderate_js_size_gap` | 4 |
+| `extra_js_skips` | 3 |
+| `moderate_invalid_gap` | 2 |
+| `missing_js_file` | 1 |
+| `missing_go_test` | 1 |
+| `local_only_rule` | 1 |
+
 ## Top priority rules (immediate focus)
 1. `no-useless-default-assignment` — severe invalid/test-size gap + fix parity risk.
 2. `no-duplicate-enum-values` — severe invalid/test-size gap.
@@ -55,5 +71,4 @@ It summarizes the most important parity findings and remediation priorities.
 
 ## Deliverables to keep in this cleaned state
 - `typescript-eslint-rule-parity-report.md` (this file)
-- `typescript-eslint-rule-parity-summary.md` (dashboard snapshot)
 - `typescript-eslint-rule-parity-issues-review.md` (action-focused issue list)
