@@ -49,6 +49,22 @@ After building, you can test the rslint CLI:
 ./packages/rslint/bin/rslint --config rslint.json
 ```
 
+## Maintain TypeScript-ESLint parity artifacts
+
+If you are working on TypeScript-ESLint rule parity, use the parity toolkit:
+
+- Guide: `typescript-eslint-rule-parity-guide.md`
+
+Commands:
+
+```bash
+# Refresh upstream reference + regenerate all parity artifacts
+pnpm parity:ts-eslint
+
+# Validate generated artifact consistency only
+pnpm parity:ts-eslint:check
+```
+
 ## Debugging VSCode Extension
 
 To Debug the VSCode Extension:

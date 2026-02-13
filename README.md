@@ -42,6 +42,19 @@ See [Guide](https://rslint.rs/guide/).
 
 - [Architecture Overview](./architecture.md) - Comprehensive system architecture and implementation details
 
+## 🧭 TypeScript-ESLint parity toolkit (maintainers)
+
+For maintainers tracking parity with upstream `typescript-eslint`, use:
+
+- [Parity Toolkit Guide](./typescript-eslint-rule-parity-guide.md)
+
+Quick commands:
+
+```bash
+pnpm parity:ts-eslint
+pnpm parity:ts-eslint:check
+```
+
 ## 🦀 Rstack
 
 Rstack is a unified JavaScript toolchain built around Rspack, with high performance and consistent architecture.
