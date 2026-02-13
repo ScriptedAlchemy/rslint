@@ -373,11 +373,18 @@ export class RuleTester {
               fileContent: code,
               diagnostics: diags.diagnostics,
             });
+            const actualOutputs = fixedCode.fixedContent ?? [];
             if (Array.isArray(output)) {
-              // skip for now, because the current implementation of autofix is different from typescript-eslint
-              // expect(fixedCode.fixedContent).toEqual(output);
+              expect(actualOutputs.length).toBeGreaterThanOrEqual(output.length);
+              output.forEach((expectedOutput, index) => {
+                expect(actualOutputs[index]).toBe(expectedOutput);
+              });
             } else {
-              // expect(fixedCode.fixedContent[0]).toEqual(output);
+              const finalOutput =
+                actualOutputs.length > 0
+                  ? actualOutputs[actualOutputs.length - 1]
+                  : code;
+              expect(finalOutput).toBe(output);
             }
 
             expect(

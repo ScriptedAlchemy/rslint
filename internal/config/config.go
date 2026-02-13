@@ -101,6 +101,7 @@ import (
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_unused_vars"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_use_before_define"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_useless_constructor"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_useless_default_assignment"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_useless_empty_export"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_var_requires"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/no_wrapper_object_types"
@@ -135,6 +136,7 @@ import (
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/return_await"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/sort_type_constituents"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/strict_boolean_expressions"
+	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/strict_void_return"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/switch_exhaustiveness_check"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/triple_slash_reference"
 	"github.com/web-infra-dev/rslint/internal/plugins/typescript/rules/typedef"
@@ -302,6 +304,8 @@ type TypedRules struct {
 	NoUnsafeReturn                     *RuleConfig `json:"@typescript-eslint/no-unsafe-return,omitempty"`
 	NoUnsafeTypeAssertion              *RuleConfig `json:"@typescript-eslint/no-unsafe-type-assertion,omitempty"`
 	NoUnsafeUnaryMinus                 *RuleConfig `json:"@typescript-eslint/no-unsafe-unary-minus,omitempty"`
+	NoUselessDefaultAssignment         *RuleConfig `json:"@typescript-eslint/no-useless-default-assignment,omitempty"`
+	StrictVoidReturn                   *RuleConfig `json:"@typescript-eslint/strict-void-return,omitempty"`
 }
 
 // RuleConfig represents individual rule configuration
@@ -576,6 +580,7 @@ func registerAllTypeScriptEslintPluginRules() {
 	GlobalRuleRegistry.Register("@typescript-eslint/no-use-before-define", no_use_before_define.NoUseBeforeDefineRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-useless-empty-export", no_useless_empty_export.NoUselessEmptyExportRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-useless-constructor", no_useless_constructor.NoUselessConstructorRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/no-useless-default-assignment", no_useless_default_assignment.NoUselessDefaultAssignmentRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-var-requires", no_var_requires.NoVarRequiresRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/no-wrapper-object-types", no_wrapper_object_types.NoWrapperObjectTypesRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/non-nullable-type-assertion-style", non_nullable_type_assertion_style.NonNullableTypeAssertionStyleRule)
@@ -609,6 +614,7 @@ func registerAllTypeScriptEslintPluginRules() {
 	GlobalRuleRegistry.Register("@typescript-eslint/return-await", return_await.ReturnAwaitRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/sort-type-constituents", sort_type_constituents.SortTypeConstituentsRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/strict-boolean-expressions", strict_boolean_expressions.StrictBooleanExpressionsRule)
+	GlobalRuleRegistry.Register("@typescript-eslint/strict-void-return", strict_void_return.StrictVoidReturnRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/switch-exhaustiveness-check", switch_exhaustiveness_check.SwitchExhaustivenessCheckRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/triple-slash-reference", triple_slash_reference.TripleSlashReferenceRule)
 	GlobalRuleRegistry.Register("@typescript-eslint/typedef", typedef.TypedefRule)

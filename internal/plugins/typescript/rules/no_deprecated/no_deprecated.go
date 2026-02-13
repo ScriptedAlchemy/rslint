@@ -16,9 +16,9 @@ import (
 var deprecatedReasonPattern = regexp.MustCompile(`(?s)@deprecated\s*([\s\S]*?)\*/`)
 
 const (
-	diagnosticCodeSecondEntityName        = 6387
-	declarationReasonSearchWindowBytes    = 512
-	maxConstantPropertyResolveDepth       = 8
+	diagnosticCodeSecondEntityName     = 6387
+	declarationReasonSearchWindowBytes = 512
+	maxConstantPropertyResolveDepth    = 8
 )
 
 func buildDeprecatedMessage(name string) rule.RuleMessage {
@@ -509,7 +509,19 @@ func nameImportedFromPackage(sourceFile *ast.SourceFile, name string, pkg string
 			return true
 		}
 	}
-	return false
+	// Fallback for parser edge cases where import binding nodes are not exposed as expected.
+	sourceText := sourceFile.Text()
+	if sourceText == "" {
+		return false
+	}
+	namePattern := regexp.QuoteMeta(name)
+	pkgPattern := regexp.QuoteMeta(pkg)
+	staticImportPattern := regexp.MustCompile(`(?s)import\s*\{[^}]*\b` + namePattern + `\b[^}]*\}\s*from\s*['"]` + pkgPattern + `['"]`)
+	if staticImportPattern.MatchString(sourceText) {
+		return true
+	}
+	dynamicImportPattern := regexp.MustCompile(`(?s)\{[^}]*\b` + namePattern + `\b[^}]*\}\s*=\s*(?:await\s+)?import\(\s*['"]` + pkgPattern + `['"]\s*\)`)
+	return dynamicImportPattern.MatchString(sourceText)
 }
 
 func allowEntryMatches(entry noDeprecatedAllowEntry, diagnosticName string, symbol *ast.Symbol, sourceFile *ast.SourceFile) bool {
