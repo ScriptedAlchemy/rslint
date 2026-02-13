@@ -108,6 +108,9 @@ Outputs:
 - `typescript-eslint-rule-parity-diff.md`
 - `typescript-eslint-rule-parity-diff.json` (when `--output-json` is supplied, including via `diff:json`)
 
+If no baseline is provided, diff commands default to `HEAD~1` and automatically
+fall back to `HEAD` when `HEAD~1` is unavailable.
+
 ### Rebuild artifacts from pinned metadata commit
 
 ```bash

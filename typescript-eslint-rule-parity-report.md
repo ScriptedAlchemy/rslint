@@ -117,6 +117,8 @@ python3 scripts/check_ts_eslint_parity_tooling_sync.py
 bash scripts/check_ts_eslint_parity_all.sh
 ```
 
+Diff commands default to `HEAD~1` and fall back to `HEAD` when `HEAD~1` is unavailable.
+
 ## Inventory Summary
 - Upstream rules: **134**
 - Local registered `@typescript-eslint/*` rules: **135**

@@ -20,6 +20,7 @@ import datetime
 import json
 import pathlib
 import subprocess
+import sys
 from typing import Any
 
 
@@ -87,8 +88,20 @@ def main() -> None:
 	head_rows = load_rows_from_json(pathlib.Path(args.head_json))
 	base_ref = args.base_ref or "HEAD~1"
 	if args.base_ref or not args.base_json:
-		base_rows = load_rows_from_ref(repo_root, base_ref)
-		base_label = f"git:{base_ref}"
+		try:
+			base_rows = load_rows_from_ref(repo_root, base_ref)
+			base_label = f"git:{base_ref}"
+		except subprocess.CalledProcessError:
+			if args.base_json or base_ref != "HEAD~1":
+				raise
+			fallback_ref = "HEAD"
+			print(
+				"[parity-diff] WARN: unable to read baseline from HEAD~1; "
+				f"falling back to {fallback_ref}.",
+				file=sys.stderr,
+			)
+			base_rows = load_rows_from_ref(repo_root, fallback_ref)
+			base_label = f"git:{fallback_ref}"
 	else:
 		base_rows = load_rows_from_json(pathlib.Path(args.base_json))
 		base_label = str(pathlib.Path(args.base_json))
