@@ -672,6 +672,59 @@ def main() -> None:
 		wrapper_help_lines = assert_argparse_help_contract(f"{wrapper_label} help", wrapper_help)
 		if wrapper_help_lines != direct_help_lines:
 			fail(f"{wrapper_label} help output mismatch with direct script help baseline")
+		direct_short_help = subprocess.run(
+			["python3", str(status_script), *direct_args, "-h"],
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		direct_short_help_lines = assert_argparse_help_contract(f"direct {wrapper_label} short-help", direct_short_help)
+		if direct_short_help_lines != direct_help_lines:
+			fail(f"direct {wrapper_label} short-help output mismatch with long-help baseline")
+		wrapper_short_help = subprocess.run(
+			[*wrapper_command, "-h"],
+			cwd=str(root),
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		wrapper_short_help_lines = assert_argparse_help_contract(f"{wrapper_label} short-help", wrapper_short_help)
+		if wrapper_short_help_lines != wrapper_help_lines:
+			fail(f"{wrapper_label} short-help output mismatch with long-help baseline")
+		help_precedence_cases = [
+			("help-then-unknown", ["--help", "--not-a-real-flag"]),
+			("unknown-then-help", ["--not-a-real-flag", "--help"]),
+			("short-help-then-unknown", ["-h", "--not-a-real-flag"]),
+			("unknown-then-short-help", ["--not-a-real-flag", "-h"]),
+		]
+		for precedence_label, precedence_args in help_precedence_cases:
+			direct_help_precedence = subprocess.run(
+				["python3", str(status_script), *direct_args, *precedence_args],
+				check=False,
+				capture_output=True,
+				text=True,
+			)
+			direct_help_precedence_lines = assert_argparse_help_contract(
+				f"direct {wrapper_label} {precedence_label}",
+				direct_help_precedence,
+			)
+			if direct_help_precedence_lines != direct_help_lines:
+				fail(
+					f"direct {wrapper_label} {precedence_label} output mismatch with help baseline"
+				)
+			wrapper_help_precedence = subprocess.run(
+				[*wrapper_command, *precedence_args],
+				cwd=str(root),
+				check=False,
+				capture_output=True,
+				text=True,
+			)
+			wrapper_help_precedence_lines = assert_argparse_help_contract(
+				f"{wrapper_label} {precedence_label}",
+				wrapper_help_precedence,
+			)
+			if wrapper_help_precedence_lines != wrapper_help_lines:
+				fail(f"{wrapper_label} {precedence_label} output mismatch with help baseline")
 		direct_unknown = subprocess.run(
 			["python3", str(status_script), *direct_args, "--not-a-real-flag"],
 			check=False,
@@ -4710,6 +4763,59 @@ def main() -> None:
 		wrapper_help_lines = assert_argparse_help_contract(f"{wrapper_label} help", wrapper_help)
 		if wrapper_help_lines != direct_help_lines:
 			fail(f"{wrapper_label} help output mismatch with direct script help baseline")
+		direct_short_help = subprocess.run(
+			["python3", str(ci_summary_script), *direct_args, "-h"],
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		direct_short_help_lines = assert_argparse_help_contract(f"direct {wrapper_label} short-help", direct_short_help)
+		if direct_short_help_lines != direct_help_lines:
+			fail(f"direct {wrapper_label} short-help output mismatch with long-help baseline")
+		wrapper_short_help = subprocess.run(
+			[*wrapper_command, "-h"],
+			cwd=str(root),
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		wrapper_short_help_lines = assert_argparse_help_contract(f"{wrapper_label} short-help", wrapper_short_help)
+		if wrapper_short_help_lines != wrapper_help_lines:
+			fail(f"{wrapper_label} short-help output mismatch with long-help baseline")
+		help_precedence_cases = [
+			("help-then-unknown", ["--help", "--not-a-real-flag"]),
+			("unknown-then-help", ["--not-a-real-flag", "--help"]),
+			("short-help-then-unknown", ["-h", "--not-a-real-flag"]),
+			("unknown-then-short-help", ["--not-a-real-flag", "-h"]),
+		]
+		for precedence_label, precedence_args in help_precedence_cases:
+			direct_help_precedence = subprocess.run(
+				["python3", str(ci_summary_script), *direct_args, *precedence_args],
+				check=False,
+				capture_output=True,
+				text=True,
+			)
+			direct_help_precedence_lines = assert_argparse_help_contract(
+				f"direct {wrapper_label} {precedence_label}",
+				direct_help_precedence,
+			)
+			if direct_help_precedence_lines != direct_help_lines:
+				fail(
+					f"direct {wrapper_label} {precedence_label} output mismatch with help baseline"
+				)
+			wrapper_help_precedence = subprocess.run(
+				[*wrapper_command, *precedence_args],
+				cwd=str(root),
+				check=False,
+				capture_output=True,
+				text=True,
+			)
+			wrapper_help_precedence_lines = assert_argparse_help_contract(
+				f"{wrapper_label} {precedence_label}",
+				wrapper_help_precedence,
+			)
+			if wrapper_help_precedence_lines != wrapper_help_lines:
+				fail(f"{wrapper_label} {precedence_label} output mismatch with help baseline")
 		direct_unknown = subprocess.run(
 			["python3", str(ci_summary_script), *direct_args, "--not-a-real-flag"],
 			check=False,
@@ -5075,6 +5181,59 @@ def main() -> None:
 		wrapper_help_lines = assert_argparse_help_contract(f"{wrapper_label} help", wrapper_help)
 		if wrapper_help_lines != direct_help_lines:
 			fail(f"{wrapper_label} help output mismatch with direct script help baseline")
+		direct_short_help = subprocess.run(
+			["python3", str(doctor_script), *direct_args, "-h"],
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		direct_short_help_lines = assert_argparse_help_contract(f"direct {wrapper_label} short-help", direct_short_help)
+		if direct_short_help_lines != direct_help_lines:
+			fail(f"direct {wrapper_label} short-help output mismatch with long-help baseline")
+		wrapper_short_help = subprocess.run(
+			[*wrapper_command, "-h"],
+			cwd=str(root),
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		wrapper_short_help_lines = assert_argparse_help_contract(f"{wrapper_label} short-help", wrapper_short_help)
+		if wrapper_short_help_lines != wrapper_help_lines:
+			fail(f"{wrapper_label} short-help output mismatch with long-help baseline")
+		help_precedence_cases = [
+			("help-then-unknown", ["--help", "--not-a-real-flag"]),
+			("unknown-then-help", ["--not-a-real-flag", "--help"]),
+			("short-help-then-unknown", ["-h", "--not-a-real-flag"]),
+			("unknown-then-short-help", ["--not-a-real-flag", "-h"]),
+		]
+		for precedence_label, precedence_args in help_precedence_cases:
+			direct_help_precedence = subprocess.run(
+				["python3", str(doctor_script), *direct_args, *precedence_args],
+				check=False,
+				capture_output=True,
+				text=True,
+			)
+			direct_help_precedence_lines = assert_argparse_help_contract(
+				f"direct {wrapper_label} {precedence_label}",
+				direct_help_precedence,
+			)
+			if direct_help_precedence_lines != direct_help_lines:
+				fail(
+					f"direct {wrapper_label} {precedence_label} output mismatch with help baseline"
+				)
+			wrapper_help_precedence = subprocess.run(
+				[*wrapper_command, *precedence_args],
+				cwd=str(root),
+				check=False,
+				capture_output=True,
+				text=True,
+			)
+			wrapper_help_precedence_lines = assert_argparse_help_contract(
+				f"{wrapper_label} {precedence_label}",
+				wrapper_help_precedence,
+			)
+			if wrapper_help_precedence_lines != wrapper_help_lines:
+				fail(f"{wrapper_label} {precedence_label} output mismatch with help baseline")
 		direct_unknown = subprocess.run(
 			["python3", str(doctor_script), *direct_args, "--not-a-real-flag"],
 			check=False,
