@@ -54,6 +54,7 @@ PARITY_OFFLINE=1 TS_ESLINT_REF=main pnpm parity:ts-eslint
 pnpm parity:ts-eslint:check
 pnpm parity:ts-eslint:check:tooling
 pnpm parity:ts-eslint:commands
+pnpm parity:ts-eslint:doctor
 ```
 
 The checkers validate:
@@ -127,6 +128,7 @@ python3 scripts/generate_ts_eslint_parity_tracker.py
 python3 scripts/generate_ts_eslint_parity_worklist.py
 python3 scripts/generate_ts_eslint_parity_top.py
 python3 scripts/generate_ts_eslint_parity_commands.py
+python3 scripts/generate_ts_eslint_parity_doctor.py
 python3 scripts/generate_ts_eslint_parity_summary.py
 python3 scripts/generate_ts_eslint_parity_metadata.py
 python3 scripts/generate_ts_eslint_parity_manifest.py
@@ -168,6 +170,7 @@ Workflow: `.github/workflows/parity-artifacts-check.yml`
 - CI also rebuilds artifacts from metadata-pinned upstream commit and checks
   that parity artifacts remain unchanged.
 - CI writes a concise parity status block into GitHub job summary.
+- CI appends parity doctor diagnosis into GitHub job summary.
 - Issue template available:
   - `.github/ISSUE_TEMPLATE/4-ts-eslint-parity-tracking.en-US.yml`
 

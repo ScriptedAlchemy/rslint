@@ -4,18 +4,18 @@
   "files": [
     {
       "path": "typescript-eslint-rule-parity-report.md",
-      "sha256": "7ab6ffebc8e571f6251c0f97f7e4cd179a5caf04591276bc734b6fc44e181930",
-      "bytes": 40222
+      "sha256": "cf77fcd9b679d4c9ac98f5c801fd9a77cbfc9b738bb206531422a7bd21fe1be3",
+      "bytes": 40378
     },
     {
       "path": "typescript-eslint-rule-parity-guide.md",
-      "sha256": "f94faa0cd50ae792f9415ef00f5a34e7c2d3ebfb0a75a4c2242147b5770baeb0",
-      "bytes": 6403
+      "sha256": "74c580ecfc2017198eaa525ce0c9bf2ea2cbdce88c3482766608ff9669085310",
+      "bytes": 6546
     },
     {
       "path": "typescript-eslint-rule-parity-index.md",
-      "sha256": "cdcb11efd28412295536d39ab4571a2957436b047f0ffc8aeb1d16e975ddd212",
-      "bytes": 2936
+      "sha256": "26eeb50bb55a8440003fd59e4b07a367d1dad64da2606bf511fec1a1b656246a",
+      "bytes": 2965
     },
     {
       "path": "typescript-eslint-rule-parity-summary.md",
@@ -29,13 +29,13 @@
     },
     {
       "path": "typescript-eslint-rule-parity-top.md",
-      "sha256": "2556b9fadec324377638427297864f6e61094bfa003087dbdfc398e65b668822",
+      "sha256": "02649da492b4da94f76410eeb18eb7d908ed54afc642eed505f0d9620bffc8c2",
       "bytes": 2367
     },
     {
       "path": "typescript-eslint-rule-parity-commands.md",
-      "sha256": "0dbe82c2dd1613ba117155695365116b1721cb5732d1795c062d5e11a18cf4fa",
-      "bytes": 2092
+      "sha256": "28fdac4c5d473d280c0424e283e327cc7ad29f97ef5c33157e2f73f159db9e84",
+      "bytes": 2256
     },
     {
       "path": "typescript-eslint-rule-parity-issue-plan.md",
@@ -54,7 +54,7 @@
     },
     {
       "path": "typescript-eslint-rule-parity-metadata.json",
-      "sha256": "33e8aae9b88ee3830cb0aa952f133da7446ac3a1b4e4d42eb3b62c9296a8e0b3",
+      "sha256": "2f516aba77ed53f58151aa4f3c079fed861ac6f83e3126a597709e779c40cdc9",
       "bytes": 3553
     },
     {

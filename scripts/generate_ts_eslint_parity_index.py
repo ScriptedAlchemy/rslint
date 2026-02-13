@@ -80,6 +80,7 @@ def main() -> None:
 	lines.append("pnpm parity:ts-eslint:check")
 	lines.append("pnpm parity:ts-eslint:check:tooling")
 	lines.append("pnpm parity:ts-eslint:commands")
+	lines.append("pnpm parity:ts-eslint:doctor")
 	lines.append("pnpm parity:ts-eslint:diff -- --base-ref HEAD~1")
 	lines.append("pnpm parity:ts-eslint:tasklist --phase A_critical")
 	lines.append("pnpm parity:ts-eslint:tasklist:all")

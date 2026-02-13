@@ -33,6 +33,7 @@ _Generated: 2026-02-13 09:47 UTC_
   - `typescript-eslint-rule-parity-issue-body-D_low.md`
 - CI guard: `.github/workflows/parity-artifacts-check.yml`
 - CI summary renderer: `scripts/generate_ts_eslint_parity_ci_summary.py`
+- Parity diagnosis renderer: `scripts/generate_ts_eslint_parity_doctor.py`
 - PR CI uploads:
   - `typescript-eslint-parity-diff`
   - `typescript-eslint-parity-artifacts`
@@ -60,6 +61,7 @@ pnpm parity:ts-eslint
 pnpm parity:ts-eslint:check
 pnpm parity:ts-eslint:check:tooling
 pnpm parity:ts-eslint:commands
+pnpm parity:ts-eslint:doctor
 pnpm parity:ts-eslint:diff -- --base-ref HEAD~1
 pnpm parity:ts-eslint:tasklist --phase A_critical
 pnpm parity:ts-eslint:tasklist:all
@@ -81,6 +83,7 @@ python3 scripts/generate_ts_eslint_parity_tracker.py
 python3 scripts/generate_ts_eslint_parity_worklist.py
 python3 scripts/generate_ts_eslint_parity_top.py
 python3 scripts/generate_ts_eslint_parity_commands.py
+python3 scripts/generate_ts_eslint_parity_doctor.py
 python3 scripts/generate_ts_eslint_parity_summary.py
 python3 scripts/generate_ts_eslint_parity_metadata.py
 python3 scripts/generate_ts_eslint_parity_manifest.py

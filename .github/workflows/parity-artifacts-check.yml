@@ -11,6 +11,7 @@ on:
       - "scripts/rebuild_ts_eslint_parity_from_metadata.sh"
       - "scripts/check_ts_eslint_parity_artifacts.py"
       - "scripts/check_ts_eslint_parity_tooling_sync.py"
+      - "scripts/generate_ts_eslint_parity_doctor.py"
       - "scripts/generate_ts_eslint_parity_tasklists_all.sh"
       - "scripts/generate_ts_eslint_parity_issue_bodies_all.sh"
       - "scripts/refresh-ts-eslint-parity-artifacts.sh"
@@ -28,6 +29,7 @@ on:
       - "scripts/rebuild_ts_eslint_parity_from_metadata.sh"
       - "scripts/check_ts_eslint_parity_artifacts.py"
       - "scripts/check_ts_eslint_parity_tooling_sync.py"
+      - "scripts/generate_ts_eslint_parity_doctor.py"
       - "scripts/generate_ts_eslint_parity_tasklists_all.sh"
       - "scripts/generate_ts_eslint_parity_issue_bodies_all.sh"
       - "scripts/refresh-ts-eslint-parity-artifacts.sh"
@@ -71,6 +73,8 @@ jobs:
       - name: Publish parity summary to job summary
         run: |
           python3 scripts/generate_ts_eslint_parity_ci_summary.py >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          python3 scripts/generate_ts_eslint_parity_doctor.py --markdown >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload parity diff artifact
         if: github.event_name == 'pull_request'

@@ -49,6 +49,9 @@ echo "==> Validating parity artifact consistency"
 python3 scripts/check_ts_eslint_parity_artifacts.py
 python3 scripts/check_ts_eslint_parity_tooling_sync.py
 
+echo "==> Parity health diagnosis"
+python3 scripts/generate_ts_eslint_parity_doctor.py
+
 echo "==> Done"
 echo "Generated files:"
 echo "  - typescript-eslint-rule-parity-tracker.csv"

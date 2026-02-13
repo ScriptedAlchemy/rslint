@@ -512,6 +512,32 @@ def main() -> None:
 	if ci_summary["phase_counts"] != dict(phase_counter):
 		fail("ci summary phase_counts mismatch")
 
+	# Parity doctor output checks
+	try:
+		doctor_plain = subprocess.run(
+			["python3", str(root / "scripts/generate_ts_eslint_parity_doctor.py")],
+			check=True,
+			capture_output=True,
+			text=True,
+		).stdout
+		doctor_md = subprocess.run(
+			["python3", str(root / "scripts/generate_ts_eslint_parity_doctor.py"), "--markdown"],
+			check=True,
+			capture_output=True,
+			text=True,
+		).stdout
+	except subprocess.CalledProcessError as err:
+		fail(f"parity doctor script failed: {err}")
+
+	if "Parity Doctor" not in doctor_plain:
+		fail("parity doctor plain output missing title")
+	if "Total rules" not in doctor_plain:
+		fail("parity doctor plain output missing total rules")
+	if "### Parity Doctor" not in doctor_md:
+		fail("parity doctor markdown output missing heading")
+	if f"**{summary.get('total_rules')}**" not in doctor_md:
+		fail("parity doctor markdown output missing total rules value")
+
 	print("[parity-check] OK: all parity artifacts are consistent.")
 
 
