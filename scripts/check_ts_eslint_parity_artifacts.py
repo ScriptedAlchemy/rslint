@@ -346,6 +346,10 @@ def extract_prefixed_lines(text: str, prefixes: tuple[str, ...]) -> list[str]:
 	return [line.strip() for line in text.splitlines() if any(line.strip().startswith(prefix) for prefix in prefixes)]
 
 
+def extract_nonempty_lines(text: str) -> list[str]:
+	return [line.strip() for line in text.splitlines() if line.strip()]
+
+
 def assert_no_pnpm_lifecycle_noise(label: str, text: str) -> None:
 	if "rslint-monorepo@" in text:
 		fail(f"{label} contains pnpm lifecycle banner output; expected --silent wrapper output")
@@ -354,7 +358,7 @@ def assert_no_pnpm_lifecycle_noise(label: str, text: str) -> None:
 
 
 def assert_exact_nonempty_lines(label: str, text: str, expected_lines: list[str]) -> None:
-	actual_lines = [line.strip() for line in text.splitlines() if line.strip()]
+	actual_lines = extract_nonempty_lines(text)
 	if actual_lines != expected_lines:
 		fail(f"{label} line mismatch: expected={expected_lines} actual={actual_lines}")
 
@@ -587,6 +591,8 @@ def main() -> None:
 		fail("status strict-yellow stderr missing parity-status error prefix")
 	if expected_status_strict_yellow_exit == 3 and expected_health_reason_marker not in status_strict_yellow.stderr:
 		fail("status strict-yellow stderr missing health+reason message")
+	status_strict_stderr_lines = extract_nonempty_lines(status_strict.stderr)
+	status_strict_yellow_stderr_lines = extract_nonempty_lines(status_strict_yellow.stderr)
 	status_strict_lines = extract_status_write_lines(status_strict.stdout + status_strict.stderr)
 	status_strict_yellow_lines = extract_status_write_lines(status_strict_yellow.stdout + status_strict_yellow.stderr)
 	if not status_strict_lines:
@@ -630,6 +636,7 @@ def main() -> None:
 		fail("status command strict stderr missing parity-status error prefix")
 	if expected_status_strict_exit == 2 and expected_health_reason_marker not in status_cmd_strict.stderr:
 		fail("status command strict stderr missing health+reason message")
+	assert_exact_nonempty_lines("status command strict stderr", status_cmd_strict.stderr, status_strict_stderr_lines)
 	status_strict_prefixed_lines = extract_prefixed_lines(status_strict.stdout + status_strict.stderr, ("[parity-status]",))
 	status_strict_yellow_prefixed_lines = extract_prefixed_lines(
 		status_strict_yellow.stdout + status_strict_yellow.stderr, ("[parity-status]",)
@@ -669,6 +676,11 @@ def main() -> None:
 		fail("status command strict-yellow stderr missing parity-status error prefix")
 	if expected_status_strict_yellow_exit == 3 and expected_health_reason_marker not in status_cmd_strict_yellow.stderr:
 		fail("status command strict-yellow stderr missing health+reason message")
+	assert_exact_nonempty_lines(
+		"status command strict-yellow stderr",
+		status_cmd_strict_yellow.stderr,
+		status_strict_yellow_stderr_lines,
+	)
 	status_cmd_strict_yellow_prefixed_lines = extract_prefixed_lines(
 		status_cmd_strict_yellow.stdout + status_cmd_strict_yellow.stderr, ("[parity-status]",)
 	)
@@ -722,6 +734,8 @@ def main() -> None:
 		fail("parity gate yellow stderr missing health+reason message")
 	if expected_gate_yellow_exit == 0 and "[parity-gate] OK: parity gate passed (threshold=yellow)." not in (gate_yellow.stdout + gate_yellow.stderr):
 		fail("parity gate yellow success output missing final OK message")
+	gate_red_lines = extract_nonempty_lines(gate_red.stdout + gate_red.stderr)
+	gate_yellow_lines = extract_nonempty_lines(gate_yellow.stdout + gate_yellow.stderr)
 	gate_red_prefixed_lines = extract_prefixed_lines(
 		gate_red.stdout + gate_red.stderr,
 		("[parity-gate]", "[parity-status]", "[parity-doctor]"),
@@ -924,6 +938,7 @@ def main() -> None:
 		fail("parity gate inline red success output missing final OK message")
 	if "[parity-gate] Running strict clean parity checks" in (gate_inline_red.stdout + gate_inline_red.stderr):
 		fail("parity gate inline red should not run strict clean checks in --skip-checks mode")
+	assert_exact_nonempty_lines("parity gate inline red combined output", gate_inline_red.stdout + gate_inline_red.stderr, gate_red_lines)
 	gate_inline_red_prefixed_lines = extract_prefixed_lines(
 		gate_inline_red.stdout + gate_inline_red.stderr,
 		("[parity-gate]", "[parity-status]", "[parity-doctor]"),
@@ -950,6 +965,11 @@ def main() -> None:
 		fail("parity gate inline yellow success output missing final OK message")
 	if "[parity-gate] Running strict clean parity checks" in (gate_inline_yellow.stdout + gate_inline_yellow.stderr):
 		fail("parity gate inline yellow should not run strict clean checks in --skip-checks mode")
+	assert_exact_nonempty_lines(
+		"parity gate inline yellow combined output",
+		gate_inline_yellow.stdout + gate_inline_yellow.stderr,
+		gate_yellow_lines,
+	)
 	gate_inline_yellow_prefixed_lines = extract_prefixed_lines(
 		gate_inline_yellow.stdout + gate_inline_yellow.stderr,
 		("[parity-gate]", "[parity-status]", "[parity-doctor]"),
@@ -978,6 +998,11 @@ def main() -> None:
 		fail("parity gate skip-only default-red success output missing final OK message")
 	if "[parity-gate] Running strict clean parity checks" in (gate_skip_only_default_red.stdout + gate_skip_only_default_red.stderr):
 		fail("parity gate skip-only default-red should not run strict clean checks in --skip-checks mode")
+	assert_exact_nonempty_lines(
+		"parity gate skip-only default-red combined output",
+		gate_skip_only_default_red.stdout + gate_skip_only_default_red.stderr,
+		gate_red_lines,
+	)
 	gate_skip_only_default_red_prefixed_lines = extract_prefixed_lines(
 		gate_skip_only_default_red.stdout + gate_skip_only_default_red.stderr,
 		("[parity-gate]", "[parity-status]", "[parity-doctor]"),
@@ -1006,6 +1031,11 @@ def main() -> None:
 		fail("parity gate reordered-flags yellow success output missing final OK message")
 	if "[parity-gate] Running strict clean parity checks" in (gate_reordered_flags.stdout + gate_reordered_flags.stderr):
 		fail("parity gate reordered-flags should not run strict clean checks in --skip-checks mode")
+	assert_exact_nonempty_lines(
+		"parity gate reordered-flags combined output",
+		gate_reordered_flags.stdout + gate_reordered_flags.stderr,
+		gate_yellow_lines,
+	)
 	gate_reordered_flags_prefixed_lines = extract_prefixed_lines(
 		gate_reordered_flags.stdout + gate_reordered_flags.stderr,
 		("[parity-gate]", "[parity-status]", "[parity-doctor]"),
@@ -1072,6 +1102,7 @@ def main() -> None:
 		fail("parity gate quick stderr missing health+reason message")
 	if expected_gate_red_exit == 0 and "[parity-gate] OK: parity gate passed (threshold=red)." not in (gate_quick.stdout + gate_quick.stderr):
 		fail("parity gate quick success output missing final OK message")
+	assert_exact_nonempty_lines("parity gate quick combined output", gate_quick.stdout + gate_quick.stderr, gate_red_lines)
 	gate_quick_prefixed_lines = extract_prefixed_lines(
 		gate_quick.stdout + gate_quick.stderr,
 		("[parity-gate]", "[parity-status]", "[parity-doctor]"),
@@ -1105,6 +1136,7 @@ def main() -> None:
 		gate_quick_red.stdout + gate_quick_red.stderr
 	):
 		fail("parity gate quick:red success output missing final OK message")
+	assert_exact_nonempty_lines("parity gate quick:red combined output", gate_quick_red.stdout + gate_quick_red.stderr, gate_red_lines)
 	gate_quick_red_prefixed_lines = extract_prefixed_lines(
 		gate_quick_red.stdout + gate_quick_red.stderr,
 		("[parity-gate]", "[parity-status]", "[parity-doctor]"),
@@ -1142,6 +1174,11 @@ def main() -> None:
 		gate_quick_yellow.stdout + gate_quick_yellow.stderr
 	):
 		fail("parity gate quick:yellow success output missing final OK message")
+	assert_exact_nonempty_lines(
+		"parity gate quick:yellow combined output",
+		gate_quick_yellow.stdout + gate_quick_yellow.stderr,
+		gate_yellow_lines,
+	)
 	gate_quick_yellow_prefixed_lines = extract_prefixed_lines(
 		gate_quick_yellow.stdout + gate_quick_yellow.stderr,
 		("[parity-gate]", "[parity-status]", "[parity-doctor]"),
@@ -1544,6 +1581,8 @@ def main() -> None:
 		fail("ci summary strict-yellow stderr missing parity-ci-summary error prefix")
 	if expected_ci_summary_strict_yellow_exit == 3 and expected_health_reason_marker not in ci_summary_strict_yellow.stderr:
 		fail("ci summary strict-yellow stderr missing health+reason message")
+	ci_summary_strict_stderr_lines = extract_nonempty_lines(ci_summary_strict.stderr)
+	ci_summary_strict_yellow_stderr_lines = extract_nonempty_lines(ci_summary_strict_yellow.stderr)
 
 	# CI summary npm command wrapper checks
 	ci_summary_cmd_strict = subprocess.run(
@@ -1570,6 +1609,7 @@ def main() -> None:
 		fail("ci summary command strict stderr missing parity-ci-summary error prefix")
 	if expected_ci_summary_strict_exit == 2 and expected_health_reason_marker not in ci_summary_cmd_strict.stderr:
 		fail("ci summary command strict stderr missing health+reason message")
+	assert_exact_nonempty_lines("ci summary command strict stderr", ci_summary_cmd_strict.stderr, ci_summary_strict_stderr_lines)
 	ci_summary_strict_prefixed_lines = extract_prefixed_lines(
 		ci_summary_strict.stdout + ci_summary_strict.stderr, ("[parity-ci-summary]",)
 	)
@@ -1603,6 +1643,11 @@ def main() -> None:
 		fail("ci summary command strict-yellow stderr missing parity-ci-summary error prefix")
 	if expected_ci_summary_strict_yellow_exit == 3 and expected_health_reason_marker not in ci_summary_cmd_strict_yellow.stderr:
 		fail("ci summary command strict-yellow stderr missing health+reason message")
+	assert_exact_nonempty_lines(
+		"ci summary command strict-yellow stderr",
+		ci_summary_cmd_strict_yellow.stderr,
+		ci_summary_strict_yellow_stderr_lines,
+	)
 	ci_summary_strict_yellow_prefixed_lines = extract_prefixed_lines(
 		ci_summary_strict_yellow.stdout + ci_summary_strict_yellow.stderr, ("[parity-ci-summary]",)
 	)
@@ -1818,6 +1863,10 @@ def main() -> None:
 		fail("parity doctor strict-yellow stderr missing health+reason message")
 	if expected_yellow_strict_exit == 3 and expected_health_reason_marker not in doctor_json_yellow_strict.stderr:
 		fail("parity doctor json strict-yellow stderr missing health+reason message")
+	doctor_strict_stderr_lines = extract_nonempty_lines(doctor_strict.stderr)
+	doctor_yellow_strict_stderr_lines = extract_nonempty_lines(doctor_yellow_strict.stderr)
+	doctor_json_strict_stderr_lines = extract_nonempty_lines(doctor_json_strict.stderr)
+	doctor_json_yellow_strict_stderr_lines = extract_nonempty_lines(doctor_json_yellow_strict.stderr)
 
 	# Doctor npm command wrapper checks
 	doctor_cmd_strict = subprocess.run(
@@ -1843,6 +1892,7 @@ def main() -> None:
 		fail("parity doctor command strict stderr missing parity-doctor error prefix")
 	if expected_strict_exit == 2 and "A_critical backlog is non-zero" not in doctor_cmd_strict.stderr:
 		fail("parity doctor command strict stderr missing critical backlog message")
+	assert_exact_nonempty_lines("parity doctor command strict stderr", doctor_cmd_strict.stderr, doctor_strict_stderr_lines)
 	doctor_strict_prefixed_lines = extract_prefixed_lines(doctor_strict.stdout + doctor_strict.stderr, ("[parity-doctor]",))
 	doctor_cmd_strict_prefixed_lines = extract_prefixed_lines(
 		doctor_cmd_strict.stdout + doctor_cmd_strict.stderr, ("[parity-doctor]",)
@@ -1873,6 +1923,11 @@ def main() -> None:
 		fail("parity doctor command strict-yellow stderr missing parity-doctor error prefix")
 	if expected_yellow_strict_exit == 3 and expected_health_reason_marker not in doctor_cmd_strict_yellow.stderr:
 		fail("parity doctor command strict-yellow stderr missing health+reason message")
+	assert_exact_nonempty_lines(
+		"parity doctor command strict-yellow stderr",
+		doctor_cmd_strict_yellow.stderr,
+		doctor_yellow_strict_stderr_lines,
+	)
 	doctor_yellow_strict_prefixed_lines = extract_prefixed_lines(
 		doctor_yellow_strict.stdout + doctor_yellow_strict.stderr, ("[parity-doctor]",)
 	)
@@ -1905,6 +1960,11 @@ def main() -> None:
 		fail("parity doctor command json strict stderr missing parity-doctor error prefix")
 	if expected_strict_exit == 2 and "A_critical backlog is non-zero" not in doctor_cmd_json_strict.stderr:
 		fail("parity doctor command json strict stderr missing critical backlog message")
+	assert_exact_nonempty_lines(
+		"parity doctor command json strict stderr",
+		doctor_cmd_json_strict.stderr,
+		doctor_json_strict_stderr_lines,
+	)
 	doctor_json_strict_prefixed_lines = extract_prefixed_lines(
 		doctor_json_strict.stdout + doctor_json_strict.stderr, ("[parity-doctor]",)
 	)
@@ -1937,6 +1997,11 @@ def main() -> None:
 		fail("parity doctor command json strict-yellow stderr missing parity-doctor error prefix")
 	if expected_yellow_strict_exit == 3 and expected_health_reason_marker not in doctor_cmd_json_strict_yellow.stderr:
 		fail("parity doctor command json strict-yellow stderr missing health+reason message")
+	assert_exact_nonempty_lines(
+		"parity doctor command json strict-yellow stderr",
+		doctor_cmd_json_strict_yellow.stderr,
+		doctor_json_yellow_strict_stderr_lines,
+	)
 	doctor_json_yellow_strict_prefixed_lines = extract_prefixed_lines(
 		doctor_json_yellow_strict.stdout + doctor_json_yellow_strict.stderr, ("[parity-doctor]",)
 	)
