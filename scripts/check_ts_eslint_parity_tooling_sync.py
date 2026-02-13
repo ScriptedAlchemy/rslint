@@ -28,6 +28,8 @@ def main() -> None:
 	report_md = root / "typescript-eslint-rule-parity-report.md"
 	index_md = root / "typescript-eslint-rule-parity-index.md"
 	commands_md = root / "typescript-eslint-rule-parity-commands.md"
+	readme_md = root / "README.md"
+	contributing_md = root / "CONTRIBUTING.md"
 	workflow_yml = root / ".github/workflows/parity-artifacts-check.yml"
 
 	pkg = json.loads(package_json.read_text())
@@ -115,6 +117,36 @@ def main() -> None:
 		for doc_name, text in documents.items():
 			if invalid in text:
 				fail(f"invalid parity command example `{invalid}` found in {doc_name} documentation")
+
+	# Ensure contributor-facing docs mention essential parity commands
+	readme_text = readme_md.read_text() if readme_md.exists() else ""
+	contributing_text = contributing_md.read_text() if contributing_md.exists() else ""
+	if not readme_text:
+		fail("missing or empty README.md")
+	if not contributing_text:
+		fail("missing or empty CONTRIBUTING.md")
+
+	required_readme_tokens = [
+		"TypeScript-ESLint parity toolkit",
+		"typescript-eslint-rule-parity-guide.md",
+		"pnpm parity:ts-eslint",
+		"pnpm parity:ts-eslint:check:all",
+		"pnpm parity:ts-eslint:check:strict",
+	]
+	for token in required_readme_tokens:
+		if token not in readme_text:
+			fail(f"`{token}` missing in README parity section")
+
+	required_contributing_tokens = [
+		"Maintain TypeScript-ESLint parity artifacts",
+		"typescript-eslint-rule-parity-guide.md",
+		"pnpm parity:ts-eslint",
+		"pnpm parity:ts-eslint:check:all",
+		"pnpm parity:ts-eslint:check:strict",
+	]
+	for token in required_contributing_tokens:
+		if token not in contributing_text:
+			fail(f"`{token}` missing in CONTRIBUTING parity section")
 
 	commands_text = commands_md.read_text() if commands_md.exists() else ""
 	if not commands_text:

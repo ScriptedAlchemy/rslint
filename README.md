@@ -51,9 +51,17 @@ For maintainers tracking parity with upstream `typescript-eslint`, use:
 Quick commands:
 
 ```bash
+# Refresh upstream reference + regenerate all parity artifacts
 pnpm parity:ts-eslint
-pnpm parity:ts-eslint:check
+
+# Run all consistency checks (and verify-clean when artifacts are clean)
+pnpm parity:ts-eslint:check:all
+
+# Strict gate: all checks + fail if critical parity backlog remains
+pnpm parity:ts-eslint:check:strict
 ```
+
+See `typescript-eslint-rule-parity-commands.md` for the full command reference.
 
 ## 🦀 Rstack
 
