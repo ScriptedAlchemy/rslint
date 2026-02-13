@@ -593,17 +593,14 @@ def assert_wrapper_argparse_forwarding_contracts(
 				fail(f"{wrapper_label} {precedence_label} output mismatch with help baseline")
 
 		unknown_variant_cases = [
-			("unknown-at-end", [*direct_args, "--not-a-real-flag"]),
-			("unknown-at-start", ["--not-a-real-flag", *direct_args]),
-			("duplicate-unknown-at-end", [*direct_args, "--not-a-real-flag", "--not-a-real-flag"]),
-			(
-				"unknown-sandwich",
-				["--not-a-real-flag", *direct_args, "--still-not-a-real-flag"],
-			),
+			("single-unknown", ["--not-a-real-flag"]),
+			("duplicate-unknown-same-token", ["--not-a-real-flag", "--not-a-real-flag"]),
+			("duplicate-unknown-distinct-tokens", ["--not-a-real-flag", "--still-not-a-real-flag"]),
+			("duplicate-unknown-distinct-reordered", ["--still-not-a-real-flag", "--not-a-real-flag"]),
 		]
-		for unknown_label, unknown_args in unknown_variant_cases:
+		for unknown_label, unknown_forwarded_args in unknown_variant_cases:
 			direct_unknown = subprocess.run(
-				["python3", str(script_path), *unknown_args],
+				["python3", str(script_path), *direct_args, *unknown_forwarded_args],
 				check=False,
 				capture_output=True,
 				text=True,
@@ -618,7 +615,7 @@ def assert_wrapper_argparse_forwarding_contracts(
 				direct_unknown_error_line,
 			)
 			wrapper_unknown = subprocess.run(
-				[*wrapper_command, *unknown_args],
+				[*wrapper_command, *unknown_forwarded_args],
 				cwd=str(root),
 				check=False,
 				capture_output=True,
