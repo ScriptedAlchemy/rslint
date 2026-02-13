@@ -556,6 +556,9 @@ def main() -> None:
 		fail("status command strict stderr missing parity-status error prefix")
 	if expected_status_strict_exit == 2 and expected_health_reason_marker not in status_cmd_strict.stderr:
 		fail("status command strict stderr missing health+reason message")
+	status_after_cmd_strict = json.loads(status_json.read_text())
+	if status_after_cmd_strict != status:
+		fail("status command strict mutated status artifact unexpectedly")
 
 	status_cmd_strict_yellow = subprocess.run(
 		["pnpm", "parity:ts-eslint:status:strict:yellow"],
@@ -575,6 +578,9 @@ def main() -> None:
 		fail("status command strict-yellow stderr missing parity-status error prefix")
 	if expected_status_strict_yellow_exit == 3 and expected_health_reason_marker not in status_cmd_strict_yellow.stderr:
 		fail("status command strict-yellow stderr missing health+reason message")
+	status_after_cmd_strict_yellow = json.loads(status_json.read_text())
+	if status_after_cmd_strict_yellow != status:
+		fail("status command strict-yellow mutated status artifact unexpectedly")
 
 	# Unified gate script exit-code checks (skip clean-check phase to avoid recursion)
 	gate_red = subprocess.run(
