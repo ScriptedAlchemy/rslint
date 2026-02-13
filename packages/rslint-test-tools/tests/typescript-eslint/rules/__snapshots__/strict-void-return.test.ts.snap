@@ -1,0 +1,120 @@
+// Rstest Snapshot v1
+
+exports[`strict-void-return > invalid 1`] = `
+{
+  "code": "
+declare function takesVoid(cb: () => void): void;
+takesVoid(() => 1);
+      ",
+  "diagnostics": [
+    {
+      "message": "Value returned in a context where a void return is expected.",
+      "messageId": "nonVoidReturn",
+      "range": {
+        "end": {
+          "column": 18,
+          "line": 3,
+        },
+        "start": {
+          "column": 17,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/strict-void-return",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`strict-void-return > invalid 2`] = `
+{
+  "code": "
+declare function takesVoid(cb: () => void): void;
+takesVoid(async () => {});
+      ",
+  "diagnostics": [
+    {
+      "message": "Async function used in a context where a void function is expected.",
+      "messageId": "asyncFunc",
+      "range": {
+        "end": {
+          "column": 25,
+          "line": 3,
+        },
+        "start": {
+          "column": 11,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/strict-void-return",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`strict-void-return > invalid 3`] = `
+{
+  "code": "
+declare function takesVoid(cb: () => void): void;
+const cb = () => 1;
+takesVoid(cb);
+      ",
+  "diagnostics": [
+    {
+      "message": "Value-returning function used in a context where a void function is expected.",
+      "messageId": "nonVoidFunc",
+      "range": {
+        "end": {
+          "column": 13,
+          "line": 4,
+        },
+        "start": {
+          "column": 11,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/strict-void-return",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`strict-void-return > invalid 4`] = `
+{
+  "code": "
+type VoidFn = () => void;
+const cb: VoidFn = () => {
+  return 1;
+};
+      ",
+  "diagnostics": [
+    {
+      "message": "Value returned in a context where a void return is expected.",
+      "messageId": "nonVoidReturn",
+      "range": {
+        "end": {
+          "column": 12,
+          "line": 4,
+        },
+        "start": {
+          "column": 3,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/strict-void-return",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;

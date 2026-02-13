@@ -241,51 +241,6 @@ func parseOptionsWithDefault(options any, baseDefault memberOrderingConfig) memb
 	return parsed
 }
 
-func applyAliasDefaults(opts *memberOrderingOptions, ruleName string) {
-	if opts == nil {
-		return
-	}
-	switch ruleName {
-	case "member-ordering-alphabetically-order":
-		applyClassAliasOrderDefault(opts, "alphabetically")
-	case "member-ordering-alphabetically-case-insensitive-order":
-		applyClassAliasOrderDefault(opts, "alphabetically-case-insensitive")
-	case "member-ordering-natural-order":
-		applyClassAliasOrderDefault(opts, "natural")
-	case "member-ordering-natural-case-insensitive-order":
-		applyClassAliasOrderDefault(opts, "natural-case-insensitive")
-	case "member-ordering-required":
-		if opts.defaultConfig.optionalityOrder == "" {
-			opts.defaultConfig.optionalityOrder = "required-first"
-		}
-	}
-}
-
-func hasUserConfiguredOptions(options any) bool {
-	if options == nil {
-		return false
-	}
-	switch value := options.(type) {
-	case []interface{}:
-		return len(value) > 0
-	case map[string]interface{}:
-		return true
-	default:
-		return true
-	}
-}
-
-func applyClassAliasOrderDefault(opts *memberOrderingOptions, order string) {
-	if opts == nil {
-		return
-	}
-	if opts.classesConfig == nil {
-		cfg := opts.defaultConfig
-		cfg.order = order
-		opts.classesConfig = &cfg
-	}
-}
-
 func parseMemberOrderingConfigRaw(raw interface{}, base memberOrderingConfig) memberOrderingConfig {
 	switch value := raw.(type) {
 	case map[string]interface{}:
@@ -1068,9 +1023,6 @@ func createMemberOrderingRule(ruleName string) rule.Rule {
 		Name: ruleName,
 		Run: func(ctx rule.RuleContext, options any) rule.RuleListeners {
 			opts := parseOptions(options)
-			if !hasUserConfiguredOptions(options) {
-				applyAliasDefaults(&opts, ruleName)
-			}
 			return rule.RuleListeners{
 				ast.KindClassDeclaration: func(node *ast.Node) {
 					checkMemberOrderingNode(ctx, node, opts)
@@ -1090,8 +1042,3 @@ func createMemberOrderingRule(ruleName string) rule.Rule {
 }
 
 var MemberOrderingRule = createMemberOrderingRule("member-ordering")
-var MemberOrderingAlphabeticallyOrderAliasRule = createMemberOrderingRule("member-ordering-alphabetically-order")
-var MemberOrderingAlphabeticallyCaseInsensitiveOrderAliasRule = createMemberOrderingRule("member-ordering-alphabetically-case-insensitive-order")
-var MemberOrderingNaturalOrderAliasRule = createMemberOrderingRule("member-ordering-natural-order")
-var MemberOrderingNaturalCaseInsensitiveOrderAliasRule = createMemberOrderingRule("member-ordering-natural-case-insensitive-order")
-var MemberOrderingRequiredAliasRule = createMemberOrderingRule("member-ordering-required")
