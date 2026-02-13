@@ -779,6 +779,8 @@ def main() -> None:
 		)
 	if "[parity-gate] Skipping strict clean parity checks (--skip-checks)." not in (gate_quick.stdout + gate_quick.stderr):
 		fail("parity gate quick output missing skip-checks message")
+	if "[parity-gate] Applying red threshold gates" not in (gate_quick.stdout + gate_quick.stderr):
+		fail("parity gate quick output missing red-threshold marker")
 	if expected_gate_red_exit == 2 and "health is red" not in gate_quick.stderr:
 		fail("parity gate quick stderr missing red-health message")
 
@@ -796,6 +798,8 @@ def main() -> None:
 		)
 	if "[parity-gate] Skipping strict clean parity checks (--skip-checks)." not in (gate_quick_red.stdout + gate_quick_red.stderr):
 		fail("parity gate quick:red output missing skip-checks message")
+	if "[parity-gate] Applying red threshold gates" not in (gate_quick_red.stdout + gate_quick_red.stderr):
+		fail("parity gate quick:red output missing red-threshold marker")
 	if expected_gate_red_exit == 2 and "health is red" not in gate_quick_red.stderr:
 		fail("parity gate quick:red stderr missing red-health message")
 
@@ -813,6 +817,8 @@ def main() -> None:
 		)
 	if "[parity-gate] Skipping strict clean parity checks (--skip-checks)." not in (gate_quick_yellow.stdout + gate_quick_yellow.stderr):
 		fail("parity gate quick:yellow output missing skip-checks message")
+	if "[parity-gate] Applying yellow threshold gates" not in (gate_quick_yellow.stdout + gate_quick_yellow.stderr):
+		fail("parity gate quick:yellow output missing yellow-threshold marker")
 	if expected_gate_yellow_exit == 3 and "health is" not in gate_quick_yellow.stderr:
 		fail("parity gate quick:yellow stderr missing health message")
 
