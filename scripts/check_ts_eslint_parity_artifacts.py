@@ -582,6 +582,31 @@ def main() -> None:
 	if "--threshold requires a value" not in gate_missing_threshold_value.stderr:
 		fail("parity gate missing-threshold-value stderr missing message")
 
+	gate_missing_inline_threshold_value = subprocess.run(
+		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--threshold=", "--skip-checks"],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if gate_missing_inline_threshold_value.returncode != 1:
+		fail("parity gate missing-inline-threshold-value exit code must be 1")
+	if "--threshold requires a value" not in gate_missing_inline_threshold_value.stderr:
+		fail("parity gate missing-inline-threshold-value stderr missing message")
+
+	gate_inline_red = subprocess.run(
+		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--threshold=red", "--skip-checks"],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if gate_inline_red.returncode != expected_gate_red_exit:
+		fail(
+			"parity gate inline red exit-code mismatch: "
+			f"expected={expected_gate_red_exit} actual={gate_inline_red.returncode}"
+		)
+	if expected_gate_red_exit == 2 and "health is red" not in gate_inline_red.stderr:
+		fail("parity gate inline red stderr missing red-health message")
+
 	gate_unknown_arg = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--not-a-real-flag"],
 		check=False,
