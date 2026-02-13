@@ -81,12 +81,12 @@ func defaultConfig() memberOrderingConfig {
 			{"protected-instance-field"},
 			{"private-instance-field"},
 			{"#private-instance-field"},
-			{"public-abstract-field"},
-			{"protected-abstract-field"},
 			{"public-field"},
 			{"protected-field"},
 			{"private-field"},
 			{"#private-field"},
+			{"public-abstract-field"},
+			{"protected-abstract-field"},
 			{"static-field"},
 			{"instance-field"},
 			{"abstract-field"},
@@ -108,12 +108,12 @@ func defaultConfig() memberOrderingConfig {
 			{"protected-instance-accessor"},
 			{"private-instance-accessor"},
 			{"#private-instance-accessor"},
-			{"public-abstract-accessor"},
-			{"protected-abstract-accessor"},
 			{"public-accessor"},
 			{"protected-accessor"},
 			{"private-accessor"},
 			{"#private-accessor"},
+			{"public-abstract-accessor"},
+			{"protected-abstract-accessor"},
 			{"static-accessor"},
 			{"instance-accessor"},
 			{"abstract-accessor"},
@@ -130,12 +130,12 @@ func defaultConfig() memberOrderingConfig {
 			{"protected-instance-get"},
 			{"private-instance-get"},
 			{"#private-instance-get"},
-			{"public-abstract-get"},
-			{"protected-abstract-get"},
 			{"public-get"},
 			{"protected-get"},
 			{"private-get"},
 			{"#private-get"},
+			{"public-abstract-get"},
+			{"protected-abstract-get"},
 			{"static-get"},
 			{"instance-get"},
 			{"abstract-get"},
@@ -152,12 +152,12 @@ func defaultConfig() memberOrderingConfig {
 			{"protected-instance-set"},
 			{"private-instance-set"},
 			{"#private-instance-set"},
-			{"public-abstract-set"},
-			{"protected-abstract-set"},
 			{"public-set"},
 			{"protected-set"},
 			{"private-set"},
 			{"#private-set"},
+			{"public-abstract-set"},
+			{"protected-abstract-set"},
 			{"static-set"},
 			{"instance-set"},
 			{"abstract-set"},
@@ -174,12 +174,12 @@ func defaultConfig() memberOrderingConfig {
 			{"protected-instance-method"},
 			{"private-instance-method"},
 			{"#private-instance-method"},
-			{"public-abstract-method"},
-			{"protected-abstract-method"},
 			{"public-method"},
 			{"protected-method"},
 			{"private-method"},
 			{"#private-method"},
+			{"public-abstract-method"},
+			{"protected-abstract-method"},
 			{"static-method"},
 			{"instance-method"},
 			{"abstract-method"},
@@ -332,8 +332,11 @@ func collectMembers(ctx rule.RuleContext, container *ast.Node, cfg memberOrderin
 	}
 
 	collected := make([]memberInfo, 0, len(members))
-	for _, member := range members {
+	for index, member := range members {
 		if member == nil {
+			continue
+		}
+		if shouldSkipOverloadSignature(ctx, members, index, member) {
 			continue
 		}
 		info := buildMemberInfo(ctx, member)
@@ -341,6 +344,41 @@ func collectMembers(ctx rule.RuleContext, container *ast.Node, cfg memberOrderin
 		collected = append(collected, info)
 	}
 	return collected
+}
+
+func shouldSkipOverloadSignature(ctx rule.RuleContext, members []*ast.Node, index int, member *ast.Node) bool {
+	if member == nil || member.Kind != ast.KindMethodDeclaration {
+		return false
+	}
+	methodDeclaration := member.AsMethodDeclaration()
+	if methodDeclaration == nil || methodDeclaration.Body != nil {
+		return false
+	}
+	name := normalizeMemberNameForSorting(memberName(ctx, member))
+	if name == "" {
+		return false
+	}
+	for i := index + 1; i < len(members); i++ {
+		next := members[i]
+		if next == nil {
+			continue
+		}
+		if next.Kind != ast.KindMethodDeclaration {
+			break
+		}
+		nextMethodDeclaration := next.AsMethodDeclaration()
+		if nextMethodDeclaration == nil {
+			continue
+		}
+		nextName := normalizeMemberNameForSorting(memberName(ctx, next))
+		if nextName != name {
+			continue
+		}
+		if nextMethodDeclaration.Body != nil {
+			return true
+		}
+	}
+	return false
 }
 
 func membersForContainer(container *ast.Node) []*ast.Node {
@@ -377,10 +415,10 @@ func buildMemberInfo(ctx rule.RuleContext, node *ast.Node) memberInfo {
 		node:          node,
 		name:          memberName(ctx, node),
 		optional:      isOptionalMember(node),
-		isStatic:      ast.HasSyntacticModifier(node, ast.ModifierFlagsStatic),
-		isAbstract:    ast.HasSyntacticModifier(node, ast.ModifierFlagsAbstract),
-		isReadonly:    ast.HasSyntacticModifier(node, ast.ModifierFlagsReadonly),
-		isDecorated:   utils.IncludesModifier(node, ast.KindDecorator),
+		isStatic:      ast.HasSyntacticModifier(node, ast.ModifierFlagsStatic) || utils.IncludesModifier(node, ast.KindStaticKeyword),
+		isAbstract:    ast.HasSyntacticModifier(node, ast.ModifierFlagsAbstract) || utils.IncludesModifier(node, ast.KindAbstractKeyword) || strings.HasPrefix(strings.TrimSpace(memberNodeText(ctx.SourceFile, node)), "abstract "),
+		isReadonly:    ast.HasSyntacticModifier(node, ast.ModifierFlagsReadonly) || utils.IncludesModifier(node, ast.KindReadonlyKeyword) || strings.HasPrefix(strings.TrimSpace(memberNodeText(ctx.SourceFile, node)), "readonly "),
+		isDecorated:   utils.IncludesModifier(node, ast.KindDecorator) || strings.HasPrefix(strings.TrimSpace(memberNodeText(ctx.SourceFile, node)), "@"),
 		isPrivateName: node.Name() != nil && node.Name().Kind == ast.KindPrivateIdentifier,
 		accessibility: memberAccessibility(node),
 		kind:          memberKind(node),
@@ -390,6 +428,20 @@ func buildMemberInfo(ctx rule.RuleContext, node *ast.Node) memberInfo {
 	}
 	info.nameKey = normalizeMemberNameForSorting(info.name)
 	return info
+}
+
+func memberNodeText(sourceFile *ast.SourceFile, node *ast.Node) string {
+	if sourceFile == nil || node == nil {
+		return ""
+	}
+	text := sourceFile.Text()
+	nodeRange := utils.TrimNodeTextRange(sourceFile, node)
+	start := nodeRange.Pos()
+	end := nodeRange.End()
+	if start < 0 || end > len(text) || start > end {
+		return ""
+	}
+	return text[start:end]
 }
 
 func normalizeMemberNameForSorting(name string) string {
@@ -515,14 +567,55 @@ func memberGroupIndex(member memberInfo, cfg memberOrderingConfig) int {
 	if cfg.memberTypesNever || len(cfg.memberTypes) == 0 {
 		return 0
 	}
+	hasAbstractSpecific := member.isAbstract && hasExplicitModifierGroupForMember(member, cfg, "abstract")
+	hasDecoratedSpecific := member.isDecorated && hasExplicitModifierGroupForMember(member, cfg, "decorated")
+	hasReadonlySpecific := member.isReadonly && hasExplicitModifierGroupForMember(member, cfg, "readonly")
 	for index, group := range cfg.memberTypes {
 		for _, token := range group {
+			if hasAbstractSpecific && !tokenHasModifier(token, "abstract") {
+				continue
+			}
+			if hasDecoratedSpecific && !tokenHasModifier(token, "decorated") {
+				continue
+			}
+			if hasReadonlySpecific && !tokenHasModifier(token, "readonly") {
+				continue
+			}
 			if memberMatchesGroup(member, token) {
 				return index
 			}
 		}
 	}
 	return len(cfg.memberTypes)
+}
+
+func hasExplicitModifierGroupForMember(member memberInfo, cfg memberOrderingConfig, modifier string) bool {
+	for _, group := range cfg.memberTypes {
+		for _, token := range group {
+			if !tokenHasModifier(token, modifier) {
+				continue
+			}
+			if memberMatchesGroup(member, token) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func tokenHasModifier(token string, modifier string) bool {
+	if token == "" || modifier == "" {
+		return false
+	}
+	if token == modifier {
+		return true
+	}
+	for _, part := range strings.Split(token, "-") {
+		if part == modifier {
+			return true
+		}
+	}
+	return false
 }
 
 func memberMatchesGroup(member memberInfo, group string) bool {
@@ -565,13 +658,8 @@ func memberMatchesGroup(member memberInfo, group string) bool {
 	prefix := strings.TrimSuffix(group, base)
 	prefix = strings.TrimSuffix(prefix, "-")
 	if prefix == "" {
-		if member.isAbstract || member.isDecorated {
-			return false
-		}
 		return true
 	}
-	hasAbstract := false
-	hasDecorated := false
 	for _, token := range strings.Split(prefix, "-") {
 		switch token {
 		case "public":
@@ -599,12 +687,10 @@ func memberMatchesGroup(member memberInfo, group string) bool {
 				return false
 			}
 		case "abstract":
-			hasAbstract = true
 			if !member.isAbstract {
 				return false
 			}
 		case "decorated":
-			hasDecorated = true
 			if !member.isDecorated {
 				return false
 			}
@@ -615,12 +701,6 @@ func memberMatchesGroup(member memberInfo, group string) bool {
 		default:
 			return false
 		}
-	}
-	if member.isAbstract && !hasAbstract {
-		return false
-	}
-	if member.isDecorated && !hasDecorated {
-		return false
 	}
 	return true
 }
@@ -849,7 +929,11 @@ func checkOrdering(ctx rule.RuleContext, members []memberInfo, cfg memberOrderin
 		if !cfg.memberTypesNever && len(cfg.memberTypes) > 0 && member.groupIndex >= len(cfg.memberTypes) {
 			continue
 		}
-		if !isNameComparableMember(member) {
+		if member.kind == "signature" {
+			if !cfg.memberTypesNever || member.optional {
+				continue
+			}
+		} else if !isNameComparableMember(member) {
 			continue
 		}
 		key := fmt.Sprintf("%d:%d", member.groupIndex, optionalityKey(member, cfg.optionalityOrder))
@@ -871,7 +955,10 @@ func checkOrdering(ctx rule.RuleContext, members []memberInfo, cfg memberOrderin
 func memberNameOrderBucket(member memberInfo) string {
 	switch member.kind {
 	case "signature":
-		return ""
+		if member.optional {
+			return ""
+		}
+		return "main"
 	case "call-signature", "construct-signature", "constructor":
 		return "signature-call-construct"
 	default:
