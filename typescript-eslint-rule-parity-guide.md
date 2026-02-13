@@ -72,7 +72,9 @@ pnpm parity:ts-eslint:doctor
 pnpm parity:ts-eslint:doctor:markdown
 pnpm parity:ts-eslint:doctor:json
 pnpm parity:ts-eslint:doctor:json:strict
+pnpm parity:ts-eslint:doctor:json:strict:yellow
 pnpm parity:ts-eslint:doctor:strict
+pnpm parity:ts-eslint:doctor:strict:yellow
 ```
 
 The checkers validate:
@@ -96,6 +98,7 @@ The checkers validate:
 `parity:ts-eslint:status:strict:yellow` additionally fails when computed parity health is yellow or red.
 `parity:ts-eslint:ci-summary:strict` additionally fails when computed parity health is red.
 `parity:ts-eslint:ci-summary:strict:yellow` additionally fails when computed parity health is yellow or red.
+`parity:ts-eslint:doctor:strict:yellow` and `doctor:json:strict:yellow` additionally fail when computed parity health is yellow or red.
 
 ### Compare parity progress between snapshots
 

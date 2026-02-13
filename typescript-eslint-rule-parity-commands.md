@@ -23,8 +23,10 @@ Generated from `package.json` parity scripts.
 | `pnpm parity:ts-eslint:doctor` | Print parity health diagnosis from metadata and top-priority artifact. | `python3 scripts/generate_ts_eslint_parity_doctor.py` |
 | `pnpm parity:ts-eslint:doctor:json` | Print parity doctor output in JSON format for automation. | `python3 scripts/generate_ts_eslint_parity_doctor.py --json` |
 | `pnpm parity:ts-eslint:doctor:json:strict` | Print parity doctor JSON and fail if critical backlog exists. | `python3 scripts/generate_ts_eslint_parity_doctor.py --json --fail-on-critical` |
+| `pnpm parity:ts-eslint:doctor:json:strict:yellow` | Print parity doctor JSON and fail if health is yellow or red. | `python3 scripts/generate_ts_eslint_parity_doctor.py --json --fail-on-yellow` |
 | `pnpm parity:ts-eslint:doctor:markdown` | Print parity doctor output in markdown format. | `python3 scripts/generate_ts_eslint_parity_doctor.py --markdown` |
 | `pnpm parity:ts-eslint:doctor:strict` | Print parity health diagnosis and fail if critical backlog exists. | `python3 scripts/generate_ts_eslint_parity_doctor.py --fail-on-critical` |
+| `pnpm parity:ts-eslint:doctor:strict:yellow` | Print parity doctor output and fail if health is yellow or red. | `python3 scripts/generate_ts_eslint_parity_doctor.py --fail-on-yellow` |
 | `pnpm parity:ts-eslint:issue-body` | Generate one phase issue body draft from tasklist. | `python3 scripts/generate_ts_eslint_parity_issue_body.py` |
 | `pnpm parity:ts-eslint:issue-body:all` | Generate issue body drafts for all parity phases. | `bash scripts/generate_ts_eslint_parity_issue_bodies_all.sh` |
 | `pnpm parity:ts-eslint:manifest` | Generate checksum manifest for parity artifacts. | `python3 scripts/generate_ts_eslint_parity_manifest.py` |

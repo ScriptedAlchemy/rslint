@@ -69,7 +69,9 @@ pnpm parity:ts-eslint:doctor
 pnpm parity:ts-eslint:doctor:markdown
 pnpm parity:ts-eslint:doctor:json
 pnpm parity:ts-eslint:doctor:json:strict
+pnpm parity:ts-eslint:doctor:json:strict:yellow
 pnpm parity:ts-eslint:doctor:strict
+pnpm parity:ts-eslint:doctor:strict:yellow
 pnpm parity:ts-eslint:diff
 pnpm parity:ts-eslint:diff --base-ref HEAD~1
 pnpm parity:ts-eslint:diff:json

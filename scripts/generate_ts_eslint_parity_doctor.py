@@ -11,6 +11,7 @@ Optional:
   --markdown   emit markdown (default plain text)
   --json       emit JSON output for automation
   --fail-on-critical  exit non-zero if A_critical > 0
+  --fail-on-yellow    exit non-zero if health is yellow or red
 """
 
 from __future__ import annotations
@@ -38,6 +39,7 @@ def main() -> None:
 	parser.add_argument("--markdown", action="store_true", help="Emit markdown output.")
 	parser.add_argument("--json", action="store_true", help="Emit JSON output.")
 	parser.add_argument("--fail-on-critical", action="store_true", help="Exit non-zero if A_critical > 0.")
+	parser.add_argument("--fail-on-yellow", action="store_true", help="Exit non-zero if health is yellow or red.")
 	args = parser.parse_args()
 	if args.markdown and args.json:
 		print("[parity-doctor] ERROR: choose one output mode: --markdown or --json", file=sys.stderr)
@@ -115,6 +117,9 @@ def main() -> None:
 	if args.fail_on_critical and critical > 0:
 		print(f"[parity-doctor] ERROR: A_critical backlog is non-zero ({critical}).", file=sys.stderr)
 		sys.exit(2)
+	if args.fail_on_yellow and health in {"yellow", "red"}:
+		print(f"[parity-doctor] ERROR: health is {health} ({reason}).", file=sys.stderr)
+		sys.exit(3)
 
 
 if __name__ == "__main__":
