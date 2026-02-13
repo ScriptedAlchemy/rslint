@@ -100,6 +100,38 @@ _Generated: 2026-02-13 09:47 UTC_
 - **no-unsafe-member-access**: flags = `js-invalid-coverage-reduced, js-test-size-reduced`.
   - Primary correction: Review reduced local JS invalid coverage (errors: 15 vs upstream 20).
 
+## Confirmed Message-ID Parity Gaps (non-base rules)
+
+These are not heuristic-only: each listed message ID exists in upstream rule metadata but is absent in local Go rule source text for the same rule.  
+In practice, these usually indicate missing diagnostic variants and/or missing suggestion/fix message wiring.
+
+| Rule | Missing upstream message IDs in local rule |
+|---|---|
+| `await-thenable` | `invalidPromiseAggregatorInput` |
+| `consistent-indexed-object-style` | `preferIndexSignatureSuggestion` |
+| `consistent-type-assertions` | `replaceArrayTypeAssertionWithAnnotation`, `replaceArrayTypeAssertionWithSatisfies`, `replaceObjectTypeAssertionWithAnnotation`, `replaceObjectTypeAssertionWithSatisfies` |
+| `explicit-member-accessibility` | `addExplicitAccessibility` |
+| `no-empty-object-type` | `replaceEmptyInterface`, `replaceEmptyInterfaceWithSuper`, `replaceEmptyObjectType` |
+| `no-restricted-types` | `bannedTypeReplacement` |
+| `no-unnecessary-condition` | `suggestRemoveOptionalChain` |
+| `no-unnecessary-type-constraint` | `removeUnnecessaryConstraint` |
+| `no-unnecessary-type-conversion` | `suggestRemove`, `suggestSatisfies` |
+| `no-unnecessary-type-parameters` | `replaceUsagesWithConstraint` |
+| `no-unsafe-assignment` | `unsafeObjectPattern` |
+| `no-unsafe-call` | `errorCall`, `errorCallThis`, `errorNew`, `errorTemplateTag` |
+| `no-unsafe-member-access` | `errorComputedMemberAccess`, `errorMemberExpression`, `errorThisMemberExpression` |
+| `prefer-enum-initializers` | `defineInitializerSuggestion` |
+| `prefer-find` | `preferFindSuggestion` |
+| `prefer-optional-chain` | `optionalChainSuggest` |
+| `strict-boolean-expressions` | `conditionFixCastBoolean`, `conditionFixCompareArrayLengthNonzero`, `conditionFixCompareArrayLengthZero`, `conditionFixCompareEmptyString`, `conditionFixCompareFalse`, `conditionFixCompareNaN`, `conditionFixCompareNullish`, `conditionFixCompareStringLength`, `conditionFixCompareTrue`, `conditionFixCompareZero`, `conditionFixDefaultEmptyString`, `conditionFixDefaultFalse`, `conditionFixDefaultZero`, `explicitBooleanReturnType` |
+| `switch-exhaustiveness-check` | `addMissingCases` |
+
+### Recommended correction workflow for this section
+1. For each rule above, diff upstream `messages` + suggestion/fix branches against local Go implementation.
+2. Add missing message IDs and wire corresponding diagnostic/suggestion/fix branches.
+3. Backfill JS tests to assert the recovered message IDs (especially for suggestion-only branches).
+4. Add/expand Go tests to lock each recovered branch.
+
 ## Cross-Reference Matrix (Every Rule)
 
 Legend: ✅ none detected, ⚠ needs correction, n/a = not applicable
