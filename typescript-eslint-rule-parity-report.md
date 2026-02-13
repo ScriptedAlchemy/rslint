@@ -6,6 +6,22 @@ _Generated: 2026-02-13 09:47 UTC_
 - Local compared: Go rules in `internal/plugins/typescript/rules`, registration in `internal/config/config.go`, JS parity tests in `packages/rslint-test-tools/tests/typescript-eslint/rules`.
 - This report focuses on structural/coverage parity signals and concrete mismatches requiring correction.
 
+## Companion tracker files
+- `typescript-eslint-rule-parity-tracker.csv`
+- `typescript-eslint-rule-parity-tracker.json`
+
+These machine-readable files mirror this report’s findings and include:
+- per-rule priority score,
+- recommended phase bucket,
+- all parity flags,
+- JS/Go coverage counters,
+- exact upstream/local file paths.
+
+Recommended usage:
+1. Sort by `priority_score` descending.
+2. Execute in `recommended_phase` order (`A_critical` -> `B_high` -> `C_medium` -> `D_low`).
+3. Close rows by clearing flags and reducing score to `0` as parity work lands.
+
 ## Inventory Summary
 - Upstream rules: **134**
 - Local registered `@typescript-eslint/*` rules: **135**
