@@ -54,6 +54,9 @@ Quick commands:
 # Refresh upstream reference + regenerate all parity artifacts
 pnpm parity:ts-eslint
 
+# Run artifact + tooling checks only (skip verify-clean rebuild)
+pnpm parity:ts-eslint:check:fast
+
 # Run all consistency checks (and verify-clean when artifacts are clean)
 pnpm parity:ts-eslint:check:all
 
