@@ -9,6 +9,7 @@ _Generated: 2026-02-13 09:47 UTC_
 ## Companion tracker files
 - `typescript-eslint-rule-parity-tracker.csv`
 - `typescript-eslint-rule-parity-tracker.json`
+- `typescript-eslint-rule-parity-worklist.md`
 
 These machine-readable files mirror this report’s findings and include:
 - per-rule priority score,
@@ -21,11 +22,13 @@ Recommended usage:
 1. Sort by `priority_score` descending.
 2. Execute in `recommended_phase` order (`A_critical` -> `B_high` -> `C_medium` -> `D_low`).
 3. Close rows by clearing flags and reducing score to `0` as parity work lands.
+4. Use the generated worklist markdown for checkbox-style execution tracking.
 
 Regenerate tracker artifacts:
 
 ```bash
 python3 scripts/generate_ts_eslint_parity_tracker.py
+python3 scripts/generate_ts_eslint_parity_worklist.py
 ```
 
 ## Inventory Summary
