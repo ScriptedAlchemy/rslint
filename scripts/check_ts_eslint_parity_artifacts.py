@@ -342,6 +342,10 @@ def extract_status_write_lines(text: str) -> list[str]:
 	return [line.strip() for line in text.splitlines() if "typescript-eslint-rule-parity-status.json" in line]
 
 
+def extract_prefixed_lines(text: str, prefixes: tuple[str, ...]) -> list[str]:
+	return [line.strip() for line in text.splitlines() if any(line.strip().startswith(prefix) for prefix in prefixes)]
+
+
 def main() -> None:
 	root = pathlib.Path("/workspace")
 	tracker_csv = root / "typescript-eslint-rule-parity-tracker.csv"
@@ -940,8 +944,17 @@ def main() -> None:
 		fail("parity gate duplicate-skip-checks stderr missing skip-checks token in usage message")
 
 	# Quick gate npm command wrappers
+	gate_red_prefixed_lines = extract_prefixed_lines(
+		gate_red.stdout + gate_red.stderr,
+		("[parity-gate]", "[parity-status]", "[parity-doctor]"),
+	)
+	gate_yellow_prefixed_lines = extract_prefixed_lines(
+		gate_yellow.stdout + gate_yellow.stderr,
+		("[parity-gate]", "[parity-status]", "[parity-doctor]"),
+	)
+
 	gate_quick = subprocess.run(
-		["pnpm", "parity:ts-eslint:gate:quick"],
+		["pnpm", "--silent", "parity:ts-eslint:gate:quick"],
 		cwd=str(root),
 		check=False,
 		capture_output=True,
@@ -962,9 +975,15 @@ def main() -> None:
 		fail("parity gate quick stderr missing health+reason message")
 	if expected_gate_red_exit == 0 and "[parity-gate] OK: parity gate passed (threshold=red)." not in (gate_quick.stdout + gate_quick.stderr):
 		fail("parity gate quick success output missing final OK message")
+	gate_quick_prefixed_lines = extract_prefixed_lines(
+		gate_quick.stdout + gate_quick.stderr,
+		("[parity-gate]", "[parity-status]", "[parity-doctor]"),
+	)
+	if gate_quick_prefixed_lines != gate_red_prefixed_lines:
+		fail("parity gate quick prefixed output mismatch with direct red skip-check run")
 
 	gate_quick_red = subprocess.run(
-		["pnpm", "parity:ts-eslint:gate:quick:red"],
+		["pnpm", "--silent", "parity:ts-eslint:gate:quick:red"],
 		cwd=str(root),
 		check=False,
 		capture_output=True,
@@ -987,9 +1006,15 @@ def main() -> None:
 		gate_quick_red.stdout + gate_quick_red.stderr
 	):
 		fail("parity gate quick:red success output missing final OK message")
+	gate_quick_red_prefixed_lines = extract_prefixed_lines(
+		gate_quick_red.stdout + gate_quick_red.stderr,
+		("[parity-gate]", "[parity-status]", "[parity-doctor]"),
+	)
+	if gate_quick_red_prefixed_lines != gate_red_prefixed_lines:
+		fail("parity gate quick:red prefixed output mismatch with direct red skip-check run")
 
 	gate_quick_yellow = subprocess.run(
-		["pnpm", "parity:ts-eslint:gate:quick:yellow"],
+		["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow"],
 		cwd=str(root),
 		check=False,
 		capture_output=True,
@@ -1012,6 +1037,12 @@ def main() -> None:
 		gate_quick_yellow.stdout + gate_quick_yellow.stderr
 	):
 		fail("parity gate quick:yellow success output missing final OK message")
+	gate_quick_yellow_prefixed_lines = extract_prefixed_lines(
+		gate_quick_yellow.stdout + gate_quick_yellow.stderr,
+		("[parity-gate]", "[parity-status]", "[parity-doctor]"),
+	)
+	if gate_quick_yellow_prefixed_lines != gate_yellow_prefixed_lines:
+		fail("parity gate quick:yellow prefixed output mismatch with direct yellow skip-check run")
 
 	flagged = [row for row in tracker_rows if int(row.get("priority_score", 0)) > 0]
 	aligned = len(tracker_rows) - len(flagged)

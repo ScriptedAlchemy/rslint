@@ -93,7 +93,7 @@ The checkers validate:
 - optional diff artifact summary consistency between markdown and JSON outputs,
 - parity doctor output consistency (plain + markdown + JSON forms + npm wrapper parity),
 - parity doctor strict-mode exit behavior (`--fail-on-critical` / `--fail-on-yellow`) with strict-wrapper stdout parity + component-prefixed health-reason stderr contracts (including npm wrapper strict commands),
-- unified gate script exit and argument/help validation behavior (including missing/invalid/duplicate threshold handling, duplicate `--skip-checks` handling, default-red behavior, `--threshold=<value>` parsing, reordered flag parsing, short-help support, usage-on-error output with threshold-form + skip-checks tokens, and quick-gate npm wrapper exit+skip-checks+threshold-marker+health-reason/success-marker contracts that must not run strict clean checks),
+- unified gate script exit and argument/help validation behavior (including missing/invalid/duplicate threshold handling, duplicate `--skip-checks` handling, default-red behavior, `--threshold=<value>` parsing, reordered flag parsing, short-help support, usage-on-error output with threshold-form + skip-checks tokens, and quick-gate npm wrapper exit+skip-checks+threshold-marker+health-reason/success-marker contracts + prefixed-output parity with direct skip-check runs, all of which must not run strict clean checks),
 - parity command/docs/script synchronization,
 - exact parity command inventory in `package.json` vs checker expectations,
 - command reference row/backing-script mapping parity with `package.json`,
