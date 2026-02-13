@@ -1098,6 +1098,32 @@ def main() -> None:
 	)
 	if extract_nonempty_lines(gate_duplicate_threshold_inline.stderr) != gate_duplicate_threshold_lines:
 		fail("parity gate duplicate-threshold-inline stderr mismatch with duplicate-threshold stderr")
+	gate_duplicate_threshold_invalid_spaced = subprocess.run(
+		[
+			"bash",
+			str(root / "scripts/run_ts_eslint_parity_gate.sh"),
+			"--threshold",
+			"red",
+			"--threshold",
+			"blue",
+			"--skip-checks",
+		],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if gate_duplicate_threshold_invalid_spaced.returncode != 1:
+		fail("parity gate duplicate-threshold-invalid-spaced exit code must be 1")
+	if gate_duplicate_threshold_invalid_spaced.stdout.strip():
+		fail("parity gate duplicate-threshold-invalid-spaced stdout must be empty")
+	assert_exact_error_plus_usage(
+		"parity gate duplicate-threshold-invalid-spaced stderr",
+		gate_duplicate_threshold_invalid_spaced.stderr,
+		expected_gate_duplicate_threshold_line,
+		expected_gate_usage_line,
+	)
+	if extract_nonempty_lines(gate_duplicate_threshold_invalid_spaced.stderr) != gate_duplicate_threshold_lines:
+		fail("parity gate duplicate-threshold-invalid-spaced stderr mismatch with duplicate-threshold stderr")
 
 	gate_inline_red = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--threshold=red", "--skip-checks"],
@@ -1689,6 +1715,30 @@ def main() -> None:
 		(
 			"parity gate quick command yellow duplicate-threshold precedence empty-value",
 			["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow", "--threshold="],
+		),
+		(
+			"parity gate command duplicate-threshold precedence invalid-value-spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate", "--threshold", "blue"],
+		),
+		(
+			"parity gate command red duplicate-threshold precedence invalid-value-spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:red", "--threshold", "blue"],
+		),
+		(
+			"parity gate command yellow duplicate-threshold precedence invalid-value-spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:yellow", "--threshold", "blue"],
+		),
+		(
+			"parity gate quick command duplicate-threshold precedence invalid-value-spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick", "--threshold", "blue"],
+		),
+		(
+			"parity gate quick command red duplicate-threshold precedence invalid-value-spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:red", "--threshold", "blue"],
+		),
+		(
+			"parity gate quick command yellow duplicate-threshold precedence invalid-value-spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow", "--threshold", "blue"],
 		),
 	]
 	for label, command in gate_wrapper_duplicate_threshold_precedence_cases:
