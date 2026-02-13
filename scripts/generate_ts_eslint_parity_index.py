@@ -82,6 +82,7 @@ def main() -> None:
 	lines.append("PARITY_OFFLINE=1 TS_ESLINT_REF=main pnpm parity:ts-eslint")
 	lines.append("pnpm parity:ts-eslint:check")
 	lines.append("pnpm parity:ts-eslint:check:all")
+	lines.append("pnpm parity:ts-eslint:check:clean")
 	lines.append("pnpm parity:ts-eslint:check:strict")
 	lines.append("pnpm parity:ts-eslint:check:tooling")
 	lines.append("pnpm parity:ts-eslint:commands")
