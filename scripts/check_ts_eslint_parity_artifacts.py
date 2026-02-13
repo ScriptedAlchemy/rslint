@@ -1442,6 +1442,16 @@ def main() -> None:
 		fail("parity gate quick:red prefixed output mismatch with direct red skip-check run")
 	if gate_quick.returncode != gate_quick_red.returncode:
 		fail("parity gate quick alias return code mismatch with quick:red")
+	assert_exact_nonempty_lines(
+		"parity gate quick alias stdout",
+		gate_quick.stdout,
+		extract_nonempty_lines(gate_quick_red.stdout),
+	)
+	assert_exact_nonempty_lines(
+		"parity gate quick alias stderr",
+		gate_quick.stderr,
+		extract_nonempty_lines(gate_quick_red.stderr),
+	)
 	if gate_quick_prefixed_lines != gate_quick_red_prefixed_lines:
 		fail("parity gate quick alias prefixed output mismatch with quick:red")
 
