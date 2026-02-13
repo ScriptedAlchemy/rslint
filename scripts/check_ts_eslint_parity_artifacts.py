@@ -1579,6 +1579,26 @@ def main() -> None:
 	)
 	if extract_nonempty_lines(gate_unknown_then_short_help.stderr) != gate_unknown_arg_lines:
 		fail("parity gate unknown-then-short-help stderr mismatch with unknown-arg baseline")
+	for suffix_label, suffix_tokens in gate_help_then_malformed_threshold_suffixes:
+		unknown_proc = subprocess.run(
+			["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--not-a-real-flag", *suffix_tokens],
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		if unknown_proc.returncode != 1:
+			fail(f"parity gate unknown-then-{suffix_label} exit code must be 1")
+		if unknown_proc.stdout.strip():
+			fail(f"parity gate unknown-then-{suffix_label} stdout must be empty")
+		assert_exact_error_plus_usage(
+			f"parity gate unknown-then-{suffix_label} stderr",
+			unknown_proc.stderr,
+			expected_gate_unknown_arg_line,
+			expected_gate_usage_line,
+		)
+		if extract_nonempty_lines(unknown_proc.stderr) != gate_unknown_arg_lines:
+			fail(f"parity gate unknown-then-{suffix_label} stderr mismatch with unknown-arg baseline")
+
 	gate_duplicate_threshold_then_help = subprocess.run(
 		[
 			"bash",
@@ -2501,6 +2521,10 @@ def main() -> None:
 		("missing-threshold", ["--threshold"]),
 		("empty-threshold", ["--threshold="]),
 		("missing-threshold with trailing skip-checks", ["--threshold", "--skip-checks"]),
+		("invalid-threshold-inline", ["--threshold=blue"]),
+		("invalid-threshold-spaced", ["--threshold", "blue"]),
+		("invalid-threshold-inline with trailing skip-checks", ["--threshold=blue", "--skip-checks"]),
+		("invalid-threshold-spaced with trailing skip-checks", ["--threshold", "blue", "--skip-checks"]),
 	]
 	gate_wrapper_help_base_commands = [
 		("parity gate command", ["pnpm", "--silent", "parity:ts-eslint:gate"]),
@@ -2537,6 +2561,21 @@ def main() -> None:
 			)
 			if short_help_lines != gate_wrapper_help_baseline:
 				fail(f"{base_label} short-help-then-{suffix_label} stderr output mismatch with help baseline")
+			unknown_proc = subprocess.run(
+				[*base_command, "--not-a-real-flag", *suffix_tokens],
+				cwd=str(root),
+				check=False,
+				capture_output=True,
+				text=True,
+			)
+			unknown_lines = assert_gate_wrapper_unknown_arg_contract(
+				f"{base_label} unknown-then-{suffix_label}",
+				unknown_proc,
+				expected_gate_unknown_arg_line,
+				expected_gate_usage_line,
+			)
+			if unknown_lines != gate_wrapper_unknown_arg_baseline:
+				fail(f"{base_label} unknown-then-{suffix_label} stderr output mismatch with unknown baseline")
 
 	gate_wrapper_duplicate_threshold_cases = [
 		(
