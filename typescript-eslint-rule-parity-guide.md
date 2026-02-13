@@ -51,6 +51,16 @@ Outputs:
 
 - `typescript-eslint-rule-parity-diff.md`
 
+### Generate GitHub issue tasklist snippets by phase
+
+```bash
+pnpm parity:ts-eslint:tasklist --phase A_critical
+```
+
+Outputs:
+
+- `typescript-eslint-rule-parity-tasklist-<phase>.md`
+
 ### Direct script usage
 
 ```bash
@@ -61,6 +71,7 @@ python3 scripts/generate_ts_eslint_parity_metadata.py
 python3 scripts/generate_ts_eslint_parity_issue_plan.py
 python3 scripts/check_ts_eslint_parity_artifacts.py
 python3 scripts/compare_ts_eslint_parity_trackers.py --base-ref HEAD~1
+python3 scripts/generate_ts_eslint_parity_issue_tasklist.py --phase A_critical
 ```
 
 ## Typical workflow
@@ -84,6 +95,8 @@ Workflow: `.github/workflows/parity-artifacts-check.yml`
 - Ensures tracker/summary/worklist/metadata remain synchronized.
 - On pull requests, also generates `typescript-eslint-rule-parity-diff.md`
   against the PR base branch and uploads it as a workflow artifact.
+- Issue template available:
+  - `.github/ISSUE_TEMPLATE/4-ts-eslint-parity-tracking.en-US.yml`
 
 ## Notes
 

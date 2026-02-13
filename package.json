@@ -32,6 +32,7 @@
     "parity:ts-eslint": "bash scripts/refresh-ts-eslint-parity-artifacts.sh",
     "parity:ts-eslint:check": "python3 scripts/check_ts_eslint_parity_artifacts.py",
     "parity:ts-eslint:diff": "python3 scripts/compare_ts_eslint_parity_trackers.py",
+    "parity:ts-eslint:tasklist": "python3 scripts/generate_ts_eslint_parity_issue_tasklist.py",
     "prepare": "husky",
     "migrate:tests": "sg scan -r ast-grep-rule.yml ./packages/rslint-test-tools/tests/typescript-eslint/rules/**/*.test.ts --update-all"
   },
