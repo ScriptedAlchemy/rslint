@@ -215,6 +215,7 @@ type ParserOptions struct {
 	TsconfigRootDir        string        `json:"tsconfigRootDir,omitempty"`
 	SourceType             string        `json:"sourceType,omitempty"`
 	EcmaVersion            int           `json:"ecmaVersion,omitempty"`
+	IsolatedDeclarations   bool          `json:"isolatedDeclarations,omitempty"`
 	ExperimentalDecorators bool          `json:"experimentalDecorators,omitempty"`
 	EmitDecoratorMetadata  bool          `json:"emitDecoratorMetadata,omitempty"`
 	JSXPragma              string        `json:"jsxPragma,omitempty"`

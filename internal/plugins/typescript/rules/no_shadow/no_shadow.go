@@ -893,9 +893,6 @@ var NoShadowRule = rule.CreateRule(rule.Rule{
 			if decl.IsThisParam || opts.Allow[decl.Name] {
 				continue
 			}
-			if decl.IsFunctionTypeParameter && opts.IgnoreFunctionTypeParameterNameValueShadow {
-				continue
-			}
 
 			shadowed := findShadowedDeclaration(decl, opts)
 			if shadowed != nil {

@@ -119,6 +119,58 @@ func buildRuleGlobals(languageOptions *api.LanguageOptions) map[string]bool {
 	return globals
 }
 
+func configLanguageOptionsToAPI(languageOptions *rslintconfig.LanguageOptions) *api.LanguageOptions {
+	if languageOptions == nil {
+		return nil
+	}
+
+	result := &api.LanguageOptions{}
+
+	if len(languageOptions.Globals) > 0 {
+		result.Globals = make(map[string]interface{}, len(languageOptions.Globals))
+		for key, value := range languageOptions.Globals {
+			result.Globals[key] = value
+		}
+	}
+
+	if languageOptions.ParserOptions != nil {
+		parserOptions := languageOptions.ParserOptions
+		result.ParserOptions = &api.ParserOptions{
+			ProjectService:         parserOptions.ProjectService,
+			Project:                api.ProjectPaths(parserOptions.Project),
+			TsconfigRootDir:        parserOptions.TsconfigRootDir,
+			SourceType:             parserOptions.SourceType,
+			EcmaVersion:            parserOptions.EcmaVersion,
+			IsolatedDeclarations:   parserOptions.IsolatedDeclarations,
+			ExperimentalDecorators: parserOptions.ExperimentalDecorators,
+			EmitDecoratorMetadata:  parserOptions.EmitDecoratorMetadata,
+			JSXPragma:              parserOptions.JSXPragma,
+			JSXFragmentName:        parserOptions.JSXFragmentName,
+		}
+		if parserOptions.EcmaFeatures != nil {
+			result.ParserOptions.EcmaFeatures = &api.EcmaFeatures{
+				GlobalReturn: parserOptions.EcmaFeatures.GlobalReturn,
+				JSX:          parserOptions.EcmaFeatures.JSX,
+			}
+		}
+	}
+
+	if result.ParserOptions == nil && len(result.Globals) == 0 {
+		return nil
+	}
+
+	return result
+}
+
+func resolveRuleLanguageOptions(requestOptions *api.LanguageOptions, configEntries rslintconfig.RslintConfig) *api.LanguageOptions {
+	for _, entry := range configEntries {
+		if entry.LanguageOptions != nil {
+			return configLanguageOptionsToAPI(entry.LanguageOptions)
+		}
+	}
+	return requestOptions
+}
+
 // Global program cache for AST info requests
 var astInfoProgramCache = &programCache{}
 
@@ -177,6 +229,7 @@ func (h *IPCHandler) HandleLint(req api.LintRequest) (*api.LintResponse, error) 
 				TsconfigRootDir:        req.LanguageOptions.ParserOptions.TsconfigRootDir,
 				SourceType:             req.LanguageOptions.ParserOptions.SourceType,
 				EcmaVersion:            req.LanguageOptions.ParserOptions.EcmaVersion,
+				IsolatedDeclarations:   req.LanguageOptions.ParserOptions.IsolatedDeclarations,
 				ExperimentalDecorators: req.LanguageOptions.ParserOptions.ExperimentalDecorators,
 				EmitDecoratorMetadata:  req.LanguageOptions.ParserOptions.EmitDecoratorMetadata,
 				JSXPragma:              req.LanguageOptions.ParserOptions.JSXPragma,
@@ -308,8 +361,9 @@ func (h *IPCHandler) HandleLint(req api.LintRequest) (*api.LintResponse, error) 
 	}
 
 	// Run linter
-	ruleParserOptions := buildRuleParserOptions(req.LanguageOptions)
-	ruleGlobals := buildRuleGlobals(req.LanguageOptions)
+	effectiveLanguageOptions := resolveRuleLanguageOptions(req.LanguageOptions, rslintConfig)
+	ruleParserOptions := buildRuleParserOptions(effectiveLanguageOptions)
+	ruleGlobals := buildRuleGlobals(effectiveLanguageOptions)
 	lintedFilesCount, err := linter.RunLinter(
 		programs,
 		false, // Don't use single-threaded mode for IPC
