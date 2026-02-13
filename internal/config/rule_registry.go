@@ -36,6 +36,7 @@ func (r *RuleRegistry) GetAllRules() map[string]rule.Rule {
 // GetEnabledRules returns rules that are enabled in the configuration for a given file
 func (r *RuleRegistry) GetEnabledRules(config RslintConfig, filePath string) []linter.ConfiguredRule {
 	enabledRuleConfigs := config.GetRulesForFile(filePath)
+	ruleParserOptions, ruleGlobals := ResolveRuleContextForFile(config, filePath)
 	var enabledRules []linter.ConfiguredRule
 
 	for ruleName, ruleConfig := range enabledRuleConfigs {
@@ -48,6 +49,8 @@ func (r *RuleRegistry) GetEnabledRules(config RslintConfig, filePath string) []l
 					Name:     ruleName, // Use the registered rule name, not the implementation name
 					Severity: ruleConfig.GetSeverity(),
 					Run: func(ctx rule.RuleContext) rule.RuleListeners {
+						ctx.ParserOptions = ruleParserOptions
+						ctx.Globals = ruleGlobals
 						return ruleImpl.Run(ctx, ruleConfigCopy.Options)
 					},
 				})

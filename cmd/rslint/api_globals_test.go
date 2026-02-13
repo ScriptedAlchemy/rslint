@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"reflect"
 	"testing"
 
@@ -161,5 +162,56 @@ func TestResolveRuleLanguageOptionsForFile(t *testing.T) {
 
 	if srcOptions.Globals["RequestGlobal"] != "readonly" || scriptOptions.Globals["RequestGlobal"] != "readonly" {
 		t.Fatalf("expected RequestGlobal for both files, src=%#v scripts=%#v", srcOptions.Globals, scriptOptions.Globals)
+	}
+}
+
+func TestMergeParserOptionsAllowsExplicitFalseOverrides(t *testing.T) {
+	var base ipc.ParserOptions
+	if err := json.Unmarshal([]byte(`{
+		"projectService": true,
+		"isolatedDeclarations": true,
+		"experimentalDecorators": true,
+		"emitDecoratorMetadata": true,
+		"ecmaFeatures": { "globalReturn": true, "jsx": true }
+	}`), &base); err != nil {
+		t.Fatalf("failed to unmarshal base parser options: %v", err)
+	}
+
+	var override ipc.ParserOptions
+	if err := json.Unmarshal([]byte(`{
+		"projectService": false,
+		"isolatedDeclarations": false,
+		"experimentalDecorators": false,
+		"emitDecoratorMetadata": false,
+		"ecmaFeatures": { "globalReturn": false, "jsx": false }
+	}`), &override); err != nil {
+		t.Fatalf("failed to unmarshal override parser options: %v", err)
+	}
+
+	merged := mergeParserOptions(&base, &override)
+	if merged == nil {
+		t.Fatalf("expected merged parser options")
+	}
+
+	if merged.ProjectService {
+		t.Fatalf("expected projectService to be false after override")
+	}
+	if merged.IsolatedDeclarations {
+		t.Fatalf("expected isolatedDeclarations to be false after override")
+	}
+	if merged.ExperimentalDecorators {
+		t.Fatalf("expected experimentalDecorators to be false after override")
+	}
+	if merged.EmitDecoratorMetadata {
+		t.Fatalf("expected emitDecoratorMetadata to be false after override")
+	}
+	if merged.EcmaFeatures == nil {
+		t.Fatalf("expected ecmaFeatures in merged parser options")
+	}
+	if merged.EcmaFeatures.GlobalReturn {
+		t.Fatalf("expected ecmaFeatures.globalReturn to be false after override")
+	}
+	if merged.EcmaFeatures.JSX {
+		t.Fatalf("expected ecmaFeatures.jsx to be false after override")
 	}
 }

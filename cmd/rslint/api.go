@@ -137,21 +137,27 @@ func configLanguageOptionsToAPI(languageOptions *rslintconfig.LanguageOptions) *
 	if languageOptions.ParserOptions != nil {
 		parserOptions := languageOptions.ParserOptions
 		result.ParserOptions = &api.ParserOptions{
-			ProjectService:         parserOptions.ProjectService,
-			Project:                api.ProjectPaths(parserOptions.Project),
-			TsconfigRootDir:        parserOptions.TsconfigRootDir,
-			SourceType:             parserOptions.SourceType,
-			EcmaVersion:            parserOptions.EcmaVersion,
-			IsolatedDeclarations:   parserOptions.IsolatedDeclarations,
-			ExperimentalDecorators: parserOptions.ExperimentalDecorators,
-			EmitDecoratorMetadata:  parserOptions.EmitDecoratorMetadata,
-			JSXPragma:              parserOptions.JSXPragma,
-			JSXFragmentName:        parserOptions.JSXFragmentName,
+			ProjectService:            parserOptions.ProjectService,
+			Project:                   api.ProjectPaths(parserOptions.Project),
+			TsconfigRootDir:           parserOptions.TsconfigRootDir,
+			SourceType:                parserOptions.SourceType,
+			EcmaVersion:               parserOptions.EcmaVersion,
+			IsolatedDeclarations:      parserOptions.IsolatedDeclarations,
+			ExperimentalDecorators:    parserOptions.ExperimentalDecorators,
+			EmitDecoratorMetadata:     parserOptions.EmitDecoratorMetadata,
+			JSXPragma:                 parserOptions.JSXPragma,
+			JSXFragmentName:           parserOptions.JSXFragmentName,
+			ProjectServiceSet:         parserOptions.ProjectServiceSet,
+			IsolatedDeclarationsSet:   parserOptions.IsolatedDeclarationsSet,
+			ExperimentalDecoratorsSet: parserOptions.ExperimentalDecoratorsSet,
+			EmitDecoratorMetadataSet:  parserOptions.EmitDecoratorMetadataSet,
 		}
 		if parserOptions.EcmaFeatures != nil {
 			result.ParserOptions.EcmaFeatures = &api.EcmaFeatures{
-				GlobalReturn: parserOptions.EcmaFeatures.GlobalReturn,
-				JSX:          parserOptions.EcmaFeatures.JSX,
+				GlobalReturn:    parserOptions.EcmaFeatures.GlobalReturn,
+				JSX:             parserOptions.EcmaFeatures.JSX,
+				GlobalReturnSet: parserOptions.EcmaFeatures.GlobalReturnSet,
+				JSXSet:          parserOptions.EcmaFeatures.JSXSet,
 			}
 		}
 	}
@@ -168,8 +174,10 @@ func cloneEcmaFeatures(features *api.EcmaFeatures) *api.EcmaFeatures {
 		return nil
 	}
 	return &api.EcmaFeatures{
-		GlobalReturn: features.GlobalReturn,
-		JSX:          features.JSX,
+		GlobalReturn:    features.GlobalReturn,
+		JSX:             features.JSX,
+		GlobalReturnSet: features.GlobalReturnSet,
+		JSXSet:          features.JSXSet,
 	}
 }
 
@@ -178,17 +186,21 @@ func cloneParserOptions(options *api.ParserOptions) *api.ParserOptions {
 		return nil
 	}
 	parserOptions := &api.ParserOptions{
-		ProjectService:         options.ProjectService,
-		Project:                append(api.ProjectPaths(nil), options.Project...),
-		TsconfigRootDir:        options.TsconfigRootDir,
-		SourceType:             options.SourceType,
-		EcmaVersion:            options.EcmaVersion,
-		IsolatedDeclarations:   options.IsolatedDeclarations,
-		ExperimentalDecorators: options.ExperimentalDecorators,
-		EmitDecoratorMetadata:  options.EmitDecoratorMetadata,
-		JSXPragma:              options.JSXPragma,
-		JSXFragmentName:        options.JSXFragmentName,
-		EcmaFeatures:           cloneEcmaFeatures(options.EcmaFeatures),
+		ProjectService:            options.ProjectService,
+		Project:                   append(api.ProjectPaths(nil), options.Project...),
+		TsconfigRootDir:           options.TsconfigRootDir,
+		SourceType:                options.SourceType,
+		EcmaVersion:               options.EcmaVersion,
+		IsolatedDeclarations:      options.IsolatedDeclarations,
+		ExperimentalDecorators:    options.ExperimentalDecorators,
+		EmitDecoratorMetadata:     options.EmitDecoratorMetadata,
+		JSXPragma:                 options.JSXPragma,
+		JSXFragmentName:           options.JSXFragmentName,
+		EcmaFeatures:              cloneEcmaFeatures(options.EcmaFeatures),
+		ProjectServiceSet:         options.ProjectServiceSet,
+		IsolatedDeclarationsSet:   options.IsolatedDeclarationsSet,
+		ExperimentalDecoratorsSet: options.ExperimentalDecoratorsSet,
+		EmitDecoratorMetadataSet:  options.EmitDecoratorMetadataSet,
 	}
 	return parserOptions
 }
@@ -221,8 +233,9 @@ func mergeParserOptions(base *api.ParserOptions, override *api.ParserOptions) *a
 	}
 
 	result := cloneParserOptions(base)
-	if override.ProjectService {
-		result.ProjectService = true
+	if override.ProjectServiceSet || override.ProjectService {
+		result.ProjectService = override.ProjectService
+		result.ProjectServiceSet = override.ProjectServiceSet || override.ProjectService
 	}
 	if len(override.Project) > 0 {
 		result.Project = append(api.ProjectPaths(nil), override.Project...)
@@ -236,14 +249,17 @@ func mergeParserOptions(base *api.ParserOptions, override *api.ParserOptions) *a
 	if override.EcmaVersion != 0 {
 		result.EcmaVersion = override.EcmaVersion
 	}
-	if override.IsolatedDeclarations {
-		result.IsolatedDeclarations = true
+	if override.IsolatedDeclarationsSet || override.IsolatedDeclarations {
+		result.IsolatedDeclarations = override.IsolatedDeclarations
+		result.IsolatedDeclarationsSet = override.IsolatedDeclarationsSet || override.IsolatedDeclarations
 	}
-	if override.ExperimentalDecorators {
-		result.ExperimentalDecorators = true
+	if override.ExperimentalDecoratorsSet || override.ExperimentalDecorators {
+		result.ExperimentalDecorators = override.ExperimentalDecorators
+		result.ExperimentalDecoratorsSet = override.ExperimentalDecoratorsSet || override.ExperimentalDecorators
 	}
-	if override.EmitDecoratorMetadata {
-		result.EmitDecoratorMetadata = true
+	if override.EmitDecoratorMetadataSet || override.EmitDecoratorMetadata {
+		result.EmitDecoratorMetadata = override.EmitDecoratorMetadata
+		result.EmitDecoratorMetadataSet = override.EmitDecoratorMetadataSet || override.EmitDecoratorMetadata
 	}
 	if override.JSXPragma != "" {
 		result.JSXPragma = override.JSXPragma
@@ -255,11 +271,13 @@ func mergeParserOptions(base *api.ParserOptions, override *api.ParserOptions) *a
 		if result.EcmaFeatures == nil {
 			result.EcmaFeatures = &api.EcmaFeatures{}
 		}
-		if override.EcmaFeatures.GlobalReturn {
-			result.EcmaFeatures.GlobalReturn = true
+		if override.EcmaFeatures.GlobalReturnSet || override.EcmaFeatures.GlobalReturn {
+			result.EcmaFeatures.GlobalReturn = override.EcmaFeatures.GlobalReturn
+			result.EcmaFeatures.GlobalReturnSet = override.EcmaFeatures.GlobalReturnSet || override.EcmaFeatures.GlobalReturn
 		}
-		if override.EcmaFeatures.JSX {
-			result.EcmaFeatures.JSX = true
+		if override.EcmaFeatures.JSXSet || override.EcmaFeatures.JSX {
+			result.EcmaFeatures.JSX = override.EcmaFeatures.JSX
+			result.EcmaFeatures.JSXSet = override.EcmaFeatures.JSXSet || override.EcmaFeatures.JSX
 		}
 	}
 	return result

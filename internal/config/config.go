@@ -183,8 +183,10 @@ type LanguageOptions struct {
 }
 
 type EcmaFeatures struct {
-	GlobalReturn bool `json:"globalReturn,omitempty"`
-	JSX          bool `json:"jsx,omitempty"`
+	GlobalReturn    bool `json:"globalReturn,omitempty"`
+	JSX             bool `json:"jsx,omitempty"`
+	GlobalReturnSet bool `json:"-"`
+	JSXSet          bool `json:"-"`
 }
 
 // ProjectPaths represents project paths that can be either a single string or an array of strings
@@ -210,17 +212,59 @@ func (p *ProjectPaths) UnmarshalJSON(data []byte) error {
 
 // ParserOptions contains parser-specific configuration
 type ParserOptions struct {
-	ProjectService         bool          `json:"projectService"`
-	Project                ProjectPaths  `json:"project,omitempty"`
-	TsconfigRootDir        string        `json:"tsconfigRootDir,omitempty"`
-	SourceType             string        `json:"sourceType,omitempty"`
-	EcmaVersion            int           `json:"ecmaVersion,omitempty"`
-	IsolatedDeclarations   bool          `json:"isolatedDeclarations,omitempty"`
-	ExperimentalDecorators bool          `json:"experimentalDecorators,omitempty"`
-	EmitDecoratorMetadata  bool          `json:"emitDecoratorMetadata,omitempty"`
-	JSXPragma              string        `json:"jsxPragma,omitempty"`
-	JSXFragmentName        string        `json:"jsxFragmentName,omitempty"`
-	EcmaFeatures           *EcmaFeatures `json:"ecmaFeatures,omitempty"`
+	ProjectService            bool          `json:"projectService"`
+	Project                   ProjectPaths  `json:"project,omitempty"`
+	TsconfigRootDir           string        `json:"tsconfigRootDir,omitempty"`
+	SourceType                string        `json:"sourceType,omitempty"`
+	EcmaVersion               int           `json:"ecmaVersion,omitempty"`
+	IsolatedDeclarations      bool          `json:"isolatedDeclarations,omitempty"`
+	ExperimentalDecorators    bool          `json:"experimentalDecorators,omitempty"`
+	EmitDecoratorMetadata     bool          `json:"emitDecoratorMetadata,omitempty"`
+	JSXPragma                 string        `json:"jsxPragma,omitempty"`
+	JSXFragmentName           string        `json:"jsxFragmentName,omitempty"`
+	EcmaFeatures              *EcmaFeatures `json:"ecmaFeatures,omitempty"`
+	ProjectServiceSet         bool          `json:"-"`
+	IsolatedDeclarationsSet   bool          `json:"-"`
+	ExperimentalDecoratorsSet bool          `json:"-"`
+	EmitDecoratorMetadataSet  bool          `json:"-"`
+}
+
+// UnmarshalJSON keeps track of whether boolean fields were explicitly configured.
+func (e *EcmaFeatures) UnmarshalJSON(data []byte) error {
+	type ecmaFeaturesAlias EcmaFeatures
+	var alias ecmaFeaturesAlias
+	if err := json.Unmarshal(data, &alias); err != nil {
+		return err
+	}
+	*e = EcmaFeatures(alias)
+
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	_, e.GlobalReturnSet = raw["globalReturn"]
+	_, e.JSXSet = raw["jsx"]
+	return nil
+}
+
+// UnmarshalJSON keeps track of whether boolean fields were explicitly configured.
+func (p *ParserOptions) UnmarshalJSON(data []byte) error {
+	type parserOptionsAlias ParserOptions
+	var alias parserOptionsAlias
+	if err := json.Unmarshal(data, &alias); err != nil {
+		return err
+	}
+	*p = ParserOptions(alias)
+
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	_, p.ProjectServiceSet = raw["projectService"]
+	_, p.IsolatedDeclarationsSet = raw["isolatedDeclarations"]
+	_, p.ExperimentalDecoratorsSet = raw["experimentalDecorators"]
+	_, p.EmitDecoratorMetadataSet = raw["emitDecoratorMetadata"]
+	return nil
 }
 
 // Rules represents the rules configuration
