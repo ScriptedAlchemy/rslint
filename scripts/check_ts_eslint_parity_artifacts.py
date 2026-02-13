@@ -518,6 +518,37 @@ def main() -> None:
 	if expected_status_strict_yellow_exit == 3 and expected_health_reason_marker not in status_strict_yellow.stderr:
 		fail("status strict-yellow stderr missing health+reason message")
 
+	# Status npm command wrapper checks
+	status_cmd_strict = subprocess.run(
+		["pnpm", "parity:ts-eslint:status:strict"],
+		cwd=str(root),
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if status_cmd_strict.returncode != expected_status_strict_exit:
+		fail(
+			"status command strict exit-code mismatch: "
+			f"expected={expected_status_strict_exit} actual={status_cmd_strict.returncode}"
+		)
+	if expected_status_strict_exit == 2 and expected_health_reason_marker not in status_cmd_strict.stderr:
+		fail("status command strict stderr missing health+reason message")
+
+	status_cmd_strict_yellow = subprocess.run(
+		["pnpm", "parity:ts-eslint:status:strict:yellow"],
+		cwd=str(root),
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if status_cmd_strict_yellow.returncode != expected_status_strict_yellow_exit:
+		fail(
+			"status command strict-yellow exit-code mismatch: "
+			f"expected={expected_status_strict_yellow_exit} actual={status_cmd_strict_yellow.returncode}"
+		)
+	if expected_status_strict_yellow_exit == 3 and expected_health_reason_marker not in status_cmd_strict_yellow.stderr:
+		fail("status command strict-yellow stderr missing health+reason message")
+
 	# Unified gate script exit-code checks (skip clean-check phase to avoid recursion)
 	gate_red = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--threshold", "red", "--skip-checks"],
@@ -1229,6 +1260,37 @@ def main() -> None:
 	if expected_ci_summary_strict_yellow_exit == 3 and expected_health_reason_marker not in ci_summary_strict_yellow.stderr:
 		fail("ci summary strict-yellow stderr missing health+reason message")
 
+	# CI summary npm command wrapper checks
+	ci_summary_cmd_strict = subprocess.run(
+		["pnpm", "parity:ts-eslint:ci-summary:strict"],
+		cwd=str(root),
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if ci_summary_cmd_strict.returncode != expected_ci_summary_strict_exit:
+		fail(
+			"ci summary command strict exit-code mismatch: "
+			f"expected={expected_ci_summary_strict_exit} actual={ci_summary_cmd_strict.returncode}"
+		)
+	if expected_ci_summary_strict_exit == 2 and expected_health_reason_marker not in ci_summary_cmd_strict.stderr:
+		fail("ci summary command strict stderr missing health+reason message")
+
+	ci_summary_cmd_strict_yellow = subprocess.run(
+		["pnpm", "parity:ts-eslint:ci-summary:strict:yellow"],
+		cwd=str(root),
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if ci_summary_cmd_strict_yellow.returncode != expected_ci_summary_strict_yellow_exit:
+		fail(
+			"ci summary command strict-yellow exit-code mismatch: "
+			f"expected={expected_ci_summary_strict_yellow_exit} actual={ci_summary_cmd_strict_yellow.returncode}"
+		)
+	if expected_ci_summary_strict_yellow_exit == 3 and expected_health_reason_marker not in ci_summary_cmd_strict_yellow.stderr:
+		fail("ci summary command strict-yellow stderr missing health+reason message")
+
 	# Parity doctor output checks
 	try:
 		doctor_plain = subprocess.run(
@@ -1373,6 +1435,67 @@ def main() -> None:
 		fail("parity doctor strict-yellow stderr missing health+reason message")
 	if expected_yellow_strict_exit == 3 and expected_health_reason_marker not in doctor_json_yellow_strict.stderr:
 		fail("parity doctor json strict-yellow stderr missing health+reason message")
+
+	# Doctor npm command wrapper checks
+	doctor_cmd_strict = subprocess.run(
+		["pnpm", "parity:ts-eslint:doctor:strict"],
+		cwd=str(root),
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if doctor_cmd_strict.returncode != expected_strict_exit:
+		fail(
+			"parity doctor command strict exit-code mismatch: "
+			f"expected={expected_strict_exit} actual={doctor_cmd_strict.returncode}"
+		)
+	if expected_strict_exit == 2 and "A_critical backlog is non-zero" not in doctor_cmd_strict.stderr:
+		fail("parity doctor command strict stderr missing critical backlog message")
+
+	doctor_cmd_strict_yellow = subprocess.run(
+		["pnpm", "parity:ts-eslint:doctor:strict:yellow"],
+		cwd=str(root),
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if doctor_cmd_strict_yellow.returncode != expected_yellow_strict_exit:
+		fail(
+			"parity doctor command strict-yellow exit-code mismatch: "
+			f"expected={expected_yellow_strict_exit} actual={doctor_cmd_strict_yellow.returncode}"
+		)
+	if expected_yellow_strict_exit == 3 and expected_health_reason_marker not in doctor_cmd_strict_yellow.stderr:
+		fail("parity doctor command strict-yellow stderr missing health+reason message")
+
+	doctor_cmd_json_strict = subprocess.run(
+		["pnpm", "parity:ts-eslint:doctor:json:strict"],
+		cwd=str(root),
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if doctor_cmd_json_strict.returncode != expected_strict_exit:
+		fail(
+			"parity doctor command json strict exit-code mismatch: "
+			f"expected={expected_strict_exit} actual={doctor_cmd_json_strict.returncode}"
+		)
+	if expected_strict_exit == 2 and "A_critical backlog is non-zero" not in doctor_cmd_json_strict.stderr:
+		fail("parity doctor command json strict stderr missing critical backlog message")
+
+	doctor_cmd_json_strict_yellow = subprocess.run(
+		["pnpm", "parity:ts-eslint:doctor:json:strict:yellow"],
+		cwd=str(root),
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if doctor_cmd_json_strict_yellow.returncode != expected_yellow_strict_exit:
+		fail(
+			"parity doctor command json strict-yellow exit-code mismatch: "
+			f"expected={expected_yellow_strict_exit} actual={doctor_cmd_json_strict_yellow.returncode}"
+		)
+	if expected_yellow_strict_exit == 3 and expected_health_reason_marker not in doctor_cmd_json_strict_yellow.stderr:
+		fail("parity doctor command json strict-yellow stderr missing health+reason message")
 
 	doctor_json_strict_data = parse_doctor_json_output(doctor_json_strict.stdout)
 	doctor_json_yellow_strict_data = parse_doctor_json_output(doctor_json_yellow_strict.stdout)
