@@ -99,7 +99,7 @@ The checkers validate:
 - command alias invariants for gate shorthands (`gate == gate:red`, `gate:quick == gate:quick:red`),
 - command reference row/backing-script mapping parity with `package.json`,
 - CI workflow wiring (required parity checks, trigger paths, diff generation/upload paths, and uploaded artifact bundle paths),
-- status/badge schema, health reason, strict-exit behavior with component-prefixed stderr contracts (including npm wrapper strict commands), status artifact-write stability + exact write-line format/parity across non-strict/strict/direct/wrapper status commands, and summary arithmetic coherence.
+- status/badge schema, health reason, strict-exit behavior with component-prefixed stderr contracts (including npm wrapper strict commands), status artifact-write stability + exact single-line stdout/write-line format/parity across non-strict/strict/direct/wrapper status commands, and summary arithmetic coherence.
 
 `parity:ts-eslint:check:all` additionally runs metadata-pinned reproducibility verification when parity artifacts are clean.
 `parity:ts-eslint:check:fast` runs artifact+tooling checks only (no reproducibility rebuild).

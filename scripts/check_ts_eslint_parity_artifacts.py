@@ -353,6 +353,12 @@ def assert_no_pnpm_lifecycle_noise(label: str, text: str) -> None:
 		fail(f"{label} contains pnpm lifecycle command echo output; expected --silent wrapper output")
 
 
+def assert_exact_nonempty_lines(label: str, text: str, expected_lines: list[str]) -> None:
+	actual_lines = [line.strip() for line in text.splitlines() if line.strip()]
+	if actual_lines != expected_lines:
+		fail(f"{label} line mismatch: expected={expected_lines} actual={actual_lines}")
+
+
 def main() -> None:
 	root = pathlib.Path("/workspace")
 	tracker_csv = root / "typescript-eslint-rule-parity-tracker.csv"
@@ -508,6 +514,7 @@ def main() -> None:
 		fail("direct status script output missing status artifact write line")
 	if status_direct_lines != [expected_status_write_line]:
 		fail("direct status script write-line output format mismatch")
+	assert_exact_nonempty_lines("direct status script stdout", status_direct.stdout, [expected_status_write_line])
 
 	status_cmd = subprocess.run(
 		["pnpm", "--silent", "parity:ts-eslint:status"],
@@ -531,6 +538,7 @@ def main() -> None:
 		fail("status command write-line output format mismatch")
 	if status_lines != status_direct_lines:
 		fail("status command write-line output mismatch with direct status script")
+	assert_exact_nonempty_lines("status command stdout", status_cmd.stdout, [expected_status_write_line])
 	status_after_cmd = json.loads(status_json.read_text())
 	if status_after_cmd != status:
 		fail("status command output mutated status artifact unexpectedly")
@@ -589,6 +597,8 @@ def main() -> None:
 		fail("status strict write-line output format mismatch")
 	if status_strict_yellow_lines != [expected_status_write_line]:
 		fail("status strict-yellow write-line output format mismatch")
+	assert_exact_nonempty_lines("status strict stdout", status_strict.stdout, [expected_status_write_line])
+	assert_exact_nonempty_lines("status strict-yellow stdout", status_strict_yellow.stdout, [expected_status_write_line])
 	if status_strict_lines != status_lines:
 		fail("status strict write-line output mismatch with non-strict status command")
 	if status_strict_yellow_lines != status_lines:
@@ -630,6 +640,7 @@ def main() -> None:
 	status_cmd_strict_lines = extract_status_write_lines(status_cmd_strict.stdout + status_cmd_strict.stderr)
 	if status_cmd_strict_lines != [expected_status_write_line]:
 		fail("status command strict write-line output format mismatch")
+	assert_exact_nonempty_lines("status command strict stdout", status_cmd_strict.stdout, [expected_status_write_line])
 	if status_cmd_strict_lines != status_strict_lines:
 		fail("status command strict write-line output mismatch with direct strict mode")
 	status_after_cmd_strict = json.loads(status_json.read_text())
@@ -666,6 +677,7 @@ def main() -> None:
 	status_cmd_strict_yellow_lines = extract_status_write_lines(status_cmd_strict_yellow.stdout + status_cmd_strict_yellow.stderr)
 	if status_cmd_strict_yellow_lines != [expected_status_write_line]:
 		fail("status command strict-yellow write-line output format mismatch")
+	assert_exact_nonempty_lines("status command strict-yellow stdout", status_cmd_strict_yellow.stdout, [expected_status_write_line])
 	if status_cmd_strict_yellow_lines != status_strict_yellow_lines:
 		fail("status command strict-yellow write-line output mismatch with direct strict-yellow mode")
 	status_after_cmd_strict_yellow = json.loads(status_json.read_text())
