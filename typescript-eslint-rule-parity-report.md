@@ -14,6 +14,7 @@ _Generated: 2026-02-13 09:47 UTC_
 - `typescript-eslint-rule-parity-summary.md`
 - `typescript-eslint-rule-parity-metadata.json`
 - `typescript-eslint-rule-parity-issue-plan.md`
+- Optional diff artifact: `typescript-eslint-rule-parity-diff.md`
 - CI guard: `.github/workflows/parity-artifacts-check.yml`
 
 These machine-readable files mirror this report’s findings and include:
@@ -36,6 +37,7 @@ Regenerate tracker artifacts:
 ```bash
 pnpm parity:ts-eslint
 pnpm parity:ts-eslint:check
+pnpm parity:ts-eslint:diff -- --base-ref HEAD~1
 
 # Optional: pin upstream ref (branch/tag/SHA) for reproducible comparisons
 TS_ESLINT_REF=main pnpm parity:ts-eslint

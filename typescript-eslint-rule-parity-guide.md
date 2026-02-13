@@ -40,6 +40,17 @@ TS_ESLINT_REF=main pnpm parity:ts-eslint
 pnpm parity:ts-eslint:check
 ```
 
+### Compare parity progress between snapshots
+
+```bash
+# compare current tracker against tracker from previous commit
+pnpm parity:ts-eslint:diff -- --base-ref HEAD~1
+```
+
+Outputs:
+
+- `typescript-eslint-rule-parity-diff.md`
+
 ### Direct script usage
 
 ```bash
@@ -49,6 +60,7 @@ python3 scripts/generate_ts_eslint_parity_summary.py
 python3 scripts/generate_ts_eslint_parity_metadata.py
 python3 scripts/generate_ts_eslint_parity_issue_plan.py
 python3 scripts/check_ts_eslint_parity_artifacts.py
+python3 scripts/compare_ts_eslint_parity_trackers.py --base-ref HEAD~1
 ```
 
 ## Typical workflow
