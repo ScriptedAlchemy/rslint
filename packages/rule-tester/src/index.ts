@@ -459,9 +459,7 @@ function filterSnapshot(
   diags: LintResponse & { output?: string | string[] | null; code?: string },
 ): LintResponse {
   for (const diag of diags.diagnostics ?? []) {
-    // @ts-ignore
     delete diag.filePath;
-    // @ts-ignore
     delete diag.fixes;
   }
   return diags;

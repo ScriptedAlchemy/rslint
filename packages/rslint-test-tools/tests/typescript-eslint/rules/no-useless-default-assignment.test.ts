@@ -39,6 +39,11 @@ function basic(a: number = 1) {
 }
       `,
       errors: [{ messageId: 'uselessDefaultAssignment' }],
+      output: `
+function basic(a: number) {
+  return a;
+}
+      `,
     },
     {
       code: `
@@ -47,12 +52,20 @@ function optional(a: number | undefined = undefined) {
 }
       `,
       errors: [{ messageId: 'preferOptionalSyntax' }],
+      output: `
+function optional(a?: number | undefined) {
+  return a;
+}
+      `,
     },
     {
       code: `
 const { a = undefined }: { a?: number } = {};
       `,
       errors: [{ messageId: 'uselessUndefined' }],
+      output: `
+const { a }: { a?: number } = {};
+      `,
     },
     {
       code: `
@@ -61,12 +74,20 @@ function withObject({ foo = '' }: { foo: string }) {
 }
       `,
       errors: [{ messageId: 'uselessDefaultAssignment' }],
+      output: `
+function withObject({ foo }: { foo: string }) {
+  return foo;
+}
+      `,
     },
     {
       code: `
 [1, 2, 3].map((a = 42) => a + 1);
       `,
       errors: [{ messageId: 'uselessDefaultAssignment' }],
+      output: `
+[1, 2, 3].map((a) => a + 1);
+      `,
     },
     {
       code: `
@@ -79,12 +100,24 @@ const h: B = {
 };
       `,
       errors: [{ messageId: 'uselessDefaultAssignment' }],
+      output: `
+interface B {
+  foo: (b: boolean | string) => void;
+}
+
+const h: B = {
+  foo: (b) => {},
+};
+      `,
     },
     {
       code: `
 const [a = undefined] = [];
       `,
       errors: [{ messageId: 'uselessUndefined' }],
+      output: `
+const [a] = [];
+      `,
     },
   ],
 });

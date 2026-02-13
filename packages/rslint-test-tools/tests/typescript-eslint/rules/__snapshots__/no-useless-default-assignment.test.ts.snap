@@ -26,6 +26,11 @@ function basic(a: number = 1) {
   ],
   "errorCount": 1,
   "fileCount": 1,
+  "output": "
+function basic(a: number) {
+  return a;
+}
+      ",
   "ruleCount": 1,
 }
 `;
@@ -56,6 +61,11 @@ function optional(a: number | undefined = undefined) {
   ],
   "errorCount": 1,
   "fileCount": 1,
+  "output": "
+function optional(a?: number | undefined) {
+  return a;
+}
+      ",
   "ruleCount": 1,
 }
 `;
@@ -84,6 +94,9 @@ const { a = undefined }: { a?: number } = {};
   ],
   "errorCount": 1,
   "fileCount": 1,
+  "output": "
+const { a }: { a?: number } = {};
+      ",
   "ruleCount": 1,
 }
 `;
@@ -114,6 +127,11 @@ function withObject({ foo = '' }: { foo: string }) {
   ],
   "errorCount": 1,
   "fileCount": 1,
+  "output": "
+function withObject({ foo }: { foo: string }) {
+  return foo;
+}
+      ",
   "ruleCount": 1,
 }
 `;
@@ -142,6 +160,9 @@ exports[`no-useless-default-assignment > invalid 5`] = `
   ],
   "errorCount": 1,
   "fileCount": 1,
+  "output": "
+[1, 2, 3].map((a) => a + 1);
+      ",
   "ruleCount": 1,
 }
 `;
@@ -176,6 +197,15 @@ const h: B = {
   ],
   "errorCount": 1,
   "fileCount": 1,
+  "output": "
+interface B {
+  foo: (b: boolean | string) => void;
+}
+
+const h: B = {
+  foo: (b) => {},
+};
+      ",
   "ruleCount": 1,
 }
 `;
@@ -204,6 +234,9 @@ const [a = undefined] = [];
   ],
   "errorCount": 1,
   "fileCount": 1,
+  "output": "
+const [a] = [];
+      ",
   "ruleCount": 1,
 }
 `;

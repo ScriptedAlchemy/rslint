@@ -11,14 +11,21 @@ export interface Range {
   end: Position;
 }
 
+export interface Fix {
+  text: string;
+  startPos: number;
+  endPos: number;
+}
+
 export interface Diagnostic {
   ruleName: string;
   message: string;
   messageId: string;
-  filePath: string;
+  filePath?: string;
   range: Range;
   severity?: string;
-  suggestions: any[];
+  suggestions?: any[];
+  fixes?: Fix[];
 }
 
 export interface LintResponse {

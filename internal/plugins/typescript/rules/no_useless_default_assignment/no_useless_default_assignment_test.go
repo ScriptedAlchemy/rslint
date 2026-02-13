@@ -11,6 +11,8 @@ func TestNoUselessDefaultAssignmentRule(t *testing.T) {
 	rule_tester.RunRuleTester(fixtures.GetRootDir(), "tsconfig.json", t, &NoUselessDefaultAssignmentRule, []rule_tester.ValidTestCase{
 		{Code: `function withOptional(a: number | undefined = 1) { return a; }`},
 		{Code: `const { a = 1 }: { a?: number } = {};`},
+		{Code: `[1, 2, 3, undefined].map((a = 42) => a + 1);`},
+		{Code: `function test(a: any = "default") { return a; }`},
 		{
 			Code:     `const value = 1;`,
 			TSConfig: "tsconfig.unstrict.json",
@@ -40,6 +42,11 @@ func TestNoUselessDefaultAssignmentRule(t *testing.T) {
 			Errors: []rule_tester.InvalidTestCaseError{{MessageId: "uselessDefaultAssignment"}},
 		},
 		{
+			Code:   `[1, 2, 3].map((a = 42) => a + 1);`,
+			Output: []string{`[1, 2, 3].map((a) => a + 1);`},
+			Errors: []rule_tester.InvalidTestCaseError{{MessageId: "uselessDefaultAssignment"}},
+		},
+		{
 			Code: `
 interface B {
 	foo: (b: boolean | string) => void;
@@ -59,6 +66,11 @@ const h: B = {
 };
 			`},
 			Errors: []rule_tester.InvalidTestCaseError{{MessageId: "uselessDefaultAssignment"}},
+		},
+		{
+			Code:   `const [a = undefined] = [];`,
+			Output: []string{`const [a] = [];`},
+			Errors: []rule_tester.InvalidTestCaseError{{MessageId: "uselessUndefined"}},
 		},
 		{
 			Code:     `const value = 1;`,
