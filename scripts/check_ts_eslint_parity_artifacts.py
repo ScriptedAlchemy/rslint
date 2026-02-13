@@ -387,6 +387,36 @@ def assert_gate_success_contract(label: str, proc: subprocess.CompletedProcess[s
 			fail(f"{label} failing output must not include final OK message")
 
 
+def assert_gate_wrapper_help_contract(
+	label: str, proc: subprocess.CompletedProcess[str], expected_usage_line: str
+) -> list[str]:
+	if proc.returncode != 0:
+		fail(f"{label} exit code must be 0")
+	assert_no_pnpm_lifecycle_noise(f"{label} stdout", proc.stdout)
+	assert_no_pnpm_lifecycle_noise(f"{label} stderr", proc.stderr)
+	if proc.stdout.strip():
+		fail(f"{label} stdout must be empty")
+	assert_exact_nonempty_lines(f"{label} stderr", proc.stderr, [expected_usage_line])
+	return extract_nonempty_lines(proc.stderr)
+
+
+def assert_gate_wrapper_unknown_arg_contract(
+	label: str,
+	proc: subprocess.CompletedProcess[str],
+	expected_error_line: str,
+	expected_usage_line: str,
+) -> list[str]:
+	if proc.returncode != 1:
+		fail(f"{label} exit code must be 1")
+	assert_no_pnpm_lifecycle_noise(f"{label} stdout", proc.stdout)
+	assert_no_pnpm_lifecycle_noise(f"{label} stderr", proc.stderr)
+	if proc.stdout.strip():
+		fail(f"{label} stdout must be empty")
+	assert_line_occurs_once(f"{label} stderr", proc.stderr, expected_usage_line)
+	assert_exact_error_plus_usage(f"{label} stderr", proc.stderr, expected_error_line, expected_usage_line)
+	return extract_nonempty_lines(proc.stderr)
+
+
 def main() -> None:
 	root = pathlib.Path("/workspace")
 	tracker_csv = root / "typescript-eslint-rule-parity-tracker.csv"
@@ -1251,6 +1281,107 @@ def main() -> None:
 		expected_gate_duplicate_skip_checks_line,
 		expected_gate_usage_line,
 	)
+
+	# Gate npm wrapper help/unknown-arg forwarding checks
+	gate_wrapper_help_cases = [
+		("parity gate command --help", ["pnpm", "--silent", "parity:ts-eslint:gate", "--help"]),
+		("parity gate command red --help", ["pnpm", "--silent", "parity:ts-eslint:gate:red", "--help"]),
+		("parity gate command yellow --help", ["pnpm", "--silent", "parity:ts-eslint:gate:yellow", "--help"]),
+		("parity gate quick command --help", ["pnpm", "--silent", "parity:ts-eslint:gate:quick", "--help"]),
+		(
+			"parity gate quick command red --help",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:red", "--help"],
+		),
+		(
+			"parity gate quick command yellow --help",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow", "--help"],
+		),
+	]
+	gate_wrapper_help_lines: dict[str, list[str]] = {}
+	gate_wrapper_help_codes: dict[str, int] = {}
+	for label, command in gate_wrapper_help_cases:
+		proc = subprocess.run(
+			command,
+			cwd=str(root),
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		gate_wrapper_help_lines[label] = assert_gate_wrapper_help_contract(label, proc, expected_gate_usage_line)
+		gate_wrapper_help_codes[label] = proc.returncode
+	if gate_wrapper_help_codes["parity gate command --help"] != gate_wrapper_help_codes["parity gate command red --help"]:
+		fail("parity gate command help alias return code mismatch with gate:red")
+	if gate_wrapper_help_lines["parity gate command --help"] != gate_wrapper_help_lines["parity gate command red --help"]:
+		fail("parity gate command help alias stderr mismatch with gate:red")
+	if (
+		gate_wrapper_help_codes["parity gate quick command --help"]
+		!= gate_wrapper_help_codes["parity gate quick command red --help"]
+	):
+		fail("parity gate quick help alias return code mismatch with quick:red")
+	if gate_wrapper_help_lines["parity gate quick command --help"] != gate_wrapper_help_lines[
+		"parity gate quick command red --help"
+	]:
+		fail("parity gate quick help alias stderr mismatch with quick:red")
+
+	gate_wrapper_unknown_arg_cases = [
+		(
+			"parity gate command unknown-arg",
+			["pnpm", "--silent", "parity:ts-eslint:gate", "--not-a-real-flag"],
+		),
+		(
+			"parity gate command red unknown-arg",
+			["pnpm", "--silent", "parity:ts-eslint:gate:red", "--not-a-real-flag"],
+		),
+		(
+			"parity gate command yellow unknown-arg",
+			["pnpm", "--silent", "parity:ts-eslint:gate:yellow", "--not-a-real-flag"],
+		),
+		(
+			"parity gate quick command unknown-arg",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick", "--not-a-real-flag"],
+		),
+		(
+			"parity gate quick command red unknown-arg",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:red", "--not-a-real-flag"],
+		),
+		(
+			"parity gate quick command yellow unknown-arg",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow", "--not-a-real-flag"],
+		),
+	]
+	gate_wrapper_unknown_arg_lines: dict[str, list[str]] = {}
+	gate_wrapper_unknown_arg_codes: dict[str, int] = {}
+	for label, command in gate_wrapper_unknown_arg_cases:
+		proc = subprocess.run(
+			command,
+			cwd=str(root),
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		gate_wrapper_unknown_arg_lines[label] = assert_gate_wrapper_unknown_arg_contract(
+			label,
+			proc,
+			expected_gate_unknown_arg_line,
+			expected_gate_usage_line,
+		)
+		gate_wrapper_unknown_arg_codes[label] = proc.returncode
+	if gate_wrapper_unknown_arg_codes["parity gate command unknown-arg"] != gate_wrapper_unknown_arg_codes[
+		"parity gate command red unknown-arg"
+	]:
+		fail("parity gate command unknown-arg alias return code mismatch with gate:red")
+	if gate_wrapper_unknown_arg_lines["parity gate command unknown-arg"] != gate_wrapper_unknown_arg_lines[
+		"parity gate command red unknown-arg"
+	]:
+		fail("parity gate command unknown-arg alias stderr mismatch with gate:red")
+	if gate_wrapper_unknown_arg_codes["parity gate quick command unknown-arg"] != gate_wrapper_unknown_arg_codes[
+		"parity gate quick command red unknown-arg"
+	]:
+		fail("parity gate quick unknown-arg alias return code mismatch with quick:red")
+	if gate_wrapper_unknown_arg_lines["parity gate quick command unknown-arg"] != gate_wrapper_unknown_arg_lines[
+		"parity gate quick command red unknown-arg"
+	]:
+		fail("parity gate quick unknown-arg alias stderr mismatch with quick:red")
 
 	# Gate npm command wrappers in skip-check mode
 	gate_cmd = subprocess.run(
