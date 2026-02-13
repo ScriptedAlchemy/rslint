@@ -14,15 +14,7 @@ from __future__ import annotations
 import json
 import pathlib
 
-
-def compute_health(critical: int, high: int, flagged: int) -> tuple[str, str]:
-	if critical > 0:
-		return "red", "critical backlog is non-zero"
-	if high > 0:
-		return "yellow", "high backlog is non-zero"
-	if flagged > 0:
-		return "yellow", "non-critical flagged backlog remains"
-	return "green", "no flagged parity backlog"
+from parity_health import compute_health_reason
 
 
 def main() -> None:
@@ -42,7 +34,7 @@ def main() -> None:
 	aligned_percent = round((aligned / total * 100.0), 1) if total else 0.0
 	critical = int(phase.get("A_critical", 0))
 	high = int(phase.get("B_high", 0))
-	health_default, health_reason_default = compute_health(critical=critical, high=high, flagged=flagged)
+	health_default, health_reason_default = compute_health_reason(critical=critical, high=high, flagged=flagged)
 	health = status.get("health", health_default)
 	health_reason = status.get("reason", health_reason_default)
 	health_color = {"green": "brightgreen", "yellow": "yellow", "red": "red"}.get(health, "lightgrey")

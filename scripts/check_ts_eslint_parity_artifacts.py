@@ -22,20 +22,12 @@ import subprocess
 import sys
 from collections import Counter
 
+from parity_health import compute_health_reason
+
 
 def fail(msg: str) -> None:
 	print(f"[parity-check] ERROR: {msg}")
 	sys.exit(1)
-
-
-def compute_health_reason(critical: int, high: int, flagged: int) -> tuple[str, str]:
-	if critical > 0:
-		return "red", "critical backlog is non-zero"
-	if high > 0:
-		return "yellow", "high backlog is non-zero"
-	if flagged > 0:
-		return "yellow", "non-critical flagged backlog remains"
-	return "green", "no flagged parity backlog"
 
 
 def sha256_file(path: pathlib.Path) -> str:

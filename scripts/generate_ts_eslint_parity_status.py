@@ -20,15 +20,7 @@ import json
 import pathlib
 import sys
 
-
-def compute_health(critical: int, high: int, flagged: int) -> tuple[str, str]:
-	if critical > 0:
-		return "red", "critical backlog is non-zero"
-	if high > 0:
-		return "yellow", "high backlog is non-zero"
-	if flagged > 0:
-		return "yellow", "non-critical flagged backlog remains"
-	return "green", "no flagged parity backlog"
+from parity_health import compute_health_reason
 
 
 def main() -> None:
@@ -53,7 +45,7 @@ def main() -> None:
 	medium = int(phase.get("C_medium", 0))
 	low = int(phase.get("D_low", 0))
 
-	health, reason = compute_health(critical=critical, high=high, flagged=flagged)
+	health, reason = compute_health_reason(critical=critical, high=high, flagged=flagged)
 
 	status = {
 		"schema_version": 1,

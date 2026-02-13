@@ -218,6 +218,7 @@ def main() -> None:
 		"scripts/generate_ts_eslint_parity_issue_bodies_all.sh",
 		"scripts/generate_ts_eslint_parity_badges.py",
 		"scripts/generate_ts_eslint_parity_status.py",
+		"scripts/parity_health.py",
 		"scripts/generate_ts_eslint_parity_ci_summary.py",
 		"scripts/generate_ts_eslint_parity_doctor.py",
 		"scripts/generate_ts_eslint_parity_top.py",
