@@ -65,7 +65,8 @@ The checkers validate:
 - tracker/worklist/summary/metadata/manifest/index/issue-plan coherence,
 - issue-body structure/counts,
 - CI summary rendering consistency,
-- parity command/docs/script synchronization.
+- parity command/docs/script synchronization,
+- CI workflow wiring (required parity checks and uploaded artifact bundle paths).
 
 ### Compare parity progress between snapshots
 

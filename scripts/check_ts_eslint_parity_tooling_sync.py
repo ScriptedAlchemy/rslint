@@ -27,6 +27,7 @@ def main() -> None:
 	report_md = root / "typescript-eslint-rule-parity-report.md"
 	index_md = root / "typescript-eslint-rule-parity-index.md"
 	commands_md = root / "typescript-eslint-rule-parity-commands.md"
+	workflow_yml = root / ".github/workflows/parity-artifacts-check.yml"
 
 	pkg = json.loads(package_json.read_text())
 	scripts = pkg.get("scripts", {})
@@ -121,6 +122,52 @@ def main() -> None:
 	for rel in required_scripts:
 		if not (root / rel).exists():
 			fail(f"missing required parity helper script: {rel}")
+
+	# Ensure CI workflow remains wired to parity checks/artifacts
+	if not workflow_yml.exists():
+		fail("missing parity CI workflow: .github/workflows/parity-artifacts-check.yml")
+
+	workflow_text = workflow_yml.read_text()
+	required_workflow_tokens = [
+		"python3 scripts/check_ts_eslint_parity_artifacts.py",
+		"python3 scripts/check_ts_eslint_parity_tooling_sync.py",
+		"bash scripts/verify_ts_eslint_parity_clean.sh",
+		"python3 scripts/generate_ts_eslint_parity_ci_summary.py >> \"$GITHUB_STEP_SUMMARY\"",
+		"python3 scripts/generate_ts_eslint_parity_doctor.py --markdown >> \"$GITHUB_STEP_SUMMARY\"",
+		"name: typescript-eslint-parity-diff",
+		"name: typescript-eslint-parity-artifacts",
+	]
+	for token in required_workflow_tokens:
+		if token not in workflow_text:
+			fail(f"missing workflow wiring token: {token}")
+
+	required_bundle_artifacts = [
+		"typescript-eslint-rule-parity-report.md",
+		"typescript-eslint-rule-parity-guide.md",
+		"typescript-eslint-rule-parity-index.md",
+		"typescript-eslint-rule-parity-summary.md",
+		"typescript-eslint-rule-parity-top.md",
+		"typescript-eslint-rule-parity-worklist.md",
+		"typescript-eslint-rule-parity-issue-plan.md",
+		"typescript-eslint-rule-parity-tracker.csv",
+		"typescript-eslint-rule-parity-tracker.json",
+		"typescript-eslint-rule-parity-metadata.json",
+		"typescript-eslint-rule-parity-badges.json",
+		"typescript-eslint-rule-parity-status.json",
+		"typescript-eslint-rule-parity-commands.md",
+		"typescript-eslint-rule-parity-manifest.json",
+		"typescript-eslint-rule-parity-tasklist-A_critical.md",
+		"typescript-eslint-rule-parity-tasklist-B_high.md",
+		"typescript-eslint-rule-parity-tasklist-C_medium.md",
+		"typescript-eslint-rule-parity-tasklist-D_low.md",
+		"typescript-eslint-rule-parity-issue-body-A_critical.md",
+		"typescript-eslint-rule-parity-issue-body-B_high.md",
+		"typescript-eslint-rule-parity-issue-body-C_medium.md",
+		"typescript-eslint-rule-parity-issue-body-D_low.md",
+	]
+	for artifact in required_bundle_artifacts:
+		if artifact not in workflow_text:
+			fail(f"missing workflow uploaded artifact path: {artifact}")
 
 	print("[parity-tooling-check] OK: parity commands/docs/scripts are synchronized.")
 
