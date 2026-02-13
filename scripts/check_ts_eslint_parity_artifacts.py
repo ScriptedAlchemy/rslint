@@ -1322,6 +1322,47 @@ def main() -> None:
 		"parity gate quick command red --help"
 	]:
 		fail("parity gate quick help alias stderr mismatch with quick:red")
+	gate_wrapper_short_help_cases = [
+		("parity gate command -h", ["pnpm", "--silent", "parity:ts-eslint:gate", "-h"], "parity gate command --help"),
+		(
+			"parity gate command red -h",
+			["pnpm", "--silent", "parity:ts-eslint:gate:red", "-h"],
+			"parity gate command red --help",
+		),
+		(
+			"parity gate command yellow -h",
+			["pnpm", "--silent", "parity:ts-eslint:gate:yellow", "-h"],
+			"parity gate command yellow --help",
+		),
+		(
+			"parity gate quick command -h",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick", "-h"],
+			"parity gate quick command --help",
+		),
+		(
+			"parity gate quick command red -h",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:red", "-h"],
+			"parity gate quick command red --help",
+		),
+		(
+			"parity gate quick command yellow -h",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow", "-h"],
+			"parity gate quick command yellow --help",
+		),
+	]
+	for label, command, help_label in gate_wrapper_short_help_cases:
+		proc = subprocess.run(
+			command,
+			cwd=str(root),
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		short_help_lines = assert_gate_wrapper_help_contract(label, proc, expected_gate_usage_line)
+		if proc.returncode != gate_wrapper_help_codes[help_label]:
+			fail(f"{label} return code mismatch with {help_label}")
+		if short_help_lines != gate_wrapper_help_lines[help_label]:
+			fail(f"{label} stderr output mismatch with {help_label}")
 
 	gate_wrapper_unknown_arg_cases = [
 		(
