@@ -99,3 +99,60 @@ func TestBuildRuleGlobals(t *testing.T) {
 		t.Fatalf("expected off/false string globals to be absent, got %#v", got)
 	}
 }
+
+func TestResolveLanguageOptionsForFileRespectsFilesPatterns(t *testing.T) {
+	cfg := RslintConfig{
+		{
+			Language: "javascript",
+			Files:    []string{"src/**/*.ts"},
+			LanguageOptions: &LanguageOptions{
+				Globals: map[string]interface{}{
+					"SrcGlobal": "readonly",
+				},
+				ParserOptions: &ParserOptions{
+					SourceType: "module",
+				},
+			},
+		},
+		{
+			Language: "javascript",
+			Files:    []string{"scripts/**/*.ts"},
+			LanguageOptions: &LanguageOptions{
+				Globals: map[string]interface{}{
+					"ScriptsGlobal": "readonly",
+				},
+				ParserOptions: &ParserOptions{
+					SourceType: "script",
+				},
+			},
+		},
+	}
+
+	srcResolved := ResolveLanguageOptionsForFile(cfg, "src/main.ts")
+	if srcResolved == nil {
+		t.Fatalf("expected language options for src/main.ts")
+	}
+	if srcResolved.Globals["SrcGlobal"] != "readonly" {
+		t.Fatalf("expected SrcGlobal, got %#v", srcResolved.Globals)
+	}
+	if _, exists := srcResolved.Globals["ScriptsGlobal"]; exists {
+		t.Fatalf("did not expect ScriptsGlobal for src/main.ts, got %#v", srcResolved.Globals)
+	}
+	if srcResolved.ParserOptions == nil || srcResolved.ParserOptions.SourceType != "module" {
+		t.Fatalf("expected module parser options for src/main.ts, got %#v", srcResolved.ParserOptions)
+	}
+
+	scriptsResolved := ResolveLanguageOptionsForFile(cfg, "scripts/build.ts")
+	if scriptsResolved == nil {
+		t.Fatalf("expected language options for scripts/build.ts")
+	}
+	if scriptsResolved.Globals["ScriptsGlobal"] != "readonly" {
+		t.Fatalf("expected ScriptsGlobal, got %#v", scriptsResolved.Globals)
+	}
+	if _, exists := scriptsResolved.Globals["SrcGlobal"]; exists {
+		t.Fatalf("did not expect SrcGlobal for scripts/build.ts, got %#v", scriptsResolved.Globals)
+	}
+	if scriptsResolved.ParserOptions == nil || scriptsResolved.ParserOptions.SourceType != "script" {
+		t.Fatalf("expected script parser options for scripts/build.ts, got %#v", scriptsResolved.ParserOptions)
+	}
+}

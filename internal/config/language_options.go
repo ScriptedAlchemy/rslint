@@ -1,8 +1,10 @@
 package config
 
 import (
+	"os"
 	"strings"
 
+	"github.com/bmatcuk/doublestar/v4"
 	"github.com/web-infra-dev/rslint/internal/rule"
 )
 
@@ -148,12 +150,51 @@ func mergeLanguageOptions(base *LanguageOptions, override *LanguageOptions) *Lan
 func ResolveLanguageOptionsForFile(config RslintConfig, filePath string) *LanguageOptions {
 	var resolved *LanguageOptions
 	for _, entry := range config {
-		if isFileIgnored(filePath, entry.Ignores) {
+		if !configEntryMatchesFile(entry, filePath) {
 			continue
 		}
 		resolved = mergeLanguageOptions(resolved, entry.LanguageOptions)
 	}
 	return resolved
+}
+
+func configEntryMatchesFile(entry ConfigEntry, filePath string) bool {
+	if isFileIgnored(filePath, entry.Ignores) {
+		return false
+	}
+	if len(entry.Files) == 0 {
+		return true
+	}
+
+	normalizedPath := filePath
+	if cwd, err := os.Getwd(); err == nil {
+		normalizedPath = normalizePath(filePath, cwd)
+	}
+
+	for _, filePattern := range entry.Files {
+		if patternMatchesFile(filePattern, filePath, normalizedPath) {
+			return true
+		}
+	}
+	return false
+}
+
+func patternMatchesFile(pattern string, filePath string, normalizedPath string) bool {
+	candidates := []string{
+		normalizedPath,
+		strings.ReplaceAll(normalizedPath, "\\", "/"),
+		filePath,
+		strings.ReplaceAll(filePath, "\\", "/"),
+	}
+	for _, candidate := range candidates {
+		if candidate == "" {
+			continue
+		}
+		if matched, err := doublestar.Match(pattern, candidate); err == nil && matched {
+			return true
+		}
+	}
+	return false
 }
 
 func BuildRuleParserOptions(languageOptions *LanguageOptions) *rule.RuleParserOptions {
