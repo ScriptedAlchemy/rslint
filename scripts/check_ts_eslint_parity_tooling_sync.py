@@ -1,0 +1,89 @@
+#!/usr/bin/env python3
+"""
+Validate parity toolkit command/docs synchronization.
+
+Checks:
+1. Required package.json parity scripts exist.
+2. Core parity docs mention those commands.
+3. Referenced helper scripts exist on disk.
+"""
+
+from __future__ import annotations
+
+import json
+import pathlib
+import sys
+
+
+def fail(msg: str) -> None:
+	print(f"[parity-tooling-check] ERROR: {msg}")
+	sys.exit(1)
+
+
+def main() -> None:
+	root = pathlib.Path("/workspace")
+	package_json = root / "package.json"
+	guide_md = root / "typescript-eslint-rule-parity-guide.md"
+	report_md = root / "typescript-eslint-rule-parity-report.md"
+	index_md = root / "typescript-eslint-rule-parity-index.md"
+
+	pkg = json.loads(package_json.read_text())
+	scripts = pkg.get("scripts", {})
+
+	expected_scripts = {
+		"parity:ts-eslint": "refresh-ts-eslint-parity-artifacts.sh",
+		"parity:ts-eslint:check": "check_ts_eslint_parity_artifacts.py",
+		"parity:ts-eslint:check:tooling": "check_ts_eslint_parity_tooling_sync.py",
+		"parity:ts-eslint:diff": "compare_ts_eslint_parity_trackers.py",
+		"parity:ts-eslint:tasklist": "generate_ts_eslint_parity_issue_tasklist.py",
+		"parity:ts-eslint:tasklist:all": "generate_ts_eslint_parity_tasklists_all.sh",
+		"parity:ts-eslint:issue-body": "generate_ts_eslint_parity_issue_body.py",
+		"parity:ts-eslint:issue-body:all": "generate_ts_eslint_parity_issue_bodies_all.sh",
+		"parity:ts-eslint:top": "generate_ts_eslint_parity_top.py",
+		"parity:ts-eslint:manifest": "generate_ts_eslint_parity_manifest.py",
+		"parity:ts-eslint:rebuild-metadata": "rebuild_ts_eslint_parity_from_metadata.sh",
+		"parity:ts-eslint:verify-clean": "verify_ts_eslint_parity_clean.sh",
+	}
+
+	for script_name, expected_token in expected_scripts.items():
+		value = scripts.get(script_name)
+		if not value:
+			fail(f"missing package script: {script_name}")
+		if expected_token not in value:
+			fail(f"package script `{script_name}` does not reference `{expected_token}`")
+
+	command_tokens = [f"pnpm {name}" for name in expected_scripts]
+	documents = {
+		"guide": guide_md.read_text(),
+		"report": report_md.read_text(),
+		"index": index_md.read_text(),
+	}
+	for token in command_tokens:
+		for doc_name, text in documents.items():
+			if token not in text:
+				fail(f"`{token}` missing in parity {doc_name} documentation")
+
+	# Ensure all referenced helper scripts exist
+	required_scripts = {
+		"scripts/refresh-ts-eslint-parity-artifacts.sh",
+		"scripts/check_ts_eslint_parity_artifacts.py",
+		"scripts/check_ts_eslint_parity_tooling_sync.py",
+		"scripts/compare_ts_eslint_parity_trackers.py",
+		"scripts/generate_ts_eslint_parity_issue_tasklist.py",
+		"scripts/generate_ts_eslint_parity_tasklists_all.sh",
+		"scripts/generate_ts_eslint_parity_issue_body.py",
+		"scripts/generate_ts_eslint_parity_issue_bodies_all.sh",
+		"scripts/generate_ts_eslint_parity_top.py",
+		"scripts/generate_ts_eslint_parity_manifest.py",
+		"scripts/rebuild_ts_eslint_parity_from_metadata.sh",
+		"scripts/verify_ts_eslint_parity_clean.sh",
+	}
+	for rel in required_scripts:
+		if not (root / rel).exists():
+			fail(f"missing required parity helper script: {rel}")
+
+	print("[parity-tooling-check] OK: parity commands/docs/scripts are synchronized.")
+
+
+if __name__ == "__main__":
+	main()

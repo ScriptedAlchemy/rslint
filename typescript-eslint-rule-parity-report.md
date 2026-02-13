@@ -57,6 +57,7 @@ Regenerate tracker artifacts:
 ```bash
 pnpm parity:ts-eslint
 pnpm parity:ts-eslint:check
+pnpm parity:ts-eslint:check:tooling
 pnpm parity:ts-eslint:diff -- --base-ref HEAD~1
 pnpm parity:ts-eslint:tasklist --phase A_critical
 pnpm parity:ts-eslint:tasklist:all
@@ -83,6 +84,7 @@ python3 scripts/generate_ts_eslint_parity_manifest.py
 python3 scripts/generate_ts_eslint_parity_index.py
 python3 scripts/generate_ts_eslint_parity_issue_plan.py
 python3 scripts/check_ts_eslint_parity_artifacts.py
+python3 scripts/check_ts_eslint_parity_tooling_sync.py
 ```
 
 ## Inventory Summary

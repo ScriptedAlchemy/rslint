@@ -46,6 +46,7 @@ python3 scripts/generate_ts_eslint_parity_manifest.py
 
 echo "==> Validating parity artifact consistency"
 python3 scripts/check_ts_eslint_parity_artifacts.py
+python3 scripts/check_ts_eslint_parity_tooling_sync.py
 
 echo "==> Done"
 echo "Generated files:"

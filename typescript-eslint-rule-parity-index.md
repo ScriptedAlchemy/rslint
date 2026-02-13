@@ -1,6 +1,6 @@
 # TypeScript-ESLint Parity Artifact Index
 
-_Generated: 2026-02-13T11:10:30.274301+00:00_
+_Generated: 2026-02-13T11:13:59.215405+00:00_
 
 ## Snapshot
 - Upstream ref requested: `main`
@@ -47,6 +47,7 @@ _Generated: 2026-02-13T11:10:30.274301+00:00_
 pnpm parity:ts-eslint
 PARITY_OFFLINE=1 TS_ESLINT_REF=main pnpm parity:ts-eslint
 pnpm parity:ts-eslint:check
+pnpm parity:ts-eslint:check:tooling
 pnpm parity:ts-eslint:diff -- --base-ref HEAD~1
 pnpm parity:ts-eslint:tasklist --phase A_critical
 pnpm parity:ts-eslint:tasklist:all
