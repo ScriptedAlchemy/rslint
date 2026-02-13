@@ -855,7 +855,8 @@ def main() -> None:
 	if gate_short_help.stdout.strip():
 		fail("parity gate -h stdout must be empty")
 	assert_exact_nonempty_lines("parity gate -h stderr", gate_short_help.stderr, [expected_gate_usage_line])
-	if extract_nonempty_lines(gate_short_help.stderr) != extract_nonempty_lines(gate_help.stderr):
+	gate_help_lines = extract_nonempty_lines(gate_help.stderr)
+	if extract_nonempty_lines(gate_short_help.stderr) != gate_help_lines:
 		fail("parity gate -h stderr output mismatch with --help")
 
 	gate_invalid_threshold = subprocess.run(
@@ -1251,6 +1252,7 @@ def main() -> None:
 		expected_gate_unknown_arg_line,
 		expected_gate_usage_line,
 	)
+	gate_unknown_arg_lines = extract_nonempty_lines(gate_unknown_arg.stderr)
 
 	gate_duplicate_skip_checks = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--skip-checks", "--skip-checks"],
@@ -1281,6 +1283,7 @@ def main() -> None:
 		expected_gate_duplicate_skip_checks_line,
 		expected_gate_usage_line,
 	)
+	gate_duplicate_skip_checks_lines = extract_nonempty_lines(gate_duplicate_skip_checks.stderr)
 
 	# Gate npm wrapper help/unknown-arg forwarding checks
 	gate_wrapper_help_cases = [
@@ -1323,6 +1326,8 @@ def main() -> None:
 	]:
 		fail("parity gate quick help alias stderr mismatch with quick:red")
 	gate_wrapper_help_baseline = gate_wrapper_help_lines["parity gate command --help"]
+	if gate_wrapper_help_baseline != gate_help_lines:
+		fail("parity gate wrapper help baseline mismatch with direct --help stderr")
 	for label, lines in gate_wrapper_help_lines.items():
 		if lines != gate_wrapper_help_baseline:
 			fail(f"{label} stderr output mismatch with gate wrapper help baseline")
@@ -1428,6 +1433,8 @@ def main() -> None:
 	]:
 		fail("parity gate quick unknown-arg alias stderr mismatch with quick:red")
 	gate_wrapper_unknown_arg_baseline = gate_wrapper_unknown_arg_lines["parity gate command unknown-arg"]
+	if gate_wrapper_unknown_arg_baseline != gate_unknown_arg_lines:
+		fail("parity gate wrapper unknown-arg baseline mismatch with direct unknown-arg stderr")
 	for label, lines in gate_wrapper_unknown_arg_lines.items():
 		if lines != gate_wrapper_unknown_arg_baseline:
 			fail(f"{label} stderr output mismatch with gate wrapper unknown-arg baseline")
@@ -1494,6 +1501,8 @@ def main() -> None:
 	gate_wrapper_duplicate_threshold_baseline = gate_wrapper_duplicate_threshold_lines[
 		"parity gate command duplicate-threshold"
 	]
+	if gate_wrapper_duplicate_threshold_baseline != gate_duplicate_threshold_lines:
+		fail("parity gate wrapper duplicate-threshold baseline mismatch with direct duplicate-threshold stderr")
 	for label, lines in gate_wrapper_duplicate_threshold_lines.items():
 		if lines != gate_wrapper_duplicate_threshold_baseline:
 			fail(f"{label} stderr output mismatch with gate wrapper duplicate-threshold baseline")
@@ -1610,6 +1619,8 @@ def main() -> None:
 	gate_wrapper_duplicate_skip_checks_baseline = gate_wrapper_duplicate_skip_checks_lines[
 		"parity gate command duplicate-skip-checks"
 	]
+	if gate_wrapper_duplicate_skip_checks_baseline != gate_duplicate_skip_checks_lines:
+		fail("parity gate wrapper duplicate-skip-checks baseline mismatch with direct duplicate-skip-checks stderr")
 	for label, lines in gate_wrapper_duplicate_skip_checks_lines.items():
 		if lines != gate_wrapper_duplicate_skip_checks_baseline:
 			fail(f"{label} stderr output mismatch with gate wrapper duplicate-skip-checks baseline")
