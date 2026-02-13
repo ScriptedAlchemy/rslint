@@ -48,6 +48,7 @@ pnpm parity:ts-eslint
 pnpm parity:ts-eslint:check
 pnpm parity:ts-eslint:diff -- --base-ref HEAD~1
 pnpm parity:ts-eslint:tasklist --phase A_critical
+pnpm parity:ts-eslint:tasklist:all
 pnpm parity:ts-eslint:rebuild-metadata
 
 # Optional: pin upstream ref (branch/tag/SHA) for reproducible comparisons

@@ -78,6 +78,7 @@ reproducibility checks.
 
 ```bash
 pnpm parity:ts-eslint:tasklist --phase A_critical
+pnpm parity:ts-eslint:tasklist:all
 ```
 
 Outputs:

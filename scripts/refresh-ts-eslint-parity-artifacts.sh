@@ -39,10 +39,7 @@ python3 scripts/generate_ts_eslint_parity_summary.py
 python3 scripts/generate_ts_eslint_parity_metadata.py
 python3 scripts/generate_ts_eslint_parity_index.py
 python3 scripts/generate_ts_eslint_parity_issue_plan.py
-python3 scripts/generate_ts_eslint_parity_issue_tasklist.py --phase A_critical
-python3 scripts/generate_ts_eslint_parity_issue_tasklist.py --phase B_high
-python3 scripts/generate_ts_eslint_parity_issue_tasklist.py --phase C_medium
-python3 scripts/generate_ts_eslint_parity_issue_tasklist.py --phase D_low
+bash scripts/generate_ts_eslint_parity_tasklists_all.sh
 
 echo "==> Validating parity artifact consistency"
 python3 scripts/check_ts_eslint_parity_artifacts.py
