@@ -42,6 +42,7 @@ def main() -> None:
 		"parity:ts-eslint:check:tooling": "check_ts_eslint_parity_tooling_sync.py",
 		"parity:ts-eslint:commands": "generate_ts_eslint_parity_commands.py",
 		"parity:ts-eslint:diff": "compare_ts_eslint_parity_trackers.py",
+		"parity:ts-eslint:diff:json": "compare_ts_eslint_parity_trackers.py --output-json /workspace/typescript-eslint-rule-parity-diff.json",
 		"parity:ts-eslint:tasklist": "generate_ts_eslint_parity_issue_tasklist.py",
 		"parity:ts-eslint:tasklist:all": "generate_ts_eslint_parity_tasklists_all.sh",
 		"parity:ts-eslint:issue-body": "generate_ts_eslint_parity_issue_body.py",
@@ -105,6 +106,15 @@ def main() -> None:
 			text = documents[doc_name]
 			if artifact not in text:
 				fail(f"`{artifact}` missing in parity {doc_name} documentation")
+
+	invalid_command_examples = [
+		"pnpm parity:ts-eslint:diff -- --base-ref",
+		"pnpm parity:ts-eslint:diff:json -- --base-ref",
+	]
+	for invalid in invalid_command_examples:
+		for doc_name, text in documents.items():
+			if invalid in text:
+				fail(f"invalid parity command example `{invalid}` found in {doc_name} documentation")
 
 	commands_text = commands_md.read_text() if commands_md.exists() else ""
 	if not commands_text:

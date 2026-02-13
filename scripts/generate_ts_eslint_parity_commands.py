@@ -30,6 +30,7 @@ def main() -> None:
 		"parity:ts-eslint:check:tooling": "Validate parity commands/docs/script synchronization.",
 		"parity:ts-eslint:commands": "Generate command reference markdown from package scripts.",
 		"parity:ts-eslint:diff": "Compare current tracker against baseline snapshot or git ref.",
+		"parity:ts-eslint:diff:json": "Compare parity snapshots and emit optional JSON diff artifact.",
 		"parity:ts-eslint:tasklist": "Generate one phase tasklist snippet.",
 		"parity:ts-eslint:tasklist:all": "Generate tasklist snippets for all parity phases.",
 		"parity:ts-eslint:issue-body": "Generate one phase issue body draft from tasklist.",

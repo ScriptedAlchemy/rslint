@@ -88,12 +88,14 @@ The checkers validate:
 
 ```bash
 # compare current tracker against tracker from previous commit
-pnpm parity:ts-eslint:diff -- --base-ref HEAD~1
+pnpm parity:ts-eslint:diff --base-ref HEAD~1
+pnpm parity:ts-eslint:diff:json --base-ref HEAD~1
 ```
 
 Outputs:
 
 - `typescript-eslint-rule-parity-diff.md`
+- `typescript-eslint-rule-parity-diff.json` (when `--output-json` is supplied, including via `diff:json`)
 
 ### Rebuild artifacts from pinned metadata commit
 

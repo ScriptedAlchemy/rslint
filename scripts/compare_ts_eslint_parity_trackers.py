@@ -7,7 +7,8 @@ Examples:
   python3 scripts/compare_ts_eslint_parity_trackers.py \
     --base-json /path/to/old-tracker.json \
     --head-json /workspace/typescript-eslint-rule-parity-tracker.json \
-    --output /workspace/typescript-eslint-rule-parity-diff.md
+    --output /workspace/typescript-eslint-rule-parity-diff.md \
+    --output-json /workspace/typescript-eslint-rule-parity-diff.json
 """
 
 from __future__ import annotations
@@ -71,6 +72,10 @@ def main() -> None:
 		"--output",
 		default="/workspace/typescript-eslint-rule-parity-diff.md",
 		help="Output markdown path",
+	)
+	parser.add_argument(
+		"--output-json",
+		help="Optional output JSON path",
 	)
 	args = parser.parse_args()
 
@@ -222,6 +227,35 @@ def main() -> None:
 	output_path = pathlib.Path(args.output)
 	output_path.write_text("\n".join(lines) + "\n")
 	print(f"wrote {output_path}")
+
+	if args.output_json:
+		json_path = pathlib.Path(args.output_json)
+		payload = {
+			"schema_version": 1,
+			"generated_at_utc": datetime.datetime.now(datetime.UTC).isoformat(),
+			"base_label": base_label,
+			"head_label": head_label,
+			"summary": {
+				"rules_compared": len(all_rules),
+				"flagged_rules_base": base_flagged,
+				"flagged_rules_head": head_flagged,
+				"net_flagged_change": head_flagged - base_flagged,
+				"improved_rules": len(improved),
+				"regressed_rules": len(regressed),
+				"resolved_rules": len(resolved),
+				"newly_flagged_rules": len(newly_flagged),
+			},
+			"phase_transitions": dict(phase_transitions),
+			"top_improvements": [{"rule": rule, "score_delta": delta} for delta, rule in improved_sorted[:20]],
+			"top_regressions": [{"rule": rule, "score_delta": delta} for delta, rule in regressed_sorted[:20]],
+			"flag_frequency_deltas": [
+				{"flag": flag, "base": before, "head": after, "delta": diff} for _, diff, flag, before, after in flag_delta_rows
+			],
+			"newly_flagged_rules": sorted(newly_flagged),
+			"resolved_rules": sorted(resolved),
+		}
+		json_path.write_text(json.dumps(payload, indent=2) + "\n")
+		print(f"wrote {json_path}")
 
 
 if __name__ == "__main__":

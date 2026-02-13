@@ -21,6 +21,7 @@ _Generated: 2026-02-13 09:47 UTC_
 - `typescript-eslint-rule-parity-index.md`
 - `typescript-eslint-rule-parity-issue-plan.md`
 - Optional diff artifact: `typescript-eslint-rule-parity-diff.md`
+- Optional diff artifact: `typescript-eslint-rule-parity-diff.json`
 - Optional tasklist snippet artifact: `typescript-eslint-rule-parity-tasklist-<phase>.md`
 - Optional issue body artifact: `typescript-eslint-rule-parity-issue-body-<phase>.md`
 - Generated phase tasklists:
@@ -75,7 +76,8 @@ pnpm parity:ts-eslint:doctor:markdown
 pnpm parity:ts-eslint:doctor:json
 pnpm parity:ts-eslint:doctor:json:strict
 pnpm parity:ts-eslint:doctor:strict
-pnpm parity:ts-eslint:diff -- --base-ref HEAD~1
+pnpm parity:ts-eslint:diff --base-ref HEAD~1
+pnpm parity:ts-eslint:diff:json --base-ref HEAD~1
 pnpm parity:ts-eslint:tasklist --phase A_critical
 pnpm parity:ts-eslint:tasklist:all
 pnpm parity:ts-eslint:issue-body --phase A_critical

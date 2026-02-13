@@ -36,6 +36,7 @@
     "parity:ts-eslint:check:tooling": "python3 scripts/check_ts_eslint_parity_tooling_sync.py",
     "parity:ts-eslint:commands": "python3 scripts/generate_ts_eslint_parity_commands.py",
     "parity:ts-eslint:diff": "python3 scripts/compare_ts_eslint_parity_trackers.py",
+    "parity:ts-eslint:diff:json": "python3 scripts/compare_ts_eslint_parity_trackers.py --output-json /workspace/typescript-eslint-rule-parity-diff.json",
     "parity:ts-eslint:tasklist": "python3 scripts/generate_ts_eslint_parity_issue_tasklist.py",
     "parity:ts-eslint:tasklist:all": "bash scripts/generate_ts_eslint_parity_tasklists_all.sh",
     "parity:ts-eslint:issue-body": "python3 scripts/generate_ts_eslint_parity_issue_body.py",

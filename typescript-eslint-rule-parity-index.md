@@ -33,6 +33,7 @@ _Generated: 2026-02-13T11:25:52.075324+00:00_
 - `typescript-eslint-rule-parity-manifest.json` — deterministic checksums for parity artifacts.
 - `typescript-eslint-rule-parity-issue-plan.md` — issue-friendly phase plans.
 - `typescript-eslint-rule-parity-diff.md` — optional snapshot comparison output.
+- `typescript-eslint-rule-parity-diff.json` — optional machine-readable diff output.
 - `typescript-eslint-rule-parity-tasklist-A_critical.md` — tasklist snippet for A_critical.
 - `typescript-eslint-rule-parity-tasklist-B_high.md` — tasklist snippet for B_high.
 - `typescript-eslint-rule-parity-tasklist-C_medium.md` — tasklist snippet for C_medium.
@@ -63,7 +64,8 @@ pnpm parity:ts-eslint:doctor:markdown
 pnpm parity:ts-eslint:doctor:json
 pnpm parity:ts-eslint:doctor:json:strict
 pnpm parity:ts-eslint:doctor:strict
-pnpm parity:ts-eslint:diff -- --base-ref HEAD~1
+pnpm parity:ts-eslint:diff --base-ref HEAD~1
+pnpm parity:ts-eslint:diff:json --base-ref HEAD~1
 pnpm parity:ts-eslint:tasklist --phase A_critical
 pnpm parity:ts-eslint:tasklist:all
 pnpm parity:ts-eslint:issue-body --phase A_critical
