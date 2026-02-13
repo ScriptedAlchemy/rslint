@@ -1485,6 +1485,47 @@ def main() -> None:
 	)
 	if extract_nonempty_lines(gate_short_help_then_duplicate_skip_checks.stderr) != gate_help_lines:
 		fail("parity gate short-help-then-duplicate-skip-checks stderr mismatch with help baseline")
+	gate_help_then_malformed_threshold_suffixes = [
+		("missing-threshold", ["--threshold"]),
+		("empty-threshold", ["--threshold="]),
+		("missing-threshold with trailing skip-checks", ["--threshold", "--skip-checks"]),
+	]
+	for suffix_label, suffix_tokens in gate_help_then_malformed_threshold_suffixes:
+		help_proc = subprocess.run(
+			["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--help", *suffix_tokens],
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		if help_proc.returncode != 0:
+			fail(f"parity gate help-then-{suffix_label} exit code must be 0")
+		if help_proc.stdout.strip():
+			fail(f"parity gate help-then-{suffix_label} stdout must be empty")
+		assert_exact_nonempty_lines(
+			f"parity gate help-then-{suffix_label} stderr",
+			help_proc.stderr,
+			[expected_gate_usage_line],
+		)
+		if extract_nonempty_lines(help_proc.stderr) != gate_help_lines:
+			fail(f"parity gate help-then-{suffix_label} stderr mismatch with help baseline")
+
+		short_help_proc = subprocess.run(
+			["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "-h", *suffix_tokens],
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		if short_help_proc.returncode != 0:
+			fail(f"parity gate short-help-then-{suffix_label} exit code must be 0")
+		if short_help_proc.stdout.strip():
+			fail(f"parity gate short-help-then-{suffix_label} stdout must be empty")
+		assert_exact_nonempty_lines(
+			f"parity gate short-help-then-{suffix_label} stderr",
+			short_help_proc.stderr,
+			[expected_gate_usage_line],
+		)
+		if extract_nonempty_lines(short_help_proc.stderr) != gate_help_lines:
+			fail(f"parity gate short-help-then-{suffix_label} stderr mismatch with help baseline")
 
 	gate_unknown_then_help = subprocess.run(
 		[
@@ -2452,6 +2493,46 @@ def main() -> None:
 			)
 			if lines != gate_wrapper_unknown_arg_baseline:
 				fail(f"{label} stderr output mismatch with unknown precedence baseline")
+	gate_wrapper_help_then_malformed_suffixes = [
+		("missing-threshold", ["--threshold"]),
+		("empty-threshold", ["--threshold="]),
+		("missing-threshold with trailing skip-checks", ["--threshold", "--skip-checks"]),
+	]
+	gate_wrapper_help_base_commands = [
+		("parity gate command", ["pnpm", "--silent", "parity:ts-eslint:gate"]),
+		("parity gate command red", ["pnpm", "--silent", "parity:ts-eslint:gate:red"]),
+		("parity gate command yellow", ["pnpm", "--silent", "parity:ts-eslint:gate:yellow"]),
+		("parity gate quick command", ["pnpm", "--silent", "parity:ts-eslint:gate:quick"]),
+		("parity gate quick command red", ["pnpm", "--silent", "parity:ts-eslint:gate:quick:red"]),
+		("parity gate quick command yellow", ["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow"]),
+	]
+	for base_label, base_command in gate_wrapper_help_base_commands:
+		for suffix_label, suffix_tokens in gate_wrapper_help_then_malformed_suffixes:
+			help_proc = subprocess.run(
+				[*base_command, "--help", *suffix_tokens],
+				cwd=str(root),
+				check=False,
+				capture_output=True,
+				text=True,
+			)
+			help_lines = assert_gate_wrapper_help_contract(
+				f"{base_label} help-then-{suffix_label}", help_proc, expected_gate_usage_line
+			)
+			if help_lines != gate_wrapper_help_baseline:
+				fail(f"{base_label} help-then-{suffix_label} stderr output mismatch with help baseline")
+
+			short_help_proc = subprocess.run(
+				[*base_command, "-h", *suffix_tokens],
+				cwd=str(root),
+				check=False,
+				capture_output=True,
+				text=True,
+			)
+			short_help_lines = assert_gate_wrapper_help_contract(
+				f"{base_label} short-help-then-{suffix_label}", short_help_proc, expected_gate_usage_line
+			)
+			if short_help_lines != gate_wrapper_help_baseline:
+				fail(f"{base_label} short-help-then-{suffix_label} stderr output mismatch with help baseline")
 
 	gate_wrapper_duplicate_threshold_cases = [
 		(
