@@ -4,18 +4,18 @@
   "files": [
     {
       "path": "typescript-eslint-rule-parity-report.md",
-      "sha256": "39b10583e1dbcb7bc455cae1e6d05d2236e6af2c178e241075d66e7cf86fe5a0",
-      "bytes": 41619
+      "sha256": "c32e933824f388cb86fa17bca9ac56156367d3cd6ecf15c1738eee356542d995",
+      "bytes": 41678
     },
     {
       "path": "typescript-eslint-rule-parity-guide.md",
-      "sha256": "38f877965fd10e3b9e90f3a91a34eeb1da2a7773dc08d2a77610240b31f3779a",
-      "bytes": 8717
+      "sha256": "6f0327dcdb2c3182ef2cc0635ab99cbe6cb5b8ac9ca74d25830e54fb4d0e63f8",
+      "bytes": 8776
     },
     {
       "path": "typescript-eslint-rule-parity-index.md",
-      "sha256": "8af633d0212e06b502d132dcfb07487fbc69c8f93a40cf26158a6d8d71019aed",
-      "bytes": 3717
+      "sha256": "59ff62207ea2fe90542ef65f47449908eaabf183fe7100416f05b3ff21b85525",
+      "bytes": 3776
     },
     {
       "path": "typescript-eslint-rule-parity-summary.md",
@@ -34,8 +34,8 @@
     },
     {
       "path": "typescript-eslint-rule-parity-commands.md",
-      "sha256": "0abd5f881cfc29b64756246ed9c56ea2d137930af0e8ad096f8a3b57f8415b42",
-      "bytes": 4676
+      "sha256": "a8698ec5a46f41fd6621b894ae2cdaaed179d79fc6ffa8ab36a0de31681346b5",
+      "bytes": 4680
     },
     {
       "path": "typescript-eslint-rule-parity-badges.json",

@@ -66,7 +66,9 @@ pnpm parity:ts-eslint:doctor:markdown
 pnpm parity:ts-eslint:doctor:json
 pnpm parity:ts-eslint:doctor:json:strict
 pnpm parity:ts-eslint:doctor:strict
+pnpm parity:ts-eslint:diff
 pnpm parity:ts-eslint:diff --base-ref HEAD~1
+pnpm parity:ts-eslint:diff:json
 pnpm parity:ts-eslint:diff:json --base-ref HEAD~1
 pnpm parity:ts-eslint:tasklist --phase A_critical
 pnpm parity:ts-eslint:tasklist:all

@@ -93,7 +93,9 @@ The checkers validate:
 
 ```bash
 # compare current tracker against tracker from previous commit
+pnpm parity:ts-eslint:diff
 pnpm parity:ts-eslint:diff --base-ref HEAD~1
+pnpm parity:ts-eslint:diff:json
 pnpm parity:ts-eslint:diff:json --base-ref HEAD~1
 ```
 

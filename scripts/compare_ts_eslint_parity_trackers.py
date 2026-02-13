@@ -3,6 +3,7 @@
 Compare two TypeScript-ESLint parity tracker snapshots.
 
 Examples:
+  python3 scripts/compare_ts_eslint_parity_trackers.py
   python3 scripts/compare_ts_eslint_parity_trackers.py --base-ref HEAD~1
   python3 scripts/compare_ts_eslint_parity_trackers.py \
     --base-json /path/to/old-tracker.json \
@@ -60,8 +61,11 @@ def parse_flags(raw: str) -> set[str]:
 
 def main() -> None:
 	parser = argparse.ArgumentParser(description="Compare two parity tracker snapshots.")
-	base_group = parser.add_mutually_exclusive_group(required=True)
-	base_group.add_argument("--base-ref", help="Git ref containing typescript-eslint-rule-parity-tracker.json")
+	base_group = parser.add_mutually_exclusive_group(required=False)
+	base_group.add_argument(
+		"--base-ref",
+		help="Git ref containing typescript-eslint-rule-parity-tracker.json (default: HEAD~1 when no base is provided)",
+	)
 	base_group.add_argument("--base-json", help="Path to baseline tracker JSON")
 	parser.add_argument(
 		"--head-json",
@@ -81,9 +85,10 @@ def main() -> None:
 
 	repo_root = pathlib.Path("/workspace")
 	head_rows = load_rows_from_json(pathlib.Path(args.head_json))
-	if args.base_ref:
-		base_rows = load_rows_from_ref(repo_root, args.base_ref)
-		base_label = f"git:{args.base_ref}"
+	base_ref = args.base_ref or "HEAD~1"
+	if args.base_ref or not args.base_json:
+		base_rows = load_rows_from_ref(repo_root, base_ref)
+		base_label = f"git:{base_ref}"
 	else:
 		base_rows = load_rows_from_json(pathlib.Path(args.base_json))
 		base_label = str(pathlib.Path(args.base_json))
