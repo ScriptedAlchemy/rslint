@@ -31,6 +31,7 @@ def main() -> None:
 
 	pkg = json.loads(package_json.read_text())
 	scripts = pkg.get("scripts", {})
+	actual_parity_scripts = sorted(name for name in scripts if name.startswith("parity:ts-eslint"))
 
 	expected_scripts = {
 		"parity:ts-eslint": "refresh-ts-eslint-parity-artifacts.sh",
@@ -51,6 +52,12 @@ def main() -> None:
 		"parity:ts-eslint:rebuild-metadata": "rebuild_ts_eslint_parity_from_metadata.sh",
 		"parity:ts-eslint:verify-clean": "verify_ts_eslint_parity_clean.sh",
 	}
+	expected_parity_scripts = sorted(expected_scripts.keys())
+	if actual_parity_scripts != expected_parity_scripts:
+		fail(
+			"parity script inventory mismatch: "
+			f"expected={expected_parity_scripts} actual={actual_parity_scripts}"
+		)
 
 	for script_name, expected_token in expected_scripts.items():
 		value = scripts.get(script_name)
