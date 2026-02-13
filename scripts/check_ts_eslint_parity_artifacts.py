@@ -1766,6 +1766,43 @@ def main() -> None:
 	)
 	if extract_nonempty_lines(gate_duplicate_skip_checks_then_short_help.stderr) != gate_duplicate_skip_checks_lines:
 		fail("parity gate duplicate-skip-checks-then-short-help stderr mismatch with duplicate-skip-checks baseline")
+	gate_duplicate_skip_then_malformed_threshold_cases = [
+		(
+			"parity gate duplicate-skip-checks-then-missing-threshold",
+			["--skip-checks", "--skip-checks", "--threshold"],
+		),
+		(
+			"parity gate duplicate-skip-checks-then-empty-threshold",
+			["--skip-checks", "--skip-checks", "--threshold="],
+		),
+		(
+			"parity gate duplicate-skip-checks-then-invalid-threshold-inline",
+			["--skip-checks", "--skip-checks", "--threshold=blue"],
+		),
+		(
+			"parity gate duplicate-skip-checks-then-invalid-threshold-spaced",
+			["--skip-checks", "--skip-checks", "--threshold", "blue"],
+		),
+	]
+	for label, extra_args in gate_duplicate_skip_then_malformed_threshold_cases:
+		proc = subprocess.run(
+			["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), *extra_args],
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		if proc.returncode != 1:
+			fail(f"{label} exit code must be 1")
+		if proc.stdout.strip():
+			fail(f"{label} stdout must be empty")
+		assert_exact_error_plus_usage(
+			f"{label} stderr",
+			proc.stderr,
+			expected_gate_duplicate_skip_checks_line,
+			expected_gate_usage_line,
+		)
+		if extract_nonempty_lines(proc.stderr) != gate_duplicate_skip_checks_lines:
+			fail(f"{label} stderr mismatch with duplicate-skip-checks baseline")
 
 	gate_unknown_precedence_cases = [
 		(
@@ -3196,6 +3233,120 @@ def main() -> None:
 		)
 		if precedence_lines != baseline_lines:
 			fail(f"{label} stderr output mismatch with duplicate-vs-help precedence baseline")
+	gate_wrapper_duplicate_skip_then_malformed_threshold_cases = [
+		(
+			"parity gate command duplicate-skip-checks then missing-threshold",
+			["pnpm", "--silent", "parity:ts-eslint:gate", "--skip-checks", "--skip-checks", "--threshold"],
+		),
+		(
+			"parity gate command red duplicate-skip-checks then missing-threshold",
+			["pnpm", "--silent", "parity:ts-eslint:gate:red", "--skip-checks", "--skip-checks", "--threshold"],
+		),
+		(
+			"parity gate command yellow duplicate-skip-checks then missing-threshold",
+			["pnpm", "--silent", "parity:ts-eslint:gate:yellow", "--skip-checks", "--skip-checks", "--threshold"],
+		),
+		(
+			"parity gate quick command duplicate-skip-checks then missing-threshold",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick", "--skip-checks", "--threshold"],
+		),
+		(
+			"parity gate quick command red duplicate-skip-checks then missing-threshold",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:red", "--skip-checks", "--threshold"],
+		),
+		(
+			"parity gate quick command yellow duplicate-skip-checks then missing-threshold",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow", "--skip-checks", "--threshold"],
+		),
+		(
+			"parity gate command duplicate-skip-checks then empty-threshold",
+			["pnpm", "--silent", "parity:ts-eslint:gate", "--skip-checks", "--skip-checks", "--threshold="],
+		),
+		(
+			"parity gate command red duplicate-skip-checks then empty-threshold",
+			["pnpm", "--silent", "parity:ts-eslint:gate:red", "--skip-checks", "--skip-checks", "--threshold="],
+		),
+		(
+			"parity gate command yellow duplicate-skip-checks then empty-threshold",
+			["pnpm", "--silent", "parity:ts-eslint:gate:yellow", "--skip-checks", "--skip-checks", "--threshold="],
+		),
+		(
+			"parity gate quick command duplicate-skip-checks then empty-threshold",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick", "--skip-checks", "--threshold="],
+		),
+		(
+			"parity gate quick command red duplicate-skip-checks then empty-threshold",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:red", "--skip-checks", "--threshold="],
+		),
+		(
+			"parity gate quick command yellow duplicate-skip-checks then empty-threshold",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow", "--skip-checks", "--threshold="],
+		),
+		(
+			"parity gate command duplicate-skip-checks then invalid-threshold-inline",
+			["pnpm", "--silent", "parity:ts-eslint:gate", "--skip-checks", "--skip-checks", "--threshold=blue"],
+		),
+		(
+			"parity gate command red duplicate-skip-checks then invalid-threshold-inline",
+			["pnpm", "--silent", "parity:ts-eslint:gate:red", "--skip-checks", "--skip-checks", "--threshold=blue"],
+		),
+		(
+			"parity gate command yellow duplicate-skip-checks then invalid-threshold-inline",
+			["pnpm", "--silent", "parity:ts-eslint:gate:yellow", "--skip-checks", "--skip-checks", "--threshold=blue"],
+		),
+		(
+			"parity gate quick command duplicate-skip-checks then invalid-threshold-inline",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick", "--skip-checks", "--threshold=blue"],
+		),
+		(
+			"parity gate quick command red duplicate-skip-checks then invalid-threshold-inline",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:red", "--skip-checks", "--threshold=blue"],
+		),
+		(
+			"parity gate quick command yellow duplicate-skip-checks then invalid-threshold-inline",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow", "--skip-checks", "--threshold=blue"],
+		),
+		(
+			"parity gate command duplicate-skip-checks then invalid-threshold-spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate", "--skip-checks", "--skip-checks", "--threshold", "blue"],
+		),
+		(
+			"parity gate command red duplicate-skip-checks then invalid-threshold-spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:red", "--skip-checks", "--skip-checks", "--threshold", "blue"],
+		),
+		(
+			"parity gate command yellow duplicate-skip-checks then invalid-threshold-spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:yellow", "--skip-checks", "--skip-checks", "--threshold", "blue"],
+		),
+		(
+			"parity gate quick command duplicate-skip-checks then invalid-threshold-spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick", "--skip-checks", "--threshold", "blue"],
+		),
+		(
+			"parity gate quick command red duplicate-skip-checks then invalid-threshold-spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:red", "--skip-checks", "--threshold", "blue"],
+		),
+		(
+			"parity gate quick command yellow duplicate-skip-checks then invalid-threshold-spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow", "--skip-checks", "--threshold", "blue"],
+		),
+	]
+	for label, command in gate_wrapper_duplicate_skip_then_malformed_threshold_cases:
+		proc = subprocess.run(
+			command,
+			cwd=str(root),
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		precedence_lines = assert_gate_wrapper_unknown_arg_contract(
+			label,
+			proc,
+			expected_gate_duplicate_skip_checks_line,
+			expected_gate_usage_line,
+		)
+		if precedence_lines != gate_wrapper_duplicate_skip_checks_baseline:
+			fail(f"{label} stderr output mismatch with duplicate-skip-checks malformed-tail baseline")
 	gate_wrapper_duplicate_then_unknown_cases = [
 		(
 			"parity gate command duplicate-threshold then unknown",
