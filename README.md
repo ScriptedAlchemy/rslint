@@ -66,6 +66,9 @@ pnpm parity:ts-eslint:check:clean
 # Strict gate: all checks + fail if critical parity backlog remains
 pnpm parity:ts-eslint:check:strict
 
+# Strict gate: all checks + fail if parity health is yellow or red
+pnpm parity:ts-eslint:check:strict:yellow
+
 # Strict gate + clean-tree enforcement for reproducibility verification
 pnpm parity:ts-eslint:check:strict:clean
 

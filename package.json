@@ -35,6 +35,7 @@
     "parity:ts-eslint:check:all": "bash scripts/check_ts_eslint_parity_all.sh",
     "parity:ts-eslint:check:clean": "PARITY_CHECK_ALL_REQUIRE_CLEAN=1 bash scripts/check_ts_eslint_parity_all.sh",
     "parity:ts-eslint:check:strict": "bash scripts/check_ts_eslint_parity_all.sh && python3 scripts/generate_ts_eslint_parity_doctor.py --fail-on-critical",
+    "parity:ts-eslint:check:strict:yellow": "bash scripts/check_ts_eslint_parity_all.sh && python3 scripts/generate_ts_eslint_parity_doctor.py --fail-on-yellow",
     "parity:ts-eslint:check:strict:clean": "PARITY_CHECK_ALL_REQUIRE_CLEAN=1 bash scripts/check_ts_eslint_parity_all.sh && python3 scripts/generate_ts_eslint_parity_doctor.py --fail-on-critical",
     "parity:ts-eslint:gate": "bash scripts/run_ts_eslint_parity_gate.sh --threshold red",
     "parity:ts-eslint:gate:red": "bash scripts/run_ts_eslint_parity_gate.sh --threshold red",
