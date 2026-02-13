@@ -31,6 +31,7 @@
     "format:go": "golangci-lint fmt ./cmd/... ./internal/...",
     "parity:ts-eslint": "bash scripts/refresh-ts-eslint-parity-artifacts.sh",
     "parity:ts-eslint:check": "python3 scripts/check_ts_eslint_parity_artifacts.py",
+    "parity:ts-eslint:check:all": "bash scripts/check_ts_eslint_parity_all.sh",
     "parity:ts-eslint:check:tooling": "python3 scripts/check_ts_eslint_parity_tooling_sync.py",
     "parity:ts-eslint:commands": "python3 scripts/generate_ts_eslint_parity_commands.py",
     "parity:ts-eslint:diff": "python3 scripts/compare_ts_eslint_parity_trackers.py",

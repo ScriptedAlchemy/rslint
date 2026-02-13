@@ -35,6 +35,7 @@ def main() -> None:
 	expected_scripts = {
 		"parity:ts-eslint": "refresh-ts-eslint-parity-artifacts.sh",
 		"parity:ts-eslint:check": "check_ts_eslint_parity_artifacts.py",
+		"parity:ts-eslint:check:all": "check_ts_eslint_parity_all.sh",
 		"parity:ts-eslint:check:tooling": "check_ts_eslint_parity_tooling_sync.py",
 		"parity:ts-eslint:commands": "generate_ts_eslint_parity_commands.py",
 		"parity:ts-eslint:diff": "compare_ts_eslint_parity_trackers.py",
@@ -104,6 +105,7 @@ def main() -> None:
 	required_scripts = {
 		"scripts/refresh-ts-eslint-parity-artifacts.sh",
 		"scripts/check_ts_eslint_parity_artifacts.py",
+		"scripts/check_ts_eslint_parity_all.sh",
 		"scripts/check_ts_eslint_parity_tooling_sync.py",
 		"scripts/generate_ts_eslint_parity_commands.py",
 		"scripts/compare_ts_eslint_parity_trackers.py",

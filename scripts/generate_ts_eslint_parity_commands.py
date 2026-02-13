@@ -25,6 +25,7 @@ def main() -> None:
 	descriptions = {
 		"parity:ts-eslint": "Refresh all parity artifacts from upstream reference and run validations.",
 		"parity:ts-eslint:check": "Validate generated parity artifact consistency and structure.",
+		"parity:ts-eslint:check:all": "Run all parity checks; includes verify-clean when parity artifacts are clean.",
 		"parity:ts-eslint:check:tooling": "Validate parity commands/docs/script synchronization.",
 		"parity:ts-eslint:diff": "Compare current tracker against baseline snapshot or git ref.",
 		"parity:ts-eslint:tasklist": "Generate one phase tasklist snippet.",

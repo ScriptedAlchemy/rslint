@@ -7,6 +7,7 @@ Generated from `package.json` parity scripts.
 | `pnpm parity:ts-eslint` | Refresh all parity artifacts from upstream reference and run validations. | `bash scripts/refresh-ts-eslint-parity-artifacts.sh` |
 | `pnpm parity:ts-eslint:badges` | Generate badge-friendly parity metrics JSON. | `python3 scripts/generate_ts_eslint_parity_badges.py` |
 | `pnpm parity:ts-eslint:check` | Validate generated parity artifact consistency and structure. | `python3 scripts/check_ts_eslint_parity_artifacts.py` |
+| `pnpm parity:ts-eslint:check:all` | Run all parity checks; includes verify-clean when parity artifacts are clean. | `bash scripts/check_ts_eslint_parity_all.sh` |
 | `pnpm parity:ts-eslint:check:tooling` | Validate parity commands/docs/script synchronization. | `python3 scripts/check_ts_eslint_parity_tooling_sync.py` |
 | `pnpm parity:ts-eslint:commands` | No description provided. | `python3 scripts/generate_ts_eslint_parity_commands.py` |
 | `pnpm parity:ts-eslint:diff` | Compare current tracker against baseline snapshot or git ref. | `python3 scripts/compare_ts_eslint_parity_trackers.py` |
