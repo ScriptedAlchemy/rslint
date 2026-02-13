@@ -190,6 +190,70 @@ def parse_ci_summary_markdown(summary_text: str) -> dict:
 	return parsed
 
 
+def parse_doctor_plain_output(text: str) -> dict:
+	patterns = {
+		"total_rules": r"Total rules\s*:\s*(\d+)",
+		"aligned_rules": r"Aligned rules\s*:\s*(\d+)\s*\(",
+		"flagged_rules": r"Flagged rules\s*:\s*(\d+)",
+	}
+	parsed = {}
+	for key, pattern in patterns.items():
+		match = re.search(pattern, text)
+		if not match:
+			fail(f"parity doctor plain output missing field: {key}")
+		parsed[key] = int(match.group(1))
+
+	phase_match = re.search(r"Phase load\s*:\s*A=(\d+)\s+B=(\d+)\s+C=(\d+)\s+D=(\d+)", text)
+	if not phase_match:
+		fail("parity doctor plain output missing phase load")
+	parsed["phase_counts"] = {
+		"A_critical": int(phase_match.group(1)),
+		"B_high": int(phase_match.group(2)),
+		"C_medium": int(phase_match.group(3)),
+		"D_low": int(phase_match.group(4)),
+	}
+
+	top_match = re.search(r"Top rules\s*:\s*(.+)", text)
+	if top_match:
+		parsed["top_rules"] = [part.strip() for part in top_match.group(1).split(",") if part.strip()]
+	else:
+		parsed["top_rules"] = []
+
+	return parsed
+
+
+def parse_doctor_markdown_output(text: str) -> dict:
+	patterns = {
+		"total_rules": r"- Total rules:\s+\*\*(\d+)\*\*",
+		"aligned_rules": r"- Aligned rules:\s+\*\*(\d+)\*\*\s+\(",
+		"flagged_rules": r"- Flagged rules:\s+\*\*(\d+)\*\*",
+	}
+	parsed = {}
+	for key, pattern in patterns.items():
+		match = re.search(pattern, text)
+		if not match:
+			fail(f"parity doctor markdown output missing field: {key}")
+		parsed[key] = int(match.group(1))
+
+	phase_match = re.search(r"- Phase load:\s*A=(\d+),\s*B=(\d+),\s*C=(\d+),\s*D=(\d+)", text)
+	if not phase_match:
+		fail("parity doctor markdown output missing phase load")
+	parsed["phase_counts"] = {
+		"A_critical": int(phase_match.group(1)),
+		"B_high": int(phase_match.group(2)),
+		"C_medium": int(phase_match.group(3)),
+		"D_low": int(phase_match.group(4)),
+	}
+
+	top_match = re.search(r"- Top immediate rules:\s*(.+)", text)
+	if top_match:
+		parsed["top_rules"] = re.findall(r"`([^`]+)`", top_match.group(1))
+	else:
+		parsed["top_rules"] = []
+
+	return parsed
+
+
 def main() -> None:
 	root = pathlib.Path("/workspace")
 	tracker_csv = root / "typescript-eslint-rule-parity-tracker.csv"
@@ -640,12 +704,35 @@ def main() -> None:
 
 	if "Parity Doctor" not in doctor_plain:
 		fail("parity doctor plain output missing title")
-	if "Total rules" not in doctor_plain:
-		fail("parity doctor plain output missing total rules")
 	if "### Parity Doctor" not in doctor_md:
 		fail("parity doctor markdown output missing heading")
-	if f"**{summary.get('total_rules')}**" not in doctor_md:
-		fail("parity doctor markdown output missing total rules value")
+
+	doctor_plain_data = parse_doctor_plain_output(doctor_plain)
+	doctor_md_data = parse_doctor_markdown_output(doctor_md)
+
+	for key in ("total_rules", "aligned_rules", "flagged_rules"):
+		expected = int(summary.get(key, -1))
+		if doctor_plain_data[key] != expected:
+			fail(f"parity doctor plain output mismatch for {key}")
+		if doctor_md_data[key] != expected:
+			fail(f"parity doctor markdown output mismatch for {key}")
+
+	expected_doctor_phases = {
+		"A_critical": int(phase_counter.get("A_critical", 0)),
+		"B_high": int(phase_counter.get("B_high", 0)),
+		"C_medium": int(phase_counter.get("C_medium", 0)),
+		"D_low": int(phase_counter.get("D_low", 0)),
+	}
+	if doctor_plain_data["phase_counts"] != expected_doctor_phases:
+		fail("parity doctor plain phase counts mismatch")
+	if doctor_md_data["phase_counts"] != expected_doctor_phases:
+		fail("parity doctor markdown phase counts mismatch")
+
+	expected_doctor_top = [row.get("rule", "") for row in expected_top[:5]]
+	if doctor_plain_data["top_rules"] != expected_doctor_top:
+		fail("parity doctor plain top rules mismatch")
+	if doctor_md_data["top_rules"] != expected_doctor_top:
+		fail("parity doctor markdown top rules mismatch")
 
 	print("[parity-check] OK: all parity artifacts are consistent.")
 

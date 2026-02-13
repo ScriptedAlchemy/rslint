@@ -54,7 +54,7 @@ Recommended usage:
 3. Close rows by clearing flags and reducing score to `0` as parity work lands.
 4. Use the generated worklist markdown for checkbox-style execution tracking.
 5. Use the generated issue plan markdown to open/track phase-scoped GitHub issues.
-6. Run consistency check to ensure tracker/summary/worklist/metadata/manifest/index/issue-plan/issue-body artifacts, CI summary output, CI workflow artifact-bundle wiring, parity command inventory, and status/badge schema+arithmetic invariants remain synchronized.
+6. Run consistency check to ensure tracker/summary/worklist/metadata/manifest/index/issue-plan/issue-body artifacts, CI summary output, doctor output (plain/markdown), CI workflow artifact-bundle wiring, parity command inventory, and status/badge schema+arithmetic invariants remain synchronized.
 7. Optionally run metadata-pinned rebuild to verify reproducibility.
 
 Regenerate tracker artifacts:
