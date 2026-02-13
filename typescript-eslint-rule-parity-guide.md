@@ -61,6 +61,7 @@ pnpm parity:ts-eslint:commands
 pnpm parity:ts-eslint:badges
 pnpm parity:ts-eslint:status
 pnpm parity:ts-eslint:ci-summary
+pnpm parity:ts-eslint:ci-summary:json
 pnpm parity:ts-eslint:doctor
 pnpm parity:ts-eslint:doctor:markdown
 pnpm parity:ts-eslint:doctor:json
@@ -71,7 +72,7 @@ pnpm parity:ts-eslint:doctor:strict
 The checkers validate:
 - tracker/worklist/summary/metadata/manifest/index/issue-plan coherence,
 - issue-body structure/counts,
-- CI summary rendering consistency (including optional diff metrics when diff artifact exists),
+- CI summary rendering consistency (markdown + JSON, including optional diff metrics when diff artifact exists),
 - parity doctor output consistency (plain + markdown + JSON forms),
 - parity doctor strict-mode exit behavior (`--fail-on-critical`),
 - parity command/docs/script synchronization,

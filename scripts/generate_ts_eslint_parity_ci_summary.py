@@ -6,11 +6,13 @@ Reads:
   - typescript-eslint-rule-parity-metadata.json (required)
   - typescript-eslint-rule-parity-diff.md (optional)
 
-Prints markdown to stdout (intended for $GITHUB_STEP_SUMMARY).
+Prints markdown to stdout (intended for $GITHUB_STEP_SUMMARY),
+or JSON with --json.
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import pathlib
 import re
@@ -37,6 +39,10 @@ def read_optional_diff_metrics(diff_path: pathlib.Path) -> dict:
 
 
 def main() -> None:
+	parser = argparse.ArgumentParser(description="Emit parity CI summary.")
+	parser.add_argument("--json", action="store_true", help="Emit JSON output instead of markdown.")
+	args = parser.parse_args()
+
 	root = pathlib.Path("/workspace")
 	metadata_path = root / "typescript-eslint-rule-parity-metadata.json"
 	status_path = root / "typescript-eslint-rule-parity-status.json"
@@ -52,6 +58,32 @@ def main() -> None:
 	reason = status.get("reason")
 
 	diff_metrics = read_optional_diff_metrics(diff_path)
+
+	if args.json:
+		payload = {
+			"schema_version": 1,
+			"generated_at_utc": metadata.get("generated_at_utc"),
+			"upstream_ref_requested": upstream_ref,
+			"upstream_commit": upstream_commit,
+			"summary": {
+				"total_rules": int(summary.get("total_rules", 0)),
+				"flagged_rules": int(summary.get("flagged_rules", 0)),
+				"aligned_rules": int(summary.get("aligned_rules", 0)),
+			},
+			"health": health,
+			"health_reason": reason,
+			"phase_counts": {
+				"A_critical": int(phase_counts.get("A_critical", 0)),
+				"B_high": int(phase_counts.get("B_high", 0)),
+				"C_medium": int(phase_counts.get("C_medium", 0)),
+				"D_low": int(phase_counts.get("D_low", 0)),
+				"aligned": int(phase_counts.get("aligned", 0)),
+			},
+		}
+		if diff_metrics:
+			payload["diff_metrics"] = {key: int(value) for key, value in diff_metrics.items()}
+		print(json.dumps(payload, indent=2))
+		return
 
 	lines: list[str] = []
 	lines.append("## TypeScript-ESLint Parity Summary")

@@ -11,6 +11,7 @@ Generated from `package.json` parity scripts.
 | `pnpm parity:ts-eslint:check:strict` | Run full parity checks and fail if critical backlog exists. | `bash scripts/check_ts_eslint_parity_all.sh && python3 scripts/generate_ts_eslint_parity_doctor.py --fail-on-critical` |
 | `pnpm parity:ts-eslint:check:tooling` | Validate parity commands/docs/script synchronization. | `python3 scripts/check_ts_eslint_parity_tooling_sync.py` |
 | `pnpm parity:ts-eslint:ci-summary` | Render CI-style markdown summary from parity artifacts. | `python3 scripts/generate_ts_eslint_parity_ci_summary.py` |
+| `pnpm parity:ts-eslint:ci-summary:json` | Render CI summary as JSON for automation. | `python3 scripts/generate_ts_eslint_parity_ci_summary.py --json` |
 | `pnpm parity:ts-eslint:commands` | Generate command reference markdown from package scripts. | `python3 scripts/generate_ts_eslint_parity_commands.py` |
 | `pnpm parity:ts-eslint:diff` | Compare current tracker against baseline snapshot or git ref. | `python3 scripts/compare_ts_eslint_parity_trackers.py` |
 | `pnpm parity:ts-eslint:doctor` | Print parity health diagnosis from metadata and top-priority artifact. | `python3 scripts/generate_ts_eslint_parity_doctor.py` |

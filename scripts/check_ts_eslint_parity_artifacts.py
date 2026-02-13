@@ -206,6 +206,18 @@ def parse_ci_summary_markdown(summary_text: str) -> dict:
 	return parsed
 
 
+def parse_ci_summary_json(summary_text: str) -> dict:
+	try:
+		parsed = json.loads(summary_text)
+	except json.JSONDecodeError as err:
+		fail(f"ci summary json output invalid JSON: {err}")
+	if not isinstance(parsed, dict):
+		fail("ci summary json output must be an object")
+	if int(parsed.get("schema_version", -1)) != 1:
+		fail("ci summary json schema_version must be 1")
+	return parsed
+
+
 def parse_diff_markdown_summary(diff_text: str) -> dict:
 	patterns = {
 		"net_flagged_change": r"Net flagged change:\s+\*\*([+-]?\d+)\*\*",
@@ -720,10 +732,17 @@ def main() -> None:
 			capture_output=True,
 			text=True,
 		).stdout
+		ci_summary_json_output = subprocess.run(
+			["python3", str(root / "scripts/generate_ts_eslint_parity_ci_summary.py"), "--json"],
+			check=True,
+			capture_output=True,
+			text=True,
+		).stdout
 	except subprocess.CalledProcessError as err:
 		fail(f"ci summary script failed: {err}")
 
 	ci_summary = parse_ci_summary_markdown(ci_summary_output)
+	ci_summary_json = parse_ci_summary_json(ci_summary_json_output)
 	if ci_summary["upstream_ref"] != metadata.get("upstream_ref_requested"):
 		fail("ci summary upstream_ref mismatch")
 	if ci_summary["upstream_commit"] != metadata.get("upstream_commit"):
@@ -740,12 +759,31 @@ def main() -> None:
 		fail("ci summary health reason mismatch")
 	if ci_summary["phase_counts"] != dict(phase_counter):
 		fail("ci summary phase_counts mismatch")
+
+	if ci_summary_json.get("upstream_ref_requested") != metadata.get("upstream_ref_requested"):
+		fail("ci summary json upstream_ref mismatch")
+	if ci_summary_json.get("upstream_commit") != metadata.get("upstream_commit"):
+		fail("ci summary json upstream_commit mismatch")
+	ci_json_summary = ci_summary_json.get("summary", {})
+	for key in ("total_rules", "flagged_rules", "aligned_rules"):
+		if int(ci_json_summary.get(key, -1)) != int(summary.get(key, -2)):
+			fail(f"ci summary json {key} mismatch")
+	if ci_summary_json.get("health") != status.get("health"):
+		fail("ci summary json health mismatch")
+	if ci_summary_json.get("health_reason", "") != status.get("reason", ""):
+		fail("ci summary json health reason mismatch")
+	if ci_summary_json.get("phase_counts", {}) != dict(phase_counter):
+		fail("ci summary json phase_counts mismatch")
 	if diff_md.exists():
 		expected_diff = parse_diff_markdown_summary(diff_md.read_text())
 		if ci_summary["diff_metrics"] != expected_diff:
 			fail("ci summary diff metrics mismatch with parity diff artifact")
+		if ci_summary_json.get("diff_metrics", {}) != expected_diff:
+			fail("ci summary json diff metrics mismatch with parity diff artifact")
 	elif ci_summary["diff_metrics"]:
 		fail("ci summary should not include diff metrics when parity diff artifact is absent")
+	elif ci_summary_json.get("diff_metrics"):
+		fail("ci summary json should not include diff metrics when parity diff artifact is absent")
 
 	# Parity doctor output checks
 	try:

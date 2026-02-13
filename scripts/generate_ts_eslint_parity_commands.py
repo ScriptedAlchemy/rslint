@@ -37,6 +37,7 @@ def main() -> None:
 		"parity:ts-eslint:badges": "Generate badge-friendly parity metrics JSON.",
 		"parity:ts-eslint:status": "Generate concise parity health status JSON for automation.",
 		"parity:ts-eslint:ci-summary": "Render CI-style markdown summary from parity artifacts.",
+		"parity:ts-eslint:ci-summary:json": "Render CI summary as JSON for automation.",
 		"parity:ts-eslint:doctor": "Print parity health diagnosis from metadata and top-priority artifact.",
 		"parity:ts-eslint:doctor:markdown": "Print parity doctor output in markdown format.",
 		"parity:ts-eslint:doctor:json": "Print parity doctor output in JSON format for automation.",
