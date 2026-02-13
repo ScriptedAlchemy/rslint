@@ -1803,6 +1803,25 @@ def main() -> None:
 		)
 		if extract_nonempty_lines(proc.stderr) != gate_duplicate_skip_checks_lines:
 			fail(f"{label} stderr mismatch with duplicate-skip-checks baseline")
+		for help_flag, help_label in [("--help", "help"), ("-h", "short-help")]:
+			proc_with_help = subprocess.run(
+				["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), *extra_args, help_flag],
+				check=False,
+				capture_output=True,
+				text=True,
+			)
+			if proc_with_help.returncode != 1:
+				fail(f"{label} then {help_label} exit code must be 1")
+			if proc_with_help.stdout.strip():
+				fail(f"{label} then {help_label} stdout must be empty")
+			assert_exact_error_plus_usage(
+				f"{label} then {help_label} stderr",
+				proc_with_help.stderr,
+				expected_gate_duplicate_skip_checks_line,
+				expected_gate_usage_line,
+			)
+			if extract_nonempty_lines(proc_with_help.stderr) != gate_duplicate_skip_checks_lines:
+				fail(f"{label} then {help_label} stderr mismatch with duplicate-skip-checks baseline")
 
 	gate_unknown_precedence_cases = [
 		(
@@ -3347,6 +3366,22 @@ def main() -> None:
 		)
 		if precedence_lines != gate_wrapper_duplicate_skip_checks_baseline:
 			fail(f"{label} stderr output mismatch with duplicate-skip-checks malformed-tail baseline")
+		for help_flag, help_label in [("--help", "help"), ("-h", "short-help")]:
+			proc_with_help = subprocess.run(
+				[*command, help_flag],
+				cwd=str(root),
+				check=False,
+				capture_output=True,
+				text=True,
+			)
+			precedence_with_help_lines = assert_gate_wrapper_unknown_arg_contract(
+				f"{label} then {help_label}",
+				proc_with_help,
+				expected_gate_duplicate_skip_checks_line,
+				expected_gate_usage_line,
+			)
+			if precedence_with_help_lines != gate_wrapper_duplicate_skip_checks_baseline:
+				fail(f"{label} then {help_label} stderr output mismatch with duplicate-skip-checks malformed-tail baseline")
 	gate_wrapper_duplicate_then_unknown_cases = [
 		(
 			"parity gate command duplicate-threshold then unknown",
