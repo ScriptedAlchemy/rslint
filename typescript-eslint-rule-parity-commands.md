@@ -13,6 +13,7 @@ Generated from `package.json` parity scripts.
 | `pnpm parity:ts-eslint:commands` | Generate command reference markdown from package scripts. | `python3 scripts/generate_ts_eslint_parity_commands.py` |
 | `pnpm parity:ts-eslint:diff` | Compare current tracker against baseline snapshot or git ref. | `python3 scripts/compare_ts_eslint_parity_trackers.py` |
 | `pnpm parity:ts-eslint:doctor` | Print parity health diagnosis from metadata and top-priority artifact. | `python3 scripts/generate_ts_eslint_parity_doctor.py` |
+| `pnpm parity:ts-eslint:doctor:strict` | Print parity health diagnosis and fail if critical backlog exists. | `python3 scripts/generate_ts_eslint_parity_doctor.py --fail-on-critical` |
 | `pnpm parity:ts-eslint:issue-body` | Generate one phase issue body draft from tasklist. | `python3 scripts/generate_ts_eslint_parity_issue_body.py` |
 | `pnpm parity:ts-eslint:issue-body:all` | Generate issue body drafts for all parity phases. | `bash scripts/generate_ts_eslint_parity_issue_bodies_all.sh` |
 | `pnpm parity:ts-eslint:manifest` | Generate checksum manifest for parity artifacts. | `python3 scripts/generate_ts_eslint_parity_manifest.py` |

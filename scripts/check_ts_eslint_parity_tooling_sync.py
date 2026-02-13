@@ -48,6 +48,7 @@ def main() -> None:
 		"parity:ts-eslint:status": "generate_ts_eslint_parity_status.py",
 		"parity:ts-eslint:ci-summary": "generate_ts_eslint_parity_ci_summary.py",
 		"parity:ts-eslint:doctor": "generate_ts_eslint_parity_doctor.py",
+		"parity:ts-eslint:doctor:strict": "generate_ts_eslint_parity_doctor.py --fail-on-critical",
 		"parity:ts-eslint:top": "generate_ts_eslint_parity_top.py",
 		"parity:ts-eslint:manifest": "generate_ts_eslint_parity_manifest.py",
 		"parity:ts-eslint:rebuild-metadata": "rebuild_ts_eslint_parity_from_metadata.sh",
