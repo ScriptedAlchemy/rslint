@@ -1556,6 +1556,48 @@ def main() -> None:
 			fail(f"{label} return code mismatch with {inline_label}")
 		if spaced_lines != gate_wrapper_duplicate_threshold_lines[inline_label]:
 			fail(f"{label} stderr output mismatch with {inline_label}")
+	gate_wrapper_duplicate_threshold_precedence_cases = [
+		(
+			"parity gate command duplicate-threshold precedence missing-value",
+			["pnpm", "--silent", "parity:ts-eslint:gate", "--threshold"],
+		),
+		(
+			"parity gate command red duplicate-threshold precedence invalid-value",
+			["pnpm", "--silent", "parity:ts-eslint:gate:red", "--threshold=blue"],
+		),
+		(
+			"parity gate command yellow duplicate-threshold precedence empty-value",
+			["pnpm", "--silent", "parity:ts-eslint:gate:yellow", "--threshold="],
+		),
+		(
+			"parity gate quick command duplicate-threshold precedence missing-value",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick", "--threshold"],
+		),
+		(
+			"parity gate quick command red duplicate-threshold precedence invalid-value",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:red", "--threshold=blue"],
+		),
+		(
+			"parity gate quick command yellow duplicate-threshold precedence empty-value",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow", "--threshold="],
+		),
+	]
+	for label, command in gate_wrapper_duplicate_threshold_precedence_cases:
+		proc = subprocess.run(
+			command,
+			cwd=str(root),
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		precedence_lines = assert_gate_wrapper_unknown_arg_contract(
+			label,
+			proc,
+			expected_gate_duplicate_threshold_line,
+			expected_gate_usage_line,
+		)
+		if precedence_lines != gate_wrapper_duplicate_threshold_baseline:
+			fail(f"{label} stderr output mismatch with duplicate-threshold precedence baseline")
 
 	gate_wrapper_duplicate_skip_checks_cases = [
 		(
