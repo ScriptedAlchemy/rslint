@@ -26,6 +26,9 @@ _Generated: 2026-02-13 09:47 UTC_
   - `typescript-eslint-rule-parity-tasklist-D_low.md`
 - CI guard: `.github/workflows/parity-artifacts-check.yml`
 - CI summary renderer: `scripts/generate_ts_eslint_parity_ci_summary.py`
+- PR CI uploads:
+  - `typescript-eslint-parity-diff`
+  - `typescript-eslint-parity-artifacts`
 
 These machine-readable files mirror this report’s findings and include:
 - per-rule priority score,

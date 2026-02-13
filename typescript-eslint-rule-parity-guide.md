@@ -140,6 +140,8 @@ Workflow: `.github/workflows/parity-artifacts-check.yml`
 - Ensures tracker/summary/worklist/metadata/manifest/index/issue-plan remain synchronized.
 - On pull requests, also generates `typescript-eslint-rule-parity-diff.md`
   against the PR base branch and uploads it as a workflow artifact.
+- On pull requests, uploads a full parity artifact bundle
+  (`typescript-eslint-parity-artifacts`) for review.
 - CI also rebuilds artifacts from metadata-pinned upstream commit and checks
   that parity artifacts remain unchanged.
 - CI writes a concise parity status block into GitHub job summary.

@@ -71,3 +71,25 @@ jobs:
         with:
           name: typescript-eslint-parity-diff
           path: typescript-eslint-rule-parity-diff.md
+
+      - name: Upload parity artifact bundle
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: typescript-eslint-parity-artifacts
+          path: |
+            typescript-eslint-rule-parity-report.md
+            typescript-eslint-rule-parity-guide.md
+            typescript-eslint-rule-parity-index.md
+            typescript-eslint-rule-parity-summary.md
+            typescript-eslint-rule-parity-top.md
+            typescript-eslint-rule-parity-worklist.md
+            typescript-eslint-rule-parity-issue-plan.md
+            typescript-eslint-rule-parity-tracker.csv
+            typescript-eslint-rule-parity-tracker.json
+            typescript-eslint-rule-parity-metadata.json
+            typescript-eslint-rule-parity-manifest.json
+            typescript-eslint-rule-parity-tasklist-A_critical.md
+            typescript-eslint-rule-parity-tasklist-B_high.md
+            typescript-eslint-rule-parity-tasklist-C_medium.md
+            typescript-eslint-rule-parity-tasklist-D_low.md
