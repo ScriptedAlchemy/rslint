@@ -90,6 +90,7 @@ def main() -> None:
 	lines.append("pnpm parity:ts-eslint:doctor")
 	lines.append("pnpm parity:ts-eslint:doctor:markdown")
 	lines.append("pnpm parity:ts-eslint:doctor:json")
+	lines.append("pnpm parity:ts-eslint:doctor:json:strict")
 	lines.append("pnpm parity:ts-eslint:doctor:strict")
 	lines.append("pnpm parity:ts-eslint:diff -- --base-ref HEAD~1")
 	lines.append("pnpm parity:ts-eslint:tasklist --phase A_critical")

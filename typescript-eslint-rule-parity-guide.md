@@ -64,6 +64,7 @@ pnpm parity:ts-eslint:ci-summary
 pnpm parity:ts-eslint:doctor
 pnpm parity:ts-eslint:doctor:markdown
 pnpm parity:ts-eslint:doctor:json
+pnpm parity:ts-eslint:doctor:json:strict
 pnpm parity:ts-eslint:doctor:strict
 ```
 

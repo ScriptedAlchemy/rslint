@@ -843,14 +843,38 @@ def main() -> None:
 		capture_output=True,
 		text=True,
 	)
+	doctor_json_strict = subprocess.run(
+		["python3", str(root / "scripts/generate_ts_eslint_parity_doctor.py"), "--json", "--fail-on-critical"],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
 	expected_strict_exit = 2 if int(phase_counter.get("A_critical", 0)) > 0 else 0
 	if doctor_strict.returncode != expected_strict_exit:
 		fail(
 			"parity doctor strict exit-code mismatch: "
 			f"expected={expected_strict_exit} actual={doctor_strict.returncode}"
 		)
+	if doctor_json_strict.returncode != expected_strict_exit:
+		fail(
+			"parity doctor json strict exit-code mismatch: "
+			f"expected={expected_strict_exit} actual={doctor_json_strict.returncode}"
+		)
 	if expected_strict_exit == 2 and "A_critical backlog is non-zero" not in doctor_strict.stderr:
 		fail("parity doctor strict stderr missing critical backlog message")
+	if expected_strict_exit == 2 and "A_critical backlog is non-zero" not in doctor_json_strict.stderr:
+		fail("parity doctor json strict stderr missing critical backlog message")
+	doctor_json_strict_data = parse_doctor_json_output(doctor_json_strict.stdout)
+	if doctor_json_strict_data.get("summary") != doctor_json_data.get("summary"):
+		fail("parity doctor json strict summary mismatch with json mode")
+	if doctor_json_strict_data.get("phase_counts") != doctor_json_data.get("phase_counts"):
+		fail("parity doctor json strict phase counts mismatch with json mode")
+	if doctor_json_strict_data.get("top_rules") != doctor_json_data.get("top_rules"):
+		fail("parity doctor json strict top rules mismatch with json mode")
+	if doctor_json_strict_data.get("health") != doctor_json_data.get("health"):
+		fail("parity doctor json strict health mismatch with json mode")
+	if doctor_json_strict_data.get("reason") != doctor_json_data.get("reason"):
+		fail("parity doctor json strict reason mismatch with json mode")
 
 	print("[parity-check] OK: all parity artifacts are consistent.")
 
