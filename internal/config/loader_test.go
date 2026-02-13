@@ -86,3 +86,35 @@ func TestLoadTsConfigsFromRslintConfigForFilesSkipsUnmatchedEntries(t *testing.T
 		t.Fatalf("expected only src tsconfig, got %#v", tsconfigs)
 	}
 }
+
+func TestLoadTsConfigsFromRslintConfigExpandsGlobProjectPatterns(t *testing.T) {
+	tempDir := t.TempDir()
+	pkgDir := filepath.Join(tempDir, "packages", "pkg")
+	if err := os.MkdirAll(pkgDir, 0o755); err != nil {
+		t.Fatalf("failed to create package directory fixture: %v", err)
+	}
+	pkgTsconfigPath := filepath.Join(pkgDir, "tsconfig.json")
+	if err := os.WriteFile(pkgTsconfigPath, []byte(`{"compilerOptions":{"strict":true}}`), 0o644); err != nil {
+		t.Fatalf("failed to write package tsconfig fixture: %v", err)
+	}
+
+	loader := NewConfigLoader(bundled.WrapFS(cachedvfs.From(osvfs.FS())), tempDir)
+	cfg := RslintConfig{
+		{
+			ConfigDirectory: tempDir,
+			LanguageOptions: &LanguageOptions{
+				ParserOptions: &ParserOptions{
+					Project: ProjectPaths{"packages/*/tsconfig.json"},
+				},
+			},
+		},
+	}
+
+	tsconfigs, err := loader.LoadTsConfigsFromRslintConfig(cfg, tempDir)
+	if err != nil {
+		t.Fatalf("expected glob project path expansion to succeed, got %v", err)
+	}
+	if len(tsconfigs) != 1 || tsconfigs[0] != pkgTsconfigPath {
+		t.Fatalf("expected expanded tsconfig %q, got %#v", pkgTsconfigPath, tsconfigs)
+	}
+}

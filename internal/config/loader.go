@@ -3,7 +3,10 @@ package config
 import (
 	"errors"
 	"fmt"
+	iofs "io/fs"
 	"os"
+	"sort"
+	"strings"
 
 	"github.com/microsoft/typescript-go/shim/tspath"
 	"github.com/microsoft/typescript-go/shim/vfs"
@@ -100,17 +103,17 @@ func (loader *ConfigLoader) loadTsConfigsFromRslintConfig(rslintConfig RslintCon
 			if entry.LanguageOptions.ParserOptions.TsconfigRootDir != "" {
 				baseDir = tspath.ResolvePath(configDirectory, entry.LanguageOptions.ParserOptions.TsconfigRootDir)
 			}
-			tsconfigPath := tspath.ResolvePath(baseDir, config)
-
-			if !loader.fs.FileExists(tsconfigPath) {
-				return nil, fmt.Errorf("tsconfig file %q doesn't exist", tsconfigPath)
+			resolvedPaths, err := loader.resolveProjectPaths(baseDir, config)
+			if err != nil {
+				return nil, err
 			}
-
-			if seenConfigs[tsconfigPath] {
-				continue
+			for _, tsconfigPath := range resolvedPaths {
+				if seenConfigs[tsconfigPath] {
+					continue
+				}
+				seenConfigs[tsconfigPath] = true
+				tsConfigs = append(tsConfigs, tsconfigPath)
 			}
-			seenConfigs[tsconfigPath] = true
-			tsConfigs = append(tsConfigs, tsconfigPath)
 		}
 	}
 
@@ -119,6 +122,47 @@ func (loader *ConfigLoader) loadTsConfigsFromRslintConfig(rslintConfig RslintCon
 	}
 
 	return tsConfigs, nil
+}
+
+func hasGlobPattern(pattern string) bool {
+	return strings.ContainsAny(pattern, "*?[{")
+}
+
+func (loader *ConfigLoader) resolveProjectPaths(baseDir string, projectPath string) ([]string, error) {
+	if !hasGlobPattern(projectPath) {
+		tsconfigPath := tspath.ResolvePath(baseDir, projectPath)
+		if !loader.fs.FileExists(tsconfigPath) {
+			return nil, fmt.Errorf("tsconfig file %q doesn't exist", tsconfigPath)
+		}
+		return []string{tsconfigPath}, nil
+	}
+
+	matches := []string{}
+	walkErr := loader.fs.WalkDir(baseDir, func(path string, d iofs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d == nil || d.IsDir() {
+			return nil
+		}
+		normalizedPath := tspath.NormalizePath(path)
+		relativePath := tspath.NormalizePath(tspath.ConvertToRelativePath(normalizedPath, tspath.ComparePathsOptions{
+			UseCaseSensitiveFileNames: loader.fs.UseCaseSensitiveFileNames(),
+			CurrentDirectory:          baseDir,
+		}))
+		if patternMatchesFile(projectPath, normalizedPath, relativePath) {
+			matches = append(matches, normalizedPath)
+		}
+		return nil
+	})
+	if walkErr != nil {
+		return nil, walkErr
+	}
+	sort.Strings(matches)
+	if len(matches) == 0 {
+		return nil, fmt.Errorf("tsconfig file %q doesn't exist", tspath.ResolvePath(baseDir, projectPath))
+	}
+	return matches, nil
 }
 
 // LoadConfiguration is a convenience method that loads both rslint and tsconfig configurations

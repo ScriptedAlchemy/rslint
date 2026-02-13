@@ -4,8 +4,10 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/microsoft/typescript-go/shim/core"
 	"github.com/web-infra-dev/rslint/internal/rule"
+	"github.com/web-infra-dev/rslint/internal/utils"
 )
 
 var enableDisableRegex = regexp.MustCompile(`^\s*tslint:(enable|disable)(?:-(line|next-line))?(:|\s|$)`)
@@ -22,51 +24,34 @@ func run(ctx rule.RuleContext, _ any) rule.RuleListeners {
 }
 
 func processComments(ctx rule.RuleContext) {
-	text := ctx.SourceFile.Text()
-	length := len(text)
-
-	pos := 0
-	for pos < length {
-		if pos+1 >= length {
-			pos++
-			continue
+	sourceText := ctx.SourceFile.Text()
+	utils.ForEachComment(ctx.SourceFile.AsNode(), func(comment *ast.CommentRange) {
+		if comment == nil {
+			return
 		}
-
-		if text[pos] == '/' && text[pos+1] == '/' {
-			commentStart := pos
-			commentEnd := pos + 2
-			for commentEnd < length && text[commentEnd] != '\n' && text[commentEnd] != '\r' {
-				commentEnd++
-			}
-
-			commentValue := text[commentStart+2 : commentEnd]
-			reportIfMatched(ctx, text, commentStart, commentEnd, commentValue, true)
-			pos = commentEnd
-			continue
+		commentText := sourceText[comment.Pos():comment.End()]
+		commentValue, isLineComment, ok := extractCommentValue(commentText, comment.Kind)
+		if !ok {
+			return
 		}
+		reportIfMatched(ctx, sourceText, comment.Pos(), comment.End(), commentValue, isLineComment)
+	}, ctx.SourceFile)
+}
 
-		if text[pos] == '/' && text[pos+1] == '*' {
-			commentStart := pos
-			commentEnd := pos + 2
-			for commentEnd+1 < length && (text[commentEnd] != '*' || text[commentEnd+1] != '/') {
-				commentEnd++
-			}
-			if commentEnd+1 < length {
-				commentEnd += 2
-			} else {
-				commentEnd = length
-			}
-
-			commentValue := ""
-			if commentEnd >= commentStart+4 {
-				commentValue = text[commentStart+2 : commentEnd-2]
-			}
-			reportIfMatched(ctx, text, commentStart, commentEnd, commentValue, false)
-			pos = commentEnd
-			continue
+func extractCommentValue(commentText string, kind ast.Kind) (string, bool, bool) {
+	switch kind {
+	case ast.KindSingleLineCommentTrivia:
+		if len(commentText) < 2 || !strings.HasPrefix(commentText, "//") {
+			return "", false, false
 		}
-
-		pos++
+		return commentText[2:], true, true
+	case ast.KindMultiLineCommentTrivia:
+		if len(commentText) < 4 || !strings.HasPrefix(commentText, "/*") || !strings.HasSuffix(commentText, "*/") {
+			return "", false, false
+		}
+		return commentText[2 : len(commentText)-2], false, true
+	default:
+		return "", false, false
 	}
 }
 
@@ -85,7 +70,10 @@ func reportIfMatched(
 	commentRange := core.NewTextRange(commentStart, commentEnd)
 	removeStart := commentStart
 	if lineStart := getLineStartOffset(sourceText, commentStart); commentStart > lineStart {
-		removeStart = commentStart - 1
+		previousChar := sourceText[commentStart-1]
+		if previousChar == ' ' || previousChar == '\t' {
+			removeStart = commentStart - 1
+		}
 	}
 	removeEnd := commentEnd
 	if removeEnd < len(sourceText) {

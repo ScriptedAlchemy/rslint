@@ -14,6 +14,8 @@ func TestBanTslintCommentRule(t *testing.T) {
 		{Code: "// some other comment"},
 		{Code: "// TODO: this is a comment that mentions tslint"},
 		{Code: "/* another comment that mentions tslint */"},
+		{Code: `const text = "/* tslint:disable */";`},
+		{Code: "const pattern = /\\/\\*\\s*tslint:disable\\s*\\*\\//;"},
 	}, []rule_tester.InvalidTestCase{
 		{
 			Code: "/* tslint:disable */",
@@ -49,6 +51,13 @@ func TestBanTslintCommentRule(t *testing.T) {
 				{MessageId: "commentDetected"},
 			},
 			Output: []string{"someCode();"},
+		},
+		{
+			Code: "const y = 1/* tslint:disable */+2;",
+			Errors: []rule_tester.InvalidTestCaseError{
+				{MessageId: "commentDetected"},
+			},
+			Output: []string{"const y = 1+2;"},
 		},
 		{
 			Code: `
