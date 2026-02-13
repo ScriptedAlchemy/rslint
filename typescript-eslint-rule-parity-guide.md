@@ -89,10 +89,10 @@ pnpm parity:ts-eslint:doctor:strict:yellow
 The checkers validate:
 - tracker/worklist/summary/metadata/manifest/index/issue-plan coherence,
 - issue-body structure/counts,
-- CI summary rendering consistency (markdown + JSON + npm wrapper parity + strict exit behavior + component-prefixed health-reason stderr contracts, including optional diff metrics when diff artifact exists),
+- CI summary rendering consistency (markdown + JSON + npm wrapper parity, including strict-wrapper stdout parity, strict exit behavior, and component-prefixed health-reason stderr contracts, plus optional diff metrics when diff artifact exists),
 - optional diff artifact summary consistency between markdown and JSON outputs,
 - parity doctor output consistency (plain + markdown + JSON forms + npm wrapper parity),
-- parity doctor strict-mode exit behavior (`--fail-on-critical` / `--fail-on-yellow`) with component-prefixed health-reason stderr contracts (including npm wrapper strict commands),
+- parity doctor strict-mode exit behavior (`--fail-on-critical` / `--fail-on-yellow`) with strict-wrapper stdout parity + component-prefixed health-reason stderr contracts (including npm wrapper strict commands),
 - unified gate script exit and argument/help validation behavior (including missing/invalid/duplicate threshold handling, duplicate `--skip-checks` handling, default-red behavior, `--threshold=<value>` parsing, reordered flag parsing, short-help support, usage-on-error output with threshold-form + skip-checks tokens, and quick-gate npm wrapper exit+skip-checks+threshold-marker+health-reason/success-marker contracts that must not run strict clean checks),
 - parity command/docs/script synchronization,
 - exact parity command inventory in `package.json` vs checker expectations,

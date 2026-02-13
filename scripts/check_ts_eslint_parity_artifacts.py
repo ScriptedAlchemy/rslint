@@ -550,6 +550,8 @@ def main() -> None:
 			"status command strict exit-code mismatch: "
 			f"expected={expected_status_strict_exit} actual={status_cmd_strict.returncode}"
 		)
+	if "typescript-eslint-rule-parity-status.json" not in (status_cmd_strict.stdout + status_cmd_strict.stderr):
+		fail("status command strict output missing status artifact path token")
 	if expected_status_strict_exit == 2 and "[parity-status] ERROR:" not in status_cmd_strict.stderr:
 		fail("status command strict stderr missing parity-status error prefix")
 	if expected_status_strict_exit == 2 and expected_health_reason_marker not in status_cmd_strict.stderr:
@@ -567,6 +569,8 @@ def main() -> None:
 			"status command strict-yellow exit-code mismatch: "
 			f"expected={expected_status_strict_yellow_exit} actual={status_cmd_strict_yellow.returncode}"
 		)
+	if "typescript-eslint-rule-parity-status.json" not in (status_cmd_strict_yellow.stdout + status_cmd_strict_yellow.stderr):
+		fail("status command strict-yellow output missing status artifact path token")
 	if expected_status_strict_yellow_exit == 3 and "[parity-status] ERROR:" not in status_cmd_strict_yellow.stderr:
 		fail("status command strict-yellow stderr missing parity-status error prefix")
 	if expected_status_strict_yellow_exit == 3 and expected_health_reason_marker not in status_cmd_strict_yellow.stderr:
@@ -1374,6 +1378,9 @@ def main() -> None:
 			"ci summary command strict exit-code mismatch: "
 			f"expected={expected_ci_summary_strict_exit} actual={ci_summary_cmd_strict.returncode}"
 		)
+	ci_summary_cmd_strict_parsed = parse_ci_summary_markdown(ci_summary_cmd_strict.stdout)
+	if ci_summary_cmd_strict_parsed != ci_summary:
+		fail("ci summary command strict stdout mismatch with non-strict summary output")
 	if expected_ci_summary_strict_exit == 2 and "[parity-ci-summary] ERROR:" not in ci_summary_cmd_strict.stderr:
 		fail("ci summary command strict stderr missing parity-ci-summary error prefix")
 	if expected_ci_summary_strict_exit == 2 and expected_health_reason_marker not in ci_summary_cmd_strict.stderr:
@@ -1391,6 +1398,9 @@ def main() -> None:
 			"ci summary command strict-yellow exit-code mismatch: "
 			f"expected={expected_ci_summary_strict_yellow_exit} actual={ci_summary_cmd_strict_yellow.returncode}"
 		)
+	ci_summary_cmd_strict_yellow_parsed = parse_ci_summary_markdown(ci_summary_cmd_strict_yellow.stdout)
+	if ci_summary_cmd_strict_yellow_parsed != ci_summary:
+		fail("ci summary command strict-yellow stdout mismatch with non-strict summary output")
 	if expected_ci_summary_strict_yellow_exit == 3 and "[parity-ci-summary] ERROR:" not in ci_summary_cmd_strict_yellow.stderr:
 		fail("ci summary command strict-yellow stderr missing parity-ci-summary error prefix")
 	if expected_ci_summary_strict_yellow_exit == 3 and expected_health_reason_marker not in ci_summary_cmd_strict_yellow.stderr:
@@ -1598,6 +1608,8 @@ def main() -> None:
 			"parity doctor command strict exit-code mismatch: "
 			f"expected={expected_strict_exit} actual={doctor_cmd_strict.returncode}"
 		)
+	if parse_doctor_plain_output(doctor_cmd_strict.stdout) != doctor_plain_data:
+		fail("parity doctor command strict stdout mismatch with non-strict plain output")
 	if expected_strict_exit == 2 and "[parity-doctor] ERROR:" not in doctor_cmd_strict.stderr:
 		fail("parity doctor command strict stderr missing parity-doctor error prefix")
 	if expected_strict_exit == 2 and "A_critical backlog is non-zero" not in doctor_cmd_strict.stderr:
@@ -1615,13 +1627,15 @@ def main() -> None:
 			"parity doctor command strict-yellow exit-code mismatch: "
 			f"expected={expected_yellow_strict_exit} actual={doctor_cmd_strict_yellow.returncode}"
 		)
+	if parse_doctor_plain_output(doctor_cmd_strict_yellow.stdout) != doctor_plain_data:
+		fail("parity doctor command strict-yellow stdout mismatch with non-strict plain output")
 	if expected_yellow_strict_exit == 3 and "[parity-doctor] ERROR:" not in doctor_cmd_strict_yellow.stderr:
 		fail("parity doctor command strict-yellow stderr missing parity-doctor error prefix")
 	if expected_yellow_strict_exit == 3 and expected_health_reason_marker not in doctor_cmd_strict_yellow.stderr:
 		fail("parity doctor command strict-yellow stderr missing health+reason message")
 
 	doctor_cmd_json_strict = subprocess.run(
-		["pnpm", "parity:ts-eslint:doctor:json:strict"],
+		["pnpm", "--silent", "parity:ts-eslint:doctor:json:strict"],
 		cwd=str(root),
 		check=False,
 		capture_output=True,
@@ -1632,13 +1646,15 @@ def main() -> None:
 			"parity doctor command json strict exit-code mismatch: "
 			f"expected={expected_strict_exit} actual={doctor_cmd_json_strict.returncode}"
 		)
+	if parse_doctor_json_output(doctor_cmd_json_strict.stdout) != doctor_json_data:
+		fail("parity doctor command json strict stdout mismatch with non-strict json output")
 	if expected_strict_exit == 2 and "[parity-doctor] ERROR:" not in doctor_cmd_json_strict.stderr:
 		fail("parity doctor command json strict stderr missing parity-doctor error prefix")
 	if expected_strict_exit == 2 and "A_critical backlog is non-zero" not in doctor_cmd_json_strict.stderr:
 		fail("parity doctor command json strict stderr missing critical backlog message")
 
 	doctor_cmd_json_strict_yellow = subprocess.run(
-		["pnpm", "parity:ts-eslint:doctor:json:strict:yellow"],
+		["pnpm", "--silent", "parity:ts-eslint:doctor:json:strict:yellow"],
 		cwd=str(root),
 		check=False,
 		capture_output=True,
@@ -1649,6 +1665,8 @@ def main() -> None:
 			"parity doctor command json strict-yellow exit-code mismatch: "
 			f"expected={expected_yellow_strict_exit} actual={doctor_cmd_json_strict_yellow.returncode}"
 		)
+	if parse_doctor_json_output(doctor_cmd_json_strict_yellow.stdout) != doctor_json_data:
+		fail("parity doctor command json strict-yellow stdout mismatch with non-strict json output")
 	if expected_yellow_strict_exit == 3 and "[parity-doctor] ERROR:" not in doctor_cmd_json_strict_yellow.stderr:
 		fail("parity doctor command json strict-yellow stderr missing parity-doctor error prefix")
 	if expected_yellow_strict_exit == 3 and expected_health_reason_marker not in doctor_cmd_json_strict_yellow.stderr:
