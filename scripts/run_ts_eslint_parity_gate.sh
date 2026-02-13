@@ -2,6 +2,7 @@
 set -euo pipefail
 
 threshold="red"
+skip_checks="0"
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --threshold)
@@ -12,9 +13,12 @@ while [[ $# -gt 0 ]]; do
       fi
       threshold="$1"
       ;;
+    --skip-checks)
+      skip_checks="1"
+      ;;
     *)
       echo "[parity-gate] ERROR: unknown argument: $1" >&2
-      echo "[parity-gate] Usage: bash scripts/run_ts_eslint_parity_gate.sh --threshold red|yellow" >&2
+      echo "[parity-gate] Usage: bash scripts/run_ts_eslint_parity_gate.sh --threshold red|yellow [--skip-checks]" >&2
       exit 1
       ;;
   esac
@@ -26,8 +30,12 @@ if [[ "${threshold}" != "red" && "${threshold}" != "yellow" ]]; then
   exit 1
 fi
 
-echo "[parity-gate] Running strict clean parity checks"
-PARITY_CHECK_ALL_REQUIRE_CLEAN=1 bash /workspace/scripts/check_ts_eslint_parity_all.sh
+if [[ "${skip_checks}" == "1" ]]; then
+  echo "[parity-gate] Skipping strict clean parity checks (--skip-checks)."
+else
+  echo "[parity-gate] Running strict clean parity checks"
+  PARITY_CHECK_ALL_REQUIRE_CLEAN=1 bash /workspace/scripts/check_ts_eslint_parity_all.sh
+fi
 
 if [[ "${threshold}" == "red" ]]; then
   echo "[parity-gate] Applying red threshold gates"

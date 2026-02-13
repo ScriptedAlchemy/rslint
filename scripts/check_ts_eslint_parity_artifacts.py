@@ -517,6 +517,37 @@ def main() -> None:
 	if expected_status_strict_yellow_exit == 3 and "health is" not in status_strict_yellow.stderr:
 		fail("status strict-yellow stderr missing health message")
 
+	# Unified gate script exit-code checks (skip clean-check phase to avoid recursion)
+	gate_red = subprocess.run(
+		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--threshold", "red", "--skip-checks"],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	expected_gate_red_exit = 2 if expected_health == "red" else 0
+	if gate_red.returncode != expected_gate_red_exit:
+		fail(
+			"parity gate red exit-code mismatch: "
+			f"expected={expected_gate_red_exit} actual={gate_red.returncode}"
+		)
+	if expected_gate_red_exit == 2 and "health is red" not in gate_red.stderr:
+		fail("parity gate red stderr missing red-health message")
+
+	gate_yellow = subprocess.run(
+		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--threshold", "yellow", "--skip-checks"],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	expected_gate_yellow_exit = 3 if expected_health in {"yellow", "red"} else 0
+	if gate_yellow.returncode != expected_gate_yellow_exit:
+		fail(
+			"parity gate yellow exit-code mismatch: "
+			f"expected={expected_gate_yellow_exit} actual={gate_yellow.returncode}"
+		)
+	if expected_gate_yellow_exit == 3 and "health is" not in gate_yellow.stderr:
+		fail("parity gate yellow stderr missing health message")
+
 	flagged = [row for row in tracker_rows if int(row.get("priority_score", 0)) > 0]
 	aligned = len(tracker_rows) - len(flagged)
 
