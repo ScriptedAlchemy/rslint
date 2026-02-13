@@ -71,6 +71,26 @@ It summarizes the most important parity findings and remediation priorities.
 3. Burn down `C_medium` skip/TODO debt.
 4. Finish `D_low` residual parity cleanup and reassess.
 
+## Phase exit criteria (definition of done)
+
+### A_critical exit criteria
+- All severe invalid/test-size gaps in `A_critical` are closed or explicitly justified.
+- Missing test assets are restored (`no-unused-vars` JS artifact, `no-loss-of-precision` Go tests).
+- Any rule with fix/suggestion risk in this phase has explicit parity assertions added.
+
+### B_high exit criteria
+- High-risk semantic deltas have parity tests that match upstream intent.
+- No new skip markers are introduced.
+- Fix/suggestion parity branches are covered by deterministic assertions.
+
+### C_medium exit criteria
+- `go_skips` and `extra_js_skips` are reduced to zero, or each remaining case has documented rationale.
+- TODO/FIXME markers tied to parity are resolved or converted into tracked issues.
+
+### D_low exit criteria
+- Remaining drift is either closed or documented as intentional local divergence.
+- Rule inventory decisions (including local-only `ban-types`) are finalized and documented.
+
 ## Concrete remediation checklist
 - [ ] Port/restore missing `no-unused-vars` JS test artifact.
 - [ ] Add/port Go tests for `no-loss-of-precision`.
@@ -78,6 +98,12 @@ It summarizes the most important parity findings and remediation priorities.
 - [ ] Reduce `go_skips` from 11 to 0 (or document justified exceptions).
 - [ ] Resolve TODO/FIXME debt on the 22 flagged rules.
 - [ ] Decide whether `ban-types` remains intentionally local-only; if yes, document rationale clearly.
+
+## Validation expectations per rule change
+- Run targeted Go tests for the touched rule directory.
+- Re-run affected JS parity rule tests and verify invalid/fix/suggestion assertions.
+- Confirm no unintended increase in skip counts or TODO/FIXME markers.
+- Update this report snapshot numbers when backlog counts materially change.
 
 ## Final retained markdown deliverables
 - `typescript-eslint-rule-parity-report.md` (this file)
