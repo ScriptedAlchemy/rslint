@@ -65,6 +65,9 @@ pnpm parity:ts-eslint:check:strict
 
 # Strict gate + clean-tree enforcement for reproducibility verification
 pnpm parity:ts-eslint:check:strict:clean
+
+# Refresh canonical markdown + JSON parity diff artifacts
+pnpm parity:ts-eslint:diff:refresh
 ```
 
 See `typescript-eslint-rule-parity-commands.md` for the full command reference.

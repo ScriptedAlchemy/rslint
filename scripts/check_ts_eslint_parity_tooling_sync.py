@@ -150,6 +150,7 @@ def main() -> None:
 		"pnpm parity:ts-eslint:check:all",
 		"pnpm parity:ts-eslint:check:strict",
 		"pnpm parity:ts-eslint:check:strict:clean",
+		"pnpm parity:ts-eslint:diff:refresh",
 	]
 	for token in required_readme_tokens:
 		if token not in readme_text:
@@ -163,6 +164,7 @@ def main() -> None:
 		"pnpm parity:ts-eslint:check:all",
 		"pnpm parity:ts-eslint:check:strict",
 		"pnpm parity:ts-eslint:check:strict:clean",
+		"pnpm parity:ts-eslint:diff:refresh",
 	]
 	for token in required_contributing_tokens:
 		if token not in contributing_text:
