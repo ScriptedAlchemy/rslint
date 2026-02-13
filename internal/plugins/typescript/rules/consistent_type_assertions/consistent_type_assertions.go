@@ -223,15 +223,15 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 			return
 		}
 
-		if isConst {
-			return
-		}
-
 		if opts.AssertionStyle == AssertionStyleAngleBracket {
 			ctx.ReportNode(node, rule.RuleMessage{
 				Id:          "angle-bracket",
 				Description: "Use angle-bracket type assertions instead of 'as' assertions.",
 			})
+			return
+		}
+
+		if isConst {
 			return
 		}
 
@@ -328,11 +328,20 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 			return
 		}
 
+		// Const assertions should honor configured style, but don't participate in
+		// literal-specific assertion checks.
 		if isConst {
+			if opts.AssertionStyle == AssertionStyleAs {
+				ctx.ReportNode(node, rule.RuleMessage{
+					Id:          "as",
+					Description: "Use 'as' assertions instead of angle-bracket type assertions.",
+				})
+			}
 			return
 		}
 
-		// Check object literal assertions BEFORE checking assertion style
+		// Check object literal assertions before style so option-specific diagnostics
+		// are preserved for non-const assertions.
 		if isObjectLiteral(expression) && !isAnyOrUnknown(typeNode) {
 			if opts.ObjectLiteralTypeAssertions == LiteralAssertionNever {
 				if canUseTypeAnnotation(node) {
@@ -402,7 +411,6 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 			}
 		}
 
-		// Check assertion style (after literal checks)
 		if opts.AssertionStyle == AssertionStyleAs {
 			ctx.ReportNode(node, rule.RuleMessage{
 				Id:          "as",
@@ -410,6 +418,7 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 			})
 			return
 		}
+
 	}
 
 	return rule.RuleListeners{

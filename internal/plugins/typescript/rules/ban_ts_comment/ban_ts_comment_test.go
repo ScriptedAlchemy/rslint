@@ -58,6 +58,7 @@ func TestBanTsCommentRule(t *testing.T) {
 
 		// Multi-line comment with directive not on last line
 		{Code: "/*\n@ts-expect-error\nSome other text\n*/\nconst a = 0;", Options: map[string]interface{}{"ts-expect-error": true}},
+		{Code: "/*\n@ts-expect-error\n*/\nconst a = 0;", Options: map[string]interface{}{"ts-expect-error": true}},
 
 		// JSDoc-style comments
 		{Code: "/**\n * @ts-expect-error: Description\n */\nconst a = 0;", Options: map[string]interface{}{"ts-expect-error": "allow-with-description"}},
@@ -221,13 +222,6 @@ func TestBanTsCommentRule(t *testing.T) {
 		},
 
 		// Multi-line comments
-		{
-			Code:    "/*\n@ts-expect-error\n*/\nconst a = 0;",
-			Options: map[string]interface{}{"ts-expect-error": true},
-			Errors: []rule_tester.InvalidTestCaseError{
-				{MessageId: "tsDirectiveComment"},
-			},
-		},
 		{
 			Code:    "/*\n@ts-expect-error */\nconst a = 0;",
 			Options: map[string]interface{}{"ts-expect-error": true},

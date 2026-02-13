@@ -242,11 +242,7 @@ func checkComment(
 	hasFirstStatement bool,
 ) {
 	commentValue := commentText
-	if isMultiLine {
-		if len(commentValue) >= 4 && strings.HasPrefix(commentValue, "/*") && strings.HasSuffix(commentValue, "*/") {
-			commentValue = commentValue[2 : len(commentValue)-2]
-		}
-	} else if len(commentValue) >= 2 && strings.HasPrefix(commentValue, "//") {
+	if !isMultiLine && len(commentValue) >= 2 && strings.HasPrefix(commentValue, "//") {
 		commentValue = commentValue[2:]
 	}
 
@@ -254,7 +250,7 @@ func checkComment(
 	var description string
 
 	if isMultiLine {
-		lines := strings.Split(commentValue, "\n")
+		lines := strings.Split(commentText, "\n")
 		lastNonEmptyLine := ""
 		for i := len(lines) - 1; i >= 0; i-- {
 			if strings.TrimSpace(lines[i]) == "" {
@@ -271,7 +267,7 @@ func checkComment(
 			return
 		}
 		directiveType = match[1]
-		description = match[2]
+		description = trimMultiLineDirectiveDescription(match[2])
 	} else {
 		if match := singleLinePragmaRegex.FindStringSubmatch(commentText); match != nil {
 			directiveType = match[1]
@@ -329,6 +325,14 @@ func checkComment(
 			ctx.ReportRange(reportRange, buildTsDirectiveCommentDescriptionNotMatchPatternMessage(directiveType, config.DescriptionFormat))
 		}
 	}
+}
+
+func trimMultiLineDirectiveDescription(description string) string {
+	description = strings.TrimSpace(description)
+	if strings.HasSuffix(description, "*/") {
+		description = strings.TrimSpace(strings.TrimSuffix(description, "*/"))
+	}
+	return description
 }
 
 // graphemeLength returns the number of grapheme clusters in a string

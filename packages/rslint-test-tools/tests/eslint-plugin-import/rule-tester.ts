@@ -52,8 +52,7 @@ export class RuleTester {
       valid: ValidTestCase[];
       invalid: InvalidTestCase[];
     },
-  ): void {
-    void this;
+  ) {
     ruleName = 'import/' + ruleName;
     describe(ruleName, () => {
       const cwd = process.cwd();

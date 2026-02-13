@@ -15,9 +15,7 @@ func TestConsistentTypeAssertionsRule(t *testing.T) {
 		{Code: `const x = 'string' as a | b;`},
 		{Code: `const x = () => ({ bar: 5 }) as Foo;`},
 		{Code: `const x = { key: 'value' } as const;`},
-		{Code: `const x = <const>{ key: 'value' };`},
 		{Code: `const x = [1] as const;`},
-		{Code: `const x = <const>[1];`},
 		{Code: `const x = { foo: 1 } as Foo;`},
 		{Code: `const x = [] as Foo[];`},
 		{Code: `const x = new Generic<int>() as Foo;`},
@@ -30,9 +28,7 @@ func TestConsistentTypeAssertionsRule(t *testing.T) {
 		{Code: `const x = <a | b>'string';`, Options: []interface{}{map[string]interface{}{"assertionStyle": "angle-bracket"}}},
 		{Code: `const x = <Foo>(() => ({ bar: 5 }));`, Options: []interface{}{map[string]interface{}{"assertionStyle": "angle-bracket"}}},
 		{Code: `const x = <const>{ key: 'value' };`, Options: []interface{}{map[string]interface{}{"assertionStyle": "angle-bracket"}}},
-		{Code: `const x = { key: 'value' } as const;`, Options: []interface{}{map[string]interface{}{"assertionStyle": "angle-bracket"}}},
 		{Code: `const x = <const>[1];`, Options: []interface{}{map[string]interface{}{"assertionStyle": "angle-bracket"}}},
-		{Code: `const x = [1] as const;`, Options: []interface{}{map[string]interface{}{"assertionStyle": "angle-bracket"}}},
 		{Code: `const x = <Foo>{ foo: 1 };`, Options: []interface{}{map[string]interface{}{"assertionStyle": "angle-bracket"}}},
 		{Code: `const x = <Foo[]>[];`, Options: []interface{}{map[string]interface{}{"assertionStyle": "angle-bracket"}}},
 
@@ -137,6 +133,12 @@ func TestConsistentTypeAssertionsRule(t *testing.T) {
 				{MessageId: "as"},
 			},
 		},
+		{
+			Code: `const x = <const>{ key: 'value' };`,
+			Errors: []rule_tester.InvalidTestCaseError{
+				{MessageId: "as"},
+			},
+		},
 
 		// assertionStyle: 'angle-bracket' - using 'as' when angle-bracket is required
 		{
@@ -155,6 +157,13 @@ func TestConsistentTypeAssertionsRule(t *testing.T) {
 		},
 		{
 			Code:    `const x = { bar: 5 } as Foo;`,
+			Options: []interface{}{map[string]interface{}{"assertionStyle": "angle-bracket"}},
+			Errors: []rule_tester.InvalidTestCaseError{
+				{MessageId: "angle-bracket"},
+			},
+		},
+		{
+			Code:    `const x = { key: 'value' } as const;`,
 			Options: []interface{}{map[string]interface{}{"assertionStyle": "angle-bracket"}},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "angle-bracket"},
