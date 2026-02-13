@@ -191,8 +191,12 @@ func defaultConfig() memberOrderingConfig {
 }
 
 func parseOptions(options any) memberOrderingOptions {
+	return parseOptionsWithDefault(options, defaultConfig())
+}
+
+func parseOptionsWithDefault(options any, baseDefault memberOrderingConfig) memberOrderingOptions {
 	parsed := memberOrderingOptions{
-		defaultConfig: defaultConfig(),
+		defaultConfig: baseDefault,
 	}
 	if options == nil {
 		return parsed
@@ -235,6 +239,51 @@ func parseOptions(options any) memberOrderingOptions {
 		parsed.typeLiteralsConfig = &cfg
 	}
 	return parsed
+}
+
+func applyAliasDefaults(opts *memberOrderingOptions, ruleName string) {
+	if opts == nil {
+		return
+	}
+	switch ruleName {
+	case "member-ordering-alphabetically-order":
+		applyClassAliasOrderDefault(opts, "alphabetically")
+	case "member-ordering-alphabetically-case-insensitive-order":
+		applyClassAliasOrderDefault(opts, "alphabetically-case-insensitive")
+	case "member-ordering-natural-order":
+		applyClassAliasOrderDefault(opts, "natural")
+	case "member-ordering-natural-case-insensitive-order":
+		applyClassAliasOrderDefault(opts, "natural-case-insensitive")
+	case "member-ordering-required":
+		if opts.defaultConfig.optionalityOrder == "" {
+			opts.defaultConfig.optionalityOrder = "required-first"
+		}
+	}
+}
+
+func hasUserConfiguredOptions(options any) bool {
+	if options == nil {
+		return false
+	}
+	switch value := options.(type) {
+	case []interface{}:
+		return len(value) > 0
+	case map[string]interface{}:
+		return true
+	default:
+		return true
+	}
+}
+
+func applyClassAliasOrderDefault(opts *memberOrderingOptions, order string) {
+	if opts == nil {
+		return
+	}
+	if opts.classesConfig == nil {
+		cfg := opts.defaultConfig
+		cfg.order = order
+		opts.classesConfig = &cfg
+	}
 }
 
 func parseMemberOrderingConfigRaw(raw interface{}, base memberOrderingConfig) memberOrderingConfig {
@@ -737,9 +786,9 @@ func memberMatchesBase(member memberInfo, base string) bool {
 func compareMemberName(left, right string, order string) int {
 	switch order {
 	case "alphabetically":
-		return strings.Compare(left, right)
+		return compareAlphabetical(left, right)
 	case "alphabetically-case-insensitive":
-		return strings.Compare(strings.ToLower(left), strings.ToLower(right))
+		return compareAlphabeticalCaseInsensitive(left, right)
 	case "natural":
 		return compareNatural(left, right, false)
 	case "natural-case-insensitive":
@@ -747,6 +796,17 @@ func compareMemberName(left, right string, order string) int {
 	default:
 		return 0
 	}
+}
+
+func compareAlphabetical(left, right string) int {
+	if strings.EqualFold(left, right) {
+		return 0
+	}
+	return strings.Compare(left, right)
+}
+
+func compareAlphabeticalCaseInsensitive(left, right string) int {
+	return strings.Compare(strings.ToLower(left), strings.ToLower(right))
 }
 
 func compareNatural(left, right string, caseInsensitive bool) int {
@@ -958,7 +1018,15 @@ func memberNameOrderBucket(member memberInfo) string {
 		if member.optional {
 			return ""
 		}
-		return "main"
+		if member.node == nil || member.node.Parent == nil {
+			return ""
+		}
+		switch member.node.Parent.Kind {
+		case ast.KindClassDeclaration, ast.KindClassExpression:
+			return "main"
+		default:
+			return ""
+		}
 	case "call-signature", "construct-signature", "constructor":
 		return "signature-call-construct"
 	default:
@@ -1000,6 +1068,9 @@ func createMemberOrderingRule(ruleName string) rule.Rule {
 		Name: ruleName,
 		Run: func(ctx rule.RuleContext, options any) rule.RuleListeners {
 			opts := parseOptions(options)
+			if !hasUserConfiguredOptions(options) {
+				applyAliasDefaults(&opts, ruleName)
+			}
 			return rule.RuleListeners{
 				ast.KindClassDeclaration: func(node *ast.Node) {
 					checkMemberOrderingNode(ctx, node, opts)

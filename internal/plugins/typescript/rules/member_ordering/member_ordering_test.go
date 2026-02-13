@@ -94,3 +94,37 @@ interface Foo {
 		},
 	})
 }
+
+func TestMemberOrderingAliasDefaults(t *testing.T) {
+	t.Run("alphabetical alias default order", func(t *testing.T) {
+		rule_tester.RunRuleTester(fixtures.GetRootDir(), "tsconfig.json", t, &MemberOrderingAlphabeticallyOrderAliasRule, nil, []rule_tester.InvalidTestCase{
+			{
+				Code: `
+class Foo {
+  b() {}
+  a() {}
+}
+`,
+				Errors: []rule_tester.InvalidTestCaseError{
+					{MessageId: "incorrectOrder", Line: 4, Column: 3},
+				},
+			},
+		})
+	})
+
+	t.Run("required alias default optionality order", func(t *testing.T) {
+		rule_tester.RunRuleTester(fixtures.GetRootDir(), "tsconfig.json", t, &MemberOrderingRequiredAliasRule, nil, []rule_tester.InvalidTestCase{
+			{
+				Code: `
+interface Foo {
+  a?: string;
+  b: string;
+}
+`,
+				Errors: []rule_tester.InvalidTestCaseError{
+					{MessageId: "incorrectRequiredMembersOrder", Line: 3, Column: 3},
+				},
+			},
+		})
+	})
+}
