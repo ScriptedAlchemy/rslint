@@ -82,6 +82,8 @@ Workflow: `.github/workflows/parity-artifacts-check.yml`
 
 - Runs the parity artifact checker on parity-related changes.
 - Ensures tracker/summary/worklist/metadata remain synchronized.
+- On pull requests, also generates `typescript-eslint-rule-parity-diff.md`
+  against the PR base branch and uploads it as a workflow artifact.
 
 ## Notes
 
