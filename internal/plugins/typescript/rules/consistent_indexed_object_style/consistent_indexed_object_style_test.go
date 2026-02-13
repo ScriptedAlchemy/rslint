@@ -42,7 +42,6 @@ func TestConsistentIndexedObjectStyleRule(t *testing.T) {
 		// Circular type references (should not convert)
 		{Code: "interface Foo { [key: string]: Foo; }"},
 		{Code: "interface Foo { [key: string]: Foo | string; }"},
-		{Code: "interface Foo { [key: string]: Foo[] | string; }"},
 		{Code: "type Foo = { [key: string]: Foo; }"},
 
 		// Mapped types that reference the key
@@ -271,6 +270,32 @@ func TestConsistentIndexedObjectStyleRule(t *testing.T) {
 		},
 		{
 			Code: "interface Foo { [key: string]: Array<string> }",
+			Errors: []rule_tester.InvalidTestCaseError{
+				{MessageId: "preferRecord"},
+			},
+		},
+
+		// Circular/array-reference cases (Foo[] forms are reportable per upstream)
+		{
+			Code: "interface Foo { [key: string]: Foo[]; }",
+			Errors: []rule_tester.InvalidTestCaseError{
+				{MessageId: "preferRecord"},
+			},
+		},
+		{
+			Code: "interface Foo { [key: string]: Foo[] | string; }",
+			Errors: []rule_tester.InvalidTestCaseError{
+				{MessageId: "preferRecord"},
+			},
+		},
+		{
+			Code: "interface Foo { [key: string]: () => Foo; }",
+			Errors: []rule_tester.InvalidTestCaseError{
+				{MessageId: "preferRecord"},
+			},
+		},
+		{
+			Code: "interface Foo { [s: string]: [Foo]; }",
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferRecord"},
 			},

@@ -421,6 +421,13 @@ func checkTypeReference(
 		if typeRef == nil {
 			return false
 		}
+		if typeRef.TypeName != nil && typeRef.TypeName.Kind == ast.KindIdentifier {
+			typeName := typeRef.TypeName.AsIdentifier()
+			if typeName != nil && (typeName.Text == "Array" || typeName.Text == "ReadonlyArray") {
+				// Array wrappers shouldn't block conversion to Record.
+				return false
+			}
+		}
 		if typeRef.TypeName != nil && checkTypeReference(targetName, typeRef.TypeName, declarations, visited) {
 			return true
 		}
@@ -500,10 +507,8 @@ func checkTypeReference(
 		return false
 
 	case ast.KindArrayType:
-		arrayType := typeNode.AsArrayTypeNode()
-		if arrayType != nil && arrayType.ElementType != nil {
-			return checkTypeReference(targetName, arrayType.ElementType, declarations, visited)
-		}
+		// Array wrappers (e.g. Foo[]) are not circular boundaries per upstream.
+		// Record<string, Foo[]> is valid and reportable; do not recurse into element type.
 		return false
 
 	case ast.KindParenthesizedType:
