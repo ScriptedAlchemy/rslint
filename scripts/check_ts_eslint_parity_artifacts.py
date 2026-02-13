@@ -1497,6 +1497,56 @@ def main() -> None:
 	for label, lines in gate_wrapper_duplicate_threshold_lines.items():
 		if lines != gate_wrapper_duplicate_threshold_baseline:
 			fail(f"{label} stderr output mismatch with gate wrapper duplicate-threshold baseline")
+	gate_wrapper_duplicate_threshold_spaced_cases = [
+		(
+			"parity gate command duplicate-threshold spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate", "--threshold", "red"],
+			"parity gate command duplicate-threshold",
+		),
+		(
+			"parity gate command red duplicate-threshold spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:red", "--threshold", "red"],
+			"parity gate command red duplicate-threshold",
+		),
+		(
+			"parity gate command yellow duplicate-threshold spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:yellow", "--threshold", "yellow"],
+			"parity gate command yellow duplicate-threshold",
+		),
+		(
+			"parity gate quick command duplicate-threshold spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick", "--threshold", "red"],
+			"parity gate quick command duplicate-threshold",
+		),
+		(
+			"parity gate quick command red duplicate-threshold spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:red", "--threshold", "red"],
+			"parity gate quick command red duplicate-threshold",
+		),
+		(
+			"parity gate quick command yellow duplicate-threshold spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow", "--threshold", "yellow"],
+			"parity gate quick command yellow duplicate-threshold",
+		),
+	]
+	for label, command, inline_label in gate_wrapper_duplicate_threshold_spaced_cases:
+		proc = subprocess.run(
+			command,
+			cwd=str(root),
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		spaced_lines = assert_gate_wrapper_unknown_arg_contract(
+			label,
+			proc,
+			expected_gate_duplicate_threshold_line,
+			expected_gate_usage_line,
+		)
+		if proc.returncode != gate_wrapper_duplicate_threshold_codes[inline_label]:
+			fail(f"{label} return code mismatch with {inline_label}")
+		if spaced_lines != gate_wrapper_duplicate_threshold_lines[inline_label]:
+			fail(f"{label} stderr output mismatch with {inline_label}")
 
 	gate_wrapper_duplicate_skip_checks_cases = [
 		(
