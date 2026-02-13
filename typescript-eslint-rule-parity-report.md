@@ -26,6 +26,7 @@ Recommended usage:
 2. Execute in `recommended_phase` order (`A_critical` -> `B_high` -> `C_medium` -> `D_low`).
 3. Close rows by clearing flags and reducing score to `0` as parity work lands.
 4. Use the generated worklist markdown for checkbox-style execution tracking.
+5. Run consistency check to ensure tracker/summary/worklist/metadata remain synchronized.
 
 Regenerate tracker artifacts:
 
