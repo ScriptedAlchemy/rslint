@@ -1755,6 +1755,43 @@ def main() -> None:
 		)
 		if extract_nonempty_lines(proc.stderr) != gate_duplicate_threshold_lines:
 			fail(f"{label} stderr mismatch with duplicate-threshold baseline")
+	gate_duplicate_threshold_then_malformed_then_unknown_cases = [
+		(
+			"parity gate duplicate-threshold-then-missing-threshold-then-unknown",
+			["--threshold=red", "--threshold", "--not-a-real-flag"],
+		),
+		(
+			"parity gate duplicate-threshold-then-empty-threshold-then-unknown",
+			["--threshold=red", "--threshold=", "--not-a-real-flag"],
+		),
+		(
+			"parity gate duplicate-threshold-then-invalid-threshold-inline-then-unknown",
+			["--threshold=red", "--threshold=blue", "--not-a-real-flag"],
+		),
+		(
+			"parity gate duplicate-threshold-then-invalid-threshold-spaced-then-unknown",
+			["--threshold=red", "--threshold", "blue", "--not-a-real-flag"],
+		),
+	]
+	for label, extra_args in gate_duplicate_threshold_then_malformed_then_unknown_cases:
+		proc = subprocess.run(
+			["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), *extra_args],
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		if proc.returncode != 1:
+			fail(f"{label} exit code must be 1")
+		if proc.stdout.strip():
+			fail(f"{label} stdout must be empty")
+		assert_exact_error_plus_usage(
+			f"{label} stderr",
+			proc.stderr,
+			expected_gate_duplicate_threshold_line,
+			expected_gate_usage_line,
+		)
+		if extract_nonempty_lines(proc.stderr) != gate_duplicate_threshold_lines:
+			fail(f"{label} stderr mismatch with duplicate-threshold baseline")
 	gate_duplicate_skip_checks_then_help = subprocess.run(
 		[
 			"bash",
@@ -1859,6 +1896,24 @@ def main() -> None:
 			)
 			if extract_nonempty_lines(proc_with_help.stderr) != gate_duplicate_skip_checks_lines:
 				fail(f"{label} then {help_label} stderr mismatch with duplicate-skip-checks baseline")
+		proc_with_unknown = subprocess.run(
+			["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), *extra_args, "--not-a-real-flag"],
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		if proc_with_unknown.returncode != 1:
+			fail(f"{label} then unknown exit code must be 1")
+		if proc_with_unknown.stdout.strip():
+			fail(f"{label} then unknown stdout must be empty")
+		assert_exact_error_plus_usage(
+			f"{label} then unknown stderr",
+			proc_with_unknown.stderr,
+			expected_gate_duplicate_skip_checks_line,
+			expected_gate_usage_line,
+		)
+		if extract_nonempty_lines(proc_with_unknown.stderr) != gate_duplicate_skip_checks_lines:
+			fail(f"{label} then unknown stderr mismatch with duplicate-skip-checks baseline")
 
 	gate_unknown_precedence_cases = [
 		(
@@ -3292,6 +3347,8 @@ def main() -> None:
 	gate_wrapper_duplicate_threshold_tail_tokens = [
 		("missing-threshold", ["--threshold"]),
 		("empty-threshold", ["--threshold="]),
+		("invalid-threshold-inline", ["--threshold=blue"]),
+		("invalid-threshold-spaced", ["--threshold", "blue"]),
 	]
 	for base_label, base_command in gate_wrapper_help_base_commands:
 		for tail_label, tail_tokens in gate_wrapper_duplicate_threshold_tail_tokens:
@@ -3314,6 +3371,24 @@ def main() -> None:
 						f"{base_label} duplicate-threshold-then-{tail_label}-then-{help_label} "
 						"stderr output mismatch with duplicate-threshold baseline"
 					)
+			proc_with_unknown = subprocess.run(
+				[*base_command, *tail_tokens, "--not-a-real-flag"],
+				cwd=str(root),
+				check=False,
+				capture_output=True,
+				text=True,
+			)
+			lines_with_unknown = assert_gate_wrapper_unknown_arg_contract(
+				f"{base_label} duplicate-threshold-then-{tail_label}-then-unknown",
+				proc_with_unknown,
+				expected_gate_duplicate_threshold_line,
+				expected_gate_usage_line,
+			)
+			if lines_with_unknown != gate_wrapper_duplicate_threshold_baseline:
+				fail(
+					f"{base_label} duplicate-threshold-then-{tail_label}-then-unknown "
+					"stderr output mismatch with duplicate-threshold baseline"
+				)
 	gate_wrapper_duplicate_skip_then_malformed_threshold_cases = [
 		(
 			"parity gate command duplicate-skip-checks then missing-threshold",
