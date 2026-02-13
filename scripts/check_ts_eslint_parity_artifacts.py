@@ -338,6 +338,10 @@ def parse_doctor_json_output(text: str) -> dict:
 	return parsed
 
 
+def extract_status_write_lines(text: str) -> list[str]:
+	return [line.strip() for line in text.splitlines() if "typescript-eslint-rule-parity-status.json" in line]
+
+
 def main() -> None:
 	root = pathlib.Path("/workspace")
 	tracker_csv = root / "typescript-eslint-rule-parity-tracker.csv"
@@ -539,7 +543,7 @@ def main() -> None:
 
 	# Status npm command wrapper checks
 	status_cmd_strict = subprocess.run(
-		["pnpm", "parity:ts-eslint:status:strict"],
+		["pnpm", "--silent", "parity:ts-eslint:status:strict"],
 		cwd=str(root),
 		check=False,
 		capture_output=True,
@@ -556,12 +560,18 @@ def main() -> None:
 		fail("status command strict stderr missing parity-status error prefix")
 	if expected_status_strict_exit == 2 and expected_health_reason_marker not in status_cmd_strict.stderr:
 		fail("status command strict stderr missing health+reason message")
+	status_strict_lines = extract_status_write_lines(status_strict.stdout + status_strict.stderr)
+	status_cmd_strict_lines = extract_status_write_lines(status_cmd_strict.stdout + status_cmd_strict.stderr)
+	if not status_strict_lines:
+		fail("status strict output missing status artifact write line")
+	if status_cmd_strict_lines != status_strict_lines:
+		fail("status command strict write-line output mismatch with direct strict mode")
 	status_after_cmd_strict = json.loads(status_json.read_text())
 	if status_after_cmd_strict != status:
 		fail("status command strict mutated status artifact unexpectedly")
 
 	status_cmd_strict_yellow = subprocess.run(
-		["pnpm", "parity:ts-eslint:status:strict:yellow"],
+		["pnpm", "--silent", "parity:ts-eslint:status:strict:yellow"],
 		cwd=str(root),
 		check=False,
 		capture_output=True,
@@ -578,6 +588,12 @@ def main() -> None:
 		fail("status command strict-yellow stderr missing parity-status error prefix")
 	if expected_status_strict_yellow_exit == 3 and expected_health_reason_marker not in status_cmd_strict_yellow.stderr:
 		fail("status command strict-yellow stderr missing health+reason message")
+	status_strict_yellow_lines = extract_status_write_lines(status_strict_yellow.stdout + status_strict_yellow.stderr)
+	status_cmd_strict_yellow_lines = extract_status_write_lines(status_cmd_strict_yellow.stdout + status_cmd_strict_yellow.stderr)
+	if not status_strict_yellow_lines:
+		fail("status strict-yellow output missing status artifact write line")
+	if status_cmd_strict_yellow_lines != status_strict_yellow_lines:
+		fail("status command strict-yellow write-line output mismatch with direct strict-yellow mode")
 	status_after_cmd_strict_yellow = json.loads(status_json.read_text())
 	if status_after_cmd_strict_yellow != status:
 		fail("status command strict-yellow mutated status artifact unexpectedly")
