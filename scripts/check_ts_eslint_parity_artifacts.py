@@ -492,6 +492,20 @@ def main() -> None:
 	if status.get("upstream_ref_requested") != metadata.get("upstream_ref_requested"):
 		fail("status upstream_ref_requested mismatch with metadata")
 
+	status_direct = subprocess.run(
+		["python3", str(root / "scripts/generate_ts_eslint_parity_status.py")],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if status_direct.returncode != 0:
+		fail(f"direct status script failed: exit={status_direct.returncode}")
+	if "typescript-eslint-rule-parity-status.json" not in (status_direct.stdout + status_direct.stderr):
+		fail("direct status script output missing status artifact path token")
+	status_direct_lines = extract_status_write_lines(status_direct.stdout + status_direct.stderr)
+	if not status_direct_lines:
+		fail("direct status script output missing status artifact write line")
+
 	status_cmd = subprocess.run(
 		["pnpm", "--silent", "parity:ts-eslint:status"],
 		cwd=str(root),
@@ -508,6 +522,8 @@ def main() -> None:
 	status_lines = extract_status_write_lines(status_cmd.stdout + status_cmd.stderr)
 	if not status_lines:
 		fail("status command output missing status artifact write line")
+	if status_lines != status_direct_lines:
+		fail("status command write-line output mismatch with direct status script")
 	status_after_cmd = json.loads(status_json.read_text())
 	if status_after_cmd != status:
 		fail("status command output mutated status artifact unexpectedly")
