@@ -360,8 +360,25 @@ func nodeNameText(node *ast.Node) string {
 			return ""
 		}
 		return numericLiteral.Text
+	case ast.KindComputedPropertyName:
+		computedPropertyName := node.AsComputedPropertyName()
+		if computedPropertyName == nil || computedPropertyName.Expression == nil {
+			return ""
+		}
+		return nodeNameText(computedPropertyName.Expression)
+	case ast.KindBindingElement:
+		bindingElement := node.AsBindingElement()
+		if bindingElement == nil || bindingElement.Name() == nil {
+			return ""
+		}
+		return nodeNameText(bindingElement.Name())
+	case ast.KindObjectBindingPattern, ast.KindArrayBindingPattern:
+		// Binding patterns do not represent a single declaration name.
+		return ""
 	default:
-		return stripQuotes(strings.TrimSpace(node.Text()))
+		// Avoid calling Node.Text on unsupported kinds (for example binding patterns),
+		// which can panic in typescript-go internals.
+		return ""
 	}
 }
 
