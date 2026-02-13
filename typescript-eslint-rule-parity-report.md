@@ -28,6 +28,9 @@ Recommended usage:
 Regenerate tracker artifacts:
 
 ```bash
+pnpm parity:ts-eslint
+
+# or run steps directly:
 python3 scripts/generate_ts_eslint_parity_tracker.py
 python3 scripts/generate_ts_eslint_parity_worklist.py
 python3 scripts/generate_ts_eslint_parity_summary.py
