@@ -64,6 +64,10 @@ jobs:
             --base-ref "origin/${{ github.base_ref }}" \
             --output "typescript-eslint-rule-parity-diff.md"
 
+      - name: Publish parity summary to job summary
+        run: |
+          python3 scripts/generate_ts_eslint_parity_ci_summary.py >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upload parity diff artifact
         if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
