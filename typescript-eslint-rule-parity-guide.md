@@ -15,6 +15,7 @@ After running the refresh command, the following artifacts are generated at repo
 - `typescript-eslint-rule-parity-commands.md` — generated command reference.
 - `typescript-eslint-rule-parity-summary.md` — dashboard with headline metrics and top priorities.
 - `typescript-eslint-rule-parity-metadata.json` — run metadata (timestamp, upstream SHA, requested ref, counters).
+- `typescript-eslint-rule-parity-status.json` — compact health/status summary for automation.
 - `typescript-eslint-rule-parity-manifest.json` — deterministic checksums for core parity artifacts.
 - `typescript-eslint-rule-parity-index.md` — central index linking all parity artifacts.
 - `typescript-eslint-rule-parity-issue-plan.md` — issue-friendly phase plan/checklist template.
@@ -55,6 +56,7 @@ pnpm parity:ts-eslint:check
 pnpm parity:ts-eslint:check:tooling
 pnpm parity:ts-eslint:commands
 pnpm parity:ts-eslint:badges
+pnpm parity:ts-eslint:status
 pnpm parity:ts-eslint:doctor
 ```
 
@@ -130,6 +132,7 @@ python3 scripts/generate_ts_eslint_parity_worklist.py
 python3 scripts/generate_ts_eslint_parity_top.py
 python3 scripts/generate_ts_eslint_parity_commands.py
 python3 scripts/generate_ts_eslint_parity_badges.py
+python3 scripts/generate_ts_eslint_parity_status.py
 python3 scripts/generate_ts_eslint_parity_doctor.py
 python3 scripts/generate_ts_eslint_parity_summary.py
 python3 scripts/generate_ts_eslint_parity_metadata.py

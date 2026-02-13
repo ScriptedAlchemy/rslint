@@ -29,6 +29,7 @@ _Generated: 2026-02-13T11:25:52.075324+00:00_
 - `typescript-eslint-rule-parity-summary.md` — concise dashboard.
 - `typescript-eslint-rule-parity-metadata.json` — run metadata and counters.
 - `typescript-eslint-rule-parity-badges.json` — badge-friendly parity metrics JSON.
+- `typescript-eslint-rule-parity-status.json` — compact health/status summary JSON.
 - `typescript-eslint-rule-parity-manifest.json` — deterministic checksums for parity artifacts.
 - `typescript-eslint-rule-parity-issue-plan.md` — issue-friendly phase plans.
 - `typescript-eslint-rule-parity-diff.md` — optional snapshot comparison output.
@@ -52,6 +53,7 @@ pnpm parity:ts-eslint:check
 pnpm parity:ts-eslint:check:tooling
 pnpm parity:ts-eslint:commands
 pnpm parity:ts-eslint:badges
+pnpm parity:ts-eslint:status
 pnpm parity:ts-eslint:doctor
 pnpm parity:ts-eslint:diff -- --base-ref HEAD~1
 pnpm parity:ts-eslint:tasklist --phase A_critical

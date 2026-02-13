@@ -184,6 +184,7 @@ def main() -> None:
 	summary_md = root / "typescript-eslint-rule-parity-summary.md"
 	metadata_json = root / "typescript-eslint-rule-parity-metadata.json"
 	badges_json = root / "typescript-eslint-rule-parity-badges.json"
+	status_json = root / "typescript-eslint-rule-parity-status.json"
 	index_md = root / "typescript-eslint-rule-parity-index.md"
 	issue_plan_md = root / "typescript-eslint-rule-parity-issue-plan.md"
 	manifest_json = root / "typescript-eslint-rule-parity-manifest.json"
@@ -205,6 +206,7 @@ def main() -> None:
 		summary_md,
 		metadata_json,
 		badges_json,
+		status_json,
 		index_md,
 		issue_plan_md,
 		manifest_json,
@@ -240,6 +242,7 @@ def main() -> None:
 
 	metadata = json.loads(metadata_json.read_text())
 	badges = json.loads(badges_json.read_text())
+	status = json.loads(status_json.read_text())
 	summary = metadata.get("summary", {})
 	phase_counts_meta = metadata.get("phase_counts", {})
 	flag_counts_meta = metadata.get("flag_counts", {})
@@ -259,6 +262,38 @@ def main() -> None:
 		fail("badges aligned_rules mismatch with metadata summary")
 	if int(badge_metrics.get("critical_rules", -1)) != int(metadata.get("phase_counts", {}).get("A_critical", -2)):
 		fail("badges critical_rules mismatch with metadata phase counts")
+
+	# Status data checks
+	status_summary = status.get("summary", {})
+	status_phase_counts = status.get("phase_counts", {})
+	if int(status_summary.get("total_rules", -1)) != int(summary.get("total_rules", -2)):
+		fail("status total_rules mismatch with metadata summary")
+	if int(status_summary.get("flagged_rules", -1)) != int(summary.get("flagged_rules", -2)):
+		fail("status flagged_rules mismatch with metadata summary")
+	if int(status_summary.get("aligned_rules", -1)) != int(summary.get("aligned_rules", -2)):
+		fail("status aligned_rules mismatch with metadata summary")
+	if int(status_phase_counts.get("A_critical", -1)) != int(phase_counts_meta.get("A_critical", -2)):
+		fail("status A_critical mismatch with metadata phase counts")
+	if int(status_phase_counts.get("B_high", -1)) != int(phase_counts_meta.get("B_high", -2)):
+		fail("status B_high mismatch with metadata phase counts")
+	if int(status_phase_counts.get("C_medium", -1)) != int(phase_counts_meta.get("C_medium", -2)):
+		fail("status C_medium mismatch with metadata phase counts")
+	if int(status_phase_counts.get("D_low", -1)) != int(phase_counts_meta.get("D_low", -2)):
+		fail("status D_low mismatch with metadata phase counts")
+	if int(status_phase_counts.get("aligned", -1)) != int(phase_counts_meta.get("aligned", -2)):
+		fail("status aligned mismatch with metadata phase counts")
+	if status.get("upstream_commit") != metadata.get("upstream_commit"):
+		fail("status upstream_commit mismatch with metadata")
+	if status.get("upstream_ref_requested") != metadata.get("upstream_ref_requested"):
+		fail("status upstream_ref_requested mismatch with metadata")
+
+	expected_health = "green"
+	if int(phase_counts_meta.get("A_critical", 0)) > 0:
+		expected_health = "red"
+	elif int(phase_counts_meta.get("B_high", 0)) > 0 or int(summary.get("flagged_rules", 0)) > 0:
+		expected_health = "yellow"
+	if status.get("health") != expected_health:
+		fail(f"status health mismatch: expected={expected_health} actual={status.get('health')}")
 
 	flagged = [row for row in tracker_rows if int(row.get("priority_score", 0)) > 0]
 	aligned = len(tracker_rows) - len(flagged)
@@ -382,6 +417,7 @@ def main() -> None:
 		"typescript-eslint-rule-parity-summary.md",
 		"typescript-eslint-rule-parity-metadata.json",
 		"typescript-eslint-rule-parity-badges.json",
+		"typescript-eslint-rule-parity-status.json",
 		"typescript-eslint-rule-parity-index.md",
 		"typescript-eslint-rule-parity-issue-plan.md",
 		"typescript-eslint-rule-parity-tasklist-<phase>.md",
@@ -421,11 +457,11 @@ def main() -> None:
 		"typescript-eslint-rule-parity-top.md",
 		"typescript-eslint-rule-parity-commands.md",
 		"typescript-eslint-rule-parity-badges.json",
+		"typescript-eslint-rule-parity-status.json",
 		"typescript-eslint-rule-parity-issue-plan.md",
 		"typescript-eslint-rule-parity-tracker.csv",
 		"typescript-eslint-rule-parity-tracker.json",
 		"typescript-eslint-rule-parity-metadata.json",
-		"typescript-eslint-rule-parity-badges.json",
 		"typescript-eslint-rule-parity-tasklist-A_critical.md",
 		"typescript-eslint-rule-parity-tasklist-B_high.md",
 		"typescript-eslint-rule-parity-tasklist-C_medium.md",

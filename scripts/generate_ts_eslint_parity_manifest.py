@@ -34,6 +34,7 @@ def main() -> None:
 		"typescript-eslint-rule-parity-top.md",
 		"typescript-eslint-rule-parity-commands.md",
 		"typescript-eslint-rule-parity-badges.json",
+		"typescript-eslint-rule-parity-status.json",
 		"typescript-eslint-rule-parity-issue-plan.md",
 		"typescript-eslint-rule-parity-tracker.csv",
 		"typescript-eslint-rule-parity-tracker.json",
