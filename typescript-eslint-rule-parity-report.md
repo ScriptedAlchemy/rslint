@@ -41,6 +41,8 @@ It summarizes the most important parity findings and remediation priorities.
 6. `prefer-optional-chain` — moderate invalid/test-size gap + fix/suggestion risk.
 7. `await-thenable` — invalid coverage gap.
 8. `no-loss-of-precision` — missing Go test coverage.
+9. `no-confusing-void-expression` — extra JS skips + Go skips + TODO debt.
+10. `no-duplicate-type-constituents` — extra JS skips + Go skips + TODO debt.
 
 ## Key problem categories
 
@@ -69,6 +71,13 @@ It summarizes the most important parity findings and remediation priorities.
 3. Burn down `C_medium` skip/TODO debt.
 4. Finish `D_low` residual parity cleanup and reassess.
 
-## Deliverables to keep in this cleaned state
+## Concrete remediation checklist
+- [ ] Port/restore missing `no-unused-vars` JS test artifact.
+- [ ] Add/port Go tests for `no-loss-of-precision`.
+- [ ] Address top 7 parity-risk rules (scores 26+), with full invalid/fix parity validation.
+- [ ] Reduce `go_skips` from 11 to 0 (or document justified exceptions).
+- [ ] Resolve TODO/FIXME debt on the 22 flagged rules.
+- [ ] Decide whether `ban-types` remains intentionally local-only; if yes, document rationale clearly.
+
+## Final retained markdown deliverables
 - `typescript-eslint-rule-parity-report.md` (this file)
-- `typescript-eslint-rule-parity-issues-review.md` (action-focused issue list)
