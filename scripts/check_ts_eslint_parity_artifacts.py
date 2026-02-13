@@ -1312,6 +1312,33 @@ def main() -> None:
 	gate_conflict_threshold_first_lines = extract_nonempty_lines(gate_conflict_threshold_first.stderr)
 	if gate_conflict_threshold_first_lines != gate_duplicate_threshold_lines:
 		fail("parity gate conflict threshold-first stderr mismatch with duplicate-threshold baseline")
+	gate_conflict_threshold_first_spaced = subprocess.run(
+		[
+			"bash",
+			str(root / "scripts/run_ts_eslint_parity_gate.sh"),
+			"--threshold",
+			"red",
+			"--skip-checks",
+			"--threshold",
+			"blue",
+			"--skip-checks",
+		],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if gate_conflict_threshold_first_spaced.returncode != gate_conflict_threshold_first.returncode:
+		fail("parity gate conflict threshold-first spaced exit code mismatch with inline form")
+	if gate_conflict_threshold_first_spaced.stdout.strip():
+		fail("parity gate conflict threshold-first spaced stdout must be empty")
+	assert_exact_error_plus_usage(
+		"parity gate conflict threshold-first spaced stderr",
+		gate_conflict_threshold_first_spaced.stderr,
+		expected_gate_duplicate_threshold_line,
+		expected_gate_usage_line,
+	)
+	if extract_nonempty_lines(gate_conflict_threshold_first_spaced.stderr) != gate_conflict_threshold_first_lines:
+		fail("parity gate conflict threshold-first spaced stderr mismatch with inline form")
 
 	gate_conflict_skip_first = subprocess.run(
 		[
@@ -1339,6 +1366,33 @@ def main() -> None:
 	gate_conflict_skip_first_lines = extract_nonempty_lines(gate_conflict_skip_first.stderr)
 	if gate_conflict_skip_first_lines != gate_duplicate_skip_checks_lines:
 		fail("parity gate conflict skip-first stderr mismatch with duplicate-skip-checks baseline")
+	gate_conflict_skip_first_spaced = subprocess.run(
+		[
+			"bash",
+			str(root / "scripts/run_ts_eslint_parity_gate.sh"),
+			"--skip-checks",
+			"--threshold",
+			"red",
+			"--skip-checks",
+			"--threshold",
+			"blue",
+		],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if gate_conflict_skip_first_spaced.returncode != gate_conflict_skip_first.returncode:
+		fail("parity gate conflict skip-first spaced exit code mismatch with inline form")
+	if gate_conflict_skip_first_spaced.stdout.strip():
+		fail("parity gate conflict skip-first spaced stdout must be empty")
+	assert_exact_error_plus_usage(
+		"parity gate conflict skip-first spaced stderr",
+		gate_conflict_skip_first_spaced.stderr,
+		expected_gate_duplicate_skip_checks_line,
+		expected_gate_usage_line,
+	)
+	if extract_nonempty_lines(gate_conflict_skip_first_spaced.stderr) != gate_conflict_skip_first_lines:
+		fail("parity gate conflict skip-first spaced stderr mismatch with inline form")
 
 	# Gate npm wrapper help/unknown-arg forwarding checks
 	gate_wrapper_help_cases = [
@@ -1765,6 +1819,41 @@ def main() -> None:
 		"parity gate quick:red conflict threshold-first"
 	]:
 		fail("parity gate quick threshold-first conflict alias stderr mismatch with quick:red")
+	gate_wrapper_conflict_threshold_first_spaced_cases = [
+		(
+			"parity gate quick conflict threshold-first spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick", "--threshold", "blue", "--skip-checks"],
+			"parity gate quick conflict threshold-first",
+		),
+		(
+			"parity gate quick:red conflict threshold-first spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:red", "--threshold", "blue", "--skip-checks"],
+			"parity gate quick:red conflict threshold-first",
+		),
+		(
+			"parity gate quick:yellow conflict threshold-first spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow", "--threshold", "blue", "--skip-checks"],
+			"parity gate quick:yellow conflict threshold-first",
+		),
+	]
+	for label, command, inline_label in gate_wrapper_conflict_threshold_first_spaced_cases:
+		proc = subprocess.run(
+			command,
+			cwd=str(root),
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		spaced_lines = assert_gate_wrapper_unknown_arg_contract(
+			label,
+			proc,
+			expected_gate_duplicate_threshold_line,
+			expected_gate_usage_line,
+		)
+		if proc.returncode != gate_wrapper_conflict_threshold_first_codes[inline_label]:
+			fail(f"{label} return code mismatch with {inline_label}")
+		if spaced_lines != gate_wrapper_conflict_threshold_first_lines[inline_label]:
+			fail(f"{label} stderr output mismatch with {inline_label}")
 
 	gate_wrapper_conflict_skip_first_cases = [
 		(
@@ -1810,6 +1899,41 @@ def main() -> None:
 		"parity gate quick:red conflict skip-first"
 	]:
 		fail("parity gate quick skip-first conflict alias stderr mismatch with quick:red")
+	gate_wrapper_conflict_skip_first_spaced_cases = [
+		(
+			"parity gate quick conflict skip-first spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick", "--skip-checks", "--threshold", "blue"],
+			"parity gate quick conflict skip-first",
+		),
+		(
+			"parity gate quick:red conflict skip-first spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:red", "--skip-checks", "--threshold", "blue"],
+			"parity gate quick:red conflict skip-first",
+		),
+		(
+			"parity gate quick:yellow conflict skip-first spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow", "--skip-checks", "--threshold", "blue"],
+			"parity gate quick:yellow conflict skip-first",
+		),
+	]
+	for label, command, inline_label in gate_wrapper_conflict_skip_first_spaced_cases:
+		proc = subprocess.run(
+			command,
+			cwd=str(root),
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		spaced_lines = assert_gate_wrapper_unknown_arg_contract(
+			label,
+			proc,
+			expected_gate_duplicate_skip_checks_line,
+			expected_gate_usage_line,
+		)
+		if proc.returncode != gate_wrapper_conflict_skip_first_codes[inline_label]:
+			fail(f"{label} return code mismatch with {inline_label}")
+		if spaced_lines != gate_wrapper_conflict_skip_first_lines[inline_label]:
+			fail(f"{label} stderr output mismatch with {inline_label}")
 	gate_wrapper_conflict_default_threshold_first_cases = [
 		(
 			"parity gate command conflict threshold-first",
@@ -1854,6 +1978,41 @@ def main() -> None:
 		"parity gate command red conflict threshold-first"
 	]:
 		fail("parity gate command threshold-first conflict alias stderr mismatch with gate:red")
+	gate_wrapper_conflict_default_threshold_first_spaced_cases = [
+		(
+			"parity gate command conflict threshold-first spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate", "--threshold", "blue", "--skip-checks", "--skip-checks"],
+			"parity gate command conflict threshold-first",
+		),
+		(
+			"parity gate command red conflict threshold-first spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:red", "--threshold", "blue", "--skip-checks", "--skip-checks"],
+			"parity gate command red conflict threshold-first",
+		),
+		(
+			"parity gate command yellow conflict threshold-first spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:yellow", "--threshold", "blue", "--skip-checks", "--skip-checks"],
+			"parity gate command yellow conflict threshold-first",
+		),
+	]
+	for label, command, inline_label in gate_wrapper_conflict_default_threshold_first_spaced_cases:
+		proc = subprocess.run(
+			command,
+			cwd=str(root),
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		spaced_lines = assert_gate_wrapper_unknown_arg_contract(
+			label,
+			proc,
+			expected_gate_duplicate_threshold_line,
+			expected_gate_usage_line,
+		)
+		if proc.returncode != gate_wrapper_conflict_default_threshold_first_codes[inline_label]:
+			fail(f"{label} return code mismatch with {inline_label}")
+		if spaced_lines != gate_wrapper_conflict_default_threshold_first_lines[inline_label]:
+			fail(f"{label} stderr output mismatch with {inline_label}")
 
 	gate_wrapper_conflict_default_skip_first_cases = [
 		(
@@ -1899,6 +2058,41 @@ def main() -> None:
 		"parity gate command red conflict skip-first"
 	]:
 		fail("parity gate command skip-first conflict alias stderr mismatch with gate:red")
+	gate_wrapper_conflict_default_skip_first_spaced_cases = [
+		(
+			"parity gate command conflict skip-first spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate", "--skip-checks", "--skip-checks", "--threshold", "blue"],
+			"parity gate command conflict skip-first",
+		),
+		(
+			"parity gate command red conflict skip-first spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:red", "--skip-checks", "--skip-checks", "--threshold", "blue"],
+			"parity gate command red conflict skip-first",
+		),
+		(
+			"parity gate command yellow conflict skip-first spaced",
+			["pnpm", "--silent", "parity:ts-eslint:gate:yellow", "--skip-checks", "--skip-checks", "--threshold", "blue"],
+			"parity gate command yellow conflict skip-first",
+		),
+	]
+	for label, command, inline_label in gate_wrapper_conflict_default_skip_first_spaced_cases:
+		proc = subprocess.run(
+			command,
+			cwd=str(root),
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		spaced_lines = assert_gate_wrapper_unknown_arg_contract(
+			label,
+			proc,
+			expected_gate_duplicate_skip_checks_line,
+			expected_gate_usage_line,
+		)
+		if proc.returncode != gate_wrapper_conflict_default_skip_first_codes[inline_label]:
+			fail(f"{label} return code mismatch with {inline_label}")
+		if spaced_lines != gate_wrapper_conflict_default_skip_first_lines[inline_label]:
+			fail(f"{label} stderr output mismatch with {inline_label}")
 
 	# Gate npm command wrappers in skip-check mode
 	gate_cmd = subprocess.run(
