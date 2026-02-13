@@ -8,6 +8,7 @@ usage() {
 threshold="red"
 threshold_set="0"
 skip_checks="0"
+skip_checks_set="0"
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -h|--help)
@@ -44,7 +45,13 @@ while [[ $# -gt 0 ]]; do
       threshold_set="1"
       ;;
     --skip-checks)
+      if [[ "${skip_checks_set}" == "1" ]]; then
+        echo "[parity-gate] ERROR: duplicate --skip-checks argument." >&2
+        usage
+        exit 1
+      fi
       skip_checks="1"
+      skip_checks_set="1"
       ;;
     *)
       echo "[parity-gate] ERROR: unknown argument: $1" >&2

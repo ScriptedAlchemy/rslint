@@ -711,6 +711,19 @@ def main() -> None:
 	if "Usage: bash scripts/run_ts_eslint_parity_gate.sh" not in gate_unknown_arg.stderr:
 		fail("parity gate unknown-arg stderr missing usage message")
 
+	gate_duplicate_skip_checks = subprocess.run(
+		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--skip-checks", "--skip-checks"],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if gate_duplicate_skip_checks.returncode != 1:
+		fail("parity gate duplicate-skip-checks exit code must be 1")
+	if "duplicate --skip-checks argument" not in gate_duplicate_skip_checks.stderr:
+		fail("parity gate duplicate-skip-checks stderr missing message")
+	if "Usage: bash scripts/run_ts_eslint_parity_gate.sh" not in gate_duplicate_skip_checks.stderr:
+		fail("parity gate duplicate-skip-checks stderr missing usage message")
+
 	# Quick gate npm command wrappers
 	gate_quick = subprocess.run(
 		["pnpm", "parity:ts-eslint:gate:quick"],
