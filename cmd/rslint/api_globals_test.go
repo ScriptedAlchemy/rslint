@@ -83,7 +83,11 @@ func TestResolveRuleLanguageOptions(t *testing.T) {
 	}
 
 	if resolved.Globals["ConfigGlobal"] != "readonly" {
-		t.Fatalf("expected globals from merged config, got %#v", resolved.Globals)
+		t.Fatalf("expected globals from config, got %#v", resolved.Globals)
+	}
+
+	if resolved.Globals["RequestGlobal"] != "readonly" {
+		t.Fatalf("expected globals from request, got %#v", resolved.Globals)
 	}
 
 	if resolved.ParserOptions == nil {
@@ -92,5 +96,70 @@ func TestResolveRuleLanguageOptions(t *testing.T) {
 
 	if !resolved.ParserOptions.IsolatedDeclarations {
 		t.Fatalf("expected IsolatedDeclarations to be true from merged config")
+	}
+}
+
+func TestResolveRuleLanguageOptionsForFile(t *testing.T) {
+	configEntries := rslintconfig.RslintConfig{
+		{
+			Files: []string{"src/**/*.ts"},
+			LanguageOptions: &rslintconfig.LanguageOptions{
+				Globals: map[string]interface{}{
+					"SrcGlobal": "readonly",
+				},
+				ParserOptions: &rslintconfig.ParserOptions{
+					SourceType: "module",
+				},
+			},
+		},
+		{
+			Files: []string{"scripts/**/*.ts"},
+			LanguageOptions: &rslintconfig.LanguageOptions{
+				Globals: map[string]interface{}{
+					"ScriptsGlobal": "readonly",
+				},
+				ParserOptions: &rslintconfig.ParserOptions{
+					SourceType: "script",
+				},
+			},
+		},
+	}
+
+	reqLanguageOptions := &ipc.LanguageOptions{
+		Globals: map[string]interface{}{
+			"RequestGlobal": "readonly",
+		},
+	}
+
+	srcOptions := resolveRuleLanguageOptionsForFile(reqLanguageOptions, configEntries, "/repo/src/main.ts", "/repo")
+	if srcOptions == nil {
+		t.Fatalf("expected language options for src file")
+	}
+	if srcOptions.Globals["SrcGlobal"] != "readonly" {
+		t.Fatalf("expected SrcGlobal for src file, got %#v", srcOptions.Globals)
+	}
+	if _, exists := srcOptions.Globals["ScriptsGlobal"]; exists {
+		t.Fatalf("did not expect ScriptsGlobal for src file, got %#v", srcOptions.Globals)
+	}
+	if srcOptions.ParserOptions == nil || srcOptions.ParserOptions.SourceType != "module" {
+		t.Fatalf("expected module source type for src file, got %#v", srcOptions.ParserOptions)
+	}
+
+	scriptOptions := resolveRuleLanguageOptionsForFile(reqLanguageOptions, configEntries, "/repo/scripts/build.ts", "/repo")
+	if scriptOptions == nil {
+		t.Fatalf("expected language options for scripts file")
+	}
+	if scriptOptions.Globals["ScriptsGlobal"] != "readonly" {
+		t.Fatalf("expected ScriptsGlobal for scripts file, got %#v", scriptOptions.Globals)
+	}
+	if _, exists := scriptOptions.Globals["SrcGlobal"]; exists {
+		t.Fatalf("did not expect SrcGlobal for scripts file, got %#v", scriptOptions.Globals)
+	}
+	if scriptOptions.ParserOptions == nil || scriptOptions.ParserOptions.SourceType != "script" {
+		t.Fatalf("expected script source type for scripts file, got %#v", scriptOptions.ParserOptions)
+	}
+
+	if srcOptions.Globals["RequestGlobal"] != "readonly" || scriptOptions.Globals["RequestGlobal"] != "readonly" {
+		t.Fatalf("expected RequestGlobal for both files, src=%#v scripts=%#v", srcOptions.Globals, scriptOptions.Globals)
 	}
 }

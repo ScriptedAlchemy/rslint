@@ -48,9 +48,14 @@ export interface LanguageOptions {
 export interface ParserOptions {
   projectService?: boolean;
   project?: string[] | string;
+  tsconfigRootDir?: string;
   isolatedDeclarations?: boolean;
+  experimentalDecorators?: boolean;
+  emitDecoratorMetadata?: boolean;
   sourceType?: 'module' | 'script';
   ecmaVersion?: number;
+  jsxPragma?: string;
+  jsxFragmentName?: string;
   ecmaFeatures?: {
     globalReturn?: boolean;
     jsx?: boolean;
