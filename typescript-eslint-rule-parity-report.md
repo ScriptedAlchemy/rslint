@@ -22,6 +22,12 @@ Recommended usage:
 2. Execute in `recommended_phase` order (`A_critical` -> `B_high` -> `C_medium` -> `D_low`).
 3. Close rows by clearing flags and reducing score to `0` as parity work lands.
 
+Regenerate tracker artifacts:
+
+```bash
+python3 scripts/generate_ts_eslint_parity_tracker.py
+```
+
 ## Inventory Summary
 - Upstream rules: **134**
 - Local registered `@typescript-eslint/*` rules: **135**
