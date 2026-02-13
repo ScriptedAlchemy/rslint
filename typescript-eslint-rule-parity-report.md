@@ -39,7 +39,7 @@ _Generated: 2026-02-13 09:47 UTC_
 - Parity diagnosis renderer: `scripts/generate_ts_eslint_parity_doctor.py`
 - CI summary now includes computed parity health + reason from status artifact.
 - PR CI uploads:
-  - `typescript-eslint-parity-diff`
+  - `typescript-eslint-parity-diff` (contains markdown + JSON diff artifacts)
   - `typescript-eslint-parity-artifacts`
 
 These machine-readable files mirror this report’s findings and include:

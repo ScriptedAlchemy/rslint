@@ -68,7 +68,8 @@ jobs:
         run: |
           python3 scripts/compare_ts_eslint_parity_trackers.py \
             --base-ref "origin/${{ github.base_ref }}" \
-            --output "typescript-eslint-rule-parity-diff.md"
+            --output "typescript-eslint-rule-parity-diff.md" \
+            --output-json "typescript-eslint-rule-parity-diff.json"
 
       - name: Publish parity summary to job summary
         run: |
@@ -81,7 +82,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: typescript-eslint-parity-diff
-          path: typescript-eslint-rule-parity-diff.md
+          path: |
+            typescript-eslint-rule-parity-diff.md
+            typescript-eslint-rule-parity-diff.json
 
       - name: Upload parity artifact bundle
         if: github.event_name == 'pull_request'
@@ -102,6 +105,8 @@ jobs:
             typescript-eslint-rule-parity-badges.json
             typescript-eslint-rule-parity-status.json
             typescript-eslint-rule-parity-commands.md
+            typescript-eslint-rule-parity-diff.md
+            typescript-eslint-rule-parity-diff.json
             typescript-eslint-rule-parity-manifest.json
             typescript-eslint-rule-parity-tasklist-A_critical.md
             typescript-eslint-rule-parity-tasklist-B_high.md
