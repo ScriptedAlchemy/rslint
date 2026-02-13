@@ -34,6 +34,18 @@ def get_upstream_commit(upstream_dir: pathlib.Path) -> str | None:
 		return None
 
 
+def resolve_generated_at(output_json: pathlib.Path) -> str:
+	if os.environ.get("PARITY_REPRO_MODE") == "1" and output_json.exists():
+		try:
+			existing = json.loads(output_json.read_text())
+			value = existing.get("generated_at_utc")
+			if value:
+				return str(value)
+		except Exception:
+			pass
+	return datetime.datetime.now(datetime.UTC).isoformat()
+
+
 def main() -> None:
 	root = pathlib.Path("/workspace")
 	upstream_dir = pathlib.Path("/tmp/typescript-eslint")
@@ -55,7 +67,7 @@ def main() -> None:
 	top_rules = sorted(flagged, key=lambda r: (-r.get("priority_score", 0), r.get("rule", "")))[:20]
 
 	metadata = {
-		"generated_at_utc": datetime.datetime.now(datetime.UTC).isoformat(),
+		"generated_at_utc": resolve_generated_at(output_json),
 		"upstream_repo": "https://github.com/typescript-eslint/typescript-eslint",
 		"upstream_ref_requested": os.environ.get("TS_ESLINT_REF", "main"),
 		"upstream_commit": get_upstream_commit(upstream_dir),

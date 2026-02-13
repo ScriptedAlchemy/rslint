@@ -8,6 +8,7 @@ on:
       - "typescript-eslint-rule-parity-*.csv"
       - "scripts/generate_ts_eslint_parity_*.py"
       - "scripts/compare_ts_eslint_parity_trackers.py"
+      - "scripts/rebuild_ts_eslint_parity_from_metadata.sh"
       - "scripts/check_ts_eslint_parity_artifacts.py"
       - "scripts/refresh-ts-eslint-parity-artifacts.sh"
       - "typescript-eslint-rule-parity-guide.md"
@@ -21,6 +22,7 @@ on:
       - "typescript-eslint-rule-parity-*.csv"
       - "scripts/generate_ts_eslint_parity_*.py"
       - "scripts/compare_ts_eslint_parity_trackers.py"
+      - "scripts/rebuild_ts_eslint_parity_from_metadata.sh"
       - "scripts/check_ts_eslint_parity_artifacts.py"
       - "scripts/refresh-ts-eslint-parity-artifacts.sh"
       - "typescript-eslint-rule-parity-guide.md"
@@ -46,6 +48,14 @@ jobs:
 
       - name: Validate parity artifacts consistency
         run: python3 scripts/check_ts_eslint_parity_artifacts.py
+
+      - name: Rebuild from metadata commit and ensure clean diff
+        run: |
+          bash scripts/rebuild_ts_eslint_parity_from_metadata.sh
+          git diff --exit-code -- \
+            "typescript-eslint-rule-parity-*.md" \
+            "typescript-eslint-rule-parity-*.json" \
+            "typescript-eslint-rule-parity-*.csv"
 
       - name: Generate parity tracker diff against PR base
         if: github.event_name == 'pull_request'

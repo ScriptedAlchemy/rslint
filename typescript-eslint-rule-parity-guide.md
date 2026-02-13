@@ -54,6 +54,16 @@ Outputs:
 
 - `typescript-eslint-rule-parity-diff.md`
 
+### Rebuild artifacts from pinned metadata commit
+
+```bash
+pnpm parity:ts-eslint:rebuild-metadata
+```
+
+This rebuilds artifacts using `upstream_commit` from
+`typescript-eslint-rule-parity-metadata.json` and is useful for
+reproducibility checks.
+
 ### Generate GitHub issue tasklist snippets by phase
 
 ```bash
@@ -76,6 +86,7 @@ python3 scripts/generate_ts_eslint_parity_issue_plan.py
 python3 scripts/check_ts_eslint_parity_artifacts.py
 python3 scripts/compare_ts_eslint_parity_trackers.py --base-ref HEAD~1
 python3 scripts/generate_ts_eslint_parity_issue_tasklist.py --phase A_critical
+bash scripts/rebuild_ts_eslint_parity_from_metadata.sh
 ```
 
 ## Typical workflow
@@ -99,6 +110,8 @@ Workflow: `.github/workflows/parity-artifacts-check.yml`
 - Ensures tracker/summary/worklist/metadata remain synchronized.
 - On pull requests, also generates `typescript-eslint-rule-parity-diff.md`
   against the PR base branch and uploads it as a workflow artifact.
+- CI also rebuilds artifacts from metadata-pinned upstream commit and checks
+  that parity artifacts remain unchanged.
 - Issue template available:
   - `.github/ISSUE_TEMPLATE/4-ts-eslint-parity-tracking.en-US.yml`
 

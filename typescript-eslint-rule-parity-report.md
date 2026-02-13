@@ -33,6 +33,7 @@ Recommended usage:
 4. Use the generated worklist markdown for checkbox-style execution tracking.
 5. Use the generated issue plan markdown to open/track phase-scoped GitHub issues.
 6. Run consistency check to ensure tracker/summary/worklist/metadata/issue-plan remain synchronized.
+7. Optionally run metadata-pinned rebuild to verify reproducibility.
 
 Regenerate tracker artifacts:
 
@@ -41,6 +42,7 @@ pnpm parity:ts-eslint
 pnpm parity:ts-eslint:check
 pnpm parity:ts-eslint:diff -- --base-ref HEAD~1
 pnpm parity:ts-eslint:tasklist --phase A_critical
+pnpm parity:ts-eslint:rebuild-metadata
 
 # Optional: pin upstream ref (branch/tag/SHA) for reproducible comparisons
 TS_ESLINT_REF=main pnpm parity:ts-eslint

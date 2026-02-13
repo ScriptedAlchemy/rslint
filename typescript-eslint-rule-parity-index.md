@@ -3,7 +3,7 @@
 _Generated: 2026-02-13T10:21:33.532197+00:00_
 
 ## Snapshot
-- Upstream ref requested: `main`
+- Upstream ref requested: `68a074fb61a10c3627f09678859fb4d42a3b88f5`
 - Upstream commit resolved: `68a074fb61a10c3627f09678859fb4d42a3b88f5`
 - Total rules: **135**
 - Flagged rules: **60**
@@ -37,5 +37,6 @@ pnpm parity:ts-eslint
 pnpm parity:ts-eslint:check
 pnpm parity:ts-eslint:diff -- --base-ref HEAD~1
 pnpm parity:ts-eslint:tasklist --phase A_critical
+pnpm parity:ts-eslint:rebuild-metadata
 ```
 
