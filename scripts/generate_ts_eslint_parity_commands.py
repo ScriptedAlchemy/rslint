@@ -44,6 +44,8 @@ def main() -> None:
 		"parity:ts-eslint:status:strict:yellow": "Generate status JSON and fail when health is yellow or red.",
 		"parity:ts-eslint:ci-summary": "Render CI-style markdown summary from parity artifacts.",
 		"parity:ts-eslint:ci-summary:json": "Render CI summary as JSON for automation.",
+		"parity:ts-eslint:ci-summary:strict": "Render CI summary and fail when health is red.",
+		"parity:ts-eslint:ci-summary:strict:yellow": "Render CI summary and fail when health is yellow or red.",
 		"parity:ts-eslint:doctor": "Print parity health diagnosis from metadata and top-priority artifact.",
 		"parity:ts-eslint:doctor:markdown": "Print parity doctor output in markdown format.",
 		"parity:ts-eslint:doctor:json": "Print parity doctor output in JSON format for automation.",

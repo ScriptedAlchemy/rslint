@@ -10,6 +10,10 @@ Reads:
 
 Prints markdown to stdout (intended for $GITHUB_STEP_SUMMARY),
 or JSON with --json.
+
+Optional:
+  --fail-on-red     exit non-zero if computed health is red
+  --fail-on-yellow  exit non-zero if computed health is yellow or red
 """
 
 from __future__ import annotations
@@ -18,6 +22,7 @@ import argparse
 import json
 import pathlib
 import re
+import sys
 
 from parity_health import compute_health_reason
 
@@ -64,6 +69,8 @@ def read_optional_diff_metrics(diff_md_path: pathlib.Path, diff_json_path: pathl
 def main() -> None:
 	parser = argparse.ArgumentParser(description="Emit parity CI summary.")
 	parser.add_argument("--json", action="store_true", help="Emit JSON output instead of markdown.")
+	parser.add_argument("--fail-on-red", action="store_true", help="Exit non-zero if health is red.")
+	parser.add_argument("--fail-on-yellow", action="store_true", help="Exit non-zero if health is yellow or red.")
 	args = parser.parse_args()
 
 	root = pathlib.Path("/workspace")
@@ -115,36 +122,42 @@ def main() -> None:
 		if diff_metrics:
 			payload["diff_metrics"] = diff_metrics
 		print(json.dumps(payload, indent=2))
-		return
-
-	lines: list[str] = []
-	lines.append("## TypeScript-ESLint Parity Summary")
-	lines.append("")
-	lines.append(f"- Upstream ref: `{upstream_ref}`")
-	lines.append(f"- Upstream commit: `{upstream_commit}`")
-	lines.append(f"- Total rules: **{summary.get('total_rules', 0)}**")
-	lines.append(f"- Flagged rules: **{summary.get('flagged_rules', 0)}**")
-	lines.append(f"- Aligned rules: **{summary.get('aligned_rules', 0)}**")
-	health_line = f"- Health: **{health}**"
-	if reason:
-		health_line += f" — {reason}"
-	lines.append(health_line)
-	lines.append("")
-	lines.append("| Phase | Rules |")
-	lines.append("|---|---:|")
-	for phase in ["A_critical", "B_high", "C_medium", "D_low", "aligned"]:
-		lines.append(f"| `{phase}` | {phase_counts.get(phase, 0)} |")
-
-	if diff_metrics:
+	else:
+		lines: list[str] = []
+		lines.append("## TypeScript-ESLint Parity Summary")
 		lines.append("")
-		lines.append("### Diff vs baseline")
-		lines.append(f"- Net flagged change: **{diff_metrics.get('net_flagged_change', 'n/a')}**")
-		lines.append(f"- Improved rules: **{diff_metrics.get('improved_rules', 'n/a')}**")
-		lines.append(f"- Regressed rules: **{diff_metrics.get('regressed_rules', 'n/a')}**")
-		lines.append(f"- Resolved rules: **{diff_metrics.get('resolved_rules', 'n/a')}**")
-		lines.append(f"- Newly flagged rules: **{diff_metrics.get('newly_flagged_rules', 'n/a')}**")
+		lines.append(f"- Upstream ref: `{upstream_ref}`")
+		lines.append(f"- Upstream commit: `{upstream_commit}`")
+		lines.append(f"- Total rules: **{summary.get('total_rules', 0)}**")
+		lines.append(f"- Flagged rules: **{summary.get('flagged_rules', 0)}**")
+		lines.append(f"- Aligned rules: **{summary.get('aligned_rules', 0)}**")
+		health_line = f"- Health: **{health}**"
+		if reason:
+			health_line += f" — {reason}"
+		lines.append(health_line)
+		lines.append("")
+		lines.append("| Phase | Rules |")
+		lines.append("|---|---:|")
+		for phase in ["A_critical", "B_high", "C_medium", "D_low", "aligned"]:
+			lines.append(f"| `{phase}` | {phase_counts.get(phase, 0)} |")
 
-	print("\n".join(lines))
+		if diff_metrics:
+			lines.append("")
+			lines.append("### Diff vs baseline")
+			lines.append(f"- Net flagged change: **{diff_metrics.get('net_flagged_change', 'n/a')}**")
+			lines.append(f"- Improved rules: **{diff_metrics.get('improved_rules', 'n/a')}**")
+			lines.append(f"- Regressed rules: **{diff_metrics.get('regressed_rules', 'n/a')}**")
+			lines.append(f"- Resolved rules: **{diff_metrics.get('resolved_rules', 'n/a')}**")
+			lines.append(f"- Newly flagged rules: **{diff_metrics.get('newly_flagged_rules', 'n/a')}**")
+
+		print("\n".join(lines))
+
+	if args.fail_on_yellow and health in {"yellow", "red"}:
+		print(f"[parity-ci-summary] ERROR: health is {health} ({reason})", file=sys.stderr)
+		sys.exit(3)
+	if args.fail_on_red and health == "red":
+		print(f"[parity-ci-summary] ERROR: health is red ({reason})", file=sys.stderr)
+		sys.exit(2)
 
 
 if __name__ == "__main__":

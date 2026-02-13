@@ -58,6 +58,8 @@ def main() -> None:
 		"parity:ts-eslint:status:strict:yellow": "generate_ts_eslint_parity_status.py --fail-on-yellow",
 		"parity:ts-eslint:ci-summary": "generate_ts_eslint_parity_ci_summary.py",
 		"parity:ts-eslint:ci-summary:json": "generate_ts_eslint_parity_ci_summary.py --json",
+		"parity:ts-eslint:ci-summary:strict": "generate_ts_eslint_parity_ci_summary.py --fail-on-red",
+		"parity:ts-eslint:ci-summary:strict:yellow": "generate_ts_eslint_parity_ci_summary.py --fail-on-yellow",
 		"parity:ts-eslint:doctor": "generate_ts_eslint_parity_doctor.py",
 		"parity:ts-eslint:doctor:markdown": "generate_ts_eslint_parity_doctor.py --markdown",
 		"parity:ts-eslint:doctor:json": "generate_ts_eslint_parity_doctor.py --json",

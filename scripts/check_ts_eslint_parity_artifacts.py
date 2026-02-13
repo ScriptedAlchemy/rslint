@@ -840,6 +840,37 @@ def main() -> None:
 	elif ci_summary_json.get("diff_metrics"):
 		fail("ci summary json should not include diff metrics when parity diff artifact is absent")
 
+	# CI summary strict-mode exit-code checks
+	ci_summary_strict = subprocess.run(
+		["python3", str(root / "scripts/generate_ts_eslint_parity_ci_summary.py"), "--fail-on-red"],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	expected_ci_summary_strict_exit = 2 if status.get("health") == "red" else 0
+	if ci_summary_strict.returncode != expected_ci_summary_strict_exit:
+		fail(
+			"ci summary strict exit-code mismatch: "
+			f"expected={expected_ci_summary_strict_exit} actual={ci_summary_strict.returncode}"
+		)
+	if expected_ci_summary_strict_exit == 2 and "health is red" not in ci_summary_strict.stderr:
+		fail("ci summary strict stderr missing red-health message")
+
+	ci_summary_strict_yellow = subprocess.run(
+		["python3", str(root / "scripts/generate_ts_eslint_parity_ci_summary.py"), "--fail-on-yellow"],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	expected_ci_summary_strict_yellow_exit = 3 if status.get("health") in {"yellow", "red"} else 0
+	if ci_summary_strict_yellow.returncode != expected_ci_summary_strict_yellow_exit:
+		fail(
+			"ci summary strict-yellow exit-code mismatch: "
+			f"expected={expected_ci_summary_strict_yellow_exit} actual={ci_summary_strict_yellow.returncode}"
+		)
+	if expected_ci_summary_strict_yellow_exit == 3 and "health is" not in ci_summary_strict_yellow.stderr:
+		fail("ci summary strict-yellow stderr missing health message")
+
 	# Parity doctor output checks
 	try:
 		doctor_plain = subprocess.run(

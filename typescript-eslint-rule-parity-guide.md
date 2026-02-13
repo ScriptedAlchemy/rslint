@@ -66,6 +66,8 @@ pnpm parity:ts-eslint:status:strict
 pnpm parity:ts-eslint:status:strict:yellow
 pnpm parity:ts-eslint:ci-summary
 pnpm parity:ts-eslint:ci-summary:json
+pnpm parity:ts-eslint:ci-summary:strict
+pnpm parity:ts-eslint:ci-summary:strict:yellow
 pnpm parity:ts-eslint:doctor
 pnpm parity:ts-eslint:doctor:markdown
 pnpm parity:ts-eslint:doctor:json
@@ -76,7 +78,7 @@ pnpm parity:ts-eslint:doctor:strict
 The checkers validate:
 - tracker/worklist/summary/metadata/manifest/index/issue-plan coherence,
 - issue-body structure/counts,
-- CI summary rendering consistency (markdown + JSON, including optional diff metrics when diff artifact exists),
+- CI summary rendering consistency (markdown + JSON + strict exit behavior, including optional diff metrics when diff artifact exists),
 - optional diff artifact summary consistency between markdown and JSON outputs,
 - parity doctor output consistency (plain + markdown + JSON forms),
 - parity doctor strict-mode exit behavior (`--fail-on-critical`),
@@ -92,6 +94,8 @@ The checkers validate:
 `parity:ts-eslint:check:strict:clean` combines strict critical-backlog gating with clean-tree reproducibility enforcement.
 `parity:ts-eslint:status:strict` additionally fails when computed parity health is red.
 `parity:ts-eslint:status:strict:yellow` additionally fails when computed parity health is yellow or red.
+`parity:ts-eslint:ci-summary:strict` additionally fails when computed parity health is red.
+`parity:ts-eslint:ci-summary:strict:yellow` additionally fails when computed parity health is yellow or red.
 
 ### Compare parity progress between snapshots
 

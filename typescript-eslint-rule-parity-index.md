@@ -63,6 +63,8 @@ pnpm parity:ts-eslint:status:strict
 pnpm parity:ts-eslint:status:strict:yellow
 pnpm parity:ts-eslint:ci-summary
 pnpm parity:ts-eslint:ci-summary:json
+pnpm parity:ts-eslint:ci-summary:strict
+pnpm parity:ts-eslint:ci-summary:strict:yellow
 pnpm parity:ts-eslint:doctor
 pnpm parity:ts-eslint:doctor:markdown
 pnpm parity:ts-eslint:doctor:json
