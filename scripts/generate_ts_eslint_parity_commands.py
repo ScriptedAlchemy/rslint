@@ -35,6 +35,7 @@ def main() -> None:
 		"parity:ts-eslint:issue-body:all": "Generate issue body drafts for all parity phases.",
 		"parity:ts-eslint:badges": "Generate badge-friendly parity metrics JSON.",
 		"parity:ts-eslint:status": "Generate concise parity health status JSON for automation.",
+		"parity:ts-eslint:ci-summary": "Render CI-style markdown summary from parity artifacts.",
 		"parity:ts-eslint:doctor": "Print parity health diagnosis from metadata and top-priority artifact.",
 		"parity:ts-eslint:top": "Generate top-priority ranked parity list.",
 		"parity:ts-eslint:manifest": "Generate checksum manifest for parity artifacts.",

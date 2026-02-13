@@ -55,6 +55,7 @@ pnpm parity:ts-eslint:check:tooling
 pnpm parity:ts-eslint:commands
 pnpm parity:ts-eslint:badges
 pnpm parity:ts-eslint:status
+pnpm parity:ts-eslint:ci-summary
 pnpm parity:ts-eslint:doctor
 pnpm parity:ts-eslint:diff -- --base-ref HEAD~1
 pnpm parity:ts-eslint:tasklist --phase A_critical

@@ -43,6 +43,7 @@
     "parity:ts-eslint:manifest": "python3 scripts/generate_ts_eslint_parity_manifest.py",
     "parity:ts-eslint:badges": "python3 scripts/generate_ts_eslint_parity_badges.py",
     "parity:ts-eslint:status": "python3 scripts/generate_ts_eslint_parity_status.py",
+    "parity:ts-eslint:ci-summary": "python3 scripts/generate_ts_eslint_parity_ci_summary.py",
     "parity:ts-eslint:doctor": "python3 scripts/generate_ts_eslint_parity_doctor.py",
     "parity:ts-eslint:top": "python3 scripts/generate_ts_eslint_parity_top.py",
     "parity:ts-eslint:verify-clean": "bash scripts/verify_ts_eslint_parity_clean.sh",
