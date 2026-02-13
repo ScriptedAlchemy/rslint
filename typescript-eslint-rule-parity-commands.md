@@ -31,6 +31,9 @@ Generated from `package.json` parity scripts.
 | `pnpm parity:ts-eslint:doctor:strict` | Print parity health diagnosis and fail if critical backlog exists. | `python3 scripts/generate_ts_eslint_parity_doctor.py --fail-on-critical` |
 | `pnpm parity:ts-eslint:doctor:strict:yellow` | Print parity doctor output and fail if health is yellow or red. | `python3 scripts/generate_ts_eslint_parity_doctor.py --fail-on-yellow` |
 | `pnpm parity:ts-eslint:gate` | Run unified parity gate with default red threshold. | `bash scripts/run_ts_eslint_parity_gate.sh --threshold red` |
+| `pnpm parity:ts-eslint:gate:quick` | Run red-threshold gate only (skip strict clean checks). | `bash scripts/run_ts_eslint_parity_gate.sh --threshold red --skip-checks` |
+| `pnpm parity:ts-eslint:gate:quick:red` | Run red-threshold gate only (skip strict clean checks). | `bash scripts/run_ts_eslint_parity_gate.sh --threshold red --skip-checks` |
+| `pnpm parity:ts-eslint:gate:quick:yellow` | Run yellow-threshold gate only (skip strict clean checks). | `bash scripts/run_ts_eslint_parity_gate.sh --threshold yellow --skip-checks` |
 | `pnpm parity:ts-eslint:gate:red` | Run strict clean checks plus red-threshold health gates. | `bash scripts/run_ts_eslint_parity_gate.sh --threshold red` |
 | `pnpm parity:ts-eslint:gate:yellow` | Run strict clean checks plus yellow-threshold health gates. | `bash scripts/run_ts_eslint_parity_gate.sh --threshold yellow` |
 | `pnpm parity:ts-eslint:issue-body` | Generate one phase issue body draft from tasklist. | `python3 scripts/generate_ts_eslint_parity_issue_body.py` |

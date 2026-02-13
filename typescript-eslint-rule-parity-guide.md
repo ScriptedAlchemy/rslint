@@ -64,6 +64,9 @@ pnpm parity:ts-eslint:check:strict:yellow:clean
 pnpm parity:ts-eslint:gate
 pnpm parity:ts-eslint:gate:red
 pnpm parity:ts-eslint:gate:yellow
+pnpm parity:ts-eslint:gate:quick
+pnpm parity:ts-eslint:gate:quick:red
+pnpm parity:ts-eslint:gate:quick:yellow
 pnpm parity:ts-eslint:check:tooling
 pnpm parity:ts-eslint:commands
 pnpm parity:ts-eslint:badges
@@ -107,6 +110,9 @@ The checkers validate:
 `parity:ts-eslint:gate` is shorthand for `gate:red`.
 `parity:ts-eslint:gate:red` runs strict clean checks then applies red-threshold status+doctor gates.
 `parity:ts-eslint:gate:yellow` runs strict clean checks then applies yellow-threshold status+doctor gates.
+`parity:ts-eslint:gate:quick` is shorthand for `gate:quick:red`.
+`parity:ts-eslint:gate:quick:red` runs red-threshold status+doctor gates without strict clean checks.
+`parity:ts-eslint:gate:quick:yellow` runs yellow-threshold status+doctor gates without strict clean checks.
 `parity:ts-eslint:status:strict` additionally fails when computed parity health is red.
 `parity:ts-eslint:status:strict:yellow` additionally fails when computed parity health is yellow or red.
 `parity:ts-eslint:ci-summary:strict` additionally fails when computed parity health is red.
