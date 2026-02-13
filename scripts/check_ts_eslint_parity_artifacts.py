@@ -79,6 +79,24 @@ def parse_worklist_markdown(worklist_text: str) -> dict:
 	return {"heading_counts": heading_counts, "phase_items": dict(phase_items)}
 
 
+def parse_issue_plan_markdown(issue_plan_text: str) -> dict:
+	heading_counts = {}
+	phase_items = Counter()
+	current_phase = None
+
+	for line in issue_plan_text.splitlines():
+		head_match = re.match(r"^##\s+([A-Za-z_]+)\s+\((\d+)\s+rules\)$", line)
+		if head_match:
+			current_phase = head_match.group(1)
+			heading_counts[current_phase] = int(head_match.group(2))
+			continue
+
+		if current_phase in {"A_critical", "B_high", "C_medium", "D_low"} and line.startswith("- [ ] `"):
+			phase_items[current_phase] += 1
+
+	return {"heading_counts": heading_counts, "phase_items": dict(phase_items)}
+
+
 def main() -> None:
 	root = pathlib.Path("/workspace")
 	tracker_csv = root / "typescript-eslint-rule-parity-tracker.csv"
@@ -86,8 +104,9 @@ def main() -> None:
 	worklist_md = root / "typescript-eslint-rule-parity-worklist.md"
 	summary_md = root / "typescript-eslint-rule-parity-summary.md"
 	metadata_json = root / "typescript-eslint-rule-parity-metadata.json"
+	issue_plan_md = root / "typescript-eslint-rule-parity-issue-plan.md"
 
-	required = [tracker_csv, tracker_json, worklist_md, summary_md, metadata_json]
+	required = [tracker_csv, tracker_json, worklist_md, summary_md, metadata_json, issue_plan_md]
 	for path in required:
 		if not path.exists():
 			fail(f"missing artifact: {path.name}")
@@ -191,6 +210,20 @@ def main() -> None:
 		actual_items = worklist_data["phase_items"].get(phase, 0)
 		if actual_items != expected_items:
 			fail(f"worklist markdown checklist item count mismatch for {phase}: expected={expected_items} actual={actual_items}")
+
+	# Issue plan markdown checks
+	issue_plan_text = issue_plan_md.read_text()
+	issue_plan_data = parse_issue_plan_markdown(issue_plan_text)
+
+	for phase in ["A_critical", "B_high", "C_medium", "D_low"]:
+		expected_count = phase_counter.get(phase, 0)
+		head_count = issue_plan_data["heading_counts"].get(phase)
+		if head_count != expected_count:
+			fail(f"issue plan heading count mismatch for {phase}: expected={expected_count} actual={head_count}")
+
+		item_count = issue_plan_data["phase_items"].get(phase, 0)
+		if item_count != expected_count:
+			fail(f"issue plan checklist item count mismatch for {phase}: expected={expected_count} actual={item_count}")
 
 	print("[parity-check] OK: all parity artifacts are consistent.")
 

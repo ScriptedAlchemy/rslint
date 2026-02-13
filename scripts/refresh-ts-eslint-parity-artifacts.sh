@@ -22,6 +22,7 @@ python3 scripts/generate_ts_eslint_parity_tracker.py
 python3 scripts/generate_ts_eslint_parity_worklist.py
 python3 scripts/generate_ts_eslint_parity_summary.py
 python3 scripts/generate_ts_eslint_parity_metadata.py
+python3 scripts/generate_ts_eslint_parity_issue_plan.py
 
 echo "==> Validating parity artifact consistency"
 python3 scripts/check_ts_eslint_parity_artifacts.py
@@ -33,3 +34,4 @@ echo "  - typescript-eslint-rule-parity-tracker.json"
 echo "  - typescript-eslint-rule-parity-worklist.md"
 echo "  - typescript-eslint-rule-parity-summary.md"
 echo "  - typescript-eslint-rule-parity-metadata.json"
+echo "  - typescript-eslint-rule-parity-issue-plan.md"

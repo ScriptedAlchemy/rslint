@@ -13,6 +13,7 @@ _Generated: 2026-02-13 09:47 UTC_
 - `typescript-eslint-rule-parity-worklist.md`
 - `typescript-eslint-rule-parity-summary.md`
 - `typescript-eslint-rule-parity-metadata.json`
+- `typescript-eslint-rule-parity-issue-plan.md`
 - CI guard: `.github/workflows/parity-artifacts-check.yml`
 
 These machine-readable files mirror this report’s findings and include:
@@ -27,7 +28,8 @@ Recommended usage:
 2. Execute in `recommended_phase` order (`A_critical` -> `B_high` -> `C_medium` -> `D_low`).
 3. Close rows by clearing flags and reducing score to `0` as parity work lands.
 4. Use the generated worklist markdown for checkbox-style execution tracking.
-5. Run consistency check to ensure tracker/summary/worklist/metadata remain synchronized.
+5. Use the generated issue plan markdown to open/track phase-scoped GitHub issues.
+6. Run consistency check to ensure tracker/summary/worklist/metadata/issue-plan remain synchronized.
 
 Regenerate tracker artifacts:
 
@@ -43,6 +45,7 @@ python3 scripts/generate_ts_eslint_parity_tracker.py
 python3 scripts/generate_ts_eslint_parity_worklist.py
 python3 scripts/generate_ts_eslint_parity_summary.py
 python3 scripts/generate_ts_eslint_parity_metadata.py
+python3 scripts/generate_ts_eslint_parity_issue_plan.py
 python3 scripts/check_ts_eslint_parity_artifacts.py
 ```
 
