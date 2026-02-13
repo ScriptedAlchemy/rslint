@@ -1,6 +1,6 @@
 # TypeScript-ESLint Parity Artifact Index
 
-_Generated: 2026-02-13T10:19:47.594163+00:00_
+_Generated: 2026-02-13T10:21:33.532197+00:00_
 
 ## Snapshot
 - Upstream ref requested: `main`
@@ -19,6 +19,7 @@ _Generated: 2026-02-13T10:19:47.594163+00:00_
 | `aligned` | 75 |
 
 ## Artifacts
+- `typescript-eslint-rule-parity-index.md` — this central navigation page.
 - `typescript-eslint-rule-parity-report.md` — detailed narrative audit.
 - `typescript-eslint-rule-parity-tracker.csv` — tabular machine-readable dataset.
 - `typescript-eslint-rule-parity-tracker.json` — JSON machine-readable dataset.

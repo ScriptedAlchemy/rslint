@@ -48,6 +48,7 @@ def main() -> None:
 	lines.append("")
 
 	lines.append("## Artifacts")
+	lines.append("- `typescript-eslint-rule-parity-index.md` — this central navigation page.")
 	lines.append("- `typescript-eslint-rule-parity-report.md` — detailed narrative audit.")
 	lines.append("- `typescript-eslint-rule-parity-tracker.csv` — tabular machine-readable dataset.")
 	lines.append("- `typescript-eslint-rule-parity-tracker.json` — JSON machine-readable dataset.")

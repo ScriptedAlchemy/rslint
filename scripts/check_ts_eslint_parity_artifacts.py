@@ -242,6 +242,29 @@ def main() -> None:
 		if value != expected:
 			fail(f"index markdown metric mismatch for {key}: expected={expected} actual={value}")
 
+	for phase in ["A_critical", "B_high", "C_medium", "D_low", "aligned"]:
+		match = re.search(rf"\|\s*`{phase}`\s*\|\s*(\d+)\s*\|", index_text)
+		if not match:
+			fail(f"index markdown missing phase row: {phase}")
+		value = int(match.group(1))
+		expected = phase_counter.get(phase, 0)
+		if value != expected:
+			fail(f"index markdown phase count mismatch for {phase}: expected={expected} actual={value}")
+
+	required_artifact_mentions = [
+		"typescript-eslint-rule-parity-report.md",
+		"typescript-eslint-rule-parity-tracker.csv",
+		"typescript-eslint-rule-parity-tracker.json",
+		"typescript-eslint-rule-parity-worklist.md",
+		"typescript-eslint-rule-parity-summary.md",
+		"typescript-eslint-rule-parity-metadata.json",
+		"typescript-eslint-rule-parity-index.md",
+		"typescript-eslint-rule-parity-issue-plan.md",
+	]
+	for artifact_name in required_artifact_mentions:
+		if artifact_name not in index_text:
+			fail(f"index markdown missing artifact mention: {artifact_name}")
+
 	print("[parity-check] OK: all parity artifacts are consistent.")
 
 
