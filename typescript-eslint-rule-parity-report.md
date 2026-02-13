@@ -63,6 +63,7 @@ Regenerate tracker artifacts:
 ```bash
 pnpm parity:ts-eslint
 pnpm parity:ts-eslint:check
+pnpm parity:ts-eslint:check:fast
 pnpm parity:ts-eslint:check:all
 pnpm parity:ts-eslint:check:clean
 pnpm parity:ts-eslint:check:strict

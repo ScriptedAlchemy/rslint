@@ -25,6 +25,7 @@ def main() -> None:
 	descriptions = {
 		"parity:ts-eslint": "Refresh all parity artifacts from upstream reference and run validations.",
 		"parity:ts-eslint:check": "Validate generated parity artifact consistency and structure.",
+		"parity:ts-eslint:check:fast": "Run artifact and tooling checks without reproducibility rebuild.",
 		"parity:ts-eslint:check:all": "Run all parity checks; includes verify-clean when parity artifacts are clean.",
 		"parity:ts-eslint:check:clean": "Run check:all and require a clean parity-artifact tree for verify-clean.",
 		"parity:ts-eslint:check:strict": "Run full parity checks and fail if critical backlog exists.",

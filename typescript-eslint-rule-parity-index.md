@@ -51,6 +51,7 @@ _Generated: 2026-02-13T11:25:52.075324+00:00_
 pnpm parity:ts-eslint
 PARITY_OFFLINE=1 TS_ESLINT_REF=main pnpm parity:ts-eslint
 pnpm parity:ts-eslint:check
+pnpm parity:ts-eslint:check:fast
 pnpm parity:ts-eslint:check:all
 pnpm parity:ts-eslint:check:clean
 pnpm parity:ts-eslint:check:strict

@@ -31,6 +31,7 @@
     "format:go": "golangci-lint fmt ./cmd/... ./internal/...",
     "parity:ts-eslint": "bash scripts/refresh-ts-eslint-parity-artifacts.sh",
     "parity:ts-eslint:check": "python3 scripts/check_ts_eslint_parity_artifacts.py",
+    "parity:ts-eslint:check:fast": "python3 scripts/check_ts_eslint_parity_artifacts.py && python3 scripts/check_ts_eslint_parity_tooling_sync.py",
     "parity:ts-eslint:check:all": "bash scripts/check_ts_eslint_parity_all.sh",
     "parity:ts-eslint:check:clean": "PARITY_CHECK_ALL_REQUIRE_CLEAN=1 bash scripts/check_ts_eslint_parity_all.sh",
     "parity:ts-eslint:check:strict": "bash scripts/check_ts_eslint_parity_all.sh && python3 scripts/generate_ts_eslint_parity_doctor.py --fail-on-critical",

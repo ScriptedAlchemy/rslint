@@ -54,6 +54,7 @@ PARITY_OFFLINE=1 TS_ESLINT_REF=main pnpm parity:ts-eslint
 
 ```bash
 pnpm parity:ts-eslint:check
+pnpm parity:ts-eslint:check:fast
 pnpm parity:ts-eslint:check:all
 pnpm parity:ts-eslint:check:clean
 pnpm parity:ts-eslint:check:strict
@@ -95,6 +96,7 @@ The checkers validate:
 - status/badge schema, health reason, strict-exit behavior, and summary arithmetic coherence.
 
 `parity:ts-eslint:check:all` additionally runs metadata-pinned reproducibility verification when parity artifacts are clean.
+`parity:ts-eslint:check:fast` runs artifact+tooling checks only (no reproducibility rebuild).
 `parity:ts-eslint:check:clean` enforces a clean parity-artifact tree before reproducibility verification.
 `parity:ts-eslint:check:strict` additionally fails when critical backlog remains.
 `parity:ts-eslint:check:strict:clean` combines strict critical-backlog gating with clean-tree reproducibility enforcement.
