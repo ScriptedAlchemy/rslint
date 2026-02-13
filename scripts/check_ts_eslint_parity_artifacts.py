@@ -737,6 +737,10 @@ def main() -> None:
 			"parity gate quick exit-code mismatch: "
 			f"expected={expected_gate_red_exit} actual={gate_quick.returncode}"
 		)
+	if "[parity-gate] Skipping strict clean parity checks (--skip-checks)." not in (gate_quick.stdout + gate_quick.stderr):
+		fail("parity gate quick output missing skip-checks message")
+	if expected_gate_red_exit == 2 and "health is red" not in gate_quick.stderr:
+		fail("parity gate quick stderr missing red-health message")
 
 	gate_quick_red = subprocess.run(
 		["pnpm", "parity:ts-eslint:gate:quick:red"],
@@ -750,6 +754,10 @@ def main() -> None:
 			"parity gate quick:red exit-code mismatch: "
 			f"expected={expected_gate_red_exit} actual={gate_quick_red.returncode}"
 		)
+	if "[parity-gate] Skipping strict clean parity checks (--skip-checks)." not in (gate_quick_red.stdout + gate_quick_red.stderr):
+		fail("parity gate quick:red output missing skip-checks message")
+	if expected_gate_red_exit == 2 and "health is red" not in gate_quick_red.stderr:
+		fail("parity gate quick:red stderr missing red-health message")
 
 	gate_quick_yellow = subprocess.run(
 		["pnpm", "parity:ts-eslint:gate:quick:yellow"],
@@ -763,6 +771,10 @@ def main() -> None:
 			"parity gate quick:yellow exit-code mismatch: "
 			f"expected={expected_gate_yellow_exit} actual={gate_quick_yellow.returncode}"
 		)
+	if "[parity-gate] Skipping strict clean parity checks (--skip-checks)." not in (gate_quick_yellow.stdout + gate_quick_yellow.stderr):
+		fail("parity gate quick:yellow output missing skip-checks message")
+	if expected_gate_yellow_exit == 3 and "health is" not in gate_quick_yellow.stderr:
+		fail("parity gate quick:yellow stderr missing health message")
 
 	flagged = [row for row in tracker_rows if int(row.get("priority_score", 0)) > 0]
 	aligned = len(tracker_rows) - len(flagged)
