@@ -27,6 +27,7 @@ Generated from `package.json` parity scripts.
 | `pnpm parity:ts-eslint:manifest` | Generate checksum manifest for parity artifacts. | `python3 scripts/generate_ts_eslint_parity_manifest.py` |
 | `pnpm parity:ts-eslint:rebuild-metadata` | Rebuild artifacts pinned to metadata upstream commit. | `bash scripts/rebuild_ts_eslint_parity_from_metadata.sh` |
 | `pnpm parity:ts-eslint:status` | Generate concise parity health status JSON for automation. | `python3 scripts/generate_ts_eslint_parity_status.py` |
+| `pnpm parity:ts-eslint:status:strict` | Generate status JSON and fail when health is red. | `python3 scripts/generate_ts_eslint_parity_status.py --fail-on-red` |
 | `pnpm parity:ts-eslint:tasklist` | Generate one phase tasklist snippet. | `python3 scripts/generate_ts_eslint_parity_issue_tasklist.py` |
 | `pnpm parity:ts-eslint:tasklist:all` | Generate tasklist snippets for all parity phases. | `bash scripts/generate_ts_eslint_parity_tasklists_all.sh` |
 | `pnpm parity:ts-eslint:top` | Generate top-priority ranked parity list. | `python3 scripts/generate_ts_eslint_parity_top.py` |

@@ -59,6 +59,7 @@ pnpm parity:ts-eslint:check:tooling
 pnpm parity:ts-eslint:commands
 pnpm parity:ts-eslint:badges
 pnpm parity:ts-eslint:status
+pnpm parity:ts-eslint:status:strict
 pnpm parity:ts-eslint:ci-summary
 pnpm parity:ts-eslint:ci-summary:json
 pnpm parity:ts-eslint:doctor

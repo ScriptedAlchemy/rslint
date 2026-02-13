@@ -89,6 +89,7 @@ def main() -> None:
 	lines.append("pnpm parity:ts-eslint:commands")
 	lines.append("pnpm parity:ts-eslint:badges")
 	lines.append("pnpm parity:ts-eslint:status")
+	lines.append("pnpm parity:ts-eslint:status:strict")
 	lines.append("pnpm parity:ts-eslint:ci-summary")
 	lines.append("pnpm parity:ts-eslint:ci-summary:json")
 	lines.append("pnpm parity:ts-eslint:doctor")

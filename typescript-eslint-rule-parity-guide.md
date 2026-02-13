@@ -62,6 +62,7 @@ pnpm parity:ts-eslint:check:tooling
 pnpm parity:ts-eslint:commands
 pnpm parity:ts-eslint:badges
 pnpm parity:ts-eslint:status
+pnpm parity:ts-eslint:status:strict
 pnpm parity:ts-eslint:ci-summary
 pnpm parity:ts-eslint:ci-summary:json
 pnpm parity:ts-eslint:doctor
@@ -82,12 +83,13 @@ The checkers validate:
 - exact parity command inventory in `package.json` vs checker expectations,
 - command reference row/backing-script mapping parity with `package.json`,
 - CI workflow wiring (required parity checks and uploaded artifact bundle paths),
-- status/badge schema, health reason, and summary arithmetic coherence.
+- status/badge schema, health reason, strict-exit behavior, and summary arithmetic coherence.
 
 `parity:ts-eslint:check:all` additionally runs metadata-pinned reproducibility verification when parity artifacts are clean.
 `parity:ts-eslint:check:clean` enforces a clean parity-artifact tree before reproducibility verification.
 `parity:ts-eslint:check:strict` additionally fails when critical backlog remains.
 `parity:ts-eslint:check:strict:clean` combines strict critical-backlog gating with clean-tree reproducibility enforcement.
+`parity:ts-eslint:status:strict` additionally fails when computed parity health is red.
 
 ### Compare parity progress between snapshots
 

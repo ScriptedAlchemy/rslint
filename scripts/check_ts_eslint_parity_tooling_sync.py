@@ -53,6 +53,7 @@ def main() -> None:
 		"parity:ts-eslint:issue-body:all": "generate_ts_eslint_parity_issue_bodies_all.sh",
 		"parity:ts-eslint:badges": "generate_ts_eslint_parity_badges.py",
 		"parity:ts-eslint:status": "generate_ts_eslint_parity_status.py",
+		"parity:ts-eslint:status:strict": "generate_ts_eslint_parity_status.py --fail-on-red",
 		"parity:ts-eslint:ci-summary": "generate_ts_eslint_parity_ci_summary.py",
 		"parity:ts-eslint:ci-summary:json": "generate_ts_eslint_parity_ci_summary.py --json",
 		"parity:ts-eslint:doctor": "generate_ts_eslint_parity_doctor.py",

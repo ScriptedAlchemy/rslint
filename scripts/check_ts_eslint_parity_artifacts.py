@@ -495,6 +495,22 @@ def main() -> None:
 	if status.get("reason", "") != expected_reason:
 		fail(f"status reason mismatch: expected={expected_reason} actual={status.get('reason', '')}")
 
+	# Status strict-mode exit-code checks
+	status_strict = subprocess.run(
+		["python3", str(root / "scripts/generate_ts_eslint_parity_status.py"), "--fail-on-red"],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	expected_status_strict_exit = 2 if expected_health == "red" else 0
+	if status_strict.returncode != expected_status_strict_exit:
+		fail(
+			"status strict exit-code mismatch: "
+			f"expected={expected_status_strict_exit} actual={status_strict.returncode}"
+		)
+	if expected_status_strict_exit == 2 and "health is red" not in status_strict.stderr:
+		fail("status strict stderr missing red-health message")
+
 	flagged = [row for row in tracker_rows if int(row.get("priority_score", 0)) > 0]
 	aligned = len(tracker_rows) - len(flagged)
 

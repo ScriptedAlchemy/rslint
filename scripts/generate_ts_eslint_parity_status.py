@@ -7,12 +7,18 @@ Reads:
 
 Writes:
   - /workspace/typescript-eslint-rule-parity-status.json
+
+Optional:
+  --fail-on-red     exit non-zero if computed health is red
+  --fail-on-yellow  exit non-zero if computed health is yellow or red
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import pathlib
+import sys
 
 
 def compute_health(critical: int, high: int, flagged: int) -> tuple[str, str]:
@@ -26,6 +32,11 @@ def compute_health(critical: int, high: int, flagged: int) -> tuple[str, str]:
 
 
 def main() -> None:
+	parser = argparse.ArgumentParser(description="Generate parity health status JSON.")
+	parser.add_argument("--fail-on-red", action="store_true", help="Exit non-zero if health is red.")
+	parser.add_argument("--fail-on-yellow", action="store_true", help="Exit non-zero if health is yellow or red.")
+	args = parser.parse_args()
+
 	root = pathlib.Path("/workspace")
 	metadata_path = root / "typescript-eslint-rule-parity-metadata.json"
 	output_path = root / "typescript-eslint-rule-parity-status.json"
@@ -67,6 +78,13 @@ def main() -> None:
 
 	output_path.write_text(json.dumps(status, indent=2) + "\n")
 	print(f"wrote {output_path}")
+
+	if args.fail_on_yellow and health in {"yellow", "red"}:
+		print(f"[parity-status] ERROR: health is {health} ({reason})", file=sys.stderr)
+		sys.exit(3)
+	if args.fail_on_red and health == "red":
+		print(f"[parity-status] ERROR: health is red ({reason})", file=sys.stderr)
+		sys.exit(2)
 
 
 if __name__ == "__main__":
