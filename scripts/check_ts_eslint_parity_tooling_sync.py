@@ -100,6 +100,8 @@ def main() -> None:
 			fail(f"`{cmd_token}` missing in parity commands reference")
 		if expected_token not in commands_text:
 			fail(f"backing token `{expected_token}` missing in parity commands reference")
+		if f"| `pnpm {script_name}` | No description provided." in commands_text:
+			fail(f"`pnpm {script_name}` is missing command description in parity commands reference")
 
 	# Ensure all referenced helper scripts exist
 	required_scripts = {
