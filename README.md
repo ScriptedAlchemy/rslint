@@ -62,6 +62,9 @@ pnpm parity:ts-eslint:check:clean
 
 # Strict gate: all checks + fail if critical parity backlog remains
 pnpm parity:ts-eslint:check:strict
+
+# Strict gate + clean-tree enforcement for reproducibility verification
+pnpm parity:ts-eslint:check:strict:clean
 ```
 
 See `typescript-eslint-rule-parity-commands.md` for the full command reference.
