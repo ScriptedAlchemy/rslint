@@ -374,6 +374,19 @@ def assert_exact_error_plus_usage(label: str, text: str, expected_error_line: st
 	assert_exact_nonempty_lines(label, text, [expected_error_line, expected_usage_line])
 
 
+def assert_gate_success_contract(label: str, proc: subprocess.CompletedProcess[str], threshold: str, expected_exit: int) -> None:
+	ok_line = f"[parity-gate] OK: parity gate passed (threshold={threshold})."
+	combined = proc.stdout + proc.stderr
+	if expected_exit == 0:
+		if ok_line not in combined:
+			fail(f"{label} success output missing final OK message")
+		if proc.stderr.strip():
+			fail(f"{label} stderr must be empty on success")
+	else:
+		if ok_line in combined:
+			fail(f"{label} failing output must not include final OK message")
+
+
 def main() -> None:
 	root = pathlib.Path("/workspace")
 	tracker_csv = root / "typescript-eslint-rule-parity-tracker.csv"
@@ -730,8 +743,7 @@ def main() -> None:
 		fail("parity gate red output missing red-threshold marker")
 	if expected_gate_red_exit == 2 and expected_health_reason_marker not in gate_red.stderr:
 		fail("parity gate red stderr missing health+reason message")
-	if expected_gate_red_exit == 0 and "[parity-gate] OK: parity gate passed (threshold=red)." not in (gate_red.stdout + gate_red.stderr):
-		fail("parity gate red success output missing final OK message")
+	assert_gate_success_contract("parity gate red", gate_red, "red", expected_gate_red_exit)
 
 	gate_yellow = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--threshold", "yellow", "--skip-checks"],
@@ -749,8 +761,7 @@ def main() -> None:
 		fail("parity gate yellow output missing yellow-threshold marker")
 	if expected_gate_yellow_exit == 3 and expected_health_reason_marker not in gate_yellow.stderr:
 		fail("parity gate yellow stderr missing health+reason message")
-	if expected_gate_yellow_exit == 0 and "[parity-gate] OK: parity gate passed (threshold=yellow)." not in (gate_yellow.stdout + gate_yellow.stderr):
-		fail("parity gate yellow success output missing final OK message")
+	assert_gate_success_contract("parity gate yellow", gate_yellow, "yellow", expected_gate_yellow_exit)
 	gate_red_lines = extract_nonempty_lines(gate_red.stdout + gate_red.stderr)
 	gate_yellow_lines = extract_nonempty_lines(gate_yellow.stdout + gate_yellow.stderr)
 	gate_red_prefixed_lines = extract_prefixed_lines(
@@ -1068,8 +1079,7 @@ def main() -> None:
 		fail("parity gate inline red output missing red-threshold marker")
 	if expected_gate_red_exit == 2 and expected_health_reason_marker not in gate_inline_red.stderr:
 		fail("parity gate inline red stderr missing health+reason message")
-	if expected_gate_red_exit == 0 and "[parity-gate] OK: parity gate passed (threshold=red)." not in (gate_inline_red.stdout + gate_inline_red.stderr):
-		fail("parity gate inline red success output missing final OK message")
+	assert_gate_success_contract("parity gate inline red", gate_inline_red, "red", expected_gate_red_exit)
 	if "[parity-gate] Running strict clean parity checks" in (gate_inline_red.stdout + gate_inline_red.stderr):
 		fail("parity gate inline red should not run strict clean checks in --skip-checks mode")
 	assert_exact_nonempty_lines("parity gate inline red combined output", gate_inline_red.stdout + gate_inline_red.stderr, gate_red_lines)
@@ -1095,8 +1105,7 @@ def main() -> None:
 		fail("parity gate inline yellow output missing yellow-threshold marker")
 	if expected_gate_yellow_exit == 3 and expected_health_reason_marker not in gate_inline_yellow.stderr:
 		fail("parity gate inline yellow stderr missing health+reason message")
-	if expected_gate_yellow_exit == 0 and "[parity-gate] OK: parity gate passed (threshold=yellow)." not in (gate_inline_yellow.stdout + gate_inline_yellow.stderr):
-		fail("parity gate inline yellow success output missing final OK message")
+	assert_gate_success_contract("parity gate inline yellow", gate_inline_yellow, "yellow", expected_gate_yellow_exit)
 	if "[parity-gate] Running strict clean parity checks" in (gate_inline_yellow.stdout + gate_inline_yellow.stderr):
 		fail("parity gate inline yellow should not run strict clean checks in --skip-checks mode")
 	assert_exact_nonempty_lines(
@@ -1126,10 +1135,9 @@ def main() -> None:
 		fail("parity gate skip-only default-red output missing red-threshold marker")
 	if expected_gate_red_exit == 2 and expected_health_reason_marker not in gate_skip_only_default_red.stderr:
 		fail("parity gate skip-only default-red stderr missing health+reason message")
-	if expected_gate_red_exit == 0 and "[parity-gate] OK: parity gate passed (threshold=red)." not in (
-		gate_skip_only_default_red.stdout + gate_skip_only_default_red.stderr
-	):
-		fail("parity gate skip-only default-red success output missing final OK message")
+	assert_gate_success_contract(
+		"parity gate skip-only default-red", gate_skip_only_default_red, "red", expected_gate_red_exit
+	)
 	if "[parity-gate] Running strict clean parity checks" in (gate_skip_only_default_red.stdout + gate_skip_only_default_red.stderr):
 		fail("parity gate skip-only default-red should not run strict clean checks in --skip-checks mode")
 	assert_exact_nonempty_lines(
@@ -1159,10 +1167,7 @@ def main() -> None:
 		fail("parity gate reordered-flags output missing yellow-threshold marker")
 	if expected_gate_yellow_exit == 3 and expected_health_reason_marker not in gate_reordered_flags.stderr:
 		fail("parity gate reordered-flags yellow stderr missing health+reason message")
-	if expected_gate_yellow_exit == 0 and "[parity-gate] OK: parity gate passed (threshold=yellow)." not in (
-		gate_reordered_flags.stdout + gate_reordered_flags.stderr
-	):
-		fail("parity gate reordered-flags yellow success output missing final OK message")
+	assert_gate_success_contract("parity gate reordered-flags", gate_reordered_flags, "yellow", expected_gate_yellow_exit)
 	if "[parity-gate] Running strict clean parity checks" in (gate_reordered_flags.stdout + gate_reordered_flags.stderr):
 		fail("parity gate reordered-flags should not run strict clean checks in --skip-checks mode")
 	assert_exact_nonempty_lines(
@@ -1258,8 +1263,7 @@ def main() -> None:
 		fail("parity gate quick should not run strict clean checks")
 	if expected_gate_red_exit == 2 and expected_health_reason_marker not in gate_quick.stderr:
 		fail("parity gate quick stderr missing health+reason message")
-	if expected_gate_red_exit == 0 and "[parity-gate] OK: parity gate passed (threshold=red)." not in (gate_quick.stdout + gate_quick.stderr):
-		fail("parity gate quick success output missing final OK message")
+	assert_gate_success_contract("parity gate quick", gate_quick, "red", expected_gate_red_exit)
 	assert_exact_nonempty_lines("parity gate quick combined output", gate_quick.stdout + gate_quick.stderr, gate_red_lines)
 	gate_quick_prefixed_lines = extract_prefixed_lines(
 		gate_quick.stdout + gate_quick.stderr,
@@ -1290,10 +1294,7 @@ def main() -> None:
 		fail("parity gate quick:red should not run strict clean checks")
 	if expected_gate_red_exit == 2 and expected_health_reason_marker not in gate_quick_red.stderr:
 		fail("parity gate quick:red stderr missing health+reason message")
-	if expected_gate_red_exit == 0 and "[parity-gate] OK: parity gate passed (threshold=red)." not in (
-		gate_quick_red.stdout + gate_quick_red.stderr
-	):
-		fail("parity gate quick:red success output missing final OK message")
+	assert_gate_success_contract("parity gate quick:red", gate_quick_red, "red", expected_gate_red_exit)
 	assert_exact_nonempty_lines("parity gate quick:red combined output", gate_quick_red.stdout + gate_quick_red.stderr, gate_red_lines)
 	gate_quick_red_prefixed_lines = extract_prefixed_lines(
 		gate_quick_red.stdout + gate_quick_red.stderr,
@@ -1328,10 +1329,7 @@ def main() -> None:
 		fail("parity gate quick:yellow should not run strict clean checks")
 	if expected_gate_yellow_exit == 3 and expected_health_reason_marker not in gate_quick_yellow.stderr:
 		fail("parity gate quick:yellow stderr missing health+reason message")
-	if expected_gate_yellow_exit == 0 and "[parity-gate] OK: parity gate passed (threshold=yellow)." not in (
-		gate_quick_yellow.stdout + gate_quick_yellow.stderr
-	):
-		fail("parity gate quick:yellow success output missing final OK message")
+	assert_gate_success_contract("parity gate quick:yellow", gate_quick_yellow, "yellow", expected_gate_yellow_exit)
 	assert_exact_nonempty_lines(
 		"parity gate quick:yellow combined output",
 		gate_quick_yellow.stdout + gate_quick_yellow.stderr,
