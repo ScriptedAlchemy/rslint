@@ -417,6 +417,40 @@ def assert_gate_wrapper_unknown_arg_contract(
 	return extract_nonempty_lines(proc.stderr)
 
 
+def assert_argparse_help_contract(label: str, proc: subprocess.CompletedProcess[str]) -> list[str]:
+	if proc.returncode != 0:
+		fail(f"{label} exit code must be 0")
+	assert_no_pnpm_lifecycle_noise(f"{label} stdout", proc.stdout)
+	assert_no_pnpm_lifecycle_noise(f"{label} stderr", proc.stderr)
+	if proc.stderr.strip():
+		fail(f"{label} stderr must be empty")
+	lines = extract_nonempty_lines(proc.stdout)
+	if not lines:
+		fail(f"{label} stdout must include argparse help text")
+	if not lines[0].startswith("usage: "):
+		fail(f"{label} first help line must start with usage:")
+	return lines
+
+
+def assert_argparse_unknown_contract(
+	label: str, proc: subprocess.CompletedProcess[str], expected_error_line: str
+) -> list[str]:
+	if proc.returncode != 2:
+		fail(f"{label} exit code must be 2")
+	assert_no_pnpm_lifecycle_noise(f"{label} stdout", proc.stdout)
+	assert_no_pnpm_lifecycle_noise(f"{label} stderr", proc.stderr)
+	if proc.stdout.strip():
+		fail(f"{label} stdout must be empty")
+	lines = extract_nonempty_lines(proc.stderr)
+	if len(lines) < 2:
+		fail(f"{label} stderr must include usage and error lines")
+	if not lines[0].startswith("usage: "):
+		fail(f"{label} first stderr line must start with usage:")
+	if lines[-1] != expected_error_line:
+		fail(f"{label} unknown-arg error mismatch: expected={expected_error_line} actual={lines[-1]}")
+	return lines
+
+
 def main() -> None:
 	root = pathlib.Path("/workspace")
 	tracker_csv = root / "typescript-eslint-rule-parity-tracker.csv"
@@ -557,8 +591,9 @@ def main() -> None:
 		fail("status upstream_ref_requested mismatch with metadata")
 	expected_status_write_line = f"wrote {status_json}"
 
+	status_script = root / "scripts/generate_ts_eslint_parity_status.py"
 	status_direct = subprocess.run(
-		["python3", str(root / "scripts/generate_ts_eslint_parity_status.py")],
+		["python3", str(status_script)],
 		check=False,
 		capture_output=True,
 		text=True,
@@ -602,6 +637,70 @@ def main() -> None:
 	status_after_cmd = json.loads(status_json.read_text())
 	if status_after_cmd != status:
 		fail("status command output mutated status artifact unexpectedly")
+	status_cli_contracts = [
+		(
+			"status command",
+			[],
+			["pnpm", "--silent", "parity:ts-eslint:status"],
+		),
+		(
+			"status command strict",
+			["--fail-on-red"],
+			["pnpm", "--silent", "parity:ts-eslint:status:strict"],
+		),
+		(
+			"status command strict-yellow",
+			["--fail-on-yellow"],
+			["pnpm", "--silent", "parity:ts-eslint:status:strict:yellow"],
+		),
+	]
+	for wrapper_label, direct_args, wrapper_command in status_cli_contracts:
+		direct_help = subprocess.run(
+			["python3", str(status_script), *direct_args, "--help"],
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		direct_help_lines = assert_argparse_help_contract(f"direct {wrapper_label} help", direct_help)
+		wrapper_help = subprocess.run(
+			[*wrapper_command, "--help"],
+			cwd=str(root),
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		wrapper_help_lines = assert_argparse_help_contract(f"{wrapper_label} help", wrapper_help)
+		if wrapper_help_lines != direct_help_lines:
+			fail(f"{wrapper_label} help output mismatch with direct script help baseline")
+		direct_unknown = subprocess.run(
+			["python3", str(status_script), *direct_args, "--not-a-real-flag"],
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		direct_unknown_lines = extract_nonempty_lines(direct_unknown.stderr)
+		if not direct_unknown_lines:
+			fail(f"direct {wrapper_label} unknown stderr must not be empty")
+		direct_unknown_error_line = direct_unknown_lines[-1]
+		direct_unknown_lines = assert_argparse_unknown_contract(
+			f"direct {wrapper_label} unknown",
+			direct_unknown,
+			direct_unknown_error_line,
+		)
+		wrapper_unknown = subprocess.run(
+			[*wrapper_command, "--not-a-real-flag"],
+			cwd=str(root),
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		wrapper_unknown_lines = assert_argparse_unknown_contract(
+			f"{wrapper_label} unknown",
+			wrapper_unknown,
+			direct_unknown_error_line,
+		)
+		if wrapper_unknown_lines != direct_unknown_lines:
+			fail(f"{wrapper_label} unknown-arg stderr mismatch with direct script baseline")
 
 	expected_health, expected_reason = compute_health_reason(
 		critical=int(phase_counts_meta.get("A_critical", 0)),
@@ -4462,15 +4561,16 @@ def main() -> None:
 			fail(f"top markdown phase mismatch for {actual['rule']}")
 
 	# CI summary script output checks
+	ci_summary_script = root / "scripts/generate_ts_eslint_parity_ci_summary.py"
 	try:
 		ci_summary_proc = subprocess.run(
-			["python3", str(root / "scripts/generate_ts_eslint_parity_ci_summary.py")],
+			["python3", str(ci_summary_script)],
 			check=True,
 			capture_output=True,
 			text=True,
 		)
 		ci_summary_json_proc = subprocess.run(
-			["python3", str(root / "scripts/generate_ts_eslint_parity_ci_summary.py"), "--json"],
+			["python3", str(ci_summary_script), "--json"],
 			check=True,
 			capture_output=True,
 			text=True,
@@ -4570,10 +4670,79 @@ def main() -> None:
 	ci_summary_json_cmd_parsed = parse_ci_summary_json(ci_summary_json_cmd.stdout)
 	if ci_summary_json_cmd_parsed != ci_summary_json:
 		fail("ci summary json command output mismatch with direct script output")
+	ci_summary_cli_contracts = [
+		(
+			"ci summary command",
+			[],
+			["pnpm", "--silent", "parity:ts-eslint:ci-summary"],
+		),
+		(
+			"ci summary json command",
+			["--json"],
+			["pnpm", "--silent", "parity:ts-eslint:ci-summary:json"],
+		),
+		(
+			"ci summary command strict",
+			["--fail-on-red"],
+			["pnpm", "--silent", "parity:ts-eslint:ci-summary:strict"],
+		),
+		(
+			"ci summary command strict-yellow",
+			["--fail-on-yellow"],
+			["pnpm", "--silent", "parity:ts-eslint:ci-summary:strict:yellow"],
+		),
+	]
+	for wrapper_label, direct_args, wrapper_command in ci_summary_cli_contracts:
+		direct_help = subprocess.run(
+			["python3", str(ci_summary_script), *direct_args, "--help"],
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		direct_help_lines = assert_argparse_help_contract(f"direct {wrapper_label} help", direct_help)
+		wrapper_help = subprocess.run(
+			[*wrapper_command, "--help"],
+			cwd=str(root),
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		wrapper_help_lines = assert_argparse_help_contract(f"{wrapper_label} help", wrapper_help)
+		if wrapper_help_lines != direct_help_lines:
+			fail(f"{wrapper_label} help output mismatch with direct script help baseline")
+		direct_unknown = subprocess.run(
+			["python3", str(ci_summary_script), *direct_args, "--not-a-real-flag"],
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		direct_unknown_lines = extract_nonempty_lines(direct_unknown.stderr)
+		if not direct_unknown_lines:
+			fail(f"direct {wrapper_label} unknown stderr must not be empty")
+		direct_unknown_error_line = direct_unknown_lines[-1]
+		direct_unknown_lines = assert_argparse_unknown_contract(
+			f"direct {wrapper_label} unknown",
+			direct_unknown,
+			direct_unknown_error_line,
+		)
+		wrapper_unknown = subprocess.run(
+			[*wrapper_command, "--not-a-real-flag"],
+			cwd=str(root),
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		wrapper_unknown_lines = assert_argparse_unknown_contract(
+			f"{wrapper_label} unknown",
+			wrapper_unknown,
+			direct_unknown_error_line,
+		)
+		if wrapper_unknown_lines != direct_unknown_lines:
+			fail(f"{wrapper_label} unknown-arg stderr mismatch with direct script baseline")
 
 	# CI summary strict-mode exit-code checks
 	ci_summary_strict = subprocess.run(
-		["python3", str(root / "scripts/generate_ts_eslint_parity_ci_summary.py"), "--fail-on-red"],
+		["python3", str(ci_summary_script), "--fail-on-red"],
 		check=False,
 		capture_output=True,
 		text=True,
@@ -4596,7 +4765,7 @@ def main() -> None:
 		fail("ci summary strict stdout mismatch with non-strict summary output")
 
 	ci_summary_strict_yellow = subprocess.run(
-		["python3", str(root / "scripts/generate_ts_eslint_parity_ci_summary.py"), "--fail-on-yellow"],
+		["python3", str(ci_summary_script), "--fail-on-yellow"],
 		check=False,
 		capture_output=True,
 		text=True,
@@ -4700,21 +4869,22 @@ def main() -> None:
 		fail("ci summary command strict-yellow prefixed stderr output mismatch with direct strict-yellow mode")
 
 	# Parity doctor output checks
+	doctor_script = root / "scripts/generate_ts_eslint_parity_doctor.py"
 	try:
 		doctor_plain_proc = subprocess.run(
-			["python3", str(root / "scripts/generate_ts_eslint_parity_doctor.py")],
+			["python3", str(doctor_script)],
 			check=True,
 			capture_output=True,
 			text=True,
 		)
 		doctor_md_proc = subprocess.run(
-			["python3", str(root / "scripts/generate_ts_eslint_parity_doctor.py"), "--markdown"],
+			["python3", str(doctor_script), "--markdown"],
 			check=True,
 			capture_output=True,
 			text=True,
 		)
 		doctor_json_proc = subprocess.run(
-			["python3", str(root / "scripts/generate_ts_eslint_parity_doctor.py"), "--json"],
+			["python3", str(doctor_script), "--json"],
 			check=True,
 			capture_output=True,
 			text=True,
@@ -4850,28 +5020,112 @@ def main() -> None:
 	assert_exact_nonempty_lines("parity doctor json command stdout", doctor_json_cmd.stdout, doctor_json_lines)
 	if parse_doctor_json_output(doctor_json_cmd.stdout) != doctor_json_data:
 		fail("parity doctor json command output mismatch with direct script output")
+	doctor_cli_contracts = [
+		(
+			"parity doctor command",
+			[],
+			["pnpm", "--silent", "parity:ts-eslint:doctor"],
+		),
+		(
+			"parity doctor markdown command",
+			["--markdown"],
+			["pnpm", "--silent", "parity:ts-eslint:doctor:markdown"],
+		),
+		(
+			"parity doctor json command",
+			["--json"],
+			["pnpm", "--silent", "parity:ts-eslint:doctor:json"],
+		),
+		(
+			"parity doctor command strict",
+			["--fail-on-critical"],
+			["pnpm", "--silent", "parity:ts-eslint:doctor:strict"],
+		),
+		(
+			"parity doctor command strict-yellow",
+			["--fail-on-yellow"],
+			["pnpm", "--silent", "parity:ts-eslint:doctor:strict:yellow"],
+		),
+		(
+			"parity doctor json command strict",
+			["--json", "--fail-on-critical"],
+			["pnpm", "--silent", "parity:ts-eslint:doctor:json:strict"],
+		),
+		(
+			"parity doctor json command strict-yellow",
+			["--json", "--fail-on-yellow"],
+			["pnpm", "--silent", "parity:ts-eslint:doctor:json:strict:yellow"],
+		),
+	]
+	for wrapper_label, direct_args, wrapper_command in doctor_cli_contracts:
+		direct_help = subprocess.run(
+			["python3", str(doctor_script), *direct_args, "--help"],
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		direct_help_lines = assert_argparse_help_contract(f"direct {wrapper_label} help", direct_help)
+		wrapper_help = subprocess.run(
+			[*wrapper_command, "--help"],
+			cwd=str(root),
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		wrapper_help_lines = assert_argparse_help_contract(f"{wrapper_label} help", wrapper_help)
+		if wrapper_help_lines != direct_help_lines:
+			fail(f"{wrapper_label} help output mismatch with direct script help baseline")
+		direct_unknown = subprocess.run(
+			["python3", str(doctor_script), *direct_args, "--not-a-real-flag"],
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		direct_unknown_lines = extract_nonempty_lines(direct_unknown.stderr)
+		if not direct_unknown_lines:
+			fail(f"direct {wrapper_label} unknown stderr must not be empty")
+		direct_unknown_error_line = direct_unknown_lines[-1]
+		direct_unknown_lines = assert_argparse_unknown_contract(
+			f"direct {wrapper_label} unknown",
+			direct_unknown,
+			direct_unknown_error_line,
+		)
+		wrapper_unknown = subprocess.run(
+			[*wrapper_command, "--not-a-real-flag"],
+			cwd=str(root),
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		wrapper_unknown_lines = assert_argparse_unknown_contract(
+			f"{wrapper_label} unknown",
+			wrapper_unknown,
+			direct_unknown_error_line,
+		)
+		if wrapper_unknown_lines != direct_unknown_lines:
+			fail(f"{wrapper_label} unknown-arg stderr mismatch with direct script baseline")
 
 	# Parity doctor strict-mode exit-code checks
 	doctor_strict = subprocess.run(
-		["python3", str(root / "scripts/generate_ts_eslint_parity_doctor.py"), "--fail-on-critical"],
+		["python3", str(doctor_script), "--fail-on-critical"],
 		check=False,
 		capture_output=True,
 		text=True,
 	)
 	doctor_json_strict = subprocess.run(
-		["python3", str(root / "scripts/generate_ts_eslint_parity_doctor.py"), "--json", "--fail-on-critical"],
+		["python3", str(doctor_script), "--json", "--fail-on-critical"],
 		check=False,
 		capture_output=True,
 		text=True,
 	)
 	doctor_yellow_strict = subprocess.run(
-		["python3", str(root / "scripts/generate_ts_eslint_parity_doctor.py"), "--fail-on-yellow"],
+		["python3", str(doctor_script), "--fail-on-yellow"],
 		check=False,
 		capture_output=True,
 		text=True,
 	)
 	doctor_json_yellow_strict = subprocess.run(
-		["python3", str(root / "scripts/generate_ts_eslint_parity_doctor.py"), "--json", "--fail-on-yellow"],
+		["python3", str(doctor_script), "--json", "--fail-on-yellow"],
 		check=False,
 		capture_output=True,
 		text=True,
