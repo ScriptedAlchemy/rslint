@@ -511,6 +511,8 @@ def main() -> None:
 	)
 	if status_direct.returncode != 0:
 		fail(f"direct status script failed: exit={status_direct.returncode}")
+	if status_direct.stderr.strip():
+		fail("direct status script stderr must be empty in non-strict mode")
 	if "typescript-eslint-rule-parity-status.json" not in (status_direct.stdout + status_direct.stderr):
 		fail("direct status script output missing status artifact path token")
 	status_direct_lines = extract_status_write_lines(status_direct.stdout + status_direct.stderr)
@@ -581,6 +583,8 @@ def main() -> None:
 		fail("status strict stderr missing parity-status error prefix")
 	if expected_status_strict_exit == 2 and expected_health_reason_marker not in status_strict.stderr:
 		fail("status strict stderr missing health+reason message")
+	if expected_status_strict_exit == 0 and status_strict.stderr.strip():
+		fail("status strict stderr must be empty on success")
 	expected_status_strict_yellow_exit = 3 if expected_health in {"yellow", "red"} else 0
 	if status_strict_yellow.returncode != expected_status_strict_yellow_exit:
 		fail(
@@ -591,6 +595,8 @@ def main() -> None:
 		fail("status strict-yellow stderr missing parity-status error prefix")
 	if expected_status_strict_yellow_exit == 3 and expected_health_reason_marker not in status_strict_yellow.stderr:
 		fail("status strict-yellow stderr missing health+reason message")
+	if expected_status_strict_yellow_exit == 0 and status_strict_yellow.stderr.strip():
+		fail("status strict-yellow stderr must be empty on success")
 	status_strict_stderr_lines = extract_nonempty_lines(status_strict.stderr)
 	status_strict_yellow_stderr_lines = extract_nonempty_lines(status_strict_yellow.stderr)
 	status_strict_lines = extract_status_write_lines(status_strict.stdout + status_strict.stderr)
@@ -1445,20 +1451,26 @@ def main() -> None:
 
 	# CI summary script output checks
 	try:
-		ci_summary_output = subprocess.run(
+		ci_summary_proc = subprocess.run(
 			["python3", str(root / "scripts/generate_ts_eslint_parity_ci_summary.py")],
 			check=True,
 			capture_output=True,
 			text=True,
-		).stdout
-		ci_summary_json_output = subprocess.run(
+		)
+		ci_summary_json_proc = subprocess.run(
 			["python3", str(root / "scripts/generate_ts_eslint_parity_ci_summary.py"), "--json"],
 			check=True,
 			capture_output=True,
 			text=True,
-		).stdout
+		)
 	except subprocess.CalledProcessError as err:
 		fail(f"ci summary script failed: {err}")
+	if ci_summary_proc.stderr.strip():
+		fail("ci summary direct script stderr must be empty in non-strict mode")
+	if ci_summary_json_proc.stderr.strip():
+		fail("ci summary json direct script stderr must be empty in non-strict mode")
+	ci_summary_output = ci_summary_proc.stdout
+	ci_summary_json_output = ci_summary_json_proc.stdout
 
 	ci_summary = parse_ci_summary_markdown(ci_summary_output)
 	ci_summary_json = parse_ci_summary_json(ci_summary_json_output)
@@ -1564,6 +1576,8 @@ def main() -> None:
 		fail("ci summary strict stderr missing parity-ci-summary error prefix")
 	if expected_ci_summary_strict_exit == 2 and expected_health_reason_marker not in ci_summary_strict.stderr:
 		fail("ci summary strict stderr missing health+reason message")
+	if expected_ci_summary_strict_exit == 0 and ci_summary_strict.stderr.strip():
+		fail("ci summary strict stderr must be empty on success")
 
 	ci_summary_strict_yellow = subprocess.run(
 		["python3", str(root / "scripts/generate_ts_eslint_parity_ci_summary.py"), "--fail-on-yellow"],
@@ -1581,6 +1595,8 @@ def main() -> None:
 		fail("ci summary strict-yellow stderr missing parity-ci-summary error prefix")
 	if expected_ci_summary_strict_yellow_exit == 3 and expected_health_reason_marker not in ci_summary_strict_yellow.stderr:
 		fail("ci summary strict-yellow stderr missing health+reason message")
+	if expected_ci_summary_strict_yellow_exit == 0 and ci_summary_strict_yellow.stderr.strip():
+		fail("ci summary strict-yellow stderr must be empty on success")
 	ci_summary_strict_stderr_lines = extract_nonempty_lines(ci_summary_strict.stderr)
 	ci_summary_strict_yellow_stderr_lines = extract_nonempty_lines(ci_summary_strict_yellow.stderr)
 
@@ -1659,26 +1675,35 @@ def main() -> None:
 
 	# Parity doctor output checks
 	try:
-		doctor_plain = subprocess.run(
+		doctor_plain_proc = subprocess.run(
 			["python3", str(root / "scripts/generate_ts_eslint_parity_doctor.py")],
 			check=True,
 			capture_output=True,
 			text=True,
-		).stdout
-		doctor_md = subprocess.run(
+		)
+		doctor_md_proc = subprocess.run(
 			["python3", str(root / "scripts/generate_ts_eslint_parity_doctor.py"), "--markdown"],
 			check=True,
 			capture_output=True,
 			text=True,
-		).stdout
-		doctor_json = subprocess.run(
+		)
+		doctor_json_proc = subprocess.run(
 			["python3", str(root / "scripts/generate_ts_eslint_parity_doctor.py"), "--json"],
 			check=True,
 			capture_output=True,
 			text=True,
-		).stdout
+		)
 	except subprocess.CalledProcessError as err:
 		fail(f"parity doctor script failed: {err}")
+	if doctor_plain_proc.stderr.strip():
+		fail("parity doctor direct plain script stderr must be empty in non-strict mode")
+	if doctor_md_proc.stderr.strip():
+		fail("parity doctor direct markdown script stderr must be empty in non-strict mode")
+	if doctor_json_proc.stderr.strip():
+		fail("parity doctor direct json script stderr must be empty in non-strict mode")
+	doctor_plain = doctor_plain_proc.stdout
+	doctor_md = doctor_md_proc.stdout
+	doctor_json = doctor_json_proc.stdout
 
 	if "Parity Doctor" not in doctor_plain:
 		fail("parity doctor plain output missing title")
@@ -1844,6 +1869,10 @@ def main() -> None:
 		fail("parity doctor strict stderr missing critical backlog message")
 	if expected_strict_exit == 2 and "A_critical backlog is non-zero" not in doctor_json_strict.stderr:
 		fail("parity doctor json strict stderr missing critical backlog message")
+	if expected_strict_exit == 0 and doctor_strict.stderr.strip():
+		fail("parity doctor strict stderr must be empty on success")
+	if expected_strict_exit == 0 and doctor_json_strict.stderr.strip():
+		fail("parity doctor json strict stderr must be empty on success")
 	expected_yellow_strict_exit = 3 if expected_health in {"yellow", "red"} else 0
 	if doctor_yellow_strict.returncode != expected_yellow_strict_exit:
 		fail(
@@ -1863,6 +1892,10 @@ def main() -> None:
 		fail("parity doctor strict-yellow stderr missing health+reason message")
 	if expected_yellow_strict_exit == 3 and expected_health_reason_marker not in doctor_json_yellow_strict.stderr:
 		fail("parity doctor json strict-yellow stderr missing health+reason message")
+	if expected_yellow_strict_exit == 0 and doctor_yellow_strict.stderr.strip():
+		fail("parity doctor strict-yellow stderr must be empty on success")
+	if expected_yellow_strict_exit == 0 and doctor_json_yellow_strict.stderr.strip():
+		fail("parity doctor json strict-yellow stderr must be empty on success")
 	doctor_strict_stderr_lines = extract_nonempty_lines(doctor_strict.stderr)
 	doctor_yellow_strict_stderr_lines = extract_nonempty_lines(doctor_yellow_strict.stderr)
 	doctor_json_strict_stderr_lines = extract_nonempty_lines(doctor_json_strict.stderr)
