@@ -52,7 +52,7 @@ PARITY_OFFLINE=1 TS_ESLINT_REF=main pnpm parity:ts-eslint
 pnpm parity:ts-eslint:check
 ```
 
-The checker validates tracker/worklist/summary/metadata/manifest/index/issue-plan coherence.
+The checker validates tracker/worklist/summary/metadata/manifest/index/issue-plan coherence and CI summary rendering consistency.
 
 ### Compare parity progress between snapshots
 

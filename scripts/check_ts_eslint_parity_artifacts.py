@@ -18,6 +18,7 @@ import hashlib
 import json
 import pathlib
 import re
+import subprocess
 import sys
 from collections import Counter
 
@@ -112,6 +113,36 @@ def parse_phase_tasklist_markdown(tasklist_text: str) -> int:
 		if line.startswith("- [ ] "):
 			count += 1
 	return count
+
+
+def parse_ci_summary_markdown(summary_text: str) -> dict:
+	patterns = {
+		"upstream_ref": r"- Upstream ref:\s+`([^`]+)`",
+		"upstream_commit": r"- Upstream commit:\s+`([^`]+)`",
+		"total_rules": r"- Total rules:\s+\*\*(\d+)\*\*",
+		"flagged_rules": r"- Flagged rules:\s+\*\*(\d+)\*\*",
+		"aligned_rules": r"- Aligned rules:\s+\*\*(\d+)\*\*",
+	}
+	parsed = {}
+	for key, pattern in patterns.items():
+		match = re.search(pattern, summary_text)
+		if not match:
+			fail(f"ci summary missing field: {key}")
+		value = match.group(1)
+		if key in {"total_rules", "flagged_rules", "aligned_rules"}:
+			parsed[key] = int(value)
+		else:
+			parsed[key] = value
+
+	phase_counts = {}
+	for phase in ["A_critical", "B_high", "C_medium", "D_low", "aligned"]:
+		match = re.search(rf"\|\s*`{phase}`\s*\|\s*(\d+)\s*\|", summary_text)
+		if not match:
+			fail(f"ci summary missing phase row: {phase}")
+		phase_counts[phase] = int(match.group(1))
+	parsed["phase_counts"] = phase_counts
+
+	return parsed
 
 
 def main() -> None:
@@ -362,6 +393,31 @@ def main() -> None:
 		expected = phase_counter.get(phase, 0)
 		if task_count != expected:
 			fail(f"tasklist count mismatch for {phase}: expected={expected} actual={task_count}")
+
+	# CI summary script output checks
+	try:
+		ci_summary_output = subprocess.run(
+			["python3", str(root / "scripts/generate_ts_eslint_parity_ci_summary.py")],
+			check=True,
+			capture_output=True,
+			text=True,
+		).stdout
+	except subprocess.CalledProcessError as err:
+		fail(f"ci summary script failed: {err}")
+
+	ci_summary = parse_ci_summary_markdown(ci_summary_output)
+	if ci_summary["upstream_ref"] != metadata.get("upstream_ref_requested"):
+		fail("ci summary upstream_ref mismatch")
+	if ci_summary["upstream_commit"] != metadata.get("upstream_commit"):
+		fail("ci summary upstream_commit mismatch")
+	if ci_summary["total_rules"] != summary.get("total_rules"):
+		fail("ci summary total_rules mismatch")
+	if ci_summary["flagged_rules"] != summary.get("flagged_rules"):
+		fail("ci summary flagged_rules mismatch")
+	if ci_summary["aligned_rules"] != summary.get("aligned_rules"):
+		fail("ci summary aligned_rules mismatch")
+	if ci_summary["phase_counts"] != dict(phase_counter):
+		fail("ci summary phase_counts mismatch")
 
 	print("[parity-check] OK: all parity artifacts are consistent.")
 
