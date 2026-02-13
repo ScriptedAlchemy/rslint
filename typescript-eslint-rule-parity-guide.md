@@ -62,6 +62,7 @@ pnpm parity:ts-eslint:badges
 pnpm parity:ts-eslint:status
 pnpm parity:ts-eslint:ci-summary
 pnpm parity:ts-eslint:doctor
+pnpm parity:ts-eslint:doctor:markdown
 pnpm parity:ts-eslint:doctor:strict
 ```
 
