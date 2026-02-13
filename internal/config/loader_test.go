@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/microsoft/typescript-go/shim/bundled"
+	"github.com/microsoft/typescript-go/shim/tspath"
 	"github.com/microsoft/typescript-go/shim/vfs/cachedvfs"
 	"github.com/microsoft/typescript-go/shim/vfs/osvfs"
 )
@@ -44,7 +45,7 @@ func TestLoadTsConfigsFromRslintConfigDeduplicatesPaths(t *testing.T) {
 	if len(tsconfigs) != 1 {
 		t.Fatalf("expected deduplicated single tsconfig, got %#v", tsconfigs)
 	}
-	if tsconfigs[0] != tsconfigPath {
+	if tspath.NormalizePath(tsconfigs[0]) != tspath.NormalizePath(tsconfigPath) {
 		t.Fatalf("expected %q, got %q", tsconfigPath, tsconfigs[0])
 	}
 }
@@ -82,7 +83,7 @@ func TestLoadTsConfigsFromRslintConfigForFilesSkipsUnmatchedEntries(t *testing.T
 	if err != nil {
 		t.Fatalf("expected no error for unmatched missing tsconfig entry, got %v", err)
 	}
-	if len(tsconfigs) != 1 || tsconfigs[0] != srcTsconfigPath {
+	if len(tsconfigs) != 1 || tspath.NormalizePath(tsconfigs[0]) != tspath.NormalizePath(srcTsconfigPath) {
 		t.Fatalf("expected only src tsconfig, got %#v", tsconfigs)
 	}
 }
@@ -114,7 +115,7 @@ func TestLoadTsConfigsFromRslintConfigExpandsGlobProjectPatterns(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected glob project path expansion to succeed, got %v", err)
 	}
-	if len(tsconfigs) != 1 || tsconfigs[0] != pkgTsconfigPath {
+	if len(tsconfigs) != 1 || tspath.NormalizePath(tsconfigs[0]) != tspath.NormalizePath(pkgTsconfigPath) {
 		t.Fatalf("expected expanded tsconfig %q, got %#v", pkgTsconfigPath, tsconfigs)
 	}
 }
