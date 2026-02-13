@@ -675,6 +675,14 @@ def main() -> None:
 		fail("parity gate yellow stderr missing health+reason message")
 	if expected_gate_yellow_exit == 0 and "[parity-gate] OK: parity gate passed (threshold=yellow)." not in (gate_yellow.stdout + gate_yellow.stderr):
 		fail("parity gate yellow success output missing final OK message")
+	gate_red_prefixed_lines = extract_prefixed_lines(
+		gate_red.stdout + gate_red.stderr,
+		("[parity-gate]", "[parity-status]", "[parity-doctor]"),
+	)
+	gate_yellow_prefixed_lines = extract_prefixed_lines(
+		gate_yellow.stdout + gate_yellow.stderr,
+		("[parity-gate]", "[parity-status]", "[parity-doctor]"),
+	)
 
 	# Unified gate script argument validation checks
 	usage_prefix = "Usage: bash scripts/run_ts_eslint_parity_gate.sh"
@@ -869,6 +877,12 @@ def main() -> None:
 		fail("parity gate inline red success output missing final OK message")
 	if "[parity-gate] Running strict clean parity checks" in (gate_inline_red.stdout + gate_inline_red.stderr):
 		fail("parity gate inline red should not run strict clean checks in --skip-checks mode")
+	gate_inline_red_prefixed_lines = extract_prefixed_lines(
+		gate_inline_red.stdout + gate_inline_red.stderr,
+		("[parity-gate]", "[parity-status]", "[parity-doctor]"),
+	)
+	if gate_inline_red_prefixed_lines != gate_red_prefixed_lines:
+		fail("parity gate inline red prefixed output mismatch with direct red skip-check run")
 
 	gate_inline_yellow = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--threshold=yellow", "--skip-checks"],
@@ -889,6 +903,12 @@ def main() -> None:
 		fail("parity gate inline yellow success output missing final OK message")
 	if "[parity-gate] Running strict clean parity checks" in (gate_inline_yellow.stdout + gate_inline_yellow.stderr):
 		fail("parity gate inline yellow should not run strict clean checks in --skip-checks mode")
+	gate_inline_yellow_prefixed_lines = extract_prefixed_lines(
+		gate_inline_yellow.stdout + gate_inline_yellow.stderr,
+		("[parity-gate]", "[parity-status]", "[parity-doctor]"),
+	)
+	if gate_inline_yellow_prefixed_lines != gate_yellow_prefixed_lines:
+		fail("parity gate inline yellow prefixed output mismatch with direct yellow skip-check run")
 
 	gate_skip_only_default_red = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--skip-checks"],
@@ -911,6 +931,12 @@ def main() -> None:
 		fail("parity gate skip-only default-red success output missing final OK message")
 	if "[parity-gate] Running strict clean parity checks" in (gate_skip_only_default_red.stdout + gate_skip_only_default_red.stderr):
 		fail("parity gate skip-only default-red should not run strict clean checks in --skip-checks mode")
+	gate_skip_only_default_red_prefixed_lines = extract_prefixed_lines(
+		gate_skip_only_default_red.stdout + gate_skip_only_default_red.stderr,
+		("[parity-gate]", "[parity-status]", "[parity-doctor]"),
+	)
+	if gate_skip_only_default_red_prefixed_lines != gate_red_prefixed_lines:
+		fail("parity gate skip-only default-red prefixed output mismatch with direct red skip-check run")
 
 	gate_reordered_flags = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--skip-checks", "--threshold=yellow"],
@@ -933,6 +959,12 @@ def main() -> None:
 		fail("parity gate reordered-flags yellow success output missing final OK message")
 	if "[parity-gate] Running strict clean parity checks" in (gate_reordered_flags.stdout + gate_reordered_flags.stderr):
 		fail("parity gate reordered-flags should not run strict clean checks in --skip-checks mode")
+	gate_reordered_flags_prefixed_lines = extract_prefixed_lines(
+		gate_reordered_flags.stdout + gate_reordered_flags.stderr,
+		("[parity-gate]", "[parity-status]", "[parity-doctor]"),
+	)
+	if gate_reordered_flags_prefixed_lines != gate_yellow_prefixed_lines:
+		fail("parity gate reordered-flags prefixed output mismatch with direct yellow skip-check run")
 
 	gate_unknown_arg = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--not-a-real-flag"],
@@ -969,15 +1001,6 @@ def main() -> None:
 		fail("parity gate duplicate-skip-checks stderr missing skip-checks token in usage message")
 
 	# Quick gate npm command wrappers
-	gate_red_prefixed_lines = extract_prefixed_lines(
-		gate_red.stdout + gate_red.stderr,
-		("[parity-gate]", "[parity-status]", "[parity-doctor]"),
-	)
-	gate_yellow_prefixed_lines = extract_prefixed_lines(
-		gate_yellow.stdout + gate_yellow.stderr,
-		("[parity-gate]", "[parity-status]", "[parity-doctor]"),
-	)
-
 	gate_quick = subprocess.run(
 		["pnpm", "--silent", "parity:ts-eslint:gate:quick"],
 		cwd=str(root),
