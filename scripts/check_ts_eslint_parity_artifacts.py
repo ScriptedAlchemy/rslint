@@ -548,6 +548,29 @@ def main() -> None:
 	if expected_gate_yellow_exit == 3 and "health is" not in gate_yellow.stderr:
 		fail("parity gate yellow stderr missing health message")
 
+	# Unified gate script argument validation checks
+	gate_invalid_threshold = subprocess.run(
+		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--threshold", "blue", "--skip-checks"],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if gate_invalid_threshold.returncode != 1:
+		fail("parity gate invalid-threshold exit code must be 1")
+	if "invalid threshold" not in gate_invalid_threshold.stderr:
+		fail("parity gate invalid-threshold stderr missing message")
+
+	gate_unknown_arg = subprocess.run(
+		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--not-a-real-flag"],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if gate_unknown_arg.returncode != 1:
+		fail("parity gate unknown-arg exit code must be 1")
+	if "unknown argument" not in gate_unknown_arg.stderr:
+		fail("parity gate unknown-arg stderr missing message")
+
 	flagged = [row for row in tracker_rows if int(row.get("priority_score", 0)) > 0]
 	aligned = len(tracker_rows) - len(flagged)
 
