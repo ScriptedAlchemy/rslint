@@ -1425,6 +1425,8 @@ def main() -> None:
 
 	ci_summary = parse_ci_summary_markdown(ci_summary_output)
 	ci_summary_json = parse_ci_summary_json(ci_summary_json_output)
+	ci_summary_lines = [line.strip() for line in ci_summary_output.splitlines() if line.strip()]
+	ci_summary_json_lines = [line.strip() for line in ci_summary_json_output.splitlines() if line.strip()]
 	if ci_summary["upstream_ref"] != metadata.get("upstream_ref_requested"):
 		fail("ci summary upstream_ref mismatch")
 	if ci_summary["upstream_commit"] != metadata.get("upstream_commit"):
@@ -1485,6 +1487,7 @@ def main() -> None:
 	assert_no_pnpm_lifecycle_noise("ci summary command stderr", ci_summary_cmd.stderr)
 	if ci_summary_cmd.stderr.strip():
 		fail("ci summary command stderr must be empty in non-strict mode")
+	assert_exact_nonempty_lines("ci summary command stdout", ci_summary_cmd.stdout, ci_summary_lines)
 	ci_summary_cmd_parsed = parse_ci_summary_markdown(ci_summary_cmd.stdout)
 	if ci_summary_cmd_parsed != ci_summary:
 		fail("ci summary command output mismatch with direct script output")
@@ -1502,6 +1505,7 @@ def main() -> None:
 	assert_no_pnpm_lifecycle_noise("ci summary json command stderr", ci_summary_json_cmd.stderr)
 	if ci_summary_json_cmd.stderr.strip():
 		fail("ci summary json command stderr must be empty in non-strict mode")
+	assert_exact_nonempty_lines("ci summary json command stdout", ci_summary_json_cmd.stdout, ci_summary_json_lines)
 	ci_summary_json_cmd_parsed = parse_ci_summary_json(ci_summary_json_cmd.stdout)
 	if ci_summary_json_cmd_parsed != ci_summary_json:
 		fail("ci summary json command output mismatch with direct script output")
@@ -1558,6 +1562,7 @@ def main() -> None:
 	assert_no_pnpm_lifecycle_noise("ci summary command strict stderr", ci_summary_cmd_strict.stderr)
 	if expected_ci_summary_strict_exit == 0 and ci_summary_cmd_strict.stderr.strip():
 		fail("ci summary command strict stderr must be empty on success")
+	assert_exact_nonempty_lines("ci summary command strict stdout", ci_summary_cmd_strict.stdout, ci_summary_lines)
 	ci_summary_cmd_strict_parsed = parse_ci_summary_markdown(ci_summary_cmd_strict.stdout)
 	if ci_summary_cmd_strict_parsed != ci_summary:
 		fail("ci summary command strict stdout mismatch with non-strict summary output")
@@ -1590,6 +1595,7 @@ def main() -> None:
 	assert_no_pnpm_lifecycle_noise("ci summary command strict-yellow stderr", ci_summary_cmd_strict_yellow.stderr)
 	if expected_ci_summary_strict_yellow_exit == 0 and ci_summary_cmd_strict_yellow.stderr.strip():
 		fail("ci summary command strict-yellow stderr must be empty on success")
+	assert_exact_nonempty_lines("ci summary command strict-yellow stdout", ci_summary_cmd_strict_yellow.stdout, ci_summary_lines)
 	ci_summary_cmd_strict_yellow_parsed = parse_ci_summary_markdown(ci_summary_cmd_strict_yellow.stdout)
 	if ci_summary_cmd_strict_yellow_parsed != ci_summary:
 		fail("ci summary command strict-yellow stdout mismatch with non-strict summary output")
@@ -1637,6 +1643,9 @@ def main() -> None:
 	doctor_plain_data = parse_doctor_plain_output(doctor_plain)
 	doctor_md_data = parse_doctor_markdown_output(doctor_md)
 	doctor_json_data = parse_doctor_json_output(doctor_json)
+	doctor_plain_lines = [line.strip() for line in doctor_plain.splitlines() if line.strip()]
+	doctor_markdown_lines = [line.strip() for line in doctor_md.splitlines() if line.strip()]
+	doctor_json_lines = [line.strip() for line in doctor_json.splitlines() if line.strip()]
 
 	for key in ("total_rules", "aligned_rules", "flagged_rules"):
 		expected = int(summary.get(key, -1))
@@ -1708,6 +1717,7 @@ def main() -> None:
 	assert_no_pnpm_lifecycle_noise("parity doctor command stderr", doctor_cmd.stderr)
 	if doctor_cmd.stderr.strip():
 		fail("parity doctor command stderr must be empty in non-strict mode")
+	assert_exact_nonempty_lines("parity doctor command stdout", doctor_cmd.stdout, doctor_plain_lines)
 	if parse_doctor_plain_output(doctor_cmd.stdout) != doctor_plain_data:
 		fail("parity doctor command output mismatch with direct script output")
 
@@ -1724,6 +1734,7 @@ def main() -> None:
 	assert_no_pnpm_lifecycle_noise("parity doctor markdown command stderr", doctor_markdown_cmd.stderr)
 	if doctor_markdown_cmd.stderr.strip():
 		fail("parity doctor markdown command stderr must be empty in non-strict mode")
+	assert_exact_nonempty_lines("parity doctor markdown command stdout", doctor_markdown_cmd.stdout, doctor_markdown_lines)
 	if parse_doctor_markdown_output(doctor_markdown_cmd.stdout) != doctor_md_data:
 		fail("parity doctor markdown command output mismatch with direct script output")
 
@@ -1740,6 +1751,7 @@ def main() -> None:
 	assert_no_pnpm_lifecycle_noise("parity doctor json command stderr", doctor_json_cmd.stderr)
 	if doctor_json_cmd.stderr.strip():
 		fail("parity doctor json command stderr must be empty in non-strict mode")
+	assert_exact_nonempty_lines("parity doctor json command stdout", doctor_json_cmd.stdout, doctor_json_lines)
 	if parse_doctor_json_output(doctor_json_cmd.stdout) != doctor_json_data:
 		fail("parity doctor json command output mismatch with direct script output")
 
@@ -1824,6 +1836,7 @@ def main() -> None:
 	assert_no_pnpm_lifecycle_noise("parity doctor command strict stderr", doctor_cmd_strict.stderr)
 	if expected_strict_exit == 0 and doctor_cmd_strict.stderr.strip():
 		fail("parity doctor command strict stderr must be empty on success")
+	assert_exact_nonempty_lines("parity doctor command strict stdout", doctor_cmd_strict.stdout, doctor_plain_lines)
 	if parse_doctor_plain_output(doctor_cmd_strict.stdout) != doctor_plain_data:
 		fail("parity doctor command strict stdout mismatch with non-strict plain output")
 	if expected_strict_exit == 2 and "[parity-doctor] ERROR:" not in doctor_cmd_strict.stderr:
@@ -1853,6 +1866,7 @@ def main() -> None:
 	assert_no_pnpm_lifecycle_noise("parity doctor command strict-yellow stderr", doctor_cmd_strict_yellow.stderr)
 	if expected_yellow_strict_exit == 0 and doctor_cmd_strict_yellow.stderr.strip():
 		fail("parity doctor command strict-yellow stderr must be empty on success")
+	assert_exact_nonempty_lines("parity doctor command strict-yellow stdout", doctor_cmd_strict_yellow.stdout, doctor_plain_lines)
 	if parse_doctor_plain_output(doctor_cmd_strict_yellow.stdout) != doctor_plain_data:
 		fail("parity doctor command strict-yellow stdout mismatch with non-strict plain output")
 	if expected_yellow_strict_exit == 3 and "[parity-doctor] ERROR:" not in doctor_cmd_strict_yellow.stderr:
@@ -1884,6 +1898,7 @@ def main() -> None:
 	assert_no_pnpm_lifecycle_noise("parity doctor command json strict stderr", doctor_cmd_json_strict.stderr)
 	if expected_strict_exit == 0 and doctor_cmd_json_strict.stderr.strip():
 		fail("parity doctor command json strict stderr must be empty on success")
+	assert_exact_nonempty_lines("parity doctor command json strict stdout", doctor_cmd_json_strict.stdout, doctor_json_lines)
 	if parse_doctor_json_output(doctor_cmd_json_strict.stdout) != doctor_json_data:
 		fail("parity doctor command json strict stdout mismatch with non-strict json output")
 	if expected_strict_exit == 2 and "[parity-doctor] ERROR:" not in doctor_cmd_json_strict.stderr:
@@ -1915,6 +1930,7 @@ def main() -> None:
 	assert_no_pnpm_lifecycle_noise("parity doctor command json strict-yellow stderr", doctor_cmd_json_strict_yellow.stderr)
 	if expected_yellow_strict_exit == 0 and doctor_cmd_json_strict_yellow.stderr.strip():
 		fail("parity doctor command json strict-yellow stderr must be empty on success")
+	assert_exact_nonempty_lines("parity doctor command json strict-yellow stdout", doctor_cmd_json_strict_yellow.stdout, doctor_json_lines)
 	if parse_doctor_json_output(doctor_cmd_json_strict_yellow.stdout) != doctor_json_data:
 		fail("parity doctor command json strict-yellow stdout mismatch with non-strict json output")
 	if expected_yellow_strict_exit == 3 and "[parity-doctor] ERROR:" not in doctor_cmd_json_strict_yellow.stderr:
