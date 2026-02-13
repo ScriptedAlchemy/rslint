@@ -60,6 +60,69 @@ This queue is ranked by combined risk score (missing assets > severe test covera
 | 14 | `no-misused-spread` | Go Skip:true x1; TODO/FIXME x2 | up:packages/eslint-plugin/src/rules/no-misused-spread.ts<br>go-impl:internal/plugins/typescript/rules/no_misused_spread/no_misused_spread.go<br>go-test:internal/plugins/typescript/rules/no_misused_spread/no_misused_spread_test.go<br>js:no-misused-spread.test.ts |
 | 15 | `no-unnecessary-type-arguments` | Go Skip:true x1; TODO/FIXME x1 | up:packages/eslint-plugin/src/rules/no-unnecessary-type-arguments.ts<br>go-impl:internal/plugins/typescript/rules/no_unnecessary_type_arguments/no_unnecessary_type_arguments.go<br>go-test:internal/plugins/typescript/rules/no_unnecessary_type_arguments/no_unnecessary_type_arguments_test.go<br>js:no-unnecessary-type-arguments.test.ts |
 
+## Recommended Execution Phases (for implementation team)
+
+### Phase A — Critical parity restorations (blockers)
+Target rules:
+- `no-useless-default-assignment`
+- `no-duplicate-enum-values`
+- `no-unused-private-class-members`
+- `strict-void-return`
+- `no-unused-vars` (including missing `no-unused-vars-enableAutofixRemoval` file)
+- `await-thenable`
+- `no-loss-of-precision` (missing Go tests)
+
+Done criteria:
+1. JS parity files exist for all upstream counterparts.
+2. Invalid-case coverage (`errors:` assertions) is aligned or justified.
+3. For fixable/suggestion-heavy rules (`no-unused-vars`, `no-useless-default-assignment`), output/suggestion assertions are restored.
+4. Go tests exist and pass for each rule.
+
+### Phase B — Skip/TODO debt elimination
+Target rules:
+- `no-confusing-void-expression`
+- `no-duplicate-type-constituents`
+- `no-base-to-string`
+- `no-misused-promises`
+- `no-misused-spread`
+- `no-unnecessary-type-arguments`
+- `no-unsafe-assignment`
+- `only-throw-error`
+- `prefer-promise-reject-errors`
+- `unbound-method`
+- `use-unknown-in-catch-callback-variable`
+
+Done criteria:
+1. Remove `Skip:true` cases or replace with passing equivalent parity tests.
+2. Resolve/close TODO/FIXME parity markers (or convert to explicitly tracked issues with IDs).
+3. Preserve or improve diagnostics vs upstream behavior.
+
+### Phase C — Message-ID / suggestion-fix branch completion
+Use the “Confirmed Message-ID Parity Gaps (non-base rules)” table.
+
+Done criteria:
+1. Missing message IDs are either implemented or explicitly documented as intentionally unsupported.
+2. Each recovered message branch is asserted in tests (Go + JS where relevant).
+3. Suggestion/fix emitting branches include concrete output/suggestions assertions.
+
+### Phase D — Inventory alignment decision
+Target:
+- Local-only `ban-types` divergence.
+
+Done criteria:
+1. Decide one of:
+   - keep as local extension with explicit docs, or
+   - deprecate/remove from TypeScript-ESLint parity surface.
+2. Reflect decision in registration/docs/tests.
+
+## Verification checklist per implementation PR
+For each rule touched:
+1. `go test -count=1 ./internal/plugins/typescript/rules/<rule_dir>`
+2. `cd packages/rslint && pnpm run build:bin`
+3. `cd packages/rslint-test-tools && npx rstest run --testTimeout=10000 <rule-name>`
+4. Verify snapshots/diagnostics for restored invalid/fix/suggestion branches.
+5. Ensure no newly introduced skip markers unless justified in PR description.
+
 ## High-Risk Non-Critical Corrections
 - **prefer-optional-chain**: flags = `js-invalid-coverage-reduced, js-test-size-reduced, fix-parity-gap-suspected, suggestion-parity-gap-suspected`.
   - Primary correction: Review reduced local JS invalid coverage (errors: 128 vs upstream 247).
