@@ -57,7 +57,11 @@ def main() -> None:
 	lines.append("- `typescript-eslint-rule-parity-metadata.json` — run metadata and counters.")
 	lines.append("- `typescript-eslint-rule-parity-issue-plan.md` — issue-friendly phase plans.")
 	lines.append("- `typescript-eslint-rule-parity-diff.md` — optional snapshot comparison output.")
-	lines.append("- `typescript-eslint-rule-parity-tasklist-<phase>.md` — optional phase tasklist snippets.")
+	lines.append("- `typescript-eslint-rule-parity-tasklist-A_critical.md` — tasklist snippet for A_critical.")
+	lines.append("- `typescript-eslint-rule-parity-tasklist-B_high.md` — tasklist snippet for B_high.")
+	lines.append("- `typescript-eslint-rule-parity-tasklist-C_medium.md` — tasklist snippet for C_medium.")
+	lines.append("- `typescript-eslint-rule-parity-tasklist-D_low.md` — tasklist snippet for D_low.")
+	lines.append("- `typescript-eslint-rule-parity-tasklist-<phase>.md` — generic tasklist naming convention.")
 	lines.append("- `typescript-eslint-rule-parity-guide.md` — toolkit usage guide.")
 	lines.append("")
 

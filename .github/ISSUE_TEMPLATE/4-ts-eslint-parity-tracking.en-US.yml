@@ -11,6 +11,10 @@ body:
         - `typescript-eslint-rule-parity-issue-plan.md`
         - `typescript-eslint-rule-parity-worklist.md`
         - `typescript-eslint-rule-parity-summary.md`
+        - `typescript-eslint-rule-parity-tasklist-A_critical.md`
+        - `typescript-eslint-rule-parity-tasklist-B_high.md`
+        - `typescript-eslint-rule-parity-tasklist-C_medium.md`
+        - `typescript-eslint-rule-parity-tasklist-D_low.md`
         - Generate phase tasklist snippet:
           - `pnpm parity:ts-eslint:tasklist --phase <A_critical|B_high|C_medium|D_low>`
   - type: dropdown

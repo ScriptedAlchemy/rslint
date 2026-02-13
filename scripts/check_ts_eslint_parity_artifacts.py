@@ -97,6 +97,14 @@ def parse_issue_plan_markdown(issue_plan_text: str) -> dict:
 	return {"heading_counts": heading_counts, "phase_items": dict(phase_items)}
 
 
+def parse_phase_tasklist_markdown(tasklist_text: str) -> int:
+	count = 0
+	for line in tasklist_text.splitlines():
+		if line.startswith("- [ ] "):
+			count += 1
+	return count
+
+
 def main() -> None:
 	root = pathlib.Path("/workspace")
 	tracker_csv = root / "typescript-eslint-rule-parity-tracker.csv"
@@ -106,8 +114,24 @@ def main() -> None:
 	metadata_json = root / "typescript-eslint-rule-parity-metadata.json"
 	index_md = root / "typescript-eslint-rule-parity-index.md"
 	issue_plan_md = root / "typescript-eslint-rule-parity-issue-plan.md"
+	tasklist_a_md = root / "typescript-eslint-rule-parity-tasklist-A_critical.md"
+	tasklist_b_md = root / "typescript-eslint-rule-parity-tasklist-B_high.md"
+	tasklist_c_md = root / "typescript-eslint-rule-parity-tasklist-C_medium.md"
+	tasklist_d_md = root / "typescript-eslint-rule-parity-tasklist-D_low.md"
 
-	required = [tracker_csv, tracker_json, worklist_md, summary_md, metadata_json, index_md, issue_plan_md]
+	required = [
+		tracker_csv,
+		tracker_json,
+		worklist_md,
+		summary_md,
+		metadata_json,
+		index_md,
+		issue_plan_md,
+		tasklist_a_md,
+		tasklist_b_md,
+		tasklist_c_md,
+		tasklist_d_md,
+	]
 	for path in required:
 		if not path.exists():
 			fail(f"missing artifact: {path.name}")
@@ -260,10 +284,27 @@ def main() -> None:
 		"typescript-eslint-rule-parity-metadata.json",
 		"typescript-eslint-rule-parity-index.md",
 		"typescript-eslint-rule-parity-issue-plan.md",
+		"typescript-eslint-rule-parity-tasklist-<phase>.md",
 	]
 	for artifact_name in required_artifact_mentions:
 		if artifact_name not in index_text:
 			fail(f"index markdown missing artifact mention: {artifact_name}")
+
+	# Phase tasklist checks
+	tasklist_by_phase = {
+		"A_critical": tasklist_a_md,
+		"B_high": tasklist_b_md,
+		"C_medium": tasklist_c_md,
+		"D_low": tasklist_d_md,
+	}
+	for phase, path in tasklist_by_phase.items():
+		text = path.read_text()
+		if f"### {phase} parity tasks" not in text:
+			fail(f"tasklist markdown missing phase heading for {phase}: {path.name}")
+		task_count = parse_phase_tasklist_markdown(text)
+		expected = phase_counter.get(phase, 0)
+		if task_count != expected:
+			fail(f"tasklist count mismatch for {phase}: expected={expected} actual={task_count}")
 
 	print("[parity-check] OK: all parity artifacts are consistent.")
 

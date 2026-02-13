@@ -17,6 +17,11 @@ _Generated: 2026-02-13 09:47 UTC_
 - `typescript-eslint-rule-parity-issue-plan.md`
 - Optional diff artifact: `typescript-eslint-rule-parity-diff.md`
 - Optional tasklist snippet artifact: `typescript-eslint-rule-parity-tasklist-<phase>.md`
+- Generated phase tasklists:
+  - `typescript-eslint-rule-parity-tasklist-A_critical.md`
+  - `typescript-eslint-rule-parity-tasklist-B_high.md`
+  - `typescript-eslint-rule-parity-tasklist-C_medium.md`
+  - `typescript-eslint-rule-parity-tasklist-D_low.md`
 - CI guard: `.github/workflows/parity-artifacts-check.yml`
 
 These machine-readable files mirror this report’s findings and include:

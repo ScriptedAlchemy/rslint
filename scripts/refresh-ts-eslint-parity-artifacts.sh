@@ -24,6 +24,10 @@ python3 scripts/generate_ts_eslint_parity_summary.py
 python3 scripts/generate_ts_eslint_parity_metadata.py
 python3 scripts/generate_ts_eslint_parity_index.py
 python3 scripts/generate_ts_eslint_parity_issue_plan.py
+python3 scripts/generate_ts_eslint_parity_issue_tasklist.py --phase A_critical
+python3 scripts/generate_ts_eslint_parity_issue_tasklist.py --phase B_high
+python3 scripts/generate_ts_eslint_parity_issue_tasklist.py --phase C_medium
+python3 scripts/generate_ts_eslint_parity_issue_tasklist.py --phase D_low
 
 echo "==> Validating parity artifact consistency"
 python3 scripts/check_ts_eslint_parity_artifacts.py
@@ -37,3 +41,7 @@ echo "  - typescript-eslint-rule-parity-summary.md"
 echo "  - typescript-eslint-rule-parity-metadata.json"
 echo "  - typescript-eslint-rule-parity-index.md"
 echo "  - typescript-eslint-rule-parity-issue-plan.md"
+echo "  - typescript-eslint-rule-parity-tasklist-A_critical.md"
+echo "  - typescript-eslint-rule-parity-tasklist-B_high.md"
+echo "  - typescript-eslint-rule-parity-tasklist-C_medium.md"
+echo "  - typescript-eslint-rule-parity-tasklist-D_low.md"

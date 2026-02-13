@@ -1,9 +1,9 @@
 # TypeScript-ESLint Parity Artifact Index
 
-_Generated: 2026-02-13T10:21:33.532197+00:00_
+_Generated: 2026-02-13T10:30:33.359725+00:00_
 
 ## Snapshot
-- Upstream ref requested: `68a074fb61a10c3627f09678859fb4d42a3b88f5`
+- Upstream ref requested: `main`
 - Upstream commit resolved: `68a074fb61a10c3627f09678859fb4d42a3b88f5`
 - Total rules: **135**
 - Flagged rules: **60**
@@ -28,7 +28,11 @@ _Generated: 2026-02-13T10:21:33.532197+00:00_
 - `typescript-eslint-rule-parity-metadata.json` — run metadata and counters.
 - `typescript-eslint-rule-parity-issue-plan.md` — issue-friendly phase plans.
 - `typescript-eslint-rule-parity-diff.md` — optional snapshot comparison output.
-- `typescript-eslint-rule-parity-tasklist-<phase>.md` — optional phase tasklist snippets.
+- `typescript-eslint-rule-parity-tasklist-A_critical.md` — tasklist snippet for A_critical.
+- `typescript-eslint-rule-parity-tasklist-B_high.md` — tasklist snippet for B_high.
+- `typescript-eslint-rule-parity-tasklist-C_medium.md` — tasklist snippet for C_medium.
+- `typescript-eslint-rule-parity-tasklist-D_low.md` — tasklist snippet for D_low.
+- `typescript-eslint-rule-parity-tasklist-<phase>.md` — generic tasklist naming convention.
 - `typescript-eslint-rule-parity-guide.md` — toolkit usage guide.
 
 ## Commands

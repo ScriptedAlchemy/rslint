@@ -15,6 +15,10 @@ After running the refresh command, the following artifacts are generated at repo
 - `typescript-eslint-rule-parity-metadata.json` — run metadata (timestamp, upstream SHA, requested ref, counters).
 - `typescript-eslint-rule-parity-index.md` — central index linking all parity artifacts.
 - `typescript-eslint-rule-parity-issue-plan.md` — issue-friendly phase plan/checklist template.
+- `typescript-eslint-rule-parity-tasklist-A_critical.md` — generated tasklist snippet for critical phase.
+- `typescript-eslint-rule-parity-tasklist-B_high.md` — generated tasklist snippet for high phase.
+- `typescript-eslint-rule-parity-tasklist-C_medium.md` — generated tasklist snippet for medium phase.
+- `typescript-eslint-rule-parity-tasklist-D_low.md` — generated tasklist snippet for low phase.
 
 ## Commands
 
@@ -73,6 +77,8 @@ pnpm parity:ts-eslint:tasklist --phase A_critical
 Outputs:
 
 - `typescript-eslint-rule-parity-tasklist-<phase>.md`
+
+Note: `pnpm parity:ts-eslint` generates all four phase tasklist files automatically.
 
 ### Direct script usage
 
