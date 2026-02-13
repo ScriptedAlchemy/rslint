@@ -1211,8 +1211,8 @@ def main() -> None:
 			"ci summary strict exit-code mismatch: "
 			f"expected={expected_ci_summary_strict_exit} actual={ci_summary_strict.returncode}"
 		)
-	if expected_ci_summary_strict_exit == 2 and "health is red" not in ci_summary_strict.stderr:
-		fail("ci summary strict stderr missing red-health message")
+	if expected_ci_summary_strict_exit == 2 and expected_health_reason_marker not in ci_summary_strict.stderr:
+		fail("ci summary strict stderr missing health+reason message")
 
 	ci_summary_strict_yellow = subprocess.run(
 		["python3", str(root / "scripts/generate_ts_eslint_parity_ci_summary.py"), "--fail-on-yellow"],
@@ -1226,8 +1226,8 @@ def main() -> None:
 			"ci summary strict-yellow exit-code mismatch: "
 			f"expected={expected_ci_summary_strict_yellow_exit} actual={ci_summary_strict_yellow.returncode}"
 		)
-	if expected_ci_summary_strict_yellow_exit == 3 and "health is" not in ci_summary_strict_yellow.stderr:
-		fail("ci summary strict-yellow stderr missing health message")
+	if expected_ci_summary_strict_yellow_exit == 3 and expected_health_reason_marker not in ci_summary_strict_yellow.stderr:
+		fail("ci summary strict-yellow stderr missing health+reason message")
 
 	# Parity doctor output checks
 	try:
@@ -1369,10 +1369,10 @@ def main() -> None:
 			"parity doctor json strict-yellow exit-code mismatch: "
 			f"expected={expected_yellow_strict_exit} actual={doctor_json_yellow_strict.returncode}"
 		)
-	if expected_yellow_strict_exit == 3 and "health is" not in doctor_yellow_strict.stderr:
-		fail("parity doctor strict-yellow stderr missing health message")
-	if expected_yellow_strict_exit == 3 and "health is" not in doctor_json_yellow_strict.stderr:
-		fail("parity doctor json strict-yellow stderr missing health message")
+	if expected_yellow_strict_exit == 3 and expected_health_reason_marker not in doctor_yellow_strict.stderr:
+		fail("parity doctor strict-yellow stderr missing health+reason message")
+	if expected_yellow_strict_exit == 3 and expected_health_reason_marker not in doctor_json_yellow_strict.stderr:
+		fail("parity doctor json strict-yellow stderr missing health+reason message")
 
 	doctor_json_strict_data = parse_doctor_json_output(doctor_json_strict.stdout)
 	doctor_json_yellow_strict_data = parse_doctor_json_output(doctor_json_yellow_strict.stdout)
