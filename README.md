@@ -57,6 +57,9 @@ pnpm parity:ts-eslint
 # Run all consistency checks (and verify-clean when artifacts are clean)
 pnpm parity:ts-eslint:check:all
 
+# Enforce clean parity-artifact tree before reproducibility verification
+pnpm parity:ts-eslint:check:clean
+
 # Strict gate: all checks + fail if critical parity backlog remains
 pnpm parity:ts-eslint:check:strict
 ```

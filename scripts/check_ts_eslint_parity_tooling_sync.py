@@ -131,6 +131,7 @@ def main() -> None:
 		"TypeScript-ESLint parity toolkit",
 		"typescript-eslint-rule-parity-guide.md",
 		"pnpm parity:ts-eslint",
+		"pnpm parity:ts-eslint:check:clean",
 		"pnpm parity:ts-eslint:check:all",
 		"pnpm parity:ts-eslint:check:strict",
 	]
@@ -142,6 +143,7 @@ def main() -> None:
 		"Maintain TypeScript-ESLint parity artifacts",
 		"typescript-eslint-rule-parity-guide.md",
 		"pnpm parity:ts-eslint",
+		"pnpm parity:ts-eslint:check:clean",
 		"pnpm parity:ts-eslint:check:all",
 		"pnpm parity:ts-eslint:check:strict",
 	]
