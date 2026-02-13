@@ -101,6 +101,9 @@ pnpm parity:ts-eslint:diff
 pnpm parity:ts-eslint:diff --base-ref HEAD~1
 pnpm parity:ts-eslint:diff:json
 pnpm parity:ts-eslint:diff:json --base-ref HEAD~1
+
+# refresh canonical diff artifacts at repository root
+pnpm parity:ts-eslint:diff:refresh
 ```
 
 Outputs:

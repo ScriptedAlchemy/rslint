@@ -84,6 +84,7 @@ pnpm parity:ts-eslint:diff
 pnpm parity:ts-eslint:diff --base-ref HEAD~1
 pnpm parity:ts-eslint:diff:json
 pnpm parity:ts-eslint:diff:json --base-ref HEAD~1
+pnpm parity:ts-eslint:diff:refresh
 pnpm parity:ts-eslint:tasklist --phase A_critical
 pnpm parity:ts-eslint:tasklist:all
 pnpm parity:ts-eslint:issue-body --phase A_critical

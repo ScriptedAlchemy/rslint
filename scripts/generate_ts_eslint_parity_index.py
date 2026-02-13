@@ -102,6 +102,7 @@ def main() -> None:
 	lines.append("pnpm parity:ts-eslint:diff --base-ref HEAD~1")
 	lines.append("pnpm parity:ts-eslint:diff:json")
 	lines.append("pnpm parity:ts-eslint:diff:json --base-ref HEAD~1")
+	lines.append("pnpm parity:ts-eslint:diff:refresh")
 	lines.append("pnpm parity:ts-eslint:tasklist --phase A_critical")
 	lines.append("pnpm parity:ts-eslint:tasklist:all")
 	lines.append("pnpm parity:ts-eslint:issue-body --phase A_critical")

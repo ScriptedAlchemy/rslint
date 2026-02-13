@@ -47,6 +47,7 @@ def main() -> None:
 		"parity:ts-eslint:commands": "generate_ts_eslint_parity_commands.py",
 		"parity:ts-eslint:diff": "compare_ts_eslint_parity_trackers.py",
 		"parity:ts-eslint:diff:json": "compare_ts_eslint_parity_trackers.py --output-json /workspace/typescript-eslint-rule-parity-diff.json",
+		"parity:ts-eslint:diff:refresh": "compare_ts_eslint_parity_trackers.py --output /workspace/typescript-eslint-rule-parity-diff.md --output-json /workspace/typescript-eslint-rule-parity-diff.json",
 		"parity:ts-eslint:tasklist": "generate_ts_eslint_parity_issue_tasklist.py",
 		"parity:ts-eslint:tasklist:all": "generate_ts_eslint_parity_tasklists_all.sh",
 		"parity:ts-eslint:issue-body": "generate_ts_eslint_parity_issue_body.py",
