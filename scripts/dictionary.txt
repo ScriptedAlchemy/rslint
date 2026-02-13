@@ -160,7 +160,3 @@ marginx
 marginy
 Readonlys
 exclam
-woah
-syncbar
-rethrowing
-unscopables

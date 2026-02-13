@@ -269,14 +269,14 @@ func GetSignatureFlagNames(flags checker.SignatureFlags) []string {
 
 	// Individual bit flags only (not combined flags)
 	flagMap := map[checker.SignatureFlags]string{
-		checker.SignatureFlagsHasRestParameter:                       "checker.SignatureFlagsHasRestParameter",
-		checker.SignatureFlagsHasLiteralTypes:                        "checker.SignatureFlagsHasLiteralTypes",
-		checker.SignatureFlagsConstruct:                              "checker.SignatureFlagsConstruct",
-		checker.SignatureFlagsAbstract:                               "checker.SignatureFlagsAbstract",
-		checker.SignatureFlagsIsInnerCallChain:                       "checker.SignatureFlagsIsInnerCallChain",
-		checker.SignatureFlagsIsOuterCallChain:                       "checker.SignatureFlagsIsOuterCallChain",
-		checker.SignatureFlagsIsUntypedSignatureInJSFile:             "checker.SignatureFlagsIsUntypedSignatureInJSFile",
-		checker.SignatureFlagsIsNonInferrable:                        "checker.SignatureFlagsIsNonInferrable",
+		checker.SignatureFlagsHasRestParameter:                    "checker.SignatureFlagsHasRestParameter",
+		checker.SignatureFlagsHasLiteralTypes:                     "checker.SignatureFlagsHasLiteralTypes",
+		checker.SignatureFlagsConstruct:                           "checker.SignatureFlagsConstruct",
+		checker.SignatureFlagsAbstract:                            "checker.SignatureFlagsAbstract",
+		checker.SignatureFlagsIsInnerCallChain:                    "checker.SignatureFlagsIsInnerCallChain",
+		checker.SignatureFlagsIsOuterCallChain:                    "checker.SignatureFlagsIsOuterCallChain",
+		checker.SignatureFlagsIsUntypedSignatureInJSFile:          "checker.SignatureFlagsIsUntypedSignatureInJSFile",
+		checker.SignatureFlagsIsNonInferrable:                     "checker.SignatureFlagsIsNonInferrable",
 		checker.SignatureFlagsIsSignatureCandidateForOverloadFailure: "checker.SignatureFlagsIsSignatureCandidateForOverloadFailure",
 	}
 

@@ -175,6 +175,22 @@ func TestConfigEntryMatchesFileSupportsDotPrefixedPatterns(t *testing.T) {
 	}
 }
 
+func TestConfigEntryMatchesFileRespectsIgnores(t *testing.T) {
+	entry := ConfigEntry{
+		Language:        "javascript",
+		Files:           []string{"src/**/*.ts"},
+		Ignores:         []string{"src/generated/**"},
+		ConfigDirectory: "/repo",
+	}
+
+	if ConfigEntryMatchesFile(entry, "/repo/src/main.ts") == false {
+		t.Fatalf("expected /repo/src/main.ts to match")
+	}
+	if ConfigEntryMatchesFile(entry, "/repo/src/generated/types.ts") {
+		t.Fatalf("did not expect ignored generated file to match")
+	}
+}
+
 func TestGetRulesForFileRespectsEntryFiles(t *testing.T) {
 	cfg := RslintConfig{
 		{

@@ -15,6 +15,12 @@ import (
 
 var deprecatedReasonPattern = regexp.MustCompile(`(?s)@deprecated\s*([\s\S]*?)\*/`)
 
+const (
+	diagnosticCodeSecondEntityName        = 6387
+	declarationReasonSearchWindowBytes    = 512
+	maxConstantPropertyResolveDepth       = 8
+)
+
 func buildDeprecatedMessage(name string) rule.RuleMessage {
 	return rule.RuleMessage{
 		Id:          "deprecated",
@@ -53,7 +59,8 @@ func diagnosticEntityName(diagnostic *ast.Diagnostic) string {
 	if len(args) == 0 {
 		return ""
 	}
-	if diagnostic.Code() == 6387 && len(args) >= 2 {
+	// Diagnostic 6387 reports the relevant entity name in the second argument.
+	if diagnostic.Code() == diagnosticCodeSecondEntityName && len(args) >= 2 {
 		return stripQuotes(args[1])
 	}
 	return stripQuotes(args[0])
@@ -133,7 +140,7 @@ func deprecatedReasonFromDeclaration(declaration *ast.Node) string {
 	if start < 0 || start > len(text) {
 		return ""
 	}
-	windowStart := start - 512
+	windowStart := start - declarationReasonSearchWindowBytes
 	if windowStart < 0 {
 		windowStart = 0
 	}
@@ -164,15 +171,25 @@ type noDeprecatedAllowEntry struct {
 
 func parseAllowEntries(options any) []noDeprecatedAllowEntry {
 	entries := []noDeprecatedAllowEntry{}
-	optionList, ok := options.([]interface{})
-	if !ok || len(optionList) == 0 {
+	var optionMap map[string]interface{}
+	switch value := options.(type) {
+	case map[string]interface{}:
+		optionMap = value
+	case []interface{}:
+		if len(value) > 0 {
+			if parsedMap, ok := value[0].(map[string]interface{}); ok {
+				optionMap = parsedMap
+			}
+		}
+	}
+	if optionMap == nil {
 		return entries
 	}
-	optionMap, ok := optionList[0].(map[string]interface{})
-	if !ok {
+	rawAllowValue, exists := optionMap["allow"]
+	if !exists {
 		return entries
 	}
-	rawAllow, ok := optionMap["allow"].([]interface{})
+	rawAllow, ok := rawAllowValue.([]interface{})
 	if !ok {
 		return entries
 	}
@@ -277,22 +294,222 @@ func packageMatchesSymbol(entryPackage string, symbol *ast.Symbol) bool {
 	return false
 }
 
+func walkAst(node *ast.Node, visitor func(*ast.Node) bool) bool {
+	if node == nil {
+		return false
+	}
+	if visitor(node) {
+		return true
+	}
+	shouldStop := false
+	node.ForEachChild(func(child *ast.Node) bool {
+		if walkAst(child, visitor) {
+			shouldStop = true
+			return true
+		}
+		return false
+	})
+	return shouldStop
+}
+
+func moduleSpecifierText(node *ast.Node) string {
+	if node == nil {
+		return ""
+	}
+	switch node.Kind {
+	case ast.KindStringLiteral:
+		stringLiteral := node.AsStringLiteral()
+		if stringLiteral != nil {
+			return stringLiteral.Text
+		}
+	case ast.KindNoSubstitutionTemplateLiteral:
+		templateLiteral := node.AsNoSubstitutionTemplateLiteral()
+		if templateLiteral != nil {
+			return templateLiteral.Text
+		}
+	}
+	return stripQuotes(strings.TrimSpace(node.Text()))
+}
+
+func nodeNameText(node *ast.Node) string {
+	if node == nil {
+		return ""
+	}
+	switch node.Kind {
+	case ast.KindIdentifier:
+		identifier := node.AsIdentifier()
+		if identifier == nil {
+			return ""
+		}
+		return identifier.Text
+	case ast.KindPrivateIdentifier:
+		privateIdentifier := node.AsPrivateIdentifier()
+		if privateIdentifier == nil {
+			return ""
+		}
+		return "#" + privateIdentifier.Text
+	case ast.KindStringLiteral:
+		stringLiteral := node.AsStringLiteral()
+		if stringLiteral == nil {
+			return ""
+		}
+		return stringLiteral.Text
+	case ast.KindNumericLiteral:
+		numericLiteral := node.AsNumericLiteral()
+		if numericLiteral == nil {
+			return ""
+		}
+		return numericLiteral.Text
+	default:
+		return stripQuotes(strings.TrimSpace(node.Text()))
+	}
+}
+
+func importedNameMatches(targetName string, node *ast.Node) bool {
+	if targetName == "" || node == nil {
+		return false
+	}
+	return normalizeComparableName(targetName) == normalizeComparableName(nodeNameText(node))
+}
+
+func staticImportContainsName(importDeclaration *ast.ImportDeclaration, targetName string) bool {
+	if importDeclaration == nil || importDeclaration.ImportClause == nil || targetName == "" {
+		return false
+	}
+	importClause := importDeclaration.ImportClause.AsImportClause()
+	if importClause == nil {
+		return false
+	}
+	if importClause.Name() != nil && importedNameMatches(targetName, importClause.Name()) {
+		return true
+	}
+	if importClause.NamedBindings == nil {
+		return false
+	}
+	if importClause.NamedBindings.Kind == ast.KindNamespaceImport {
+		namespaceImport := importClause.NamedBindings.AsNamespaceImport()
+		if namespaceImport != nil && namespaceImport.Name() != nil && importedNameMatches(targetName, namespaceImport.Name()) {
+			return true
+		}
+		return false
+	}
+	if importClause.NamedBindings.Kind != ast.KindNamedImports {
+		return false
+	}
+	namedImports := importClause.NamedBindings.AsNamedImports()
+	if namedImports == nil || namedImports.Elements == nil {
+		return false
+	}
+	for _, elementNode := range namedImports.Elements.Nodes {
+		importSpecifier := elementNode.AsImportSpecifier()
+		if importSpecifier == nil {
+			continue
+		}
+		if importSpecifier.Name() != nil && importedNameMatches(targetName, importSpecifier.Name()) {
+			return true
+		}
+		if importSpecifier.PropertyName != nil && importedNameMatches(targetName, importSpecifier.PropertyName) {
+			return true
+		}
+	}
+	return false
+}
+
+func isImportCallFromPackage(initializer *ast.Node, pkg string) bool {
+	if initializer == nil || pkg == "" {
+		return false
+	}
+	current := ast.SkipParentheses(initializer)
+	if current == nil {
+		return false
+	}
+	if current.Kind == ast.KindAwaitExpression {
+		awaitExpression := current.AsAwaitExpression()
+		if awaitExpression == nil {
+			return false
+		}
+		current = ast.SkipParentheses(awaitExpression.Expression)
+	}
+	if current == nil || current.Kind != ast.KindCallExpression {
+		return false
+	}
+	callExpression := current.AsCallExpression()
+	if callExpression == nil || callExpression.Expression == nil || callExpression.Arguments == nil || len(callExpression.Arguments.Nodes) == 0 {
+		return false
+	}
+	callee := ast.SkipParentheses(callExpression.Expression)
+	if callee == nil || callee.Kind != ast.KindImportKeyword {
+		return false
+	}
+	return moduleSpecifierText(callExpression.Arguments.Nodes[0]) == pkg
+}
+
+func dynamicImportBindingContainsName(nameNode *ast.Node, targetName string) bool {
+	if nameNode == nil || targetName == "" || nameNode.Kind != ast.KindObjectBindingPattern {
+		return false
+	}
+	objectBindingPattern := nameNode.AsBindingPattern()
+	if objectBindingPattern == nil || objectBindingPattern.Elements == nil {
+		return false
+	}
+	for _, elementNode := range objectBindingPattern.Elements.Nodes {
+		bindingElement := elementNode.AsBindingElement()
+		if bindingElement == nil {
+			continue
+		}
+		propertyName := bindingElementPropertyName(bindingElement)
+		if propertyName != "" && normalizeComparableName(propertyName) == normalizeComparableName(targetName) {
+			return true
+		}
+		name := bindingElement.Name()
+		if name != nil && importedNameMatches(targetName, name) {
+			return true
+		}
+	}
+	return false
+}
+
 func nameImportedFromPackage(sourceFile *ast.SourceFile, name string, pkg string) bool {
 	if sourceFile == nil || name == "" || pkg == "" {
 		return false
 	}
-	sourceText := sourceFile.Text()
-	if sourceText == "" {
+	if sourceFile.Statements == nil {
 		return false
 	}
-	namePattern := regexp.QuoteMeta(name)
-	pkgPattern := regexp.QuoteMeta(pkg)
-	staticImportPattern := regexp.MustCompile(`(?s)import\s*\{[^}]*\b` + namePattern + `\b[^}]*\}\s*from\s*['"]` + pkgPattern + `['"]`)
-	if staticImportPattern.MatchString(sourceText) {
-		return true
+	for _, statement := range sourceFile.Statements.Nodes {
+		if statement == nil {
+			continue
+		}
+		if statement.Kind == ast.KindImportDeclaration {
+			importDeclaration := statement.AsImportDeclaration()
+			if importDeclaration == nil || importDeclaration.ModuleSpecifier == nil {
+				continue
+			}
+			if moduleSpecifierText(importDeclaration.ModuleSpecifier) != pkg {
+				continue
+			}
+			if staticImportContainsName(importDeclaration, name) {
+				return true
+			}
+			continue
+		}
+		if walkAst(statement, func(node *ast.Node) bool {
+			if node == nil || node.Kind != ast.KindVariableDeclaration {
+				return false
+			}
+			variableDeclaration := node.AsVariableDeclaration()
+			if variableDeclaration == nil || variableDeclaration.Initializer == nil || variableDeclaration.Name() == nil {
+				return false
+			}
+			if !isImportCallFromPackage(variableDeclaration.Initializer, pkg) {
+				return false
+			}
+			return dynamicImportBindingContainsName(variableDeclaration.Name(), name)
+		}) {
+			return true
+		}
 	}
-	dynamicImportPattern := regexp.MustCompile(`(?s)\{[^}]*\b` + namePattern + `\b[^}]*\}\s*=\s*import\(\s*['"]` + pkgPattern + `['"]\s*\)`)
-	return dynamicImportPattern.MatchString(sourceText)
+	return false
 }
 
 func allowEntryMatches(entry noDeprecatedAllowEntry, diagnosticName string, symbol *ast.Symbol, sourceFile *ast.SourceFile) bool {
@@ -623,7 +840,7 @@ func bindingElementPropertyName(bindingElement *ast.BindingElement) string {
 }
 
 func resolveConstantPropertyName(ctx rule.RuleContext, node *ast.Node, depth int, seen map[*ast.Symbol]bool) (string, bool) {
-	if ctx.TypeChecker == nil || node == nil || depth > 8 {
+	if ctx.TypeChecker == nil || node == nil || depth > maxConstantPropertyResolveDepth {
 		return "", false
 	}
 	node = ast.SkipParentheses(node)
@@ -778,49 +995,77 @@ func objectBindingPatternSourceType(ctx rule.RuleContext, objectBindingPatternNo
 	return nil
 }
 
-func deprecatedInfoByNameInSource(sourceFile *ast.SourceFile, name string) (bool, string) {
-	if sourceFile == nil || name == "" {
-		return false, ""
+func isPropertyLikeDeclaration(node *ast.Node) bool {
+	if node == nil {
+		return false
 	}
-	text := sourceFile.Text()
-	if text == "" {
-		return false, ""
+	switch node.Kind {
+	case ast.KindPropertyDeclaration,
+		ast.KindPropertySignature,
+		ast.KindMethodDeclaration,
+		ast.KindMethodSignature,
+		ast.KindGetAccessor,
+		ast.KindSetAccessor:
+		return true
+	default:
+		return false
 	}
-	pattern := regexp.MustCompile(`(?s)@deprecated\s*([\s\S]*?)\*/[\s\S]{0,200}\b` + regexp.QuoteMeta(name) + `\b`)
-	matches := pattern.FindAllStringSubmatch(text, -1)
-	if len(matches) == 0 {
-		return false, ""
-	}
-	last := matches[len(matches)-1]
-	if len(last) < 2 {
-		return true, ""
-	}
-	return true, cleanupDeprecatedReason(last[1])
 }
 
-func deprecatedReasonByNameInSource(sourceFile *ast.SourceFile, name string) string {
-	_, reason := deprecatedInfoByNameInSource(sourceFile, name)
+func declarationNameNode(node *ast.Node) *ast.Node {
+	if node == nil {
+		return nil
+	}
+	if node.Kind == ast.KindVariableDeclaration {
+		variableDeclaration := node.AsVariableDeclaration()
+		if variableDeclaration == nil {
+			return nil
+		}
+		return variableDeclaration.Name()
+	}
+	return node.Name()
+}
+
+func deprecatedInfoByNameInSource(ctx rule.RuleContext, name string, propertyOnly bool) (bool, string) {
+	if ctx.TypeChecker == nil || ctx.SourceFile == nil || name == "" {
+		return false, ""
+	}
+	targetName := normalizeComparableName(name)
+	if targetName == "" {
+		return false, ""
+	}
+	found := false
+	reason := ""
+	walkAst(ctx.SourceFile.AsNode(), func(node *ast.Node) bool {
+		if node == nil {
+			return false
+		}
+		if propertyOnly && !isPropertyLikeDeclaration(node) {
+			return false
+		}
+		nameNode := declarationNameNode(node)
+		if nameNode == nil || normalizeComparableName(nodeNameText(nameNode)) != targetName {
+			return false
+		}
+		if !ctx.TypeChecker.IsDeprecatedDeclaration(node) {
+			return false
+		}
+		found = true
+		if reason == "" {
+			reason = deprecatedReasonFromDeclaration(node)
+		}
+		return reason != ""
+	})
+	return found, reason
+}
+
+func deprecatedReasonByNameInSource(ctx rule.RuleContext, name string) string {
+	_, reason := deprecatedInfoByNameInSource(ctx, name, false)
 	return reason
 }
 
-func deprecatedPropertyInfoByNameInSource(sourceFile *ast.SourceFile, name string) (bool, string) {
-	if sourceFile == nil || name == "" {
-		return false, ""
-	}
-	sourceText := sourceFile.Text()
-	if sourceText == "" {
-		return false, ""
-	}
-	propertyPattern := regexp.MustCompile(`(?s)@deprecated\s*([\s\S]*?)\*/\s*(?:readonly\s+)?(?:(?:public|private|protected|static|accessor)\s+)*['"]?` + regexp.QuoteMeta(name) + `['"]?\s*(?:\?|!)?\s*:`)
-	matches := propertyPattern.FindAllStringSubmatch(sourceText, -1)
-	if len(matches) == 0 {
-		return false, ""
-	}
-	last := matches[len(matches)-1]
-	if len(last) < 2 {
-		return true, ""
-	}
-	return true, cleanupDeprecatedReason(last[1])
+func deprecatedPropertyInfoByNameInSource(ctx rule.RuleContext, name string) (bool, string) {
+	return deprecatedInfoByNameInSource(ctx, name, true)
 }
 
 var NoDeprecatedRule = rule.CreateRule(rule.Rule{
@@ -880,7 +1125,7 @@ var NoDeprecatedRule = rule.CreateRule(rule.Rule{
 				}
 			}
 			if message.Id != "deprecatedWithReason" {
-				if reason := deprecatedReasonByNameInSource(ctx.SourceFile, name); reason != "" {
+				if reason := deprecatedReasonByNameInSource(ctx, name); reason != "" {
 					message = buildDeprecatedWithReasonMessage(name, reason)
 				}
 			}
@@ -945,7 +1190,7 @@ var NoDeprecatedRule = rule.CreateRule(rule.Rule{
 					}
 				}
 				isDeprecated := symbolIsDeprecated(ctx.TypeChecker, propertySymbol)
-				sourceDeprecated, sourceReason := deprecatedPropertyInfoByNameInSource(ctx.SourceFile, nameText)
+				sourceDeprecated, sourceReason := deprecatedPropertyInfoByNameInSource(ctx, nameText)
 				if !isDeprecated && !sourceDeprecated {
 					return
 				}

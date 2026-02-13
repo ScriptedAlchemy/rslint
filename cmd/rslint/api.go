@@ -7,10 +7,8 @@ import (
 	"fmt"
 	"os"
 	"sort"
-	"strings"
 	"sync"
 
-	"github.com/bmatcuk/doublestar/v4"
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/microsoft/typescript-go/shim/bundled"
 	"github.com/microsoft/typescript-go/shim/compiler"
@@ -73,51 +71,70 @@ type programCache struct {
 }
 
 func buildRuleParserOptions(languageOptions *api.LanguageOptions) *rule.RuleParserOptions {
-	if languageOptions == nil || languageOptions.ParserOptions == nil {
-		return nil
-	}
-	parserOptions := languageOptions.ParserOptions
-	result := &rule.RuleParserOptions{
-		SourceType:             parserOptions.SourceType,
-		EcmaVersion:            parserOptions.EcmaVersion,
-		IsolatedDeclarations:   parserOptions.IsolatedDeclarations,
-		ExperimentalDecorators: parserOptions.ExperimentalDecorators,
-		EmitDecoratorMetadata:  parserOptions.EmitDecoratorMetadata,
-		JSXPragma:              parserOptions.JSXPragma,
-		JSXFragmentName:        parserOptions.JSXFragmentName,
-	}
-	if parserOptions.EcmaFeatures != nil {
-		result.EcmaFeatures = &rule.RuleEcmaFeatures{
-			GlobalReturn: parserOptions.EcmaFeatures.GlobalReturn,
-			JSX:          parserOptions.EcmaFeatures.JSX,
-		}
-	}
-	return result
+	return rslintconfig.BuildRuleParserOptions(apiLanguageOptionsToConfig(languageOptions))
 }
 
 func buildRuleGlobals(languageOptions *api.LanguageOptions) map[string]bool {
-	if languageOptions == nil || len(languageOptions.Globals) == 0 {
+	return rslintconfig.BuildRuleGlobals(apiLanguageOptionsToConfig(languageOptions))
+}
+
+func apiEcmaFeaturesToConfig(features *api.EcmaFeatures) *rslintconfig.EcmaFeatures {
+	if features == nil {
 		return nil
 	}
-	globals := map[string]bool{}
-	for name, raw := range languageOptions.Globals {
-		switch v := raw.(type) {
-		case bool:
-			// ESLint semantics: both true (writable) and false (readonly) declare a global.
-			globals[name] = true
-		case string:
-			lower := strings.ToLower(v)
-			if lower != "off" && lower != "false" {
-				globals[name] = true
-			}
-		default:
-			globals[name] = true
+	return &rslintconfig.EcmaFeatures{
+		GlobalReturn:    features.GlobalReturn,
+		JSX:             features.JSX,
+		GlobalReturnSet: features.GlobalReturnSet,
+		JSXSet:          features.JSXSet,
+	}
+}
+
+func apiParserOptionsToConfig(options *api.ParserOptions) *rslintconfig.ParserOptions {
+	if options == nil {
+		return nil
+	}
+	var projectPaths rslintconfig.ProjectPaths
+	if options.Project != nil {
+		projectPaths = append(rslintconfig.ProjectPaths{}, options.Project...)
+	}
+	return &rslintconfig.ParserOptions{
+		ProjectService:            options.ProjectService,
+		Project:                   projectPaths,
+		TsconfigRootDir:           options.TsconfigRootDir,
+		SourceType:                options.SourceType,
+		EcmaVersion:               options.EcmaVersion,
+		IsolatedDeclarations:      options.IsolatedDeclarations,
+		ExperimentalDecorators:    options.ExperimentalDecorators,
+		EmitDecoratorMetadata:     options.EmitDecoratorMetadata,
+		JSXPragma:                 options.JSXPragma,
+		JSXFragmentName:           options.JSXFragmentName,
+		EcmaFeatures:              apiEcmaFeaturesToConfig(options.EcmaFeatures),
+		ProjectServiceSet:         options.ProjectServiceSet,
+		IsolatedDeclarationsSet:   options.IsolatedDeclarationsSet,
+		ExperimentalDecoratorsSet: options.ExperimentalDecoratorsSet,
+		EmitDecoratorMetadataSet:  options.EmitDecoratorMetadataSet,
+	}
+}
+
+func apiLanguageOptionsToConfig(languageOptions *api.LanguageOptions) *rslintconfig.LanguageOptions {
+	if languageOptions == nil {
+		return nil
+	}
+
+	result := &rslintconfig.LanguageOptions{
+		ParserOptions: apiParserOptionsToConfig(languageOptions.ParserOptions),
+	}
+	if len(languageOptions.Globals) > 0 {
+		result.Globals = make(map[string]interface{}, len(languageOptions.Globals))
+		for key, value := range languageOptions.Globals {
+			result.Globals[key] = value
 		}
 	}
-	if len(globals) == 0 {
+	if result.ParserOptions == nil && len(result.Globals) == 0 {
 		return nil
 	}
-	return globals
+	return result
 }
 
 func configLanguageOptionsToAPI(languageOptions *rslintconfig.LanguageOptions) *api.LanguageOptions {
@@ -169,222 +186,56 @@ func configLanguageOptionsToAPI(languageOptions *rslintconfig.LanguageOptions) *
 	return result
 }
 
-func cloneEcmaFeatures(features *api.EcmaFeatures) *api.EcmaFeatures {
-	if features == nil {
-		return nil
-	}
-	return &api.EcmaFeatures{
-		GlobalReturn:    features.GlobalReturn,
-		JSX:             features.JSX,
-		GlobalReturnSet: features.GlobalReturnSet,
-		JSXSet:          features.JSXSet,
-	}
-}
-
-func cloneParserOptions(options *api.ParserOptions) *api.ParserOptions {
-	if options == nil {
-		return nil
-	}
-	parserOptions := &api.ParserOptions{
-		ProjectService:            options.ProjectService,
-		Project:                   append(api.ProjectPaths(nil), options.Project...),
-		TsconfigRootDir:           options.TsconfigRootDir,
-		SourceType:                options.SourceType,
-		EcmaVersion:               options.EcmaVersion,
-		IsolatedDeclarations:      options.IsolatedDeclarations,
-		ExperimentalDecorators:    options.ExperimentalDecorators,
-		EmitDecoratorMetadata:     options.EmitDecoratorMetadata,
-		JSXPragma:                 options.JSXPragma,
-		JSXFragmentName:           options.JSXFragmentName,
-		EcmaFeatures:              cloneEcmaFeatures(options.EcmaFeatures),
-		ProjectServiceSet:         options.ProjectServiceSet,
-		IsolatedDeclarationsSet:   options.IsolatedDeclarationsSet,
-		ExperimentalDecoratorsSet: options.ExperimentalDecoratorsSet,
-		EmitDecoratorMetadataSet:  options.EmitDecoratorMetadataSet,
-	}
-	return parserOptions
-}
-
-func cloneLanguageOptions(options *api.LanguageOptions) *api.LanguageOptions {
-	if options == nil {
-		return nil
-	}
-	languageOptions := &api.LanguageOptions{
-		ParserOptions: cloneParserOptions(options.ParserOptions),
-	}
-	if len(options.Globals) > 0 {
-		languageOptions.Globals = make(map[string]interface{}, len(options.Globals))
-		for key, value := range options.Globals {
-			languageOptions.Globals[key] = value
-		}
-	}
-	if languageOptions.ParserOptions == nil && len(languageOptions.Globals) == 0 {
-		return nil
-	}
-	return languageOptions
-}
-
-func mergeParserOptions(base *api.ParserOptions, override *api.ParserOptions) *api.ParserOptions {
-	if base == nil {
-		return cloneParserOptions(override)
-	}
-	if override == nil {
-		return cloneParserOptions(base)
+func withFallbackConfigDirectory(configEntries rslintconfig.RslintConfig, configDirectory string) rslintconfig.RslintConfig {
+	if configDirectory == "" {
+		return configEntries
 	}
 
-	result := cloneParserOptions(base)
-	if override.ProjectServiceSet || override.ProjectService {
-		result.ProjectService = override.ProjectService
-		result.ProjectServiceSet = override.ProjectServiceSet || override.ProjectService
-	}
-	if override.Project != nil {
-		result.Project = append(api.ProjectPaths(nil), override.Project...)
-	}
-	if override.TsconfigRootDir != "" {
-		result.TsconfigRootDir = override.TsconfigRootDir
-	}
-	if override.SourceType != "" {
-		result.SourceType = override.SourceType
-	}
-	if override.EcmaVersion != 0 {
-		result.EcmaVersion = override.EcmaVersion
-	}
-	if override.IsolatedDeclarationsSet || override.IsolatedDeclarations {
-		result.IsolatedDeclarations = override.IsolatedDeclarations
-		result.IsolatedDeclarationsSet = override.IsolatedDeclarationsSet || override.IsolatedDeclarations
-	}
-	if override.ExperimentalDecoratorsSet || override.ExperimentalDecorators {
-		result.ExperimentalDecorators = override.ExperimentalDecorators
-		result.ExperimentalDecoratorsSet = override.ExperimentalDecoratorsSet || override.ExperimentalDecorators
-	}
-	if override.EmitDecoratorMetadataSet || override.EmitDecoratorMetadata {
-		result.EmitDecoratorMetadata = override.EmitDecoratorMetadata
-		result.EmitDecoratorMetadataSet = override.EmitDecoratorMetadataSet || override.EmitDecoratorMetadata
-	}
-	if override.JSXPragma != "" {
-		result.JSXPragma = override.JSXPragma
-	}
-	if override.JSXFragmentName != "" {
-		result.JSXFragmentName = override.JSXFragmentName
-	}
-	if override.EcmaFeatures != nil {
-		if result.EcmaFeatures == nil {
-			result.EcmaFeatures = &api.EcmaFeatures{}
-		}
-		if override.EcmaFeatures.GlobalReturnSet || override.EcmaFeatures.GlobalReturn {
-			result.EcmaFeatures.GlobalReturn = override.EcmaFeatures.GlobalReturn
-			result.EcmaFeatures.GlobalReturnSet = override.EcmaFeatures.GlobalReturnSet || override.EcmaFeatures.GlobalReturn
-		}
-		if override.EcmaFeatures.JSXSet || override.EcmaFeatures.JSX {
-			result.EcmaFeatures.JSX = override.EcmaFeatures.JSX
-			result.EcmaFeatures.JSXSet = override.EcmaFeatures.JSXSet || override.EcmaFeatures.JSX
+	needsCopy := false
+	for _, entry := range configEntries {
+		if entry.ConfigDirectory == "" {
+			needsCopy = true
+			break
 		}
 	}
-	return result
-}
-
-func mergeLanguageOptions(base *api.LanguageOptions, override *api.LanguageOptions) *api.LanguageOptions {
-	if base == nil {
-		return cloneLanguageOptions(override)
-	}
-	if override == nil {
-		return cloneLanguageOptions(base)
+	if !needsCopy {
+		return configEntries
 	}
 
-	result := cloneLanguageOptions(base)
-	if len(override.Globals) > 0 {
-		if result.Globals == nil {
-			result.Globals = map[string]interface{}{}
-		}
-		for key, value := range override.Globals {
-			result.Globals[key] = value
+	cloned := append(rslintconfig.RslintConfig(nil), configEntries...)
+	for i := range cloned {
+		if cloned[i].ConfigDirectory == "" {
+			cloned[i].ConfigDirectory = configDirectory
 		}
 	}
-	result.ParserOptions = mergeParserOptions(result.ParserOptions, override.ParserOptions)
-	if result.ParserOptions == nil && len(result.Globals) == 0 {
-		return nil
-	}
-	return result
-}
-
-func patternMatchesFile(pattern string, filePath string, normalizedPath string) bool {
-	candidates := []string{}
-	appendCandidate := func(candidate string) {
-		if candidate == "" {
-			return
-		}
-		candidates = append(candidates, candidate)
-		if !strings.HasPrefix(candidate, "./") {
-			candidates = append(candidates, "./"+candidate)
-		}
-	}
-	appendCandidate(normalizedPath)
-	appendCandidate(strings.ReplaceAll(normalizedPath, "\\", "/"))
-	appendCandidate(filePath)
-	appendCandidate(strings.ReplaceAll(filePath, "\\", "/"))
-
-	seen := map[string]bool{}
-	for _, candidate := range candidates {
-		if seen[candidate] {
-			continue
-		}
-		seen[candidate] = true
-		if matched, err := doublestar.Match(pattern, candidate); err == nil && matched {
-			return true
-		}
-	}
-	return false
-}
-
-func configEntryMatchesFile(entry rslintconfig.ConfigEntry, filePath string, configDirectory string) bool {
-	normalizedPath := tspath.NormalizePath(tspath.ConvertToRelativePath(filePath, tspath.ComparePathsOptions{
-		CurrentDirectory:          configDirectory,
-		UseCaseSensitiveFileNames: true,
-	}))
-
-	for _, ignorePattern := range entry.Ignores {
-		if patternMatchesFile(ignorePattern, filePath, normalizedPath) {
-			return false
-		}
-	}
-
-	if len(entry.Files) == 0 {
-		return true
-	}
-
-	for _, filePattern := range entry.Files {
-		if patternMatchesFile(filePattern, filePath, normalizedPath) {
-			return true
-		}
-	}
-	return false
+	return cloned
 }
 
 func resolveRuleLanguageOptions(requestOptions *api.LanguageOptions, configEntries rslintconfig.RslintConfig) *api.LanguageOptions {
-	var resolved *api.LanguageOptions
+	var resolved *rslintconfig.LanguageOptions
 	for _, entry := range configEntries {
-		resolved = mergeLanguageOptions(resolved, configLanguageOptionsToAPI(entry.LanguageOptions))
+		resolved = rslintconfig.MergeLanguageOptions(resolved, entry.LanguageOptions)
 	}
-	return mergeLanguageOptions(resolved, requestOptions)
+	resolved = rslintconfig.MergeLanguageOptions(resolved, apiLanguageOptionsToConfig(requestOptions))
+	return configLanguageOptionsToAPI(resolved)
 }
 
 func resolveRuleLanguageOptionsForFile(requestOptions *api.LanguageOptions, configEntries rslintconfig.RslintConfig, filePath string, configDirectory string) *api.LanguageOptions {
-	var resolved *api.LanguageOptions
-	for _, entry := range configEntries {
-		if !configEntryMatchesFile(entry, filePath, configDirectory) {
-			continue
-		}
-		resolved = mergeLanguageOptions(resolved, configLanguageOptionsToAPI(entry.LanguageOptions))
-	}
-	return mergeLanguageOptions(resolved, requestOptions)
+	entries := withFallbackConfigDirectory(configEntries, configDirectory)
+	resolved := rslintconfig.ResolveLanguageOptionsForFile(entries, filePath)
+	resolved = rslintconfig.MergeLanguageOptions(resolved, apiLanguageOptionsToConfig(requestOptions))
+	return configLanguageOptionsToAPI(resolved)
 }
 
 func entryMatchesAnyTargetFile(entry rslintconfig.ConfigEntry, targetFiles []string, configDirectory string) bool {
 	if len(targetFiles) == 0 {
 		return true
 	}
+	if entry.ConfigDirectory == "" {
+		entry.ConfigDirectory = configDirectory
+	}
 	for _, targetFile := range targetFiles {
-		if configEntryMatchesFile(entry, targetFile, configDirectory) {
+		if rslintconfig.ConfigEntryMatchesFile(entry, targetFile) {
 			return true
 		}
 	}
@@ -393,6 +244,7 @@ func entryMatchesAnyTargetFile(entry rslintconfig.ConfigEntry, targetFiles []str
 
 func collectTsConfigsForRequest(configEntries rslintconfig.RslintConfig, requestOptions *api.LanguageOptions, configDirectory string, fs interface{ FileExists(path string) bool }, targetFiles []string) ([]string, bool) {
 	hasExplicitProjectOverride := requestOptions != nil && requestOptions.ParserOptions != nil && requestOptions.ParserOptions.Project != nil
+	requestConfigOptions := apiLanguageOptionsToConfig(requestOptions)
 	collected := []string{}
 	seen := map[string]bool{}
 
@@ -400,16 +252,19 @@ func collectTsConfigsForRequest(configEntries rslintconfig.RslintConfig, request
 		if !entryMatchesAnyTargetFile(entry, targetFiles, configDirectory) {
 			continue
 		}
-		effectiveLanguageOptions := mergeLanguageOptions(configLanguageOptionsToAPI(entry.LanguageOptions), requestOptions)
+		effectiveLanguageOptions := rslintconfig.MergeLanguageOptions(entry.LanguageOptions, requestConfigOptions)
 		if effectiveLanguageOptions == nil || effectiveLanguageOptions.ParserOptions == nil {
 			continue
 		}
-		baseDir := configDirectory
-		if effectiveLanguageOptions.ParserOptions.TsconfigRootDir != "" {
-			baseDir = tspath.ResolvePath(configDirectory, effectiveLanguageOptions.ParserOptions.TsconfigRootDir)
+		baseDir := entry.ConfigDirectory
+		if baseDir == "" {
+			baseDir = configDirectory
 		}
-		for _, config := range effectiveLanguageOptions.ParserOptions.Project {
-			tsconfigPath := tspath.ResolvePath(baseDir, config)
+		if effectiveLanguageOptions.ParserOptions.TsconfigRootDir != "" {
+			baseDir = tspath.ResolvePath(baseDir, effectiveLanguageOptions.ParserOptions.TsconfigRootDir)
+		}
+		for _, projectPath := range effectiveLanguageOptions.ParserOptions.Project {
+			tsconfigPath := tspath.ResolvePath(baseDir, projectPath)
 			if !fs.FileExists(tsconfigPath) || seen[tsconfigPath] {
 				continue
 			}

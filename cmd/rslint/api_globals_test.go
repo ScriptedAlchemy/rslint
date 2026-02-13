@@ -194,30 +194,37 @@ func TestMergeParserOptionsAllowsExplicitFalseOverrides(t *testing.T) {
 		t.Fatalf("failed to unmarshal override parser options: %v", err)
 	}
 
-	merged := mergeParserOptions(&base, &override)
-	if merged == nil {
+	merged := rslintconfig.MergeLanguageOptions(
+		&rslintconfig.LanguageOptions{
+			ParserOptions: apiParserOptionsToConfig(&base),
+		},
+		&rslintconfig.LanguageOptions{
+			ParserOptions: apiParserOptionsToConfig(&override),
+		},
+	)
+	if merged == nil || merged.ParserOptions == nil {
 		t.Fatalf("expected merged parser options")
 	}
 
-	if merged.ProjectService {
+	if merged.ParserOptions.ProjectService {
 		t.Fatalf("expected projectService to be false after override")
 	}
-	if merged.IsolatedDeclarations {
+	if merged.ParserOptions.IsolatedDeclarations {
 		t.Fatalf("expected isolatedDeclarations to be false after override")
 	}
-	if merged.ExperimentalDecorators {
+	if merged.ParserOptions.ExperimentalDecorators {
 		t.Fatalf("expected experimentalDecorators to be false after override")
 	}
-	if merged.EmitDecoratorMetadata {
+	if merged.ParserOptions.EmitDecoratorMetadata {
 		t.Fatalf("expected emitDecoratorMetadata to be false after override")
 	}
-	if merged.EcmaFeatures == nil {
+	if merged.ParserOptions.EcmaFeatures == nil {
 		t.Fatalf("expected ecmaFeatures in merged parser options")
 	}
-	if merged.EcmaFeatures.GlobalReturn {
+	if merged.ParserOptions.EcmaFeatures.GlobalReturn {
 		t.Fatalf("expected ecmaFeatures.globalReturn to be false after override")
 	}
-	if merged.EcmaFeatures.JSX {
+	if merged.ParserOptions.EcmaFeatures.JSX {
 		t.Fatalf("expected ecmaFeatures.jsx to be false after override")
 	}
 }
@@ -237,12 +244,19 @@ func TestMergeParserOptionsProjectOverrideSemantics(t *testing.T) {
 		t.Fatalf("failed to unmarshal clear override parser options: %v", err)
 	}
 
-	mergedCleared := mergeParserOptions(&base, &clearOverride)
-	if mergedCleared == nil {
+	mergedCleared := rslintconfig.MergeLanguageOptions(
+		&rslintconfig.LanguageOptions{
+			ParserOptions: apiParserOptionsToConfig(&base),
+		},
+		&rslintconfig.LanguageOptions{
+			ParserOptions: apiParserOptionsToConfig(&clearOverride),
+		},
+	)
+	if mergedCleared == nil || mergedCleared.ParserOptions == nil {
 		t.Fatalf("expected merged parser options for clear override")
 	}
-	if len(mergedCleared.Project) != 0 {
-		t.Fatalf("expected explicit empty project override to clear projects, got %#v", mergedCleared.Project)
+	if len(mergedCleared.ParserOptions.Project) != 0 {
+		t.Fatalf("expected explicit empty project override to clear projects, got %#v", mergedCleared.ParserOptions.Project)
 	}
 
 	var keepOverride ipc.ParserOptions
@@ -252,21 +266,49 @@ func TestMergeParserOptionsProjectOverrideSemantics(t *testing.T) {
 		t.Fatalf("failed to unmarshal keep override parser options: %v", err)
 	}
 
-	mergedKept := mergeParserOptions(&base, &keepOverride)
-	if mergedKept == nil {
+	mergedKept := rslintconfig.MergeLanguageOptions(
+		&rslintconfig.LanguageOptions{
+			ParserOptions: apiParserOptionsToConfig(&base),
+		},
+		&rslintconfig.LanguageOptions{
+			ParserOptions: apiParserOptionsToConfig(&keepOverride),
+		},
+	)
+	if mergedKept == nil || mergedKept.ParserOptions == nil {
 		t.Fatalf("expected merged parser options for keep override")
 	}
-	if len(mergedKept.Project) != 1 || mergedKept.Project[0] != "./tsconfig.base.json" {
-		t.Fatalf("expected missing project override to keep base project, got %#v", mergedKept.Project)
+	if len(mergedKept.ParserOptions.Project) != 1 || mergedKept.ParserOptions.Project[0] != "./tsconfig.base.json" {
+		t.Fatalf("expected missing project override to keep base project, got %#v", mergedKept.ParserOptions.Project)
 	}
 }
 
 func TestPatternMatchesFileSupportsDotPrefixedPatterns(t *testing.T) {
-	if !patternMatchesFile("./src/**/*.ts", "/repo/src/main.ts", "src/main.ts") {
+	if !rslintconfig.PatternMatchesFile("./src/**/*.ts", "/repo/src/main.ts", "src/main.ts") {
 		t.Fatalf("expected ./src/**/*.ts to match src/main.ts")
 	}
-	if patternMatchesFile("./src/**/*.ts", "/repo/scripts/main.ts", "scripts/main.ts") {
+	if rslintconfig.PatternMatchesFile("./src/**/*.ts", "/repo/scripts/main.ts", "scripts/main.ts") {
 		t.Fatalf("did not expect ./src/**/*.ts to match scripts/main.ts")
+	}
+}
+
+func TestResolveRuleLanguageOptionsForFileConfigDirectoryFallback(t *testing.T) {
+	configEntries := rslintconfig.RslintConfig{
+		{
+			Files: []string{"src/**/*.ts"},
+			LanguageOptions: &rslintconfig.LanguageOptions{
+				Globals: map[string]interface{}{
+					"SrcGlobal": "readonly",
+				},
+			},
+		},
+	}
+
+	resolved := resolveRuleLanguageOptionsForFile(nil, configEntries, "/repo/src/main.ts", "/repo")
+	if resolved == nil {
+		t.Fatalf("expected language options to resolve with configDirectory fallback")
+	}
+	if resolved.Globals["SrcGlobal"] != "readonly" {
+		t.Fatalf("expected SrcGlobal with configDirectory fallback, got %#v", resolved.Globals)
 	}
 }
 

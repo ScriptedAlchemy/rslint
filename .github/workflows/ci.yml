@@ -30,7 +30,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [ubuntu-latest, windows-latest, macos-latest]
+        runner:
+          [
+            rspack-ubuntu-22.04-large,
+            rspack-windows-2022-large,
+            rspack-darwin-14-medium,
+          ]
         go-version: ['1.25.0']
     steps:
       - name: Checkout code
@@ -38,15 +43,6 @@ jobs:
         with:
           submodules: true
           fetch-depth: 1
-      - name: Free disk space (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          echo "Disk usage before cleanup:"
-          df -h
-          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /opt/hostedtoolcache/CodeQL
-          sudo apt-get clean
-          echo "Disk usage after cleanup:"
-          df -h
       - name: Setup Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
@@ -57,13 +53,6 @@ jobs:
         with:
           go-version: ${{ matrix.go-version }}
           cache-name: test-go
-      - name: Configure Go temp/cache paths (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          mkdir -p "$RUNNER_TEMP/go-build" "$RUNNER_TEMP/go-cache"
-          echo "GOTMPDIR=$RUNNER_TEMP/go-build" >> "$GITHUB_ENV"
-          echo "GOCACHE=$RUNNER_TEMP/go-cache" >> "$GITHUB_ENV"
-          rm -rf /tmp/go-build*
       - name: Unit Test (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -93,48 +82,17 @@ jobs:
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
 
-      - name: Unit Test (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          batch_size=20
-          batch=()
-
-          while IFS= read -r pkg; do
-            [ -z "$pkg" ] && continue
-            batch+=("$pkg")
-            if [ "${#batch[@]}" -ge "$batch_size" ]; then
-              echo "Running batch of ${#batch[@]} packages..."
-              go test -p 2 -parallel 4 "${batch[@]}"
-              go clean -cache -testcache
-              batch=()
-            fi
-          done < <(go list ./internal/...)
-
-          if [ "${#batch[@]}" -gt 0 ]; then
-            echo "Running final batch of ${#batch[@]} packages..."
-            go test -p 2 -parallel 4 "${batch[@]}"
-          fi
-
-      - name: Unit Test (macOS)
-        if: runner.os == 'macOS'
-        run: go test -parallel 4 ./internal/...
+      - name: Unit Test
+        if: runner.os != 'Windows'
+        run: go test -parallel 8 ./internal/...
   lint:
     name: Lint&Check
-    runs-on: ubuntu-latest
+    runs-on: rspack-ubuntu-22.04-large
     steps:
       - name: Checkout code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           submodules: true
-
-      - name: Free disk space
-        run: |
-          echo "Disk usage before cleanup:"
-          df -h
-          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /opt/hostedtoolcache/CodeQL
-          sudo apt-get clean
-          echo "Disk usage after cleanup:"
-          df -h
 
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
@@ -145,18 +103,11 @@ jobs:
           go-version: 1.25.0
           cache-name: go-lint
 
-      - name: Configure Go temp/cache paths
-        run: |
-          mkdir -p "$RUNNER_TEMP/go-build" "$RUNNER_TEMP/go-cache"
-          echo "GOTMPDIR=$RUNNER_TEMP/go-build" >> "$GITHUB_ENV"
-          echo "GOCACHE=$RUNNER_TEMP/go-cache" >> "$GITHUB_ENV"
-          rm -rf /tmp/go-build*
-
       - name: golangci-lint
         uses: golangci/golangci-lint-action@4afd733a84b1f43292c63897423277bb7f4313a9 # v8
         with:
           version: v2.4.0
-          args: -j 2 --timeout=20m ./cmd/... ./internal/...
+          args: --timeout=5m ./cmd/... ./internal/...
 
       - name: go vet
         run: npm run lint:go
@@ -173,7 +124,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [rspack-ubuntu-22.04-large, windows-latest]
         go-version: ['1.25.0']
     steps:
       - name: Checkout code
@@ -208,21 +159,8 @@ jobs:
       - name: Install xvfb and dependencies (Linux only)
         if: runner.os == 'Linux'
         run: |
-          alsa_pkg="libasound2"
-          candidate="$(apt-cache policy libasound2 | awk '/Candidate:/ {print $2}')"
-          if [ -z "$candidate" ] || [ "$candidate" = "(none)" ]; then
-            alsa_pkg="libasound2t64"
-          fi
-          for attempt in 1 2 3; do
-            sudo apt-get update && sudo apt-get install -y --no-install-recommends "$alsa_pkg" libgbm1 libgtk-3-0 libnss3 xvfb && break
-            if [ "$attempt" -lt 3 ]; then
-              echo "apt install failed, retrying..."
-              sleep $((attempt * 10))
-            else
-              echo "apt install failed after retries"
-              exit 1
-            fi
-          done
+          sudo apt update
+          sudo apt install -y libasound2 libgbm1 libgtk-3-0 libnss3 xvfb
 
       - name: VSCode Test Cache
         uses: lynx-infra/cache@5c6160a6a4c7fca80a2f3057bb9dfc9513fcb732
@@ -242,7 +180,7 @@ jobs:
 
   test-wasm:
     name: Test WASM
-    runs-on: ubuntu-latest
+    runs-on: rspack-ubuntu-22.04-large
     steps:
       - name: Checkout code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4

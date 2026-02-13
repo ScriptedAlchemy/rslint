@@ -2,7 +2,7 @@ import * as path from 'path';
 
 import { runTests } from '@vscode/test-electron';
 
-async function main(): Promise<void> {
+async function main() {
   try {
     const extensionDevelopmentPath = path.resolve(__dirname, '..');
     const testWorkspace = path.resolve(
@@ -17,7 +17,6 @@ async function main(): Promise<void> {
       extensionDevelopmentPath,
       extensionTestsPath,
       launchArgs: ['--disable-extensions', testWorkspace],
-      timeout: 120000,
       version: 'stable',
     });
 
@@ -25,7 +24,6 @@ async function main(): Promise<void> {
       extensionDevelopmentPath,
       extensionTestsPath,
       launchArgs: ['--disable-extensions', testWorkspace],
-      timeout: 120000,
       version: '1.106.3',
     });
   } catch (err) {
@@ -35,4 +33,4 @@ async function main(): Promise<void> {
   }
 }
 
-void main();
+main();

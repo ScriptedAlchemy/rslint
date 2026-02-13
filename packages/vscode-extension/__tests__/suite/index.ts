@@ -5,7 +5,7 @@ import Mocha from 'mocha';
 export function run(
   testPath: string,
   callback: (error: unknown, failures?: number) => void,
-): void {
+) {
   const files = fastGlob.sync('**/*.test.js', {
     cwd: testPath,
   });

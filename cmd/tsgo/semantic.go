@@ -80,15 +80,15 @@ type PrimTypes struct {
 	Never     checker.TypeId `json:"never"`
 }
 type Semantic struct {
-	Symtab       map[ast.SymbolId]SymbolInfo      `json:"symtab"`
-	Typetab      map[checker.TypeId]TypeInfo      `json:"typetab"`
-	Sym2type     map[ast.SymbolId]checker.TypeId  `json:"sym2type"`
-	AliasSymbols map[ast.SymbolId]ast.SymbolId    `json:"alias_symbols"`
-	Node2sym     map[NodeReference]ast.SymbolId   `json:"node2sym"`
-	Node2type    map[NodeReference]checker.TypeId `json:"node2type"`
-	Primtypes    PrimTypes                        `json:"primtypes"`
-	TypeExtra    TypeExtra                        `json:"type_extra"`
-	FuncData     FunctionData                     `json:"func_data"`
+	Symtab           map[ast.SymbolId]SymbolInfo      `json:"symtab"`
+	Typetab          map[checker.TypeId]TypeInfo      `json:"typetab"`
+	Sym2type         map[ast.SymbolId]checker.TypeId  `json:"sym2type"`
+	AliasSymbols     map[ast.SymbolId]ast.SymbolId    `json:"alias_symbols"`
+	Node2sym         map[NodeReference]ast.SymbolId   `json:"node2sym"`
+	Node2type        map[NodeReference]checker.TypeId `json:"node2type"`
+	Primtypes        PrimTypes                        `json:"primtypes"`
+	TypeExtra        TypeExtra                        `json:"type_extra"`
+	FuncData         FunctionData                     `json:"func_data"`
 	// ShorthandSymbols maps node reference to the value symbol for shorthand property assignments
 	// (node -> value_symbol_id)
 	ShorthandSymbols map[NodeReference]ast.SymbolId `json:"shorthand_symbols"`

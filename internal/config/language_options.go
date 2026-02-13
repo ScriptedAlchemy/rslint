@@ -145,6 +145,11 @@ func mergeLanguageOptions(base *LanguageOptions, override *LanguageOptions) *Lan
 	return result
 }
 
+// MergeLanguageOptions merges file-level language options with override precedence.
+func MergeLanguageOptions(base *LanguageOptions, override *LanguageOptions) *LanguageOptions {
+	return mergeLanguageOptions(base, override)
+}
+
 // ResolveLanguageOptionsForFile resolves file-level language options using the same
 // entry inclusion behavior as rule resolution.
 func ResolveLanguageOptionsForFile(config RslintConfig, filePath string) *LanguageOptions {
@@ -156,6 +161,11 @@ func ResolveLanguageOptionsForFile(config RslintConfig, filePath string) *Langua
 		resolved = mergeLanguageOptions(resolved, entry.LanguageOptions)
 	}
 	return resolved
+}
+
+// ConfigEntryMatchesFile reports whether a config entry applies to the file path.
+func ConfigEntryMatchesFile(entry ConfigEntry, filePath string) bool {
+	return configEntryMatchesFile(entry, filePath)
 }
 
 func configEntryMatchesFile(entry ConfigEntry, filePath string) bool {
@@ -183,6 +193,11 @@ func configEntryMatchesFile(entry ConfigEntry, filePath string) bool {
 		}
 	}
 	return false
+}
+
+// PatternMatchesFile matches the configured glob against normalized file candidates.
+func PatternMatchesFile(pattern string, filePath string, normalizedPath string) bool {
+	return patternMatchesFile(pattern, filePath, normalizedPath)
 }
 
 func patternMatchesFile(pattern string, filePath string, normalizedPath string) bool {
