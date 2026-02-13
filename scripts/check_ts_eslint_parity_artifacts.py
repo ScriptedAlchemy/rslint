@@ -711,6 +711,46 @@ def main() -> None:
 	if "Usage: bash scripts/run_ts_eslint_parity_gate.sh" not in gate_unknown_arg.stderr:
 		fail("parity gate unknown-arg stderr missing usage message")
 
+	# Quick gate npm command wrappers
+	gate_quick = subprocess.run(
+		["pnpm", "parity:ts-eslint:gate:quick"],
+		cwd=str(root),
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if gate_quick.returncode != expected_gate_red_exit:
+		fail(
+			"parity gate quick exit-code mismatch: "
+			f"expected={expected_gate_red_exit} actual={gate_quick.returncode}"
+		)
+
+	gate_quick_red = subprocess.run(
+		["pnpm", "parity:ts-eslint:gate:quick:red"],
+		cwd=str(root),
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if gate_quick_red.returncode != expected_gate_red_exit:
+		fail(
+			"parity gate quick:red exit-code mismatch: "
+			f"expected={expected_gate_red_exit} actual={gate_quick_red.returncode}"
+		)
+
+	gate_quick_yellow = subprocess.run(
+		["pnpm", "parity:ts-eslint:gate:quick:yellow"],
+		cwd=str(root),
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if gate_quick_yellow.returncode != expected_gate_yellow_exit:
+		fail(
+			"parity gate quick:yellow exit-code mismatch: "
+			f"expected={expected_gate_yellow_exit} actual={gate_quick_yellow.returncode}"
+		)
+
 	flagged = [row for row in tracker_rows if int(row.get("priority_score", 0)) > 0]
 	aligned = len(tracker_rows) - len(flagged)
 
