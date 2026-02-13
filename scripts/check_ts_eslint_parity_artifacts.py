@@ -1285,6 +1285,61 @@ def main() -> None:
 	)
 	gate_duplicate_skip_checks_lines = extract_nonempty_lines(gate_duplicate_skip_checks.stderr)
 
+	# Direct gate conflict-order precedence checks
+	gate_conflict_threshold_first = subprocess.run(
+		[
+			"bash",
+			str(root / "scripts/run_ts_eslint_parity_gate.sh"),
+			"--threshold=red",
+			"--skip-checks",
+			"--threshold=blue",
+			"--skip-checks",
+		],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if gate_conflict_threshold_first.returncode != 1:
+		fail("parity gate conflict threshold-first exit code must be 1")
+	if gate_conflict_threshold_first.stdout.strip():
+		fail("parity gate conflict threshold-first stdout must be empty")
+	assert_exact_error_plus_usage(
+		"parity gate conflict threshold-first stderr",
+		gate_conflict_threshold_first.stderr,
+		expected_gate_duplicate_threshold_line,
+		expected_gate_usage_line,
+	)
+	gate_conflict_threshold_first_lines = extract_nonempty_lines(gate_conflict_threshold_first.stderr)
+	if gate_conflict_threshold_first_lines != gate_duplicate_threshold_lines:
+		fail("parity gate conflict threshold-first stderr mismatch with duplicate-threshold baseline")
+
+	gate_conflict_skip_first = subprocess.run(
+		[
+			"bash",
+			str(root / "scripts/run_ts_eslint_parity_gate.sh"),
+			"--skip-checks",
+			"--threshold=red",
+			"--skip-checks",
+			"--threshold=blue",
+		],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if gate_conflict_skip_first.returncode != 1:
+		fail("parity gate conflict skip-first exit code must be 1")
+	if gate_conflict_skip_first.stdout.strip():
+		fail("parity gate conflict skip-first stdout must be empty")
+	assert_exact_error_plus_usage(
+		"parity gate conflict skip-first stderr",
+		gate_conflict_skip_first.stderr,
+		expected_gate_duplicate_skip_checks_line,
+		expected_gate_usage_line,
+	)
+	gate_conflict_skip_first_lines = extract_nonempty_lines(gate_conflict_skip_first.stderr)
+	if gate_conflict_skip_first_lines != gate_duplicate_skip_checks_lines:
+		fail("parity gate conflict skip-first stderr mismatch with duplicate-skip-checks baseline")
+
 	# Gate npm wrapper help/unknown-arg forwarding checks
 	gate_wrapper_help_cases = [
 		("parity gate command --help", ["pnpm", "--silent", "parity:ts-eslint:gate", "--help"]),
@@ -1700,6 +1755,8 @@ def main() -> None:
 		gate_wrapper_conflict_threshold_first_codes[label] = proc.returncode
 		if conflict_lines != gate_wrapper_duplicate_threshold_baseline:
 			fail(f"{label} stderr output mismatch with duplicate-threshold precedence baseline")
+		if conflict_lines != gate_conflict_threshold_first_lines:
+			fail(f"{label} stderr output mismatch with direct conflict threshold-first baseline")
 	if gate_wrapper_conflict_threshold_first_codes["parity gate quick conflict threshold-first"] != gate_wrapper_conflict_threshold_first_codes[
 		"parity gate quick:red conflict threshold-first"
 	]:
@@ -1743,6 +1800,8 @@ def main() -> None:
 		gate_wrapper_conflict_skip_first_codes[label] = proc.returncode
 		if conflict_lines != gate_wrapper_duplicate_skip_checks_baseline:
 			fail(f"{label} stderr output mismatch with duplicate-skip-checks precedence baseline")
+		if conflict_lines != gate_conflict_skip_first_lines:
+			fail(f"{label} stderr output mismatch with direct conflict skip-first baseline")
 	if gate_wrapper_conflict_skip_first_codes["parity gate quick conflict skip-first"] != gate_wrapper_conflict_skip_first_codes[
 		"parity gate quick:red conflict skip-first"
 	]:
@@ -1785,6 +1844,8 @@ def main() -> None:
 		gate_wrapper_conflict_default_threshold_first_codes[label] = proc.returncode
 		if conflict_lines != gate_wrapper_duplicate_threshold_baseline:
 			fail(f"{label} stderr output mismatch with duplicate-threshold precedence baseline")
+		if conflict_lines != gate_conflict_threshold_first_lines:
+			fail(f"{label} stderr output mismatch with direct conflict threshold-first baseline")
 	if gate_wrapper_conflict_default_threshold_first_codes["parity gate command conflict threshold-first"] != gate_wrapper_conflict_default_threshold_first_codes[
 		"parity gate command red conflict threshold-first"
 	]:
@@ -1828,6 +1889,8 @@ def main() -> None:
 		gate_wrapper_conflict_default_skip_first_codes[label] = proc.returncode
 		if conflict_lines != gate_wrapper_duplicate_skip_checks_baseline:
 			fail(f"{label} stderr output mismatch with duplicate-skip-checks precedence baseline")
+		if conflict_lines != gate_conflict_skip_first_lines:
+			fail(f"{label} stderr output mismatch with direct conflict skip-first baseline")
 	if gate_wrapper_conflict_default_skip_first_codes["parity gate command conflict skip-first"] != gate_wrapper_conflict_default_skip_first_codes[
 		"parity gate command red conflict skip-first"
 	]:
