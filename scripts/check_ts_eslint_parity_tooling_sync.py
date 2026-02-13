@@ -168,6 +168,14 @@ def main() -> None:
 		if token not in contributing_text:
 			fail(f"`{token}` missing in CONTRIBUTING parity section")
 
+	# Ensure every documented parity command resolves to a known package script
+	known_commands = set(expected_scripts.keys())
+	for doc_name, text in documents_with_contributors.items():
+		seen = sorted(set(re.findall(r"\bpnpm\s+(parity:ts-eslint[0-9A-Za-z:_-]*)\b", text)))
+		for command in seen:
+			if command not in known_commands:
+				fail(f"unknown parity command documented in {doc_name}: pnpm {command}")
+
 	commands_text = commands_md.read_text() if commands_md.exists() else ""
 	if not commands_text:
 		fail("missing or empty parity commands reference markdown")
