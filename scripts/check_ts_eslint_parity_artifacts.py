@@ -1598,6 +1598,25 @@ def main() -> None:
 		)
 		if extract_nonempty_lines(unknown_proc.stderr) != gate_unknown_arg_lines:
 			fail(f"parity gate unknown-then-{suffix_label} stderr mismatch with unknown-arg baseline")
+		for help_flag, help_flag_label in [("--help", "help"), ("-h", "short-help")]:
+			unknown_then_help_proc = subprocess.run(
+				["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--not-a-real-flag", *suffix_tokens, help_flag],
+				check=False,
+				capture_output=True,
+				text=True,
+			)
+			if unknown_then_help_proc.returncode != 1:
+				fail(f"parity gate unknown-then-{suffix_label}-then-{help_flag_label} exit code must be 1")
+			if unknown_then_help_proc.stdout.strip():
+				fail(f"parity gate unknown-then-{suffix_label}-then-{help_flag_label} stdout must be empty")
+			assert_exact_error_plus_usage(
+				f"parity gate unknown-then-{suffix_label}-then-{help_flag_label} stderr",
+				unknown_then_help_proc.stderr,
+				expected_gate_unknown_arg_line,
+				expected_gate_usage_line,
+			)
+			if extract_nonempty_lines(unknown_then_help_proc.stderr) != gate_unknown_arg_lines:
+				fail(f"parity gate unknown-then-{suffix_label}-then-{help_flag_label} stderr mismatch with unknown-arg baseline")
 
 	gate_duplicate_threshold_then_help = subprocess.run(
 		[
@@ -2576,6 +2595,25 @@ def main() -> None:
 			)
 			if unknown_lines != gate_wrapper_unknown_arg_baseline:
 				fail(f"{base_label} unknown-then-{suffix_label} stderr output mismatch with unknown baseline")
+			for help_flag, help_flag_label in [("--help", "help"), ("-h", "short-help")]:
+				unknown_then_help_proc = subprocess.run(
+					[*base_command, "--not-a-real-flag", *suffix_tokens, help_flag],
+					cwd=str(root),
+					check=False,
+					capture_output=True,
+					text=True,
+				)
+				unknown_then_help_lines = assert_gate_wrapper_unknown_arg_contract(
+					f"{base_label} unknown-then-{suffix_label}-then-{help_flag_label}",
+					unknown_then_help_proc,
+					expected_gate_unknown_arg_line,
+					expected_gate_usage_line,
+				)
+				if unknown_then_help_lines != gate_wrapper_unknown_arg_baseline:
+					fail(
+						f"{base_label} unknown-then-{suffix_label}-then-{help_flag_label} "
+						"stderr output mismatch with unknown baseline"
+					)
 
 	gate_wrapper_duplicate_threshold_cases = [
 		(
