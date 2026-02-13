@@ -90,7 +90,7 @@ The checkers validate:
 - optional diff artifact summary consistency between markdown and JSON outputs,
 - parity doctor output consistency (plain + markdown + JSON forms),
 - parity doctor strict-mode exit behavior (`--fail-on-critical`),
-- unified gate script exit and argument/help validation behavior (including missing/invalid/duplicate threshold handling, `--threshold=<value>` parsing, short-help support, and usage-on-error output),
+- unified gate script exit and argument/help validation behavior (including missing/invalid/duplicate threshold handling, default-red behavior, `--threshold=<value>` parsing, reordered flag parsing, short-help support, and usage-on-error output),
 - parity command/docs/script synchronization,
 - exact parity command inventory in `package.json` vs checker expectations,
 - command reference row/backing-script mapping parity with `package.json`,

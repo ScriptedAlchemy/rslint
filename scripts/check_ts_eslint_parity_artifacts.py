@@ -670,6 +670,34 @@ def main() -> None:
 	if expected_gate_yellow_exit == 3 and "health is" not in gate_inline_yellow.stderr:
 		fail("parity gate inline yellow stderr missing health message")
 
+	gate_skip_only_default_red = subprocess.run(
+		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--skip-checks"],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if gate_skip_only_default_red.returncode != expected_gate_red_exit:
+		fail(
+			"parity gate skip-only default-red exit-code mismatch: "
+			f"expected={expected_gate_red_exit} actual={gate_skip_only_default_red.returncode}"
+		)
+	if expected_gate_red_exit == 2 and "health is red" not in gate_skip_only_default_red.stderr:
+		fail("parity gate skip-only default-red stderr missing red-health message")
+
+	gate_reordered_flags = subprocess.run(
+		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--skip-checks", "--threshold=yellow"],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if gate_reordered_flags.returncode != expected_gate_yellow_exit:
+		fail(
+			"parity gate reordered-flags yellow exit-code mismatch: "
+			f"expected={expected_gate_yellow_exit} actual={gate_reordered_flags.returncode}"
+		)
+	if expected_gate_yellow_exit == 3 and "health is" not in gate_reordered_flags.stderr:
+		fail("parity gate reordered-flags yellow stderr missing health message")
+
 	gate_unknown_arg = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--not-a-real-flag"],
 		check=False,
