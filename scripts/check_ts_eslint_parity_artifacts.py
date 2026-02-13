@@ -1578,6 +1578,10 @@ def main() -> None:
 		fail("ci summary strict stderr missing health+reason message")
 	if expected_ci_summary_strict_exit == 0 and ci_summary_strict.stderr.strip():
 		fail("ci summary strict stderr must be empty on success")
+	assert_exact_nonempty_lines("ci summary strict stdout", ci_summary_strict.stdout, ci_summary_lines)
+	ci_summary_strict_parsed = parse_ci_summary_markdown(ci_summary_strict.stdout)
+	if ci_summary_strict_parsed != ci_summary:
+		fail("ci summary strict stdout mismatch with non-strict summary output")
 
 	ci_summary_strict_yellow = subprocess.run(
 		["python3", str(root / "scripts/generate_ts_eslint_parity_ci_summary.py"), "--fail-on-yellow"],
@@ -1597,6 +1601,10 @@ def main() -> None:
 		fail("ci summary strict-yellow stderr missing health+reason message")
 	if expected_ci_summary_strict_yellow_exit == 0 and ci_summary_strict_yellow.stderr.strip():
 		fail("ci summary strict-yellow stderr must be empty on success")
+	assert_exact_nonempty_lines("ci summary strict-yellow stdout", ci_summary_strict_yellow.stdout, ci_summary_lines)
+	ci_summary_strict_yellow_parsed = parse_ci_summary_markdown(ci_summary_strict_yellow.stdout)
+	if ci_summary_strict_yellow_parsed != ci_summary:
+		fail("ci summary strict-yellow stdout mismatch with non-strict summary output")
 	ci_summary_strict_stderr_lines = extract_nonempty_lines(ci_summary_strict.stderr)
 	ci_summary_strict_yellow_stderr_lines = extract_nonempty_lines(ci_summary_strict_yellow.stderr)
 
@@ -1873,6 +1881,9 @@ def main() -> None:
 		fail("parity doctor strict stderr must be empty on success")
 	if expected_strict_exit == 0 and doctor_json_strict.stderr.strip():
 		fail("parity doctor json strict stderr must be empty on success")
+	assert_exact_nonempty_lines("parity doctor strict stdout", doctor_strict.stdout, doctor_plain_lines)
+	if parse_doctor_plain_output(doctor_strict.stdout) != doctor_plain_data:
+		fail("parity doctor strict stdout mismatch with non-strict plain output")
 	expected_yellow_strict_exit = 3 if expected_health in {"yellow", "red"} else 0
 	if doctor_yellow_strict.returncode != expected_yellow_strict_exit:
 		fail(
@@ -1896,6 +1907,9 @@ def main() -> None:
 		fail("parity doctor strict-yellow stderr must be empty on success")
 	if expected_yellow_strict_exit == 0 and doctor_json_yellow_strict.stderr.strip():
 		fail("parity doctor json strict-yellow stderr must be empty on success")
+	assert_exact_nonempty_lines("parity doctor strict-yellow stdout", doctor_yellow_strict.stdout, doctor_plain_lines)
+	if parse_doctor_plain_output(doctor_yellow_strict.stdout) != doctor_plain_data:
+		fail("parity doctor strict-yellow stdout mismatch with non-strict plain output")
 	doctor_strict_stderr_lines = extract_nonempty_lines(doctor_strict.stderr)
 	doctor_yellow_strict_stderr_lines = extract_nonempty_lines(doctor_yellow_strict.stderr)
 	doctor_json_strict_stderr_lines = extract_nonempty_lines(doctor_json_strict.stderr)
