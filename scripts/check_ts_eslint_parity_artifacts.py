@@ -370,6 +370,10 @@ def assert_line_occurs_once(label: str, text: str, expected_line: str) -> None:
 		fail(f"{label} expected usage line once: count={count} line={expected_line}")
 
 
+def assert_exact_error_plus_usage(label: str, text: str, expected_error_line: str, expected_usage_line: str) -> None:
+	assert_exact_nonempty_lines(label, text, [expected_error_line, expected_usage_line])
+
+
 def main() -> None:
 	root = pathlib.Path("/workspace")
 	tracker_csv = root / "typescript-eslint-rule-parity-tracker.csv"
@@ -766,6 +770,11 @@ def main() -> None:
 		"[parity-gate] Usage: bash scripts/run_ts_eslint_parity_gate.sh "
 		"[--threshold red|yellow|--threshold=red|--threshold=yellow] [--skip-checks]"
 	)
+	expected_gate_missing_threshold_line = "[parity-gate] ERROR: --threshold requires a value (red|yellow)."
+	expected_gate_invalid_threshold_line = "[parity-gate] ERROR: invalid threshold 'blue'. Expected red|yellow."
+	expected_gate_duplicate_threshold_line = "[parity-gate] ERROR: duplicate --threshold argument."
+	expected_gate_unknown_arg_line = "[parity-gate] ERROR: unknown argument: --not-a-real-flag"
+	expected_gate_duplicate_skip_checks_line = "[parity-gate] ERROR: duplicate --skip-checks argument."
 
 	gate_help = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--help"],
@@ -812,6 +821,8 @@ def main() -> None:
 		fail("parity gate invalid-threshold exit code must be 1")
 	if "invalid threshold" not in gate_invalid_threshold.stderr:
 		fail("parity gate invalid-threshold stderr missing message")
+	if expected_gate_invalid_threshold_line not in gate_invalid_threshold.stderr:
+		fail("parity gate invalid-threshold stderr missing exact error line")
 	if usage_prefix not in gate_invalid_threshold.stderr:
 		fail("parity gate invalid-threshold stderr missing usage message")
 	if usage_threshold_token not in gate_invalid_threshold.stderr:
@@ -821,6 +832,12 @@ def main() -> None:
 	if gate_invalid_threshold.stdout.strip():
 		fail("parity gate invalid-threshold stdout must be empty")
 	assert_line_occurs_once("parity gate invalid-threshold stderr", gate_invalid_threshold.stderr, expected_gate_usage_line)
+	assert_exact_error_plus_usage(
+		"parity gate invalid-threshold stderr",
+		gate_invalid_threshold.stderr,
+		expected_gate_invalid_threshold_line,
+		expected_gate_usage_line,
+	)
 
 	gate_invalid_inline_threshold = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--threshold=blue", "--skip-checks"],
@@ -832,6 +849,8 @@ def main() -> None:
 		fail("parity gate invalid-inline-threshold exit code must be 1")
 	if "invalid threshold" not in gate_invalid_inline_threshold.stderr:
 		fail("parity gate invalid-inline-threshold stderr missing message")
+	if expected_gate_invalid_threshold_line not in gate_invalid_inline_threshold.stderr:
+		fail("parity gate invalid-inline-threshold stderr missing exact error line")
 	if usage_prefix not in gate_invalid_inline_threshold.stderr:
 		fail("parity gate invalid-inline-threshold stderr missing usage message")
 	if usage_threshold_token not in gate_invalid_inline_threshold.stderr:
@@ -842,6 +861,12 @@ def main() -> None:
 		fail("parity gate invalid-inline-threshold stdout must be empty")
 	assert_line_occurs_once(
 		"parity gate invalid-inline-threshold stderr", gate_invalid_inline_threshold.stderr, expected_gate_usage_line
+	)
+	assert_exact_error_plus_usage(
+		"parity gate invalid-inline-threshold stderr",
+		gate_invalid_inline_threshold.stderr,
+		expected_gate_invalid_threshold_line,
+		expected_gate_usage_line,
 	)
 
 	gate_missing_threshold_value = subprocess.run(
@@ -854,6 +879,8 @@ def main() -> None:
 		fail("parity gate missing-threshold-value exit code must be 1")
 	if "--threshold requires a value" not in gate_missing_threshold_value.stderr:
 		fail("parity gate missing-threshold-value stderr missing message")
+	if expected_gate_missing_threshold_line not in gate_missing_threshold_value.stderr:
+		fail("parity gate missing-threshold-value stderr missing exact error line")
 	if usage_prefix not in gate_missing_threshold_value.stderr:
 		fail("parity gate missing-threshold-value stderr missing usage message")
 	if usage_threshold_token not in gate_missing_threshold_value.stderr:
@@ -864,6 +891,12 @@ def main() -> None:
 		fail("parity gate missing-threshold-value stdout must be empty")
 	assert_line_occurs_once(
 		"parity gate missing-threshold-value stderr", gate_missing_threshold_value.stderr, expected_gate_usage_line
+	)
+	assert_exact_error_plus_usage(
+		"parity gate missing-threshold-value stderr",
+		gate_missing_threshold_value.stderr,
+		expected_gate_missing_threshold_line,
+		expected_gate_usage_line,
 	)
 
 	gate_missing_inline_threshold_value = subprocess.run(
@@ -876,6 +909,8 @@ def main() -> None:
 		fail("parity gate missing-inline-threshold-value exit code must be 1")
 	if "--threshold requires a value" not in gate_missing_inline_threshold_value.stderr:
 		fail("parity gate missing-inline-threshold-value stderr missing message")
+	if expected_gate_missing_threshold_line not in gate_missing_inline_threshold_value.stderr:
+		fail("parity gate missing-inline-threshold-value stderr missing exact error line")
 	if usage_prefix not in gate_missing_inline_threshold_value.stderr:
 		fail("parity gate missing-inline-threshold-value stderr missing usage message")
 	if usage_threshold_token not in gate_missing_inline_threshold_value.stderr:
@@ -887,6 +922,12 @@ def main() -> None:
 	assert_line_occurs_once(
 		"parity gate missing-inline-threshold-value stderr",
 		gate_missing_inline_threshold_value.stderr,
+		expected_gate_usage_line,
+	)
+	assert_exact_error_plus_usage(
+		"parity gate missing-inline-threshold-value stderr",
+		gate_missing_inline_threshold_value.stderr,
+		expected_gate_missing_threshold_line,
 		expected_gate_usage_line,
 	)
 
@@ -907,6 +948,8 @@ def main() -> None:
 		fail("parity gate duplicate-threshold exit code must be 1")
 	if "duplicate --threshold argument" not in gate_duplicate_threshold.stderr:
 		fail("parity gate duplicate-threshold stderr missing message")
+	if expected_gate_duplicate_threshold_line not in gate_duplicate_threshold.stderr:
+		fail("parity gate duplicate-threshold stderr missing exact error line")
 	if usage_prefix not in gate_duplicate_threshold.stderr:
 		fail("parity gate duplicate-threshold stderr missing usage message")
 	if usage_threshold_token not in gate_duplicate_threshold.stderr:
@@ -916,6 +959,12 @@ def main() -> None:
 	if gate_duplicate_threshold.stdout.strip():
 		fail("parity gate duplicate-threshold stdout must be empty")
 	assert_line_occurs_once("parity gate duplicate-threshold stderr", gate_duplicate_threshold.stderr, expected_gate_usage_line)
+	assert_exact_error_plus_usage(
+		"parity gate duplicate-threshold stderr",
+		gate_duplicate_threshold.stderr,
+		expected_gate_duplicate_threshold_line,
+		expected_gate_usage_line,
+	)
 
 	gate_duplicate_threshold_spaced = subprocess.run(
 		[
@@ -935,6 +984,8 @@ def main() -> None:
 		fail("parity gate duplicate-threshold-spaced exit code must be 1")
 	if "duplicate --threshold argument" not in gate_duplicate_threshold_spaced.stderr:
 		fail("parity gate duplicate-threshold-spaced stderr missing message")
+	if expected_gate_duplicate_threshold_line not in gate_duplicate_threshold_spaced.stderr:
+		fail("parity gate duplicate-threshold-spaced stderr missing exact error line")
 	if usage_prefix not in gate_duplicate_threshold_spaced.stderr:
 		fail("parity gate duplicate-threshold-spaced stderr missing usage message")
 	if usage_threshold_token not in gate_duplicate_threshold_spaced.stderr:
@@ -945,6 +996,12 @@ def main() -> None:
 		fail("parity gate duplicate-threshold-spaced stdout must be empty")
 	assert_line_occurs_once(
 		"parity gate duplicate-threshold-spaced stderr", gate_duplicate_threshold_spaced.stderr, expected_gate_usage_line
+	)
+	assert_exact_error_plus_usage(
+		"parity gate duplicate-threshold-spaced stderr",
+		gate_duplicate_threshold_spaced.stderr,
+		expected_gate_duplicate_threshold_line,
+		expected_gate_usage_line,
 	)
 
 	gate_duplicate_threshold_inline = subprocess.run(
@@ -963,6 +1020,8 @@ def main() -> None:
 		fail("parity gate duplicate-threshold-inline exit code must be 1")
 	if "duplicate --threshold argument" not in gate_duplicate_threshold_inline.stderr:
 		fail("parity gate duplicate-threshold-inline stderr missing message")
+	if expected_gate_duplicate_threshold_line not in gate_duplicate_threshold_inline.stderr:
+		fail("parity gate duplicate-threshold-inline stderr missing exact error line")
 	if usage_prefix not in gate_duplicate_threshold_inline.stderr:
 		fail("parity gate duplicate-threshold-inline stderr missing usage message")
 	if usage_threshold_token not in gate_duplicate_threshold_inline.stderr:
@@ -973,6 +1032,12 @@ def main() -> None:
 		fail("parity gate duplicate-threshold-inline stdout must be empty")
 	assert_line_occurs_once(
 		"parity gate duplicate-threshold-inline stderr", gate_duplicate_threshold_inline.stderr, expected_gate_usage_line
+	)
+	assert_exact_error_plus_usage(
+		"parity gate duplicate-threshold-inline stderr",
+		gate_duplicate_threshold_inline.stderr,
+		expected_gate_duplicate_threshold_line,
+		expected_gate_usage_line,
 	)
 
 	gate_inline_red = subprocess.run(
@@ -1109,6 +1174,8 @@ def main() -> None:
 		fail("parity gate unknown-arg exit code must be 1")
 	if "unknown argument" not in gate_unknown_arg.stderr:
 		fail("parity gate unknown-arg stderr missing message")
+	if expected_gate_unknown_arg_line not in gate_unknown_arg.stderr:
+		fail("parity gate unknown-arg stderr missing exact error line")
 	if usage_prefix not in gate_unknown_arg.stderr:
 		fail("parity gate unknown-arg stderr missing usage message")
 	if usage_threshold_token not in gate_unknown_arg.stderr:
@@ -1118,6 +1185,12 @@ def main() -> None:
 	if gate_unknown_arg.stdout.strip():
 		fail("parity gate unknown-arg stdout must be empty")
 	assert_line_occurs_once("parity gate unknown-arg stderr", gate_unknown_arg.stderr, expected_gate_usage_line)
+	assert_exact_error_plus_usage(
+		"parity gate unknown-arg stderr",
+		gate_unknown_arg.stderr,
+		expected_gate_unknown_arg_line,
+		expected_gate_usage_line,
+	)
 
 	gate_duplicate_skip_checks = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--skip-checks", "--skip-checks"],
@@ -1129,6 +1202,8 @@ def main() -> None:
 		fail("parity gate duplicate-skip-checks exit code must be 1")
 	if "duplicate --skip-checks argument" not in gate_duplicate_skip_checks.stderr:
 		fail("parity gate duplicate-skip-checks stderr missing message")
+	if expected_gate_duplicate_skip_checks_line not in gate_duplicate_skip_checks.stderr:
+		fail("parity gate duplicate-skip-checks stderr missing exact error line")
 	if usage_prefix not in gate_duplicate_skip_checks.stderr:
 		fail("parity gate duplicate-skip-checks stderr missing usage message")
 	if usage_threshold_token not in gate_duplicate_skip_checks.stderr:
@@ -1139,6 +1214,12 @@ def main() -> None:
 		fail("parity gate duplicate-skip-checks stdout must be empty")
 	assert_line_occurs_once(
 		"parity gate duplicate-skip-checks stderr", gate_duplicate_skip_checks.stderr, expected_gate_usage_line
+	)
+	assert_exact_error_plus_usage(
+		"parity gate duplicate-skip-checks stderr",
+		gate_duplicate_skip_checks.stderr,
+		expected_gate_duplicate_skip_checks_line,
+		expected_gate_usage_line,
 	)
 
 	# Quick gate npm command wrappers
