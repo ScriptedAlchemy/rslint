@@ -13,6 +13,7 @@ After running the refresh command, the following artifacts are generated at repo
 - `typescript-eslint-rule-parity-worklist.md` — execution checklist grouped by phase.
 - `typescript-eslint-rule-parity-summary.md` — dashboard with headline metrics and top priorities.
 - `typescript-eslint-rule-parity-metadata.json` — run metadata (timestamp, upstream SHA, requested ref, counters).
+- `typescript-eslint-rule-parity-manifest.json` — deterministic checksums for core parity artifacts.
 - `typescript-eslint-rule-parity-index.md` — central index linking all parity artifacts.
 - `typescript-eslint-rule-parity-issue-plan.md` — issue-friendly phase plan/checklist template.
 - `typescript-eslint-rule-parity-tasklist-A_critical.md` — generated tasklist snippet for critical phase.
@@ -51,7 +52,7 @@ PARITY_OFFLINE=1 TS_ESLINT_REF=main pnpm parity:ts-eslint
 pnpm parity:ts-eslint:check
 ```
 
-The checker validates tracker/worklist/summary/metadata/index/issue-plan coherence.
+The checker validates tracker/worklist/summary/metadata/manifest/index/issue-plan coherence.
 
 ### Compare parity progress between snapshots
 
@@ -79,6 +80,7 @@ reproducibility checks.
 ```bash
 pnpm parity:ts-eslint:tasklist --phase A_critical
 pnpm parity:ts-eslint:tasklist:all
+pnpm parity:ts-eslint:manifest
 ```
 
 Outputs:
@@ -94,6 +96,7 @@ python3 scripts/generate_ts_eslint_parity_tracker.py
 python3 scripts/generate_ts_eslint_parity_worklist.py
 python3 scripts/generate_ts_eslint_parity_summary.py
 python3 scripts/generate_ts_eslint_parity_metadata.py
+python3 scripts/generate_ts_eslint_parity_manifest.py
 python3 scripts/generate_ts_eslint_parity_index.py
 python3 scripts/generate_ts_eslint_parity_issue_plan.py
 python3 scripts/check_ts_eslint_parity_artifacts.py
@@ -113,7 +116,7 @@ python3 scripts/generate_ts_eslint_parity_ci_summary.py
    - detailed rows in tracker.
 3. Implement parity fixes.
 4. Re-run `pnpm parity:ts-eslint`.
-5. Confirm checker passes (tracker/worklist/summary/metadata/issue-plan consistency).
+5. Confirm checker passes (tracker/worklist/summary/metadata/manifest/index/issue-plan consistency).
 6. Commit updated artifacts.
 
 ## CI behavior
@@ -121,7 +124,7 @@ python3 scripts/generate_ts_eslint_parity_ci_summary.py
 Workflow: `.github/workflows/parity-artifacts-check.yml`
 
 - Runs the parity artifact checker on parity-related changes.
-- Ensures tracker/summary/worklist/metadata remain synchronized.
+- Ensures tracker/summary/worklist/metadata/manifest/index/issue-plan remain synchronized.
 - On pull requests, also generates `typescript-eslint-rule-parity-diff.md`
   against the PR base branch and uploads it as a workflow artifact.
 - CI also rebuilds artifacts from metadata-pinned upstream commit and checks

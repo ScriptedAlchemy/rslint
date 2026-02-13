@@ -13,6 +13,7 @@ _Generated: 2026-02-13 09:47 UTC_
 - `typescript-eslint-rule-parity-worklist.md`
 - `typescript-eslint-rule-parity-summary.md`
 - `typescript-eslint-rule-parity-metadata.json`
+- `typescript-eslint-rule-parity-manifest.json`
 - `typescript-eslint-rule-parity-index.md`
 - `typescript-eslint-rule-parity-issue-plan.md`
 - Optional diff artifact: `typescript-eslint-rule-parity-diff.md`
@@ -38,7 +39,7 @@ Recommended usage:
 3. Close rows by clearing flags and reducing score to `0` as parity work lands.
 4. Use the generated worklist markdown for checkbox-style execution tracking.
 5. Use the generated issue plan markdown to open/track phase-scoped GitHub issues.
-6. Run consistency check to ensure tracker/summary/worklist/metadata/issue-plan remain synchronized.
+6. Run consistency check to ensure tracker/summary/worklist/metadata/manifest/index/issue-plan remain synchronized.
 7. Optionally run metadata-pinned rebuild to verify reproducibility.
 
 Regenerate tracker artifacts:
@@ -49,6 +50,7 @@ pnpm parity:ts-eslint:check
 pnpm parity:ts-eslint:diff -- --base-ref HEAD~1
 pnpm parity:ts-eslint:tasklist --phase A_critical
 pnpm parity:ts-eslint:tasklist:all
+pnpm parity:ts-eslint:manifest
 pnpm parity:ts-eslint:rebuild-metadata
 
 # Optional: pin upstream ref (branch/tag/SHA) for reproducible comparisons
@@ -62,6 +64,7 @@ python3 scripts/generate_ts_eslint_parity_tracker.py
 python3 scripts/generate_ts_eslint_parity_worklist.py
 python3 scripts/generate_ts_eslint_parity_summary.py
 python3 scripts/generate_ts_eslint_parity_metadata.py
+python3 scripts/generate_ts_eslint_parity_manifest.py
 python3 scripts/generate_ts_eslint_parity_index.py
 python3 scripts/generate_ts_eslint_parity_issue_plan.py
 python3 scripts/check_ts_eslint_parity_artifacts.py

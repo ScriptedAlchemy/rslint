@@ -35,6 +35,7 @@
     "parity:ts-eslint:tasklist": "python3 scripts/generate_ts_eslint_parity_issue_tasklist.py",
     "parity:ts-eslint:tasklist:all": "bash scripts/generate_ts_eslint_parity_tasklists_all.sh",
     "parity:ts-eslint:rebuild-metadata": "bash scripts/rebuild_ts_eslint_parity_from_metadata.sh",
+    "parity:ts-eslint:manifest": "python3 scripts/generate_ts_eslint_parity_manifest.py",
     "prepare": "husky",
     "migrate:tests": "sg scan -r ast-grep-rule.yml ./packages/rslint-test-tools/tests/typescript-eslint/rules/**/*.test.ts --update-all"
   },

@@ -14,6 +14,7 @@ Exits with non-zero status on any mismatch.
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 import pathlib
 import re
@@ -24,6 +25,14 @@ from collections import Counter
 def fail(msg: str) -> None:
 	print(f"[parity-check] ERROR: {msg}")
 	sys.exit(1)
+
+
+def sha256_file(path: pathlib.Path) -> str:
+	hasher = hashlib.sha256()
+	with path.open("rb") as f:
+		for chunk in iter(lambda: f.read(1024 * 1024), b""):
+			hasher.update(chunk)
+	return hasher.hexdigest()
 
 
 def parse_summary_markdown(summary_text: str) -> dict:
@@ -114,6 +123,7 @@ def main() -> None:
 	metadata_json = root / "typescript-eslint-rule-parity-metadata.json"
 	index_md = root / "typescript-eslint-rule-parity-index.md"
 	issue_plan_md = root / "typescript-eslint-rule-parity-issue-plan.md"
+	manifest_json = root / "typescript-eslint-rule-parity-manifest.json"
 	tasklist_a_md = root / "typescript-eslint-rule-parity-tasklist-A_critical.md"
 	tasklist_b_md = root / "typescript-eslint-rule-parity-tasklist-B_high.md"
 	tasklist_c_md = root / "typescript-eslint-rule-parity-tasklist-C_medium.md"
@@ -127,6 +137,7 @@ def main() -> None:
 		metadata_json,
 		index_md,
 		issue_plan_md,
+		manifest_json,
 		tasklist_a_md,
 		tasklist_b_md,
 		tasklist_c_md,
@@ -289,6 +300,52 @@ def main() -> None:
 	for artifact_name in required_artifact_mentions:
 		if artifact_name not in index_text:
 			fail(f"index markdown missing artifact mention: {artifact_name}")
+
+	# Manifest checksum checks
+	manifest = json.loads(manifest_json.read_text())
+	if manifest.get("hash_algorithm") != "sha256":
+		fail("manifest hash_algorithm must be sha256")
+	files = manifest.get("files", [])
+	if not isinstance(files, list) or not files:
+		fail("manifest files list missing or empty")
+
+	manifest_map = {}
+	for entry in files:
+		path = entry.get("path")
+		sha = entry.get("sha256")
+		size = entry.get("bytes")
+		if not path or not sha:
+			fail("manifest entry missing path or sha256")
+		manifest_map[path] = {"sha256": sha, "bytes": size}
+
+	expected_manifest_paths = {
+		"typescript-eslint-rule-parity-report.md",
+		"typescript-eslint-rule-parity-guide.md",
+		"typescript-eslint-rule-parity-index.md",
+		"typescript-eslint-rule-parity-summary.md",
+		"typescript-eslint-rule-parity-worklist.md",
+		"typescript-eslint-rule-parity-issue-plan.md",
+		"typescript-eslint-rule-parity-tracker.csv",
+		"typescript-eslint-rule-parity-tracker.json",
+		"typescript-eslint-rule-parity-metadata.json",
+		"typescript-eslint-rule-parity-tasklist-A_critical.md",
+		"typescript-eslint-rule-parity-tasklist-B_high.md",
+		"typescript-eslint-rule-parity-tasklist-C_medium.md",
+		"typescript-eslint-rule-parity-tasklist-D_low.md",
+	}
+	if set(manifest_map) != expected_manifest_paths:
+		fail("manifest path set mismatch with expected parity artifacts")
+
+	for rel_path, values in manifest_map.items():
+		path = root / rel_path
+		if not path.exists():
+			fail(f"manifest artifact missing on disk: {rel_path}")
+		actual_sha = sha256_file(path)
+		if actual_sha != values["sha256"]:
+			fail(f"manifest checksum mismatch: {rel_path}")
+		actual_size = path.stat().st_size
+		if values.get("bytes") != actual_size:
+			fail(f"manifest size mismatch: {rel_path}")
 
 	# Phase tasklist checks
 	tasklist_by_phase = {
