@@ -252,6 +252,12 @@ def parse_doctor_plain_output(text: str) -> dict:
 	else:
 		parsed["top_rules"] = []
 
+	health_match = re.search(r"Health\s*:\s*([a-z]+)\s+\((.+)\)", text)
+	if not health_match:
+		fail("parity doctor plain output missing health line")
+	parsed["health"] = health_match.group(1)
+	parsed["health_reason"] = health_match.group(2).strip()
+
 	return parsed
 
 
@@ -284,6 +290,22 @@ def parse_doctor_markdown_output(text: str) -> dict:
 	else:
 		parsed["top_rules"] = []
 
+	health_match = re.search(r"- Health:\s+\*\*([a-z]+)\*\*\s+—\s+(.+)", text)
+	if not health_match:
+		fail("parity doctor markdown output missing health line")
+	parsed["health"] = health_match.group(1)
+	parsed["health_reason"] = health_match.group(2).strip()
+
+	return parsed
+
+
+def parse_doctor_json_output(text: str) -> dict:
+	try:
+		parsed = json.loads(text)
+	except json.JSONDecodeError as err:
+		fail(f"parity doctor json output invalid JSON: {err}")
+	if not isinstance(parsed, dict):
+		fail("parity doctor json output must be an object")
 	return parsed
 
 
@@ -739,6 +761,12 @@ def main() -> None:
 			capture_output=True,
 			text=True,
 		).stdout
+		doctor_json = subprocess.run(
+			["python3", str(root / "scripts/generate_ts_eslint_parity_doctor.py"), "--json"],
+			check=True,
+			capture_output=True,
+			text=True,
+		).stdout
 	except subprocess.CalledProcessError as err:
 		fail(f"parity doctor script failed: {err}")
 
@@ -749,6 +777,7 @@ def main() -> None:
 
 	doctor_plain_data = parse_doctor_plain_output(doctor_plain)
 	doctor_md_data = parse_doctor_markdown_output(doctor_md)
+	doctor_json_data = parse_doctor_json_output(doctor_json)
 
 	for key in ("total_rules", "aligned_rules", "flagged_rules"):
 		expected = int(summary.get(key, -1))
@@ -767,12 +796,45 @@ def main() -> None:
 		fail("parity doctor plain phase counts mismatch")
 	if doctor_md_data["phase_counts"] != expected_doctor_phases:
 		fail("parity doctor markdown phase counts mismatch")
+	doctor_json_phases = doctor_json_data.get("phase_counts", {})
+	if doctor_json_phases != expected_doctor_phases:
+		fail("parity doctor json phase counts mismatch")
 
 	expected_doctor_top = [row.get("rule", "") for row in expected_top[:5]]
 	if doctor_plain_data["top_rules"] != expected_doctor_top:
 		fail("parity doctor plain top rules mismatch")
 	if doctor_md_data["top_rules"] != expected_doctor_top:
 		fail("parity doctor markdown top rules mismatch")
+	if doctor_json_data.get("top_rules", []) != expected_doctor_top:
+		fail("parity doctor json top rules mismatch")
+
+	if doctor_plain_data.get("health") != status.get("health"):
+		fail("parity doctor plain health mismatch")
+	if doctor_md_data.get("health") != status.get("health"):
+		fail("parity doctor markdown health mismatch")
+	if doctor_json_data.get("health") != status.get("health"):
+		fail("parity doctor json health mismatch")
+	if doctor_plain_data.get("health_reason", "") != status.get("reason", ""):
+		fail("parity doctor plain health reason mismatch")
+	if doctor_md_data.get("health_reason", "") != status.get("reason", ""):
+		fail("parity doctor markdown health reason mismatch")
+	if doctor_json_data.get("reason", "") != status.get("reason", ""):
+		fail("parity doctor json health reason mismatch")
+
+	if int(doctor_json_data.get("schema_version", -1)) != 1:
+		fail("parity doctor json schema_version must be 1")
+	if doctor_json_data.get("generated_at_utc") != metadata.get("generated_at_utc"):
+		fail("parity doctor json generated_at_utc mismatch")
+	if doctor_json_data.get("upstream_ref_requested") != metadata.get("upstream_ref_requested"):
+		fail("parity doctor json upstream_ref_requested mismatch")
+	if doctor_json_data.get("upstream_commit") != metadata.get("upstream_commit"):
+		fail("parity doctor json upstream_commit mismatch")
+
+	doctor_json_summary = doctor_json_data.get("summary", {})
+	for key in ("total_rules", "aligned_rules", "flagged_rules"):
+		expected = int(summary.get(key, -1))
+		if int(doctor_json_summary.get(key, -2)) != expected:
+			fail(f"parity doctor json summary mismatch for {key}")
 
 	# Parity doctor strict-mode exit-code checks
 	doctor_strict = subprocess.run(

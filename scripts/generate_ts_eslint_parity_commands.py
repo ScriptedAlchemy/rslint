@@ -39,6 +39,7 @@ def main() -> None:
 		"parity:ts-eslint:ci-summary": "Render CI-style markdown summary from parity artifacts.",
 		"parity:ts-eslint:doctor": "Print parity health diagnosis from metadata and top-priority artifact.",
 		"parity:ts-eslint:doctor:markdown": "Print parity doctor output in markdown format.",
+		"parity:ts-eslint:doctor:json": "Print parity doctor output in JSON format for automation.",
 		"parity:ts-eslint:doctor:strict": "Print parity health diagnosis and fail if critical backlog exists.",
 		"parity:ts-eslint:top": "Generate top-priority ranked parity list.",
 		"parity:ts-eslint:manifest": "Generate checksum manifest for parity artifacts.",

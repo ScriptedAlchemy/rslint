@@ -14,6 +14,7 @@ Generated from `package.json` parity scripts.
 | `pnpm parity:ts-eslint:commands` | Generate command reference markdown from package scripts. | `python3 scripts/generate_ts_eslint_parity_commands.py` |
 | `pnpm parity:ts-eslint:diff` | Compare current tracker against baseline snapshot or git ref. | `python3 scripts/compare_ts_eslint_parity_trackers.py` |
 | `pnpm parity:ts-eslint:doctor` | Print parity health diagnosis from metadata and top-priority artifact. | `python3 scripts/generate_ts_eslint_parity_doctor.py` |
+| `pnpm parity:ts-eslint:doctor:json` | Print parity doctor output in JSON format for automation. | `python3 scripts/generate_ts_eslint_parity_doctor.py --json` |
 | `pnpm parity:ts-eslint:doctor:markdown` | Print parity doctor output in markdown format. | `python3 scripts/generate_ts_eslint_parity_doctor.py --markdown` |
 | `pnpm parity:ts-eslint:doctor:strict` | Print parity health diagnosis and fail if critical backlog exists. | `python3 scripts/generate_ts_eslint_parity_doctor.py --fail-on-critical` |
 | `pnpm parity:ts-eslint:issue-body` | Generate one phase issue body draft from tasklist. | `python3 scripts/generate_ts_eslint_parity_issue_body.py` |
