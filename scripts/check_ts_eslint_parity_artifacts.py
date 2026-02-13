@@ -2023,6 +2023,9 @@ def main() -> None:
 	assert_exact_nonempty_lines("parity doctor strict stdout", doctor_strict.stdout, doctor_plain_lines)
 	if parse_doctor_plain_output(doctor_strict.stdout) != doctor_plain_data:
 		fail("parity doctor strict stdout mismatch with non-strict plain output")
+	assert_exact_nonempty_lines("parity doctor json strict stdout", doctor_json_strict.stdout, doctor_json_lines)
+	if parse_doctor_json_output(doctor_json_strict.stdout) != doctor_json_data:
+		fail("parity doctor json strict stdout mismatch with non-strict json output")
 	expected_yellow_strict_exit = 3 if expected_health in {"yellow", "red"} else 0
 	if doctor_yellow_strict.returncode != expected_yellow_strict_exit:
 		fail(
@@ -2049,6 +2052,9 @@ def main() -> None:
 	assert_exact_nonempty_lines("parity doctor strict-yellow stdout", doctor_yellow_strict.stdout, doctor_plain_lines)
 	if parse_doctor_plain_output(doctor_yellow_strict.stdout) != doctor_plain_data:
 		fail("parity doctor strict-yellow stdout mismatch with non-strict plain output")
+	assert_exact_nonempty_lines("parity doctor json strict-yellow stdout", doctor_json_yellow_strict.stdout, doctor_json_lines)
+	if parse_doctor_json_output(doctor_json_yellow_strict.stdout) != doctor_json_data:
+		fail("parity doctor json strict-yellow stdout mismatch with non-strict json output")
 	doctor_strict_stderr_lines = extract_nonempty_lines(doctor_strict.stderr)
 	doctor_yellow_strict_stderr_lines = extract_nonempty_lines(doctor_yellow_strict.stderr)
 	doctor_json_strict_stderr_lines = extract_nonempty_lines(doctor_json_strict.stderr)
