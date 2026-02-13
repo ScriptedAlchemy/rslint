@@ -1252,6 +1252,128 @@ def main() -> None:
 		expected_gate_usage_line,
 	)
 
+	# Gate npm command wrappers in skip-check mode
+	gate_cmd = subprocess.run(
+		["pnpm", "--silent", "parity:ts-eslint:gate", "--skip-checks"],
+		cwd=str(root),
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if gate_cmd.returncode != expected_gate_red_exit:
+		fail(
+			"parity gate command exit-code mismatch: "
+			f"expected={expected_gate_red_exit} actual={gate_cmd.returncode}"
+		)
+	assert_no_pnpm_lifecycle_noise("parity gate command stdout", gate_cmd.stdout)
+	assert_no_pnpm_lifecycle_noise("parity gate command stderr", gate_cmd.stderr)
+	if "[parity-gate] Skipping strict clean parity checks (--skip-checks)." not in (gate_cmd.stdout + gate_cmd.stderr):
+		fail("parity gate command output missing skip-checks message")
+	if "[parity-gate] Applying red threshold gates" not in (gate_cmd.stdout + gate_cmd.stderr):
+		fail("parity gate command output missing red-threshold marker")
+	if "[parity-gate] Running strict clean parity checks" in (gate_cmd.stdout + gate_cmd.stderr):
+		fail("parity gate command should not run strict clean checks")
+	if expected_gate_red_exit == 2 and expected_health_reason_marker not in gate_cmd.stderr:
+		fail("parity gate command stderr missing health+reason message")
+	assert_gate_success_contract("parity gate command", gate_cmd, "red", expected_gate_red_exit)
+	assert_exact_nonempty_lines("parity gate command combined output", gate_cmd.stdout + gate_cmd.stderr, gate_red_lines)
+	assert_exact_nonempty_lines("parity gate command stdout", gate_cmd.stdout, gate_red_stdout_lines)
+	assert_exact_nonempty_lines("parity gate command stderr", gate_cmd.stderr, gate_red_stderr_lines)
+	gate_cmd_prefixed_lines = extract_prefixed_lines(
+		gate_cmd.stdout + gate_cmd.stderr,
+		("[parity-gate]", "[parity-status]", "[parity-doctor]"),
+	)
+	if gate_cmd_prefixed_lines != gate_red_prefixed_lines:
+		fail("parity gate command prefixed output mismatch with direct red skip-check run")
+
+	gate_cmd_red = subprocess.run(
+		["pnpm", "--silent", "parity:ts-eslint:gate:red", "--skip-checks"],
+		cwd=str(root),
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if gate_cmd_red.returncode != expected_gate_red_exit:
+		fail(
+			"parity gate command red exit-code mismatch: "
+			f"expected={expected_gate_red_exit} actual={gate_cmd_red.returncode}"
+		)
+	assert_no_pnpm_lifecycle_noise("parity gate command red stdout", gate_cmd_red.stdout)
+	assert_no_pnpm_lifecycle_noise("parity gate command red stderr", gate_cmd_red.stderr)
+	if "[parity-gate] Skipping strict clean parity checks (--skip-checks)." not in (gate_cmd_red.stdout + gate_cmd_red.stderr):
+		fail("parity gate command red output missing skip-checks message")
+	if "[parity-gate] Applying red threshold gates" not in (gate_cmd_red.stdout + gate_cmd_red.stderr):
+		fail("parity gate command red output missing red-threshold marker")
+	if "[parity-gate] Running strict clean parity checks" in (gate_cmd_red.stdout + gate_cmd_red.stderr):
+		fail("parity gate command red should not run strict clean checks")
+	if expected_gate_red_exit == 2 and expected_health_reason_marker not in gate_cmd_red.stderr:
+		fail("parity gate command red stderr missing health+reason message")
+	assert_gate_success_contract("parity gate command red", gate_cmd_red, "red", expected_gate_red_exit)
+	assert_exact_nonempty_lines(
+		"parity gate command red combined output", gate_cmd_red.stdout + gate_cmd_red.stderr, gate_red_lines
+	)
+	assert_exact_nonempty_lines("parity gate command red stdout", gate_cmd_red.stdout, gate_red_stdout_lines)
+	assert_exact_nonempty_lines("parity gate command red stderr", gate_cmd_red.stderr, gate_red_stderr_lines)
+	gate_cmd_red_prefixed_lines = extract_prefixed_lines(
+		gate_cmd_red.stdout + gate_cmd_red.stderr,
+		("[parity-gate]", "[parity-status]", "[parity-doctor]"),
+	)
+	if gate_cmd_red_prefixed_lines != gate_red_prefixed_lines:
+		fail("parity gate command red prefixed output mismatch with direct red skip-check run")
+	if gate_cmd.returncode != gate_cmd_red.returncode:
+		fail("parity gate command alias return code mismatch with gate:red")
+	assert_exact_nonempty_lines(
+		"parity gate command alias stdout",
+		gate_cmd.stdout,
+		extract_nonempty_lines(gate_cmd_red.stdout),
+	)
+	assert_exact_nonempty_lines(
+		"parity gate command alias stderr",
+		gate_cmd.stderr,
+		extract_nonempty_lines(gate_cmd_red.stderr),
+	)
+	if gate_cmd_prefixed_lines != gate_cmd_red_prefixed_lines:
+		fail("parity gate command alias prefixed output mismatch with gate:red")
+
+	gate_cmd_yellow = subprocess.run(
+		["pnpm", "--silent", "parity:ts-eslint:gate:yellow", "--skip-checks"],
+		cwd=str(root),
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if gate_cmd_yellow.returncode != expected_gate_yellow_exit:
+		fail(
+			"parity gate command yellow exit-code mismatch: "
+			f"expected={expected_gate_yellow_exit} actual={gate_cmd_yellow.returncode}"
+		)
+	assert_no_pnpm_lifecycle_noise("parity gate command yellow stdout", gate_cmd_yellow.stdout)
+	assert_no_pnpm_lifecycle_noise("parity gate command yellow stderr", gate_cmd_yellow.stderr)
+	if "[parity-gate] Skipping strict clean parity checks (--skip-checks)." not in (
+		gate_cmd_yellow.stdout + gate_cmd_yellow.stderr
+	):
+		fail("parity gate command yellow output missing skip-checks message")
+	if "[parity-gate] Applying yellow threshold gates" not in (gate_cmd_yellow.stdout + gate_cmd_yellow.stderr):
+		fail("parity gate command yellow output missing yellow-threshold marker")
+	if "[parity-gate] Running strict clean parity checks" in (gate_cmd_yellow.stdout + gate_cmd_yellow.stderr):
+		fail("parity gate command yellow should not run strict clean checks")
+	if expected_gate_yellow_exit == 3 and expected_health_reason_marker not in gate_cmd_yellow.stderr:
+		fail("parity gate command yellow stderr missing health+reason message")
+	assert_gate_success_contract("parity gate command yellow", gate_cmd_yellow, "yellow", expected_gate_yellow_exit)
+	assert_exact_nonempty_lines(
+		"parity gate command yellow combined output",
+		gate_cmd_yellow.stdout + gate_cmd_yellow.stderr,
+		gate_yellow_lines,
+	)
+	assert_exact_nonempty_lines("parity gate command yellow stdout", gate_cmd_yellow.stdout, gate_yellow_stdout_lines)
+	assert_exact_nonempty_lines("parity gate command yellow stderr", gate_cmd_yellow.stderr, gate_yellow_stderr_lines)
+	gate_cmd_yellow_prefixed_lines = extract_prefixed_lines(
+		gate_cmd_yellow.stdout + gate_cmd_yellow.stderr,
+		("[parity-gate]", "[parity-status]", "[parity-doctor]"),
+	)
+	if gate_cmd_yellow_prefixed_lines != gate_yellow_prefixed_lines:
+		fail("parity gate command yellow prefixed output mismatch with direct yellow skip-check run")
+
 	# Quick gate npm command wrappers
 	gate_quick = subprocess.run(
 		["pnpm", "--silent", "parity:ts-eslint:gate:quick"],
