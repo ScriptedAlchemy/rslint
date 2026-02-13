@@ -57,6 +57,7 @@ pnpm parity:ts-eslint:check
 pnpm parity:ts-eslint:check:all
 pnpm parity:ts-eslint:check:clean
 pnpm parity:ts-eslint:check:strict
+pnpm parity:ts-eslint:check:strict:clean
 pnpm parity:ts-eslint:check:tooling
 pnpm parity:ts-eslint:commands
 pnpm parity:ts-eslint:badges
@@ -86,6 +87,7 @@ The checkers validate:
 `parity:ts-eslint:check:all` additionally runs metadata-pinned reproducibility verification when parity artifacts are clean.
 `parity:ts-eslint:check:clean` enforces a clean parity-artifact tree before reproducibility verification.
 `parity:ts-eslint:check:strict` additionally fails when critical backlog remains.
+`parity:ts-eslint:check:strict:clean` combines strict critical-backlog gating with clean-tree reproducibility enforcement.
 
 ### Compare parity progress between snapshots
 
