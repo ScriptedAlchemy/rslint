@@ -20,6 +20,9 @@ python3 scripts/generate_ts_eslint_parity_worklist.py
 python3 scripts/generate_ts_eslint_parity_summary.py
 python3 scripts/generate_ts_eslint_parity_metadata.py
 
+echo "==> Validating parity artifact consistency"
+python3 scripts/check_ts_eslint_parity_artifacts.py
+
 echo "==> Done"
 echo "Generated files:"
 echo "  - typescript-eslint-rule-parity-tracker.csv"

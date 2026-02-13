@@ -36,6 +36,7 @@ python3 scripts/generate_ts_eslint_parity_tracker.py
 python3 scripts/generate_ts_eslint_parity_worklist.py
 python3 scripts/generate_ts_eslint_parity_summary.py
 python3 scripts/generate_ts_eslint_parity_metadata.py
+python3 scripts/check_ts_eslint_parity_artifacts.py
 ```
 
 ## Inventory Summary
