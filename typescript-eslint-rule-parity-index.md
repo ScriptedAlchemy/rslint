@@ -1,6 +1,6 @@
 # TypeScript-ESLint Parity Artifact Index
 
-_Generated: 2026-02-13T10:57:08.001693+00:00_
+_Generated: 2026-02-13T11:01:06.605355+00:00_
 
 ## Snapshot
 - Upstream ref requested: `main`
@@ -35,6 +35,7 @@ _Generated: 2026-02-13T10:57:08.001693+00:00_
 - `typescript-eslint-rule-parity-tasklist-C_medium.md` — tasklist snippet for C_medium.
 - `typescript-eslint-rule-parity-tasklist-D_low.md` — tasklist snippet for D_low.
 - `typescript-eslint-rule-parity-tasklist-<phase>.md` — generic tasklist naming convention.
+- `typescript-eslint-rule-parity-issue-body-<phase>.md` — optional full issue body draft.
 - `typescript-eslint-rule-parity-guide.md` — toolkit usage guide.
 
 ## Commands
@@ -45,6 +46,7 @@ pnpm parity:ts-eslint:check
 pnpm parity:ts-eslint:diff -- --base-ref HEAD~1
 pnpm parity:ts-eslint:tasklist --phase A_critical
 pnpm parity:ts-eslint:tasklist:all
+pnpm parity:ts-eslint:issue-body --phase A_critical
 pnpm parity:ts-eslint:top
 pnpm parity:ts-eslint:manifest
 pnpm parity:ts-eslint:rebuild-metadata

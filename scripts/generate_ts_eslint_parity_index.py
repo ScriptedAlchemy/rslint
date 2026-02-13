@@ -64,6 +64,7 @@ def main() -> None:
 	lines.append("- `typescript-eslint-rule-parity-tasklist-C_medium.md` — tasklist snippet for C_medium.")
 	lines.append("- `typescript-eslint-rule-parity-tasklist-D_low.md` — tasklist snippet for D_low.")
 	lines.append("- `typescript-eslint-rule-parity-tasklist-<phase>.md` — generic tasklist naming convention.")
+	lines.append("- `typescript-eslint-rule-parity-issue-body-<phase>.md` — optional full issue body draft.")
 	lines.append("- `typescript-eslint-rule-parity-guide.md` — toolkit usage guide.")
 	lines.append("")
 
@@ -75,6 +76,7 @@ def main() -> None:
 	lines.append("pnpm parity:ts-eslint:diff -- --base-ref HEAD~1")
 	lines.append("pnpm parity:ts-eslint:tasklist --phase A_critical")
 	lines.append("pnpm parity:ts-eslint:tasklist:all")
+	lines.append("pnpm parity:ts-eslint:issue-body --phase A_critical")
 	lines.append("pnpm parity:ts-eslint:top")
 	lines.append("pnpm parity:ts-eslint:manifest")
 	lines.append("pnpm parity:ts-eslint:rebuild-metadata")

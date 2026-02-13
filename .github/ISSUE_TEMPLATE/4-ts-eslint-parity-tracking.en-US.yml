@@ -17,6 +17,8 @@ body:
         - `typescript-eslint-rule-parity-tasklist-D_low.md`
         - Generate phase tasklist snippet:
           - `pnpm parity:ts-eslint:tasklist --phase <A_critical|B_high|C_medium|D_low>`
+        - Generate full issue body draft:
+          - `pnpm parity:ts-eslint:issue-body --phase <A_critical|B_high|C_medium|D_low>`
   - type: dropdown
     id: phase
     attributes:

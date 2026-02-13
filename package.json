@@ -34,6 +34,7 @@
     "parity:ts-eslint:diff": "python3 scripts/compare_ts_eslint_parity_trackers.py",
     "parity:ts-eslint:tasklist": "python3 scripts/generate_ts_eslint_parity_issue_tasklist.py",
     "parity:ts-eslint:tasklist:all": "bash scripts/generate_ts_eslint_parity_tasklists_all.sh",
+    "parity:ts-eslint:issue-body": "python3 scripts/generate_ts_eslint_parity_issue_body.py",
     "parity:ts-eslint:rebuild-metadata": "bash scripts/rebuild_ts_eslint_parity_from_metadata.sh",
     "parity:ts-eslint:manifest": "python3 scripts/generate_ts_eslint_parity_manifest.py",
     "parity:ts-eslint:top": "python3 scripts/generate_ts_eslint_parity_top.py",

@@ -330,6 +330,7 @@ def main() -> None:
 		"typescript-eslint-rule-parity-index.md",
 		"typescript-eslint-rule-parity-issue-plan.md",
 		"typescript-eslint-rule-parity-tasklist-<phase>.md",
+		"typescript-eslint-rule-parity-issue-body-<phase>.md",
 	]
 	for artifact_name in required_artifact_mentions:
 		if artifact_name not in index_text:

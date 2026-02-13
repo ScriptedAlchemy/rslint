@@ -100,6 +100,16 @@ Outputs:
 
 Note: `pnpm parity:ts-eslint` generates all four phase tasklist files automatically.
 
+### Generate a complete issue body from phase tasklist
+
+```bash
+pnpm parity:ts-eslint:issue-body --phase A_critical
+```
+
+Outputs:
+
+- `typescript-eslint-rule-parity-issue-body-<phase>.md`
+
 ### Direct script usage
 
 ```bash
@@ -114,6 +124,7 @@ python3 scripts/generate_ts_eslint_parity_issue_plan.py
 python3 scripts/check_ts_eslint_parity_artifacts.py
 python3 scripts/compare_ts_eslint_parity_trackers.py --base-ref HEAD~1
 python3 scripts/generate_ts_eslint_parity_issue_tasklist.py --phase A_critical
+python3 scripts/generate_ts_eslint_parity_issue_body.py --phase A_critical
 bash scripts/rebuild_ts_eslint_parity_from_metadata.sh
 bash scripts/verify_ts_eslint_parity_clean.sh
 python3 scripts/generate_ts_eslint_parity_ci_summary.py
