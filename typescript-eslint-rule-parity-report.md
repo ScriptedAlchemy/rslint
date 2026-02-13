@@ -5,6 +5,7 @@ _Generated: 2026-02-13 09:47 UTC_
 - Upstream compared: `typescript-eslint` main branch (`packages/eslint-plugin/src/rules` + `tests/rules`).
 - Local compared: Go rules in `internal/plugins/typescript/rules`, registration in `internal/config/config.go`, JS parity tests in `packages/rslint-test-tools/tests/typescript-eslint/rules`.
 - This report focuses on structural/coverage parity signals and concrete mismatches requiring correction.
+- Operational guide: `typescript-eslint-rule-parity-guide.md`
 
 ## Companion tracker files
 - `typescript-eslint-rule-parity-tracker.csv`
