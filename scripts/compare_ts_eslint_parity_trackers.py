@@ -5,6 +5,7 @@ Compare two TypeScript-ESLint parity tracker snapshots.
 Examples:
   python3 scripts/compare_ts_eslint_parity_trackers.py
   python3 scripts/compare_ts_eslint_parity_trackers.py --base-ref HEAD~1
+  python3 scripts/compare_ts_eslint_parity_trackers.py --with-default-output-json
   python3 scripts/compare_ts_eslint_parity_trackers.py \
     --base-json /path/to/old-tracker.json \
     --head-json /workspace/typescript-eslint-rule-parity-tracker.json \
@@ -82,7 +83,14 @@ def main() -> None:
 		"--output-json",
 		help="Optional output JSON path",
 	)
+	parser.add_argument(
+		"--with-default-output-json",
+		action="store_true",
+		help="Write JSON diff to /workspace/typescript-eslint-rule-parity-diff.json unless --output-json is provided.",
+	)
 	args = parser.parse_args()
+	if args.with_default_output_json and not args.output_json:
+		args.output_json = "/workspace/typescript-eslint-rule-parity-diff.json"
 
 	repo_root = pathlib.Path("/workspace")
 	head_rows = load_rows_from_json(pathlib.Path(args.head_json))

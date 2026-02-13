@@ -34,8 +34,8 @@
     },
     {
       "path": "typescript-eslint-rule-parity-commands.md",
-      "sha256": "1b74f9a25827d6c60fb57d62a03bde36dd26be086017931363e161f7d72ac420",
-      "bytes": 6101
+      "sha256": "90b49724ac539a5ae593045c91d58b29231adbac8bb4a54d9032bdae62f5ab42",
+      "bytes": 6075
     },
     {
       "path": "typescript-eslint-rule-parity-badges.json",

@@ -32,7 +32,7 @@ def main() -> None:
 		"parity:ts-eslint:check:tooling": "Validate parity commands/docs/script synchronization.",
 		"parity:ts-eslint:commands": "Generate command reference markdown from package scripts.",
 		"parity:ts-eslint:diff": "Compare current tracker against baseline (defaults to HEAD~1; falls back to HEAD).",
-		"parity:ts-eslint:diff:json": "Compare parity snapshots and emit JSON diff (defaults to HEAD~1; falls back to HEAD).",
+		"parity:ts-eslint:diff:json": "Compare parity snapshots and emit JSON diff to default path (HEAD~1 baseline with HEAD fallback).",
 		"parity:ts-eslint:diff:refresh": "Refresh standard markdown+JSON diff artifacts at repository root.",
 		"parity:ts-eslint:tasklist": "Generate one phase tasklist snippet.",
 		"parity:ts-eslint:tasklist:all": "Generate tasklist snippets for all parity phases.",

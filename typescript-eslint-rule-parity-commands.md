@@ -18,7 +18,7 @@ Generated from `package.json` parity scripts.
 | `pnpm parity:ts-eslint:ci-summary:strict:yellow` | Render CI summary and fail when health is yellow or red. | `python3 scripts/generate_ts_eslint_parity_ci_summary.py --fail-on-yellow` |
 | `pnpm parity:ts-eslint:commands` | Generate command reference markdown from package scripts. | `python3 scripts/generate_ts_eslint_parity_commands.py` |
 | `pnpm parity:ts-eslint:diff` | Compare current tracker against baseline (defaults to HEAD~1; falls back to HEAD). | `python3 scripts/compare_ts_eslint_parity_trackers.py` |
-| `pnpm parity:ts-eslint:diff:json` | Compare parity snapshots and emit JSON diff (defaults to HEAD~1; falls back to HEAD). | `python3 scripts/compare_ts_eslint_parity_trackers.py --output-json /workspace/typescript-eslint-rule-parity-diff.json` |
+| `pnpm parity:ts-eslint:diff:json` | Compare parity snapshots and emit JSON diff to default path (HEAD~1 baseline with HEAD fallback). | `python3 scripts/compare_ts_eslint_parity_trackers.py --with-default-output-json` |
 | `pnpm parity:ts-eslint:diff:refresh` | Refresh standard markdown+JSON diff artifacts at repository root. | `python3 scripts/compare_ts_eslint_parity_trackers.py --output /workspace/typescript-eslint-rule-parity-diff.md --output-json /workspace/typescript-eslint-rule-parity-diff.json` |
 | `pnpm parity:ts-eslint:doctor` | Print parity health diagnosis from metadata and top-priority artifact. | `python3 scripts/generate_ts_eslint_parity_doctor.py` |
 | `pnpm parity:ts-eslint:doctor:json` | Print parity doctor output in JSON format for automation. | `python3 scripts/generate_ts_eslint_parity_doctor.py --json` |
