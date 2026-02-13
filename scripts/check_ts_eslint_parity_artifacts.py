@@ -482,7 +482,7 @@ def main() -> None:
 		high=int(phase_counts_meta.get("B_high", 0)),
 		flagged=int(summary.get("flagged_rules", 0)),
 	)
-	expected_health_marker = f"health is {expected_health}"
+	expected_health_reason_marker = f"health is {expected_health} ({expected_reason})"
 	if status.get("health") != expected_health:
 		fail(f"status health mismatch: expected={expected_health} actual={status.get('health')}")
 	if status.get("reason", "") != expected_reason:
@@ -507,16 +507,16 @@ def main() -> None:
 			"status strict exit-code mismatch: "
 			f"expected={expected_status_strict_exit} actual={status_strict.returncode}"
 		)
-	if expected_status_strict_exit == 2 and "health is red" not in status_strict.stderr:
-		fail("status strict stderr missing red-health message")
+	if expected_status_strict_exit == 2 and expected_health_reason_marker not in status_strict.stderr:
+		fail("status strict stderr missing health+reason message")
 	expected_status_strict_yellow_exit = 3 if expected_health in {"yellow", "red"} else 0
 	if status_strict_yellow.returncode != expected_status_strict_yellow_exit:
 		fail(
 			"status strict-yellow exit-code mismatch: "
 			f"expected={expected_status_strict_yellow_exit} actual={status_strict_yellow.returncode}"
 		)
-	if expected_status_strict_yellow_exit == 3 and "health is" not in status_strict_yellow.stderr:
-		fail("status strict-yellow stderr missing health message")
+	if expected_status_strict_yellow_exit == 3 and expected_health_reason_marker not in status_strict_yellow.stderr:
+		fail("status strict-yellow stderr missing health+reason message")
 
 	# Unified gate script exit-code checks (skip clean-check phase to avoid recursion)
 	gate_red = subprocess.run(
@@ -533,8 +533,8 @@ def main() -> None:
 		)
 	if "[parity-gate] Applying red threshold gates" not in (gate_red.stdout + gate_red.stderr):
 		fail("parity gate red output missing red-threshold marker")
-	if expected_gate_red_exit == 2 and "health is red" not in gate_red.stderr:
-		fail("parity gate red stderr missing red-health message")
+	if expected_gate_red_exit == 2 and expected_health_reason_marker not in gate_red.stderr:
+		fail("parity gate red stderr missing health+reason message")
 	if expected_gate_red_exit == 0 and "[parity-gate] OK: parity gate passed (threshold=red)." not in (gate_red.stdout + gate_red.stderr):
 		fail("parity gate red success output missing final OK message")
 
@@ -552,8 +552,8 @@ def main() -> None:
 		)
 	if "[parity-gate] Applying yellow threshold gates" not in (gate_yellow.stdout + gate_yellow.stderr):
 		fail("parity gate yellow output missing yellow-threshold marker")
-	if expected_gate_yellow_exit == 3 and expected_health_marker not in gate_yellow.stderr:
-		fail("parity gate yellow stderr missing health-specific message")
+	if expected_gate_yellow_exit == 3 and expected_health_reason_marker not in gate_yellow.stderr:
+		fail("parity gate yellow stderr missing health+reason message")
 	if expected_gate_yellow_exit == 0 and "[parity-gate] OK: parity gate passed (threshold=yellow)." not in (gate_yellow.stdout + gate_yellow.stderr):
 		fail("parity gate yellow success output missing final OK message")
 
@@ -704,8 +704,8 @@ def main() -> None:
 		)
 	if "[parity-gate] Applying red threshold gates" not in (gate_inline_red.stdout + gate_inline_red.stderr):
 		fail("parity gate inline red output missing red-threshold marker")
-	if expected_gate_red_exit == 2 and "health is red" not in gate_inline_red.stderr:
-		fail("parity gate inline red stderr missing red-health message")
+	if expected_gate_red_exit == 2 and expected_health_reason_marker not in gate_inline_red.stderr:
+		fail("parity gate inline red stderr missing health+reason message")
 	if expected_gate_red_exit == 0 and "[parity-gate] OK: parity gate passed (threshold=red)." not in (gate_inline_red.stdout + gate_inline_red.stderr):
 		fail("parity gate inline red success output missing final OK message")
 	if "[parity-gate] Running strict clean parity checks" in (gate_inline_red.stdout + gate_inline_red.stderr):
@@ -724,8 +724,8 @@ def main() -> None:
 		)
 	if "[parity-gate] Applying yellow threshold gates" not in (gate_inline_yellow.stdout + gate_inline_yellow.stderr):
 		fail("parity gate inline yellow output missing yellow-threshold marker")
-	if expected_gate_yellow_exit == 3 and expected_health_marker not in gate_inline_yellow.stderr:
-		fail("parity gate inline yellow stderr missing health-specific message")
+	if expected_gate_yellow_exit == 3 and expected_health_reason_marker not in gate_inline_yellow.stderr:
+		fail("parity gate inline yellow stderr missing health+reason message")
 	if expected_gate_yellow_exit == 0 and "[parity-gate] OK: parity gate passed (threshold=yellow)." not in (gate_inline_yellow.stdout + gate_inline_yellow.stderr):
 		fail("parity gate inline yellow success output missing final OK message")
 	if "[parity-gate] Running strict clean parity checks" in (gate_inline_yellow.stdout + gate_inline_yellow.stderr):
@@ -744,8 +744,8 @@ def main() -> None:
 		)
 	if "[parity-gate] Applying red threshold gates" not in (gate_skip_only_default_red.stdout + gate_skip_only_default_red.stderr):
 		fail("parity gate skip-only default-red output missing red-threshold marker")
-	if expected_gate_red_exit == 2 and "health is red" not in gate_skip_only_default_red.stderr:
-		fail("parity gate skip-only default-red stderr missing red-health message")
+	if expected_gate_red_exit == 2 and expected_health_reason_marker not in gate_skip_only_default_red.stderr:
+		fail("parity gate skip-only default-red stderr missing health+reason message")
 	if expected_gate_red_exit == 0 and "[parity-gate] OK: parity gate passed (threshold=red)." not in (
 		gate_skip_only_default_red.stdout + gate_skip_only_default_red.stderr
 	):
@@ -766,8 +766,8 @@ def main() -> None:
 		)
 	if "[parity-gate] Applying yellow threshold gates" not in (gate_reordered_flags.stdout + gate_reordered_flags.stderr):
 		fail("parity gate reordered-flags output missing yellow-threshold marker")
-	if expected_gate_yellow_exit == 3 and expected_health_marker not in gate_reordered_flags.stderr:
-		fail("parity gate reordered-flags yellow stderr missing health-specific message")
+	if expected_gate_yellow_exit == 3 and expected_health_reason_marker not in gate_reordered_flags.stderr:
+		fail("parity gate reordered-flags yellow stderr missing health+reason message")
 	if expected_gate_yellow_exit == 0 and "[parity-gate] OK: parity gate passed (threshold=yellow)." not in (
 		gate_reordered_flags.stdout + gate_reordered_flags.stderr
 	):
@@ -820,8 +820,8 @@ def main() -> None:
 		fail("parity gate quick output missing red-threshold marker")
 	if "[parity-gate] Running strict clean parity checks" in (gate_quick.stdout + gate_quick.stderr):
 		fail("parity gate quick should not run strict clean checks")
-	if expected_gate_red_exit == 2 and "health is red" not in gate_quick.stderr:
-		fail("parity gate quick stderr missing red-health message")
+	if expected_gate_red_exit == 2 and expected_health_reason_marker not in gate_quick.stderr:
+		fail("parity gate quick stderr missing health+reason message")
 	if expected_gate_red_exit == 0 and "[parity-gate] OK: parity gate passed (threshold=red)." not in (gate_quick.stdout + gate_quick.stderr):
 		fail("parity gate quick success output missing final OK message")
 
@@ -843,8 +843,8 @@ def main() -> None:
 		fail("parity gate quick:red output missing red-threshold marker")
 	if "[parity-gate] Running strict clean parity checks" in (gate_quick_red.stdout + gate_quick_red.stderr):
 		fail("parity gate quick:red should not run strict clean checks")
-	if expected_gate_red_exit == 2 and "health is red" not in gate_quick_red.stderr:
-		fail("parity gate quick:red stderr missing red-health message")
+	if expected_gate_red_exit == 2 and expected_health_reason_marker not in gate_quick_red.stderr:
+		fail("parity gate quick:red stderr missing health+reason message")
 	if expected_gate_red_exit == 0 and "[parity-gate] OK: parity gate passed (threshold=red)." not in (
 		gate_quick_red.stdout + gate_quick_red.stderr
 	):
@@ -868,8 +868,8 @@ def main() -> None:
 		fail("parity gate quick:yellow output missing yellow-threshold marker")
 	if "[parity-gate] Running strict clean parity checks" in (gate_quick_yellow.stdout + gate_quick_yellow.stderr):
 		fail("parity gate quick:yellow should not run strict clean checks")
-	if expected_gate_yellow_exit == 3 and expected_health_marker not in gate_quick_yellow.stderr:
-		fail("parity gate quick:yellow stderr missing health-specific message")
+	if expected_gate_yellow_exit == 3 and expected_health_reason_marker not in gate_quick_yellow.stderr:
+		fail("parity gate quick:yellow stderr missing health+reason message")
 	if expected_gate_yellow_exit == 0 and "[parity-gate] OK: parity gate passed (threshold=yellow)." not in (
 		gate_quick_yellow.stdout + gate_quick_yellow.stderr
 	):
