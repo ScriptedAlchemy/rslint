@@ -810,6 +810,8 @@ def main() -> None:
 	if gate_short_help.stdout.strip():
 		fail("parity gate -h stdout must be empty")
 	assert_exact_nonempty_lines("parity gate -h stderr", gate_short_help.stderr, [expected_gate_usage_line])
+	if extract_nonempty_lines(gate_short_help.stderr) != extract_nonempty_lines(gate_help.stderr):
+		fail("parity gate -h stderr output mismatch with --help")
 
 	gate_invalid_threshold = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--threshold", "blue", "--skip-checks"],
@@ -838,6 +840,7 @@ def main() -> None:
 		expected_gate_invalid_threshold_line,
 		expected_gate_usage_line,
 	)
+	gate_invalid_threshold_lines = extract_nonempty_lines(gate_invalid_threshold.stderr)
 
 	gate_invalid_inline_threshold = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--threshold=blue", "--skip-checks"],
@@ -868,6 +871,8 @@ def main() -> None:
 		expected_gate_invalid_threshold_line,
 		expected_gate_usage_line,
 	)
+	if extract_nonempty_lines(gate_invalid_inline_threshold.stderr) != gate_invalid_threshold_lines:
+		fail("parity gate invalid-inline-threshold stderr mismatch with invalid-threshold stderr")
 
 	gate_missing_threshold_value = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--threshold", "--skip-checks"],
@@ -898,6 +903,7 @@ def main() -> None:
 		expected_gate_missing_threshold_line,
 		expected_gate_usage_line,
 	)
+	gate_missing_threshold_lines = extract_nonempty_lines(gate_missing_threshold_value.stderr)
 
 	gate_missing_inline_threshold_value = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--threshold=", "--skip-checks"],
@@ -930,6 +936,8 @@ def main() -> None:
 		expected_gate_missing_threshold_line,
 		expected_gate_usage_line,
 	)
+	if extract_nonempty_lines(gate_missing_inline_threshold_value.stderr) != gate_missing_threshold_lines:
+		fail("parity gate missing-inline-threshold-value stderr mismatch with missing-threshold-value stderr")
 
 	gate_duplicate_threshold = subprocess.run(
 		[
@@ -965,6 +973,7 @@ def main() -> None:
 		expected_gate_duplicate_threshold_line,
 		expected_gate_usage_line,
 	)
+	gate_duplicate_threshold_lines = extract_nonempty_lines(gate_duplicate_threshold.stderr)
 
 	gate_duplicate_threshold_spaced = subprocess.run(
 		[
@@ -1003,6 +1012,8 @@ def main() -> None:
 		expected_gate_duplicate_threshold_line,
 		expected_gate_usage_line,
 	)
+	if extract_nonempty_lines(gate_duplicate_threshold_spaced.stderr) != gate_duplicate_threshold_lines:
+		fail("parity gate duplicate-threshold-spaced stderr mismatch with duplicate-threshold stderr")
 
 	gate_duplicate_threshold_inline = subprocess.run(
 		[
@@ -1039,6 +1050,8 @@ def main() -> None:
 		expected_gate_duplicate_threshold_line,
 		expected_gate_usage_line,
 	)
+	if extract_nonempty_lines(gate_duplicate_threshold_inline.stderr) != gate_duplicate_threshold_lines:
+		fail("parity gate duplicate-threshold-inline stderr mismatch with duplicate-threshold stderr")
 
 	gate_inline_red = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--threshold=red", "--skip-checks"],
