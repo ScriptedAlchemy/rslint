@@ -560,6 +560,17 @@ def main() -> None:
 	if "invalid threshold" not in gate_invalid_threshold.stderr:
 		fail("parity gate invalid-threshold stderr missing message")
 
+	gate_missing_threshold_value = subprocess.run(
+		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--threshold", "--skip-checks"],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if gate_missing_threshold_value.returncode != 1:
+		fail("parity gate missing-threshold-value exit code must be 1")
+	if "--threshold requires a value" not in gate_missing_threshold_value.stderr:
+		fail("parity gate missing-threshold-value stderr missing message")
+
 	gate_unknown_arg = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--not-a-real-flag"],
 		check=False,

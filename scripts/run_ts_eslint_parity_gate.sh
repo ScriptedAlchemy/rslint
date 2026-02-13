@@ -7,7 +7,7 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --threshold)
       shift
-      if [[ $# -eq 0 ]]; then
+      if [[ $# -eq 0 || "$1" == --* ]]; then
         echo "[parity-gate] ERROR: --threshold requires a value (red|yellow)." >&2
         exit 1
       fi
