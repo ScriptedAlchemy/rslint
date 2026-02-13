@@ -1489,6 +1489,10 @@ def main() -> None:
 		("missing-threshold", ["--threshold"]),
 		("empty-threshold", ["--threshold="]),
 		("missing-threshold with trailing skip-checks", ["--threshold", "--skip-checks"]),
+		("invalid-threshold-inline", ["--threshold=blue"]),
+		("invalid-threshold-spaced", ["--threshold", "blue"]),
+		("invalid-threshold-inline with trailing skip-checks", ["--threshold=blue", "--skip-checks"]),
+		("invalid-threshold-spaced with trailing skip-checks", ["--threshold", "blue", "--skip-checks"]),
 	]
 	for suffix_label, suffix_tokens in gate_help_then_malformed_threshold_suffixes:
 		help_proc = subprocess.run(
