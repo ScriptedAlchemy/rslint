@@ -284,6 +284,20 @@ def main() -> None:
 		if token not in workflow_text:
 			fail(f"missing workflow wiring token: {token}")
 
+	required_workflow_path_tokens = [
+		'"scripts/check_ts_eslint_parity_all.sh"',
+		'"scripts/run_ts_eslint_parity_gate.sh"',
+		'"scripts/verify_ts_eslint_parity_clean.sh"',
+		'"scripts/parity_health.py"',
+		'"typescript-eslint-rule-parity-report.md"',
+		'"README.md"',
+		'"CONTRIBUTING.md"',
+		'"package.json"',
+	]
+	for token in required_workflow_path_tokens:
+		if token not in workflow_text:
+			fail(f"missing workflow trigger path token: {token}")
+
 	diff_generation_step = re.search(
 		r"- name: Generate parity tracker diff against PR base(?P<body>.*?)(?:\n\s*- name:|\Z)",
 		workflow_text,
