@@ -363,6 +363,13 @@ def assert_exact_nonempty_lines(label: str, text: str, expected_lines: list[str]
 		fail(f"{label} line mismatch: expected={expected_lines} actual={actual_lines}")
 
 
+def assert_line_occurs_once(label: str, text: str, expected_line: str) -> None:
+	lines = [line.strip() for line in text.splitlines()]
+	count = sum(1 for line in lines if line == expected_line)
+	if count != 1:
+		fail(f"{label} expected usage line once: count={count} line={expected_line}")
+
+
 def main() -> None:
 	root = pathlib.Path("/workspace")
 	tracker_csv = root / "typescript-eslint-rule-parity-tracker.csv"
@@ -755,6 +762,10 @@ def main() -> None:
 	usage_prefix = "Usage: bash scripts/run_ts_eslint_parity_gate.sh"
 	usage_threshold_token = "--threshold=red|--threshold=yellow"
 	usage_skip_checks_token = "[--skip-checks]"
+	expected_gate_usage_line = (
+		"[parity-gate] Usage: bash scripts/run_ts_eslint_parity_gate.sh "
+		"[--threshold red|yellow|--threshold=red|--threshold=yellow] [--skip-checks]"
+	)
 
 	gate_help = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--help"],
@@ -770,6 +781,9 @@ def main() -> None:
 		fail("parity gate --help missing threshold forms in usage message")
 	if usage_skip_checks_token not in (gate_help.stdout + gate_help.stderr):
 		fail("parity gate --help missing skip-checks token in usage message")
+	if gate_help.stdout.strip():
+		fail("parity gate --help stdout must be empty")
+	assert_exact_nonempty_lines("parity gate --help stderr", gate_help.stderr, [expected_gate_usage_line])
 	gate_short_help = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "-h"],
 		check=False,
@@ -784,6 +798,9 @@ def main() -> None:
 		fail("parity gate -h missing threshold forms in usage message")
 	if usage_skip_checks_token not in (gate_short_help.stdout + gate_short_help.stderr):
 		fail("parity gate -h missing skip-checks token in usage message")
+	if gate_short_help.stdout.strip():
+		fail("parity gate -h stdout must be empty")
+	assert_exact_nonempty_lines("parity gate -h stderr", gate_short_help.stderr, [expected_gate_usage_line])
 
 	gate_invalid_threshold = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--threshold", "blue", "--skip-checks"],
@@ -801,6 +818,9 @@ def main() -> None:
 		fail("parity gate invalid-threshold stderr missing threshold forms in usage message")
 	if usage_skip_checks_token not in gate_invalid_threshold.stderr:
 		fail("parity gate invalid-threshold stderr missing skip-checks token in usage message")
+	if gate_invalid_threshold.stdout.strip():
+		fail("parity gate invalid-threshold stdout must be empty")
+	assert_line_occurs_once("parity gate invalid-threshold stderr", gate_invalid_threshold.stderr, expected_gate_usage_line)
 
 	gate_invalid_inline_threshold = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--threshold=blue", "--skip-checks"],
@@ -818,6 +838,11 @@ def main() -> None:
 		fail("parity gate invalid-inline-threshold stderr missing threshold forms in usage message")
 	if usage_skip_checks_token not in gate_invalid_inline_threshold.stderr:
 		fail("parity gate invalid-inline-threshold stderr missing skip-checks token in usage message")
+	if gate_invalid_inline_threshold.stdout.strip():
+		fail("parity gate invalid-inline-threshold stdout must be empty")
+	assert_line_occurs_once(
+		"parity gate invalid-inline-threshold stderr", gate_invalid_inline_threshold.stderr, expected_gate_usage_line
+	)
 
 	gate_missing_threshold_value = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--threshold", "--skip-checks"],
@@ -835,6 +860,11 @@ def main() -> None:
 		fail("parity gate missing-threshold-value stderr missing threshold forms in usage message")
 	if usage_skip_checks_token not in gate_missing_threshold_value.stderr:
 		fail("parity gate missing-threshold-value stderr missing skip-checks token in usage message")
+	if gate_missing_threshold_value.stdout.strip():
+		fail("parity gate missing-threshold-value stdout must be empty")
+	assert_line_occurs_once(
+		"parity gate missing-threshold-value stderr", gate_missing_threshold_value.stderr, expected_gate_usage_line
+	)
 
 	gate_missing_inline_threshold_value = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--threshold=", "--skip-checks"],
@@ -852,6 +882,13 @@ def main() -> None:
 		fail("parity gate missing-inline-threshold-value stderr missing threshold forms in usage message")
 	if usage_skip_checks_token not in gate_missing_inline_threshold_value.stderr:
 		fail("parity gate missing-inline-threshold-value stderr missing skip-checks token in usage message")
+	if gate_missing_inline_threshold_value.stdout.strip():
+		fail("parity gate missing-inline-threshold-value stdout must be empty")
+	assert_line_occurs_once(
+		"parity gate missing-inline-threshold-value stderr",
+		gate_missing_inline_threshold_value.stderr,
+		expected_gate_usage_line,
+	)
 
 	gate_duplicate_threshold = subprocess.run(
 		[
@@ -876,6 +913,9 @@ def main() -> None:
 		fail("parity gate duplicate-threshold stderr missing threshold forms in usage message")
 	if usage_skip_checks_token not in gate_duplicate_threshold.stderr:
 		fail("parity gate duplicate-threshold stderr missing skip-checks token in usage message")
+	if gate_duplicate_threshold.stdout.strip():
+		fail("parity gate duplicate-threshold stdout must be empty")
+	assert_line_occurs_once("parity gate duplicate-threshold stderr", gate_duplicate_threshold.stderr, expected_gate_usage_line)
 
 	gate_duplicate_threshold_spaced = subprocess.run(
 		[
@@ -901,6 +941,11 @@ def main() -> None:
 		fail("parity gate duplicate-threshold-spaced stderr missing threshold forms in usage message")
 	if usage_skip_checks_token not in gate_duplicate_threshold_spaced.stderr:
 		fail("parity gate duplicate-threshold-spaced stderr missing skip-checks token in usage message")
+	if gate_duplicate_threshold_spaced.stdout.strip():
+		fail("parity gate duplicate-threshold-spaced stdout must be empty")
+	assert_line_occurs_once(
+		"parity gate duplicate-threshold-spaced stderr", gate_duplicate_threshold_spaced.stderr, expected_gate_usage_line
+	)
 
 	gate_duplicate_threshold_inline = subprocess.run(
 		[
@@ -924,6 +969,11 @@ def main() -> None:
 		fail("parity gate duplicate-threshold-inline stderr missing threshold forms in usage message")
 	if usage_skip_checks_token not in gate_duplicate_threshold_inline.stderr:
 		fail("parity gate duplicate-threshold-inline stderr missing skip-checks token in usage message")
+	if gate_duplicate_threshold_inline.stdout.strip():
+		fail("parity gate duplicate-threshold-inline stdout must be empty")
+	assert_line_occurs_once(
+		"parity gate duplicate-threshold-inline stderr", gate_duplicate_threshold_inline.stderr, expected_gate_usage_line
+	)
 
 	gate_inline_red = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--threshold=red", "--skip-checks"],
@@ -1065,6 +1115,9 @@ def main() -> None:
 		fail("parity gate unknown-arg stderr missing threshold forms in usage message")
 	if usage_skip_checks_token not in gate_unknown_arg.stderr:
 		fail("parity gate unknown-arg stderr missing skip-checks token in usage message")
+	if gate_unknown_arg.stdout.strip():
+		fail("parity gate unknown-arg stdout must be empty")
+	assert_line_occurs_once("parity gate unknown-arg stderr", gate_unknown_arg.stderr, expected_gate_usage_line)
 
 	gate_duplicate_skip_checks = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--skip-checks", "--skip-checks"],
@@ -1082,6 +1135,11 @@ def main() -> None:
 		fail("parity gate duplicate-skip-checks stderr missing threshold forms in usage message")
 	if usage_skip_checks_token not in gate_duplicate_skip_checks.stderr:
 		fail("parity gate duplicate-skip-checks stderr missing skip-checks token in usage message")
+	if gate_duplicate_skip_checks.stdout.strip():
+		fail("parity gate duplicate-skip-checks stdout must be empty")
+	assert_line_occurs_once(
+		"parity gate duplicate-skip-checks stderr", gate_duplicate_skip_checks.stderr, expected_gate_usage_line
+	)
 
 	# Quick gate npm command wrappers
 	gate_quick = subprocess.run(
