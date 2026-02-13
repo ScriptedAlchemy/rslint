@@ -13,6 +13,7 @@ After running the refresh command, the following artifacts are generated at repo
 - `typescript-eslint-rule-parity-worklist.md` — execution checklist grouped by phase.
 - `typescript-eslint-rule-parity-summary.md` — dashboard with headline metrics and top priorities.
 - `typescript-eslint-rule-parity-metadata.json` — run metadata (timestamp, upstream SHA, requested ref, counters).
+- `typescript-eslint-rule-parity-index.md` — central index linking all parity artifacts.
 - `typescript-eslint-rule-parity-issue-plan.md` — issue-friendly phase plan/checklist template.
 
 ## Commands
@@ -68,6 +69,7 @@ python3 scripts/generate_ts_eslint_parity_tracker.py
 python3 scripts/generate_ts_eslint_parity_worklist.py
 python3 scripts/generate_ts_eslint_parity_summary.py
 python3 scripts/generate_ts_eslint_parity_metadata.py
+python3 scripts/generate_ts_eslint_parity_index.py
 python3 scripts/generate_ts_eslint_parity_issue_plan.py
 python3 scripts/check_ts_eslint_parity_artifacts.py
 python3 scripts/compare_ts_eslint_parity_trackers.py --base-ref HEAD~1

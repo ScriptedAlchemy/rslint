@@ -104,9 +104,10 @@ def main() -> None:
 	worklist_md = root / "typescript-eslint-rule-parity-worklist.md"
 	summary_md = root / "typescript-eslint-rule-parity-summary.md"
 	metadata_json = root / "typescript-eslint-rule-parity-metadata.json"
+	index_md = root / "typescript-eslint-rule-parity-index.md"
 	issue_plan_md = root / "typescript-eslint-rule-parity-issue-plan.md"
 
-	required = [tracker_csv, tracker_json, worklist_md, summary_md, metadata_json, issue_plan_md]
+	required = [tracker_csv, tracker_json, worklist_md, summary_md, metadata_json, index_md, issue_plan_md]
 	for path in required:
 		if not path.exists():
 			fail(f"missing artifact: {path.name}")
@@ -224,6 +225,22 @@ def main() -> None:
 		item_count = issue_plan_data["phase_items"].get(phase, 0)
 		if item_count != expected_count:
 			fail(f"issue plan checklist item count mismatch for {phase}: expected={expected_count} actual={item_count}")
+
+	# Index markdown checks
+	index_text = index_md.read_text()
+	index_headline_patterns = {
+		"total_rules": r"Total rules:\s+\*\*(\d+)\*\*",
+		"flagged_rules": r"Flagged rules:\s+\*\*(\d+)\*\*",
+		"aligned_rules": r"Aligned rules:\s+\*\*(\d+)\*\*",
+	}
+	for key, pattern in index_headline_patterns.items():
+		match = re.search(pattern, index_text)
+		if not match:
+			fail(f"index markdown missing metric: {key}")
+		value = int(match.group(1))
+		expected = summary.get(key)
+		if value != expected:
+			fail(f"index markdown metric mismatch for {key}: expected={expected} actual={value}")
 
 	print("[parity-check] OK: all parity artifacts are consistent.")
 

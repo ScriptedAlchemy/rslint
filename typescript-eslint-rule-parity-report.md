@@ -13,6 +13,7 @@ _Generated: 2026-02-13 09:47 UTC_
 - `typescript-eslint-rule-parity-worklist.md`
 - `typescript-eslint-rule-parity-summary.md`
 - `typescript-eslint-rule-parity-metadata.json`
+- `typescript-eslint-rule-parity-index.md`
 - `typescript-eslint-rule-parity-issue-plan.md`
 - Optional diff artifact: `typescript-eslint-rule-parity-diff.md`
 - Optional tasklist snippet artifact: `typescript-eslint-rule-parity-tasklist-<phase>.md`
@@ -49,6 +50,7 @@ python3 scripts/generate_ts_eslint_parity_tracker.py
 python3 scripts/generate_ts_eslint_parity_worklist.py
 python3 scripts/generate_ts_eslint_parity_summary.py
 python3 scripts/generate_ts_eslint_parity_metadata.py
+python3 scripts/generate_ts_eslint_parity_index.py
 python3 scripts/generate_ts_eslint_parity_issue_plan.py
 python3 scripts/check_ts_eslint_parity_artifacts.py
 ```
