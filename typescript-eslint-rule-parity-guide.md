@@ -63,6 +63,7 @@ pnpm parity:ts-eslint:commands
 pnpm parity:ts-eslint:badges
 pnpm parity:ts-eslint:status
 pnpm parity:ts-eslint:status:strict
+pnpm parity:ts-eslint:status:strict:yellow
 pnpm parity:ts-eslint:ci-summary
 pnpm parity:ts-eslint:ci-summary:json
 pnpm parity:ts-eslint:doctor
@@ -90,6 +91,7 @@ The checkers validate:
 `parity:ts-eslint:check:strict` additionally fails when critical backlog remains.
 `parity:ts-eslint:check:strict:clean` combines strict critical-backlog gating with clean-tree reproducibility enforcement.
 `parity:ts-eslint:status:strict` additionally fails when computed parity health is red.
+`parity:ts-eslint:status:strict:yellow` additionally fails when computed parity health is yellow or red.
 
 ### Compare parity progress between snapshots
 

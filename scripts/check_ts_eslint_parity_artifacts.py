@@ -502,6 +502,12 @@ def main() -> None:
 		capture_output=True,
 		text=True,
 	)
+	status_strict_yellow = subprocess.run(
+		["python3", str(root / "scripts/generate_ts_eslint_parity_status.py"), "--fail-on-yellow"],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
 	expected_status_strict_exit = 2 if expected_health == "red" else 0
 	if status_strict.returncode != expected_status_strict_exit:
 		fail(
@@ -510,6 +516,14 @@ def main() -> None:
 		)
 	if expected_status_strict_exit == 2 and "health is red" not in status_strict.stderr:
 		fail("status strict stderr missing red-health message")
+	expected_status_strict_yellow_exit = 3 if expected_health in {"yellow", "red"} else 0
+	if status_strict_yellow.returncode != expected_status_strict_yellow_exit:
+		fail(
+			"status strict-yellow exit-code mismatch: "
+			f"expected={expected_status_strict_yellow_exit} actual={status_strict_yellow.returncode}"
+		)
+	if expected_status_strict_yellow_exit == 3 and "health is" not in status_strict_yellow.stderr:
+		fail("status strict-yellow stderr missing health message")
 
 	flagged = [row for row in tracker_rows if int(row.get("priority_score", 0)) > 0]
 	aligned = len(tracker_rows) - len(flagged)

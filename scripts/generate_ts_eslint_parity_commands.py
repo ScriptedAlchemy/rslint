@@ -40,6 +40,7 @@ def main() -> None:
 		"parity:ts-eslint:badges": "Generate badge-friendly parity metrics JSON.",
 		"parity:ts-eslint:status": "Generate concise parity health status JSON for automation.",
 		"parity:ts-eslint:status:strict": "Generate status JSON and fail when health is red.",
+		"parity:ts-eslint:status:strict:yellow": "Generate status JSON and fail when health is yellow or red.",
 		"parity:ts-eslint:ci-summary": "Render CI-style markdown summary from parity artifacts.",
 		"parity:ts-eslint:ci-summary:json": "Render CI summary as JSON for automation.",
 		"parity:ts-eslint:doctor": "Print parity health diagnosis from metadata and top-priority artifact.",

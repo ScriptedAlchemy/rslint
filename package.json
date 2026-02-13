@@ -48,6 +48,7 @@
     "parity:ts-eslint:badges": "python3 scripts/generate_ts_eslint_parity_badges.py",
     "parity:ts-eslint:status": "python3 scripts/generate_ts_eslint_parity_status.py",
     "parity:ts-eslint:status:strict": "python3 scripts/generate_ts_eslint_parity_status.py --fail-on-red",
+    "parity:ts-eslint:status:strict:yellow": "python3 scripts/generate_ts_eslint_parity_status.py --fail-on-yellow",
     "parity:ts-eslint:ci-summary": "python3 scripts/generate_ts_eslint_parity_ci_summary.py",
     "parity:ts-eslint:ci-summary:json": "python3 scripts/generate_ts_eslint_parity_ci_summary.py --json",
     "parity:ts-eslint:doctor": "python3 scripts/generate_ts_eslint_parity_doctor.py",
