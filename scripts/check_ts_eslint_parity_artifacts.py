@@ -559,6 +559,16 @@ def main() -> None:
 		fail("parity gate --help exit code must be 0")
 	if "Usage: bash scripts/run_ts_eslint_parity_gate.sh" not in (gate_help.stdout + gate_help.stderr):
 		fail("parity gate --help missing usage message")
+	gate_short_help = subprocess.run(
+		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "-h"],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if gate_short_help.returncode != 0:
+		fail("parity gate -h exit code must be 0")
+	if "Usage: bash scripts/run_ts_eslint_parity_gate.sh" not in (gate_short_help.stdout + gate_short_help.stderr):
+		fail("parity gate -h missing usage message")
 
 	gate_invalid_threshold = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--threshold", "blue", "--skip-checks"],
@@ -570,6 +580,8 @@ def main() -> None:
 		fail("parity gate invalid-threshold exit code must be 1")
 	if "invalid threshold" not in gate_invalid_threshold.stderr:
 		fail("parity gate invalid-threshold stderr missing message")
+	if "Usage: bash scripts/run_ts_eslint_parity_gate.sh" not in gate_invalid_threshold.stderr:
+		fail("parity gate invalid-threshold stderr missing usage message")
 
 	gate_missing_threshold_value = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--threshold", "--skip-checks"],
@@ -581,6 +593,8 @@ def main() -> None:
 		fail("parity gate missing-threshold-value exit code must be 1")
 	if "--threshold requires a value" not in gate_missing_threshold_value.stderr:
 		fail("parity gate missing-threshold-value stderr missing message")
+	if "Usage: bash scripts/run_ts_eslint_parity_gate.sh" not in gate_missing_threshold_value.stderr:
+		fail("parity gate missing-threshold-value stderr missing usage message")
 
 	gate_missing_inline_threshold_value = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--threshold=", "--skip-checks"],
@@ -592,6 +606,8 @@ def main() -> None:
 		fail("parity gate missing-inline-threshold-value exit code must be 1")
 	if "--threshold requires a value" not in gate_missing_inline_threshold_value.stderr:
 		fail("parity gate missing-inline-threshold-value stderr missing message")
+	if "Usage: bash scripts/run_ts_eslint_parity_gate.sh" not in gate_missing_inline_threshold_value.stderr:
+		fail("parity gate missing-inline-threshold-value stderr missing usage message")
 
 	gate_inline_red = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--threshold=red", "--skip-checks"],
@@ -607,6 +623,20 @@ def main() -> None:
 	if expected_gate_red_exit == 2 and "health is red" not in gate_inline_red.stderr:
 		fail("parity gate inline red stderr missing red-health message")
 
+	gate_inline_yellow = subprocess.run(
+		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--threshold=yellow", "--skip-checks"],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if gate_inline_yellow.returncode != expected_gate_yellow_exit:
+		fail(
+			"parity gate inline yellow exit-code mismatch: "
+			f"expected={expected_gate_yellow_exit} actual={gate_inline_yellow.returncode}"
+		)
+	if expected_gate_yellow_exit == 3 and "health is" not in gate_inline_yellow.stderr:
+		fail("parity gate inline yellow stderr missing health message")
+
 	gate_unknown_arg = subprocess.run(
 		["bash", str(root / "scripts/run_ts_eslint_parity_gate.sh"), "--not-a-real-flag"],
 		check=False,
@@ -617,6 +647,8 @@ def main() -> None:
 		fail("parity gate unknown-arg exit code must be 1")
 	if "unknown argument" not in gate_unknown_arg.stderr:
 		fail("parity gate unknown-arg stderr missing message")
+	if "Usage: bash scripts/run_ts_eslint_parity_gate.sh" not in gate_unknown_arg.stderr:
+		fail("parity gate unknown-arg stderr missing usage message")
 
 	flagged = [row for row in tracker_rows if int(row.get("priority_score", 0)) > 0]
 	aligned = len(tracker_rows) - len(flagged)
