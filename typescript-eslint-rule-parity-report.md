@@ -10,6 +10,7 @@ _Generated: 2026-02-13 09:47 UTC_
 - `typescript-eslint-rule-parity-tracker.csv`
 - `typescript-eslint-rule-parity-tracker.json`
 - `typescript-eslint-rule-parity-worklist.md`
+- `typescript-eslint-rule-parity-summary.md`
 
 These machine-readable files mirror this report’s findings and include:
 - per-rule priority score,
@@ -29,6 +30,7 @@ Regenerate tracker artifacts:
 ```bash
 python3 scripts/generate_ts_eslint_parity_tracker.py
 python3 scripts/generate_ts_eslint_parity_worklist.py
+python3 scripts/generate_ts_eslint_parity_summary.py
 ```
 
 ## Inventory Summary
