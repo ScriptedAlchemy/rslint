@@ -163,6 +163,12 @@ def parse_ci_summary_markdown(summary_text: str) -> dict:
 		else:
 			parsed[key] = value
 
+	health_match = re.search(r"- Health:\s+\*\*([a-z]+)\*\*(?:\s+—\s+(.+))?", summary_text)
+	if not health_match:
+		fail("ci summary missing field: health")
+	parsed["health"] = health_match.group(1)
+	parsed["health_reason"] = (health_match.group(2) or "").strip()
+
 	phase_counts = {}
 	for phase in ["A_critical", "B_high", "C_medium", "D_low", "aligned"]:
 		match = re.search(rf"\|\s*`{phase}`\s*\|\s*(\d+)\s*\|", summary_text)
@@ -562,6 +568,10 @@ def main() -> None:
 		fail("ci summary flagged_rules mismatch")
 	if ci_summary["aligned_rules"] != summary.get("aligned_rules"):
 		fail("ci summary aligned_rules mismatch")
+	if ci_summary["health"] != status.get("health"):
+		fail("ci summary health mismatch")
+	if ci_summary["health_reason"] != status.get("reason", ""):
+		fail("ci summary health reason mismatch")
 	if ci_summary["phase_counts"] != dict(phase_counter):
 		fail("ci summary phase_counts mismatch")
 

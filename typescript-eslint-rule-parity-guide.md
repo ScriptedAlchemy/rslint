@@ -175,6 +175,7 @@ Workflow: `.github/workflows/parity-artifacts-check.yml`
 - CI also rebuilds artifacts from metadata-pinned upstream commit and checks
   that parity artifacts remain unchanged.
 - CI writes a concise parity status block into GitHub job summary.
+- CI summary includes computed health (`red`/`yellow`/`green`) and reason from status artifact.
 - CI appends parity doctor diagnosis into GitHub job summary.
 - Issue template available:
   - `.github/ISSUE_TEMPLATE/4-ts-eslint-parity-tracking.en-US.yml`

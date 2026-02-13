@@ -36,6 +36,7 @@ _Generated: 2026-02-13 09:47 UTC_
 - CI guard: `.github/workflows/parity-artifacts-check.yml`
 - CI summary renderer: `scripts/generate_ts_eslint_parity_ci_summary.py`
 - Parity diagnosis renderer: `scripts/generate_ts_eslint_parity_doctor.py`
+- CI summary now includes computed parity health + reason from status artifact.
 - PR CI uploads:
   - `typescript-eslint-parity-diff`
   - `typescript-eslint-parity-artifacts`

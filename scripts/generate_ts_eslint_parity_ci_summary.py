@@ -39,13 +39,17 @@ def read_optional_diff_metrics(diff_path: pathlib.Path) -> dict:
 def main() -> None:
 	root = pathlib.Path("/workspace")
 	metadata_path = root / "typescript-eslint-rule-parity-metadata.json"
+	status_path = root / "typescript-eslint-rule-parity-status.json"
 	diff_path = root / "typescript-eslint-rule-parity-diff.md"
 
 	metadata = json.loads(metadata_path.read_text())
+	status = json.loads(status_path.read_text()) if status_path.exists() else {}
 	summary = metadata.get("summary", {})
 	phase_counts = metadata.get("phase_counts", {})
 	upstream_ref = metadata.get("upstream_ref_requested", "unknown")
 	upstream_commit = metadata.get("upstream_commit", "unknown")
+	health = status.get("health")
+	reason = status.get("reason")
 
 	diff_metrics = read_optional_diff_metrics(diff_path)
 
@@ -57,6 +61,11 @@ def main() -> None:
 	lines.append(f"- Total rules: **{summary.get('total_rules', 0)}**")
 	lines.append(f"- Flagged rules: **{summary.get('flagged_rules', 0)}**")
 	lines.append(f"- Aligned rules: **{summary.get('aligned_rules', 0)}**")
+	if health:
+		health_line = f"- Health: **{health}**"
+		if reason:
+			health_line += f" — {reason}"
+		lines.append(health_line)
 	lines.append("")
 	lines.append("| Phase | Rules |")
 	lines.append("|---|---:|")
