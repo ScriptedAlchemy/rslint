@@ -111,15 +111,6 @@ def main() -> None:
 			if artifact not in text:
 				fail(f"`{artifact}` missing in parity {doc_name} documentation")
 
-	invalid_command_examples = [
-		"pnpm parity:ts-eslint:diff -- --base-ref",
-		"pnpm parity:ts-eslint:diff:json -- --base-ref",
-	]
-	for invalid in invalid_command_examples:
-		for doc_name, text in documents.items():
-			if invalid in text:
-				fail(f"invalid parity command example `{invalid}` found in {doc_name} documentation")
-
 	# Ensure contributor-facing docs mention essential parity commands
 	readme_text = readme_md.read_text() if readme_md.exists() else ""
 	contributing_text = contributing_md.read_text() if contributing_md.exists() else ""
@@ -127,6 +118,26 @@ def main() -> None:
 		fail("missing or empty README.md")
 	if not contributing_text:
 		fail("missing or empty CONTRIBUTING.md")
+
+	documents_with_contributors = {
+		**documents,
+		"readme": readme_text,
+		"contributing": contributing_text,
+	}
+
+	invalid_command_examples = [
+		"pnpm parity:ts-eslint:diff -- --base-ref",
+		"pnpm parity:ts-eslint:diff:json -- --base-ref",
+	]
+	for invalid in invalid_command_examples:
+		for doc_name, text in documents_with_contributors.items():
+			if invalid in text:
+				fail(f"invalid parity command example `{invalid}` found in {doc_name} documentation")
+
+	invalid_double_dash_pattern = re.compile(r"pnpm\s+parity:ts-eslint(?::[A-Za-z0-9:-]+)?\s+--\s+--")
+	for doc_name, text in documents_with_contributors.items():
+		if invalid_double_dash_pattern.search(text):
+			fail(f"invalid pnpm argument separator pattern found in {doc_name} documentation")
 
 	required_readme_tokens = [
 		"TypeScript-ESLint parity toolkit",
