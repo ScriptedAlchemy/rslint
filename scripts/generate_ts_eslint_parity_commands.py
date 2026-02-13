@@ -26,6 +26,7 @@ def main() -> None:
 		"parity:ts-eslint": "Refresh all parity artifacts from upstream reference and run validations.",
 		"parity:ts-eslint:check": "Validate generated parity artifact consistency and structure.",
 		"parity:ts-eslint:check:all": "Run all parity checks; includes verify-clean when parity artifacts are clean.",
+		"parity:ts-eslint:check:strict": "Run full parity checks and fail if critical backlog exists.",
 		"parity:ts-eslint:check:tooling": "Validate parity commands/docs/script synchronization.",
 		"parity:ts-eslint:commands": "Generate command reference markdown from package scripts.",
 		"parity:ts-eslint:diff": "Compare current tracker against baseline snapshot or git ref.",

@@ -55,6 +55,7 @@ PARITY_OFFLINE=1 TS_ESLINT_REF=main pnpm parity:ts-eslint
 ```bash
 pnpm parity:ts-eslint:check
 pnpm parity:ts-eslint:check:all
+pnpm parity:ts-eslint:check:strict
 pnpm parity:ts-eslint:check:tooling
 pnpm parity:ts-eslint:commands
 pnpm parity:ts-eslint:badges
@@ -74,6 +75,7 @@ The checkers validate:
 - status/badge schema, health reason, and summary arithmetic coherence.
 
 `parity:ts-eslint:check:all` additionally runs metadata-pinned reproducibility verification when parity artifacts are clean.
+`parity:ts-eslint:check:strict` additionally fails when critical backlog remains.
 
 ### Compare parity progress between snapshots
 
