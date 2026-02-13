@@ -95,6 +95,14 @@ def main() -> None:
 		if expected_token not in value:
 			fail(f"package script `{script_name}` does not reference `{expected_token}`")
 
+	alias_pairs = [
+		("parity:ts-eslint:gate", "parity:ts-eslint:gate:red"),
+		("parity:ts-eslint:gate:quick", "parity:ts-eslint:gate:quick:red"),
+	]
+	for left, right in alias_pairs:
+		if scripts.get(left, "") != scripts.get(right, ""):
+			fail(f"package script alias mismatch: `{left}` must equal `{right}`")
+
 	command_tokens = [f"pnpm {name}" for name in expected_scripts]
 	documents = {
 		"guide": guide_md.read_text(),

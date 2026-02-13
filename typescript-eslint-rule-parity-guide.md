@@ -96,6 +96,7 @@ The checkers validate:
 - unified gate script exit and argument/help validation behavior (including missing/invalid/duplicate threshold handling, duplicate `--skip-checks` handling, default-red behavior, `--threshold=<value>` parsing, reordered flag parsing, short-help support, usage-on-error output with threshold-form + skip-checks tokens, and quick-gate npm wrapper exit+skip-checks+threshold-marker+health-reason/success-marker contracts + prefixed-output parity with direct and alternate skip-check runs + silent-wrapper output-noise guards, all of which must not run strict clean checks),
 - parity command/docs/script synchronization,
 - exact parity command inventory in `package.json` vs checker expectations,
+- command alias invariants for gate shorthands (`gate == gate:red`, `gate:quick == gate:quick:red`),
 - command reference row/backing-script mapping parity with `package.json`,
 - CI workflow wiring (required parity checks, trigger paths, diff generation/upload paths, and uploaded artifact bundle paths),
 - status/badge schema, health reason, strict-exit behavior with component-prefixed stderr contracts (including npm wrapper strict commands), status artifact-write stability + write-line parity across non-strict/strict/direct/wrapper status commands, and summary arithmetic coherence.

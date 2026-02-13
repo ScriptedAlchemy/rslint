@@ -1080,6 +1080,10 @@ def main() -> None:
 	)
 	if gate_quick_red_prefixed_lines != gate_red_prefixed_lines:
 		fail("parity gate quick:red prefixed output mismatch with direct red skip-check run")
+	if gate_quick.returncode != gate_quick_red.returncode:
+		fail("parity gate quick alias return code mismatch with quick:red")
+	if gate_quick_prefixed_lines != gate_quick_red_prefixed_lines:
+		fail("parity gate quick alias prefixed output mismatch with quick:red")
 
 	gate_quick_yellow = subprocess.run(
 		["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow"],
