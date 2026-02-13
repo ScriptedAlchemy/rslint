@@ -462,6 +462,12 @@ def assert_wrapper_argparse_forwarding_contracts(
 		("short-help-then-unknown", ["-h", "--not-a-real-flag"]),
 		("unknown-then-short-help", ["--not-a-real-flag", "-h"]),
 	]
+	help_alias_cases = [
+		("help-then-short-help", ["--help", "-h"]),
+		("short-help-then-help", ["-h", "--help"]),
+		("duplicate-help", ["--help", "--help"]),
+		("duplicate-short-help", ["-h", "-h"]),
+	]
 	for wrapper_label, direct_args, wrapper_command in contracts:
 		direct_help = subprocess.run(
 			["python3", str(script_path), *direct_args, "--help"],
@@ -500,6 +506,32 @@ def assert_wrapper_argparse_forwarding_contracts(
 		wrapper_short_help_lines = assert_argparse_help_contract(f"{wrapper_label} short-help", wrapper_short_help)
 		if wrapper_short_help_lines != wrapper_help_lines:
 			fail(f"{wrapper_label} short-help output mismatch with long-help baseline")
+		for alias_label, alias_args in help_alias_cases:
+			direct_help_alias = subprocess.run(
+				["python3", str(script_path), *direct_args, *alias_args],
+				check=False,
+				capture_output=True,
+				text=True,
+			)
+			direct_help_alias_lines = assert_argparse_help_contract(
+				f"direct {wrapper_label} {alias_label}",
+				direct_help_alias,
+			)
+			if direct_help_alias_lines != direct_help_lines:
+				fail(f"direct {wrapper_label} {alias_label} output mismatch with help baseline")
+			wrapper_help_alias = subprocess.run(
+				[*wrapper_command, *alias_args],
+				cwd=str(root),
+				check=False,
+				capture_output=True,
+				text=True,
+			)
+			wrapper_help_alias_lines = assert_argparse_help_contract(
+				f"{wrapper_label} {alias_label}",
+				wrapper_help_alias,
+			)
+			if wrapper_help_alias_lines != wrapper_help_lines:
+				fail(f"{wrapper_label} {alias_label} output mismatch with help baseline")
 
 		for precedence_label, precedence_args in help_precedence_cases:
 			direct_help_precedence = subprocess.run(

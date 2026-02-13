@@ -4,13 +4,13 @@
   "files": [
     {
       "path": "typescript-eslint-rule-parity-report.md",
-      "sha256": "abc3196fd232952989c6d1d69fc02131269efffc83fa9fa6e667a07a8c4df0b0",
-      "bytes": 45800
+      "sha256": "149fb7a1f3da263e6e839a61b1b5bb0707b98e65dcc4bffba2cea0a425c9d7d4",
+      "bytes": 45830
     },
     {
       "path": "typescript-eslint-rule-parity-guide.md",
-      "sha256": "e166c1bf2a8c92d28e21c3812ca8bcbc629d411f1a9dcc62146a6c8555fcfe82",
-      "bytes": 14593
+      "sha256": "2c3ab93f57c74c6d6b86af6914c7c2aff30ff14fa9a1146258b4881299f5246b",
+      "bytes": 14623
     },
     {
       "path": "typescript-eslint-rule-parity-index.md",
