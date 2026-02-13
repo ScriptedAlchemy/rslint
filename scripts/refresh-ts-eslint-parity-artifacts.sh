@@ -18,6 +18,7 @@ echo "==> Generating parity tracker artifacts"
 python3 scripts/generate_ts_eslint_parity_tracker.py
 python3 scripts/generate_ts_eslint_parity_worklist.py
 python3 scripts/generate_ts_eslint_parity_summary.py
+python3 scripts/generate_ts_eslint_parity_metadata.py
 
 echo "==> Done"
 echo "Generated files:"
@@ -25,3 +26,4 @@ echo "  - typescript-eslint-rule-parity-tracker.csv"
 echo "  - typescript-eslint-rule-parity-tracker.json"
 echo "  - typescript-eslint-rule-parity-worklist.md"
 echo "  - typescript-eslint-rule-parity-summary.md"
+echo "  - typescript-eslint-rule-parity-metadata.json"
