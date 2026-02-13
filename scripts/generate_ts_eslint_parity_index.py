@@ -87,6 +87,7 @@ def main() -> None:
 	lines.append("pnpm parity:ts-eslint:check:strict")
 	lines.append("pnpm parity:ts-eslint:check:strict:yellow")
 	lines.append("pnpm parity:ts-eslint:check:strict:clean")
+	lines.append("pnpm parity:ts-eslint:check:strict:yellow:clean")
 	lines.append("pnpm parity:ts-eslint:gate")
 	lines.append("pnpm parity:ts-eslint:gate:red")
 	lines.append("pnpm parity:ts-eslint:gate:yellow")

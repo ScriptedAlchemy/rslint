@@ -60,6 +60,7 @@ pnpm parity:ts-eslint:check:clean
 pnpm parity:ts-eslint:check:strict
 pnpm parity:ts-eslint:check:strict:yellow
 pnpm parity:ts-eslint:check:strict:clean
+pnpm parity:ts-eslint:check:strict:yellow:clean
 pnpm parity:ts-eslint:gate
 pnpm parity:ts-eslint:gate:red
 pnpm parity:ts-eslint:gate:yellow
@@ -102,6 +103,7 @@ The checkers validate:
 `parity:ts-eslint:check:strict` additionally fails when critical backlog remains.
 `parity:ts-eslint:check:strict:yellow` additionally fails when health is yellow or red.
 `parity:ts-eslint:check:strict:clean` combines strict critical-backlog gating with clean-tree reproducibility enforcement.
+`parity:ts-eslint:check:strict:yellow:clean` combines yellow-or-worse gating with clean-tree reproducibility enforcement.
 `parity:ts-eslint:gate` is shorthand for `gate:red`.
 `parity:ts-eslint:gate:red` runs strict clean checks then applies red-threshold status+doctor gates.
 `parity:ts-eslint:gate:yellow` runs strict clean checks then applies yellow-threshold status+doctor gates.

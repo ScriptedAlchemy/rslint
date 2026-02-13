@@ -45,6 +45,7 @@ def main() -> None:
 		"parity:ts-eslint:check:strict": "check_ts_eslint_parity_all.sh && python3 scripts/generate_ts_eslint_parity_doctor.py --fail-on-critical",
 		"parity:ts-eslint:check:strict:yellow": "check_ts_eslint_parity_all.sh && python3 scripts/generate_ts_eslint_parity_doctor.py --fail-on-yellow",
 		"parity:ts-eslint:check:strict:clean": "PARITY_CHECK_ALL_REQUIRE_CLEAN=1 bash scripts/check_ts_eslint_parity_all.sh && python3 scripts/generate_ts_eslint_parity_doctor.py --fail-on-critical",
+		"parity:ts-eslint:check:strict:yellow:clean": "PARITY_CHECK_ALL_REQUIRE_CLEAN=1 bash scripts/check_ts_eslint_parity_all.sh && python3 scripts/generate_ts_eslint_parity_doctor.py --fail-on-yellow",
 		"parity:ts-eslint:gate": "run_ts_eslint_parity_gate.sh --threshold red",
 		"parity:ts-eslint:gate:red": "run_ts_eslint_parity_gate.sh --threshold red",
 		"parity:ts-eslint:gate:yellow": "run_ts_eslint_parity_gate.sh --threshold yellow",
@@ -164,6 +165,7 @@ def main() -> None:
 		"pnpm parity:ts-eslint:check:strict",
 		"pnpm parity:ts-eslint:check:strict:yellow",
 		"pnpm parity:ts-eslint:check:strict:clean",
+		"pnpm parity:ts-eslint:check:strict:yellow:clean",
 		"pnpm parity:ts-eslint:diff:refresh",
 	]
 	for token in required_readme_tokens:
@@ -183,6 +185,7 @@ def main() -> None:
 		"pnpm parity:ts-eslint:check:strict",
 		"pnpm parity:ts-eslint:check:strict:yellow",
 		"pnpm parity:ts-eslint:check:strict:clean",
+		"pnpm parity:ts-eslint:check:strict:yellow:clean",
 		"pnpm parity:ts-eslint:diff:refresh",
 	]
 	for token in required_contributing_tokens:

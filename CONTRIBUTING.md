@@ -79,6 +79,9 @@ pnpm parity:ts-eslint:check:strict:yellow
 # Strict gate + clean-tree enforcement for reproducibility verification
 pnpm parity:ts-eslint:check:strict:clean
 
+# Strict yellow gate + clean-tree reproducibility enforcement
+pnpm parity:ts-eslint:check:strict:yellow:clean
+
 # Unified gate shorthand (equivalent to gate:red)
 pnpm parity:ts-eslint:gate
 

@@ -13,6 +13,7 @@ Generated from `package.json` parity scripts.
 | `pnpm parity:ts-eslint:check:strict` | Run full parity checks and fail if critical backlog exists. | `bash scripts/check_ts_eslint_parity_all.sh && python3 scripts/generate_ts_eslint_parity_doctor.py --fail-on-critical` |
 | `pnpm parity:ts-eslint:check:strict:clean` | Run strict gate and require clean parity artifacts for verify-clean. | `PARITY_CHECK_ALL_REQUIRE_CLEAN=1 bash scripts/check_ts_eslint_parity_all.sh && python3 scripts/generate_ts_eslint_parity_doctor.py --fail-on-critical` |
 | `pnpm parity:ts-eslint:check:strict:yellow` | Run full parity checks and fail if health is yellow or red. | `bash scripts/check_ts_eslint_parity_all.sh && python3 scripts/generate_ts_eslint_parity_doctor.py --fail-on-yellow` |
+| `pnpm parity:ts-eslint:check:strict:yellow:clean` | Run yellow strict gate and require clean parity artifacts for verify-clean. | `PARITY_CHECK_ALL_REQUIRE_CLEAN=1 bash scripts/check_ts_eslint_parity_all.sh && python3 scripts/generate_ts_eslint_parity_doctor.py --fail-on-yellow` |
 | `pnpm parity:ts-eslint:check:tooling` | Validate parity commands/docs/script synchronization. | `python3 scripts/check_ts_eslint_parity_tooling_sync.py` |
 | `pnpm parity:ts-eslint:ci-summary` | Render CI-style markdown summary from parity artifacts. | `python3 scripts/generate_ts_eslint_parity_ci_summary.py` |
 | `pnpm parity:ts-eslint:ci-summary:json` | Render CI summary as JSON for automation. | `python3 scripts/generate_ts_eslint_parity_ci_summary.py --json` |
