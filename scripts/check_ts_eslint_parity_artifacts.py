@@ -1383,6 +1383,126 @@ def main() -> None:
 	]:
 		fail("parity gate quick unknown-arg alias stderr mismatch with quick:red")
 
+	gate_wrapper_duplicate_threshold_cases = [
+		(
+			"parity gate command duplicate-threshold",
+			["pnpm", "--silent", "parity:ts-eslint:gate", "--threshold=red"],
+		),
+		(
+			"parity gate command red duplicate-threshold",
+			["pnpm", "--silent", "parity:ts-eslint:gate:red", "--threshold=red"],
+		),
+		(
+			"parity gate command yellow duplicate-threshold",
+			["pnpm", "--silent", "parity:ts-eslint:gate:yellow", "--threshold=yellow"],
+		),
+		(
+			"parity gate quick command duplicate-threshold",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick", "--threshold=red"],
+		),
+		(
+			"parity gate quick command red duplicate-threshold",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:red", "--threshold=red"],
+		),
+		(
+			"parity gate quick command yellow duplicate-threshold",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow", "--threshold=yellow"],
+		),
+	]
+	gate_wrapper_duplicate_threshold_lines: dict[str, list[str]] = {}
+	gate_wrapper_duplicate_threshold_codes: dict[str, int] = {}
+	for label, command in gate_wrapper_duplicate_threshold_cases:
+		proc = subprocess.run(
+			command,
+			cwd=str(root),
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		gate_wrapper_duplicate_threshold_lines[label] = assert_gate_wrapper_unknown_arg_contract(
+			label,
+			proc,
+			expected_gate_duplicate_threshold_line,
+			expected_gate_usage_line,
+		)
+		gate_wrapper_duplicate_threshold_codes[label] = proc.returncode
+	if gate_wrapper_duplicate_threshold_codes["parity gate command duplicate-threshold"] != gate_wrapper_duplicate_threshold_codes[
+		"parity gate command red duplicate-threshold"
+	]:
+		fail("parity gate duplicate-threshold alias return code mismatch with gate:red")
+	if gate_wrapper_duplicate_threshold_lines["parity gate command duplicate-threshold"] != gate_wrapper_duplicate_threshold_lines[
+		"parity gate command red duplicate-threshold"
+	]:
+		fail("parity gate duplicate-threshold alias stderr mismatch with gate:red")
+	if gate_wrapper_duplicate_threshold_codes["parity gate quick command duplicate-threshold"] != gate_wrapper_duplicate_threshold_codes[
+		"parity gate quick command red duplicate-threshold"
+	]:
+		fail("parity gate quick duplicate-threshold alias return code mismatch with quick:red")
+	if gate_wrapper_duplicate_threshold_lines["parity gate quick command duplicate-threshold"] != gate_wrapper_duplicate_threshold_lines[
+		"parity gate quick command red duplicate-threshold"
+	]:
+		fail("parity gate quick duplicate-threshold alias stderr mismatch with quick:red")
+
+	gate_wrapper_duplicate_skip_checks_cases = [
+		(
+			"parity gate command duplicate-skip-checks",
+			["pnpm", "--silent", "parity:ts-eslint:gate", "--skip-checks", "--skip-checks"],
+		),
+		(
+			"parity gate command red duplicate-skip-checks",
+			["pnpm", "--silent", "parity:ts-eslint:gate:red", "--skip-checks", "--skip-checks"],
+		),
+		(
+			"parity gate command yellow duplicate-skip-checks",
+			["pnpm", "--silent", "parity:ts-eslint:gate:yellow", "--skip-checks", "--skip-checks"],
+		),
+		(
+			"parity gate quick command duplicate-skip-checks",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick", "--skip-checks"],
+		),
+		(
+			"parity gate quick command red duplicate-skip-checks",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:red", "--skip-checks"],
+		),
+		(
+			"parity gate quick command yellow duplicate-skip-checks",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow", "--skip-checks"],
+		),
+	]
+	gate_wrapper_duplicate_skip_checks_lines: dict[str, list[str]] = {}
+	gate_wrapper_duplicate_skip_checks_codes: dict[str, int] = {}
+	for label, command in gate_wrapper_duplicate_skip_checks_cases:
+		proc = subprocess.run(
+			command,
+			cwd=str(root),
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		gate_wrapper_duplicate_skip_checks_lines[label] = assert_gate_wrapper_unknown_arg_contract(
+			label,
+			proc,
+			expected_gate_duplicate_skip_checks_line,
+			expected_gate_usage_line,
+		)
+		gate_wrapper_duplicate_skip_checks_codes[label] = proc.returncode
+	if gate_wrapper_duplicate_skip_checks_codes["parity gate command duplicate-skip-checks"] != gate_wrapper_duplicate_skip_checks_codes[
+		"parity gate command red duplicate-skip-checks"
+	]:
+		fail("parity gate duplicate-skip-checks alias return code mismatch with gate:red")
+	if gate_wrapper_duplicate_skip_checks_lines["parity gate command duplicate-skip-checks"] != gate_wrapper_duplicate_skip_checks_lines[
+		"parity gate command red duplicate-skip-checks"
+	]:
+		fail("parity gate duplicate-skip-checks alias stderr mismatch with gate:red")
+	if gate_wrapper_duplicate_skip_checks_codes["parity gate quick command duplicate-skip-checks"] != gate_wrapper_duplicate_skip_checks_codes[
+		"parity gate quick command red duplicate-skip-checks"
+	]:
+		fail("parity gate quick duplicate-skip-checks alias return code mismatch with quick:red")
+	if gate_wrapper_duplicate_skip_checks_lines["parity gate quick command duplicate-skip-checks"] != gate_wrapper_duplicate_skip_checks_lines[
+		"parity gate quick command red duplicate-skip-checks"
+	]:
+		fail("parity gate quick duplicate-skip-checks alias stderr mismatch with quick:red")
+
 	# Gate npm command wrappers in skip-check mode
 	gate_cmd = subprocess.run(
 		["pnpm", "--silent", "parity:ts-eslint:gate", "--skip-checks"],
