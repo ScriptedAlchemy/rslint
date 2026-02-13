@@ -5,6 +5,7 @@ Emit a concise markdown summary for CI job output.
 Reads:
   - typescript-eslint-rule-parity-metadata.json (required)
   - typescript-eslint-rule-parity-diff.md (optional)
+  - typescript-eslint-rule-parity-diff.json (optional)
 
 Prints markdown to stdout (intended for $GITHUB_STEP_SUMMARY),
 or JSON with --json.
@@ -18,12 +19,11 @@ import pathlib
 import re
 
 
-def read_optional_diff_metrics(diff_path: pathlib.Path) -> dict:
+def read_diff_metrics_from_markdown(diff_path: pathlib.Path) -> dict[str, int]:
 	if not diff_path.exists():
 		return {}
-
 	text = diff_path.read_text()
-	metrics = {}
+	metrics: dict[str, int] = {}
 	patterns = {
 		"net_flagged_change": r"Net flagged change:\s+\*\*([+-]?\d+)\*\*",
 		"improved_rules": r"Improved rules .*:\s+\*\*(\d+)\*\*",
@@ -34,8 +34,28 @@ def read_optional_diff_metrics(diff_path: pathlib.Path) -> dict:
 	for key, pattern in patterns.items():
 		matched = re.search(pattern, text)
 		if matched:
-			metrics[key] = matched.group(1)
+			metrics[key] = int(matched.group(1))
 	return metrics
+
+
+def read_diff_metrics_from_json(diff_json_path: pathlib.Path) -> dict[str, int]:
+	if not diff_json_path.exists():
+		return {}
+	payload = json.loads(diff_json_path.read_text())
+	summary = payload.get("summary", {})
+	metrics: dict[str, int] = {}
+	for key in ["net_flagged_change", "improved_rules", "regressed_rules", "resolved_rules", "newly_flagged_rules"]:
+		if key in summary:
+			metrics[key] = int(summary[key])
+	return metrics
+
+
+def read_optional_diff_metrics(diff_md_path: pathlib.Path, diff_json_path: pathlib.Path) -> dict[str, int]:
+	md_metrics = read_diff_metrics_from_markdown(diff_md_path)
+	json_metrics = read_diff_metrics_from_json(diff_json_path)
+	if md_metrics and json_metrics and md_metrics != json_metrics:
+		raise ValueError("diff markdown/json metrics mismatch")
+	return json_metrics or md_metrics
 
 
 def main() -> None:
@@ -46,7 +66,8 @@ def main() -> None:
 	root = pathlib.Path("/workspace")
 	metadata_path = root / "typescript-eslint-rule-parity-metadata.json"
 	status_path = root / "typescript-eslint-rule-parity-status.json"
-	diff_path = root / "typescript-eslint-rule-parity-diff.md"
+	diff_md_path = root / "typescript-eslint-rule-parity-diff.md"
+	diff_json_path = root / "typescript-eslint-rule-parity-diff.json"
 
 	metadata = json.loads(metadata_path.read_text())
 	status = json.loads(status_path.read_text()) if status_path.exists() else {}
@@ -57,7 +78,10 @@ def main() -> None:
 	health = status.get("health")
 	reason = status.get("reason")
 
-	diff_metrics = read_optional_diff_metrics(diff_path)
+	try:
+		diff_metrics = read_optional_diff_metrics(diff_md_path, diff_json_path)
+	except ValueError as err:
+		raise SystemExit(f"[parity-ci-summary] ERROR: {err}") from err
 
 	if args.json:
 		payload = {
@@ -81,7 +105,7 @@ def main() -> None:
 			},
 		}
 		if diff_metrics:
-			payload["diff_metrics"] = {key: int(value) for key, value in diff_metrics.items()}
+			payload["diff_metrics"] = diff_metrics
 		print(json.dumps(payload, indent=2))
 		return
 
