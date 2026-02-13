@@ -49,55 +49,6 @@ After building, you can test the rslint CLI:
 ./packages/rslint/bin/rslint --config rslint.json
 ```
 
-## Maintain TypeScript-ESLint parity artifacts
-
-If you are working on TypeScript-ESLint rule parity, use the parity toolkit:
-
-- Guide: `typescript-eslint-rule-parity-guide.md`
-
-Commands:
-
-```bash
-# Refresh upstream reference + regenerate all parity artifacts
-pnpm parity:ts-eslint
-
-# Run artifact + tooling checks only (skip verify-clean rebuild)
-pnpm parity:ts-eslint:check:fast
-
-# Run all consistency checks (and verify-clean when artifacts are clean)
-pnpm parity:ts-eslint:check:all
-
-# Enforce clean parity-artifact tree before reproducibility verification
-pnpm parity:ts-eslint:check:clean
-
-# Strict gate: all checks + fail if critical parity backlog remains
-pnpm parity:ts-eslint:check:strict
-
-# Strict gate: all checks + fail if parity health is yellow or red
-pnpm parity:ts-eslint:check:strict:yellow
-
-# Strict gate + clean-tree enforcement for reproducibility verification
-pnpm parity:ts-eslint:check:strict:clean
-
-# Strict yellow gate + clean-tree reproducibility enforcement
-pnpm parity:ts-eslint:check:strict:yellow:clean
-
-# Unified gate shorthand (equivalent to gate:red)
-pnpm parity:ts-eslint:gate
-
-# Unified gates (strict clean checks + thresholded health/doctor gates)
-pnpm parity:ts-eslint:gate:red
-pnpm parity:ts-eslint:gate:yellow
-
-# Quick unified gates (threshold-only status/doctor checks; skip strict clean checks)
-pnpm parity:ts-eslint:gate:quick
-pnpm parity:ts-eslint:gate:quick:red
-pnpm parity:ts-eslint:gate:quick:yellow
-
-# Refresh canonical markdown + JSON parity diff artifacts
-pnpm parity:ts-eslint:diff:refresh
-```
-
 ## Debugging VSCode Extension
 
 To Debug the VSCode Extension:
