@@ -1311,6 +1311,51 @@ def main() -> None:
 	)
 	gate_duplicate_skip_checks_lines = extract_nonempty_lines(gate_duplicate_skip_checks.stderr)
 
+	gate_help_then_unknown = subprocess.run(
+		[
+			"bash",
+			str(root / "scripts/run_ts_eslint_parity_gate.sh"),
+			"--threshold=red",
+			"--help",
+			"--not-a-real-flag",
+		],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if gate_help_then_unknown.returncode != 0:
+		fail("parity gate help-then-unknown exit code must be 0")
+	if gate_help_then_unknown.stdout.strip():
+		fail("parity gate help-then-unknown stdout must be empty")
+	assert_exact_nonempty_lines("parity gate help-then-unknown stderr", gate_help_then_unknown.stderr, [expected_gate_usage_line])
+	if extract_nonempty_lines(gate_help_then_unknown.stderr) != gate_help_lines:
+		fail("parity gate help-then-unknown stderr mismatch with help baseline")
+
+	gate_unknown_then_help = subprocess.run(
+		[
+			"bash",
+			str(root / "scripts/run_ts_eslint_parity_gate.sh"),
+			"--threshold=red",
+			"--not-a-real-flag",
+			"--help",
+		],
+		check=False,
+		capture_output=True,
+		text=True,
+	)
+	if gate_unknown_then_help.returncode != 1:
+		fail("parity gate unknown-then-help exit code must be 1")
+	if gate_unknown_then_help.stdout.strip():
+		fail("parity gate unknown-then-help stdout must be empty")
+	assert_exact_error_plus_usage(
+		"parity gate unknown-then-help stderr",
+		gate_unknown_then_help.stderr,
+		expected_gate_unknown_arg_line,
+		expected_gate_usage_line,
+	)
+	if extract_nonempty_lines(gate_unknown_then_help.stderr) != gate_unknown_arg_lines:
+		fail("parity gate unknown-then-help stderr mismatch with unknown-arg baseline")
+
 	gate_unknown_precedence_cases = [
 		(
 			"parity gate unknown-arg precedence leading-unknown",
@@ -1757,6 +1802,89 @@ def main() -> None:
 		)
 		if precedence_lines != gate_wrapper_unknown_arg_baseline:
 			fail(f"{label} stderr output mismatch with unknown-arg precedence baseline")
+	gate_wrapper_help_vs_unknown_precedence_cases = [
+		(
+			"parity gate command help-then-unknown",
+			["pnpm", "--silent", "parity:ts-eslint:gate", "--help", "--not-a-real-flag"],
+			"help",
+		),
+		(
+			"parity gate command red help-then-unknown",
+			["pnpm", "--silent", "parity:ts-eslint:gate:red", "--help", "--not-a-real-flag"],
+			"help",
+		),
+		(
+			"parity gate command yellow help-then-unknown",
+			["pnpm", "--silent", "parity:ts-eslint:gate:yellow", "--help", "--not-a-real-flag"],
+			"help",
+		),
+		(
+			"parity gate quick command help-then-unknown",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick", "--help", "--not-a-real-flag"],
+			"help",
+		),
+		(
+			"parity gate quick command red help-then-unknown",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:red", "--help", "--not-a-real-flag"],
+			"help",
+		),
+		(
+			"parity gate quick command yellow help-then-unknown",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow", "--help", "--not-a-real-flag"],
+			"help",
+		),
+		(
+			"parity gate command unknown-then-help",
+			["pnpm", "--silent", "parity:ts-eslint:gate", "--not-a-real-flag", "--help"],
+			"unknown",
+		),
+		(
+			"parity gate command red unknown-then-help",
+			["pnpm", "--silent", "parity:ts-eslint:gate:red", "--not-a-real-flag", "--help"],
+			"unknown",
+		),
+		(
+			"parity gate command yellow unknown-then-help",
+			["pnpm", "--silent", "parity:ts-eslint:gate:yellow", "--not-a-real-flag", "--help"],
+			"unknown",
+		),
+		(
+			"parity gate quick command unknown-then-help",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick", "--not-a-real-flag", "--help"],
+			"unknown",
+		),
+		(
+			"parity gate quick command red unknown-then-help",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:red", "--not-a-real-flag", "--help"],
+			"unknown",
+		),
+		(
+			"parity gate quick command yellow unknown-then-help",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow", "--not-a-real-flag", "--help"],
+			"unknown",
+		),
+	]
+	for label, command, mode in gate_wrapper_help_vs_unknown_precedence_cases:
+		proc = subprocess.run(
+			command,
+			cwd=str(root),
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		if mode == "help":
+			lines = assert_gate_wrapper_help_contract(label, proc, expected_gate_usage_line)
+			if lines != gate_wrapper_help_baseline:
+				fail(f"{label} stderr output mismatch with help precedence baseline")
+		else:
+			lines = assert_gate_wrapper_unknown_arg_contract(
+				label,
+				proc,
+				expected_gate_unknown_arg_line,
+				expected_gate_usage_line,
+			)
+			if lines != gate_wrapper_unknown_arg_baseline:
+				fail(f"{label} stderr output mismatch with unknown precedence baseline")
 
 	gate_wrapper_duplicate_threshold_cases = [
 		(
@@ -2105,6 +2233,96 @@ def main() -> None:
 	for label, lines in gate_wrapper_duplicate_skip_checks_lines.items():
 		if lines != gate_wrapper_duplicate_skip_checks_baseline:
 			fail(f"{label} stderr output mismatch with gate wrapper duplicate-skip-checks baseline")
+	gate_wrapper_duplicate_then_help_cases = [
+		(
+			"parity gate command duplicate-threshold then help",
+			["pnpm", "--silent", "parity:ts-eslint:gate", "--threshold=blue", "--help"],
+			expected_gate_duplicate_threshold_line,
+			gate_wrapper_duplicate_threshold_baseline,
+		),
+		(
+			"parity gate command red duplicate-threshold then help",
+			["pnpm", "--silent", "parity:ts-eslint:gate:red", "--threshold=blue", "--help"],
+			expected_gate_duplicate_threshold_line,
+			gate_wrapper_duplicate_threshold_baseline,
+		),
+		(
+			"parity gate command yellow duplicate-threshold then help",
+			["pnpm", "--silent", "parity:ts-eslint:gate:yellow", "--threshold=blue", "--help"],
+			expected_gate_duplicate_threshold_line,
+			gate_wrapper_duplicate_threshold_baseline,
+		),
+		(
+			"parity gate quick command duplicate-threshold then help",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick", "--threshold=blue", "--help"],
+			expected_gate_duplicate_threshold_line,
+			gate_wrapper_duplicate_threshold_baseline,
+		),
+		(
+			"parity gate quick command red duplicate-threshold then help",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:red", "--threshold=blue", "--help"],
+			expected_gate_duplicate_threshold_line,
+			gate_wrapper_duplicate_threshold_baseline,
+		),
+		(
+			"parity gate quick command yellow duplicate-threshold then help",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow", "--threshold=blue", "--help"],
+			expected_gate_duplicate_threshold_line,
+			gate_wrapper_duplicate_threshold_baseline,
+		),
+		(
+			"parity gate command duplicate-skip-checks then help",
+			["pnpm", "--silent", "parity:ts-eslint:gate", "--skip-checks", "--skip-checks", "--help"],
+			expected_gate_duplicate_skip_checks_line,
+			gate_wrapper_duplicate_skip_checks_baseline,
+		),
+		(
+			"parity gate command red duplicate-skip-checks then help",
+			["pnpm", "--silent", "parity:ts-eslint:gate:red", "--skip-checks", "--skip-checks", "--help"],
+			expected_gate_duplicate_skip_checks_line,
+			gate_wrapper_duplicate_skip_checks_baseline,
+		),
+		(
+			"parity gate command yellow duplicate-skip-checks then help",
+			["pnpm", "--silent", "parity:ts-eslint:gate:yellow", "--skip-checks", "--skip-checks", "--help"],
+			expected_gate_duplicate_skip_checks_line,
+			gate_wrapper_duplicate_skip_checks_baseline,
+		),
+		(
+			"parity gate quick command duplicate-skip-checks then help",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick", "--skip-checks", "--help"],
+			expected_gate_duplicate_skip_checks_line,
+			gate_wrapper_duplicate_skip_checks_baseline,
+		),
+		(
+			"parity gate quick command red duplicate-skip-checks then help",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:red", "--skip-checks", "--help"],
+			expected_gate_duplicate_skip_checks_line,
+			gate_wrapper_duplicate_skip_checks_baseline,
+		),
+		(
+			"parity gate quick command yellow duplicate-skip-checks then help",
+			["pnpm", "--silent", "parity:ts-eslint:gate:quick:yellow", "--skip-checks", "--help"],
+			expected_gate_duplicate_skip_checks_line,
+			gate_wrapper_duplicate_skip_checks_baseline,
+		),
+	]
+	for label, command, expected_error_line, baseline_lines in gate_wrapper_duplicate_then_help_cases:
+		proc = subprocess.run(
+			command,
+			cwd=str(root),
+			check=False,
+			capture_output=True,
+			text=True,
+		)
+		precedence_lines = assert_gate_wrapper_unknown_arg_contract(
+			label,
+			proc,
+			expected_error_line,
+			expected_gate_usage_line,
+		)
+		if precedence_lines != baseline_lines:
+			fail(f"{label} stderr output mismatch with duplicate-vs-help precedence baseline")
 	gate_wrapper_duplicate_then_unknown_cases = [
 		(
 			"parity gate command duplicate-threshold then unknown",
