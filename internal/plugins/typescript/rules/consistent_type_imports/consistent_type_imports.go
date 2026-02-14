@@ -3,6 +3,7 @@ package consistent_type_imports
 import (
 	"encoding/json"
 	"strings"
+	"unicode"
 
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/microsoft/typescript-go/shim/core"
@@ -21,12 +22,20 @@ type importedBinding struct {
 	symbol                       *ast.Symbol
 	importDecl                   *ast.Node
 	importSource                 string
+	specifierNode                *ast.Node
+	specifierKind                string
 	isInlineType                 bool
 	isTypeImport                 bool
 	usedAsType                   bool
 	usedAsValue                  bool
 	usedAsDecoratorMetadataValue bool
 }
+
+const (
+	importSpecifierKindDefault   = "default"
+	importSpecifierKindNamespace = "namespace"
+	importSpecifierKindNamed     = "named"
+)
 
 type usageContext struct {
 	decoratorMetadataEnabled bool
@@ -64,6 +73,12 @@ func parseOptions(options any) ConsistentTypeImportsOptions {
 		return opts
 	}
 	_ = json.Unmarshal(encoded, &opts)
+	if opts.Prefer != "type-imports" && opts.Prefer != "no-type-imports" {
+		opts.Prefer = "type-imports"
+	}
+	if opts.FixStyle != "inline-type-imports" && opts.FixStyle != "separate-type-imports" {
+		opts.FixStyle = "separate-type-imports"
+	}
 	return opts
 }
 
@@ -100,16 +115,30 @@ func localBindingNodeFromImportClause(importClause *ast.ImportClause) *ast.Node 
 	return nil
 }
 
-func addBinding(bindings *[]*importedBinding, ctx rule.RuleContext, importDecl *ast.Node, importSource string, localNode *ast.Node, isInlineType bool, isTypeImport bool) {
+func nodeText(sourceFile *ast.SourceFile, node *ast.Node) string {
+	if sourceFile == nil || node == nil {
+		return ""
+	}
+	text := sourceFile.Text()
+	r := utils.TrimNodeTextRange(sourceFile, node)
+	if r.Pos() < 0 || r.End() > len(text) || r.Pos() >= r.End() {
+		return ""
+	}
+	return text[r.Pos():r.End()]
+}
+
+func addBinding(bindings *[]*importedBinding, ctx rule.RuleContext, importDecl *ast.Node, importSource string, localNode *ast.Node, specifierNode *ast.Node, specifierKind string, isInlineType bool, isTypeImport bool) {
 	if localNode == nil || localNode.Kind != ast.KindIdentifier {
 		return
 	}
 	binding := &importedBinding{
-		localName:    localNode.AsIdentifier().Text,
-		importDecl:   importDecl,
-		importSource: importSource,
-		isInlineType: isInlineType,
-		isTypeImport: isTypeImport,
+		localName:     localNode.AsIdentifier().Text,
+		importDecl:    importDecl,
+		importSource:  importSource,
+		specifierNode: specifierNode,
+		specifierKind: specifierKind,
+		isInlineType:  isInlineType,
+		isTypeImport:  isTypeImport,
 	}
 	if ctx.TypeChecker != nil {
 		binding.symbol = ctx.TypeChecker.GetSymbolAtLocation(localNode)
@@ -133,6 +162,382 @@ func isTypeOnlyImportDeclaration(sourceFile *ast.SourceFile, importDeclNode *ast
 	}
 	importText := strings.TrimSpace(sourceText[start:end])
 	return strings.HasPrefix(importText, "import type ")
+}
+
+func findFirstToken(node *ast.Node, kind ast.Kind, predicate func(token *ast.Node) bool, sourceFile *ast.SourceFile) *ast.Node {
+	var matched *ast.Node
+	utils.ForEachToken(node, func(token *ast.Node) {
+		if matched != nil || token == nil || token.Kind != kind {
+			return
+		}
+		if predicate == nil || predicate(token) {
+			matched = token
+		}
+	}, sourceFile)
+	return matched
+}
+
+func tokenRange(sourceFile *ast.SourceFile, token *ast.Node) core.TextRange {
+	return utils.TrimNodeTextRange(sourceFile, token)
+}
+
+func removeTypeKeywordRange(sourceFile *ast.SourceFile, node *ast.Node, maxPos int) (core.TextRange, bool) {
+	if sourceFile == nil || node == nil {
+		return core.NewTextRange(0, 0), false
+	}
+	typeToken := findFirstToken(node, ast.KindTypeKeyword, func(token *ast.Node) bool {
+		if maxPos < 0 {
+			return true
+		}
+		return tokenRange(sourceFile, token).Pos() < maxPos
+	}, sourceFile)
+	if typeToken == nil {
+		return core.NewTextRange(0, 0), false
+	}
+	typeTokenRange := tokenRange(sourceFile, typeToken)
+	sourceText := sourceFile.Text()
+	removeEnd := typeTokenRange.End()
+	for removeEnd < len(sourceText) && unicode.IsSpace(rune(sourceText[removeEnd])) {
+		removeEnd++
+	}
+	return core.NewTextRange(typeTokenRange.Pos(), removeEnd), true
+}
+
+func importHasSemicolon(sourceFile *ast.SourceFile, node *ast.Node) bool {
+	if sourceFile == nil || node == nil {
+		return false
+	}
+	text := sourceFile.Text()
+	r := utils.TrimNodeTextRange(sourceFile, node)
+	if r.Pos() < 0 || r.End() > len(text) || r.Pos() >= r.End() {
+		return false
+	}
+	return strings.HasSuffix(strings.TrimSpace(text[r.Pos():r.End()]), ";")
+}
+
+func skipLeadingTrivia(text string) int {
+	i := 0
+	for i < len(text) {
+		for i < len(text) && unicode.IsSpace(rune(text[i])) {
+			i++
+		}
+		if i+1 < len(text) && text[i] == '/' && text[i+1] == '*' {
+			end := strings.Index(text[i+2:], "*/")
+			if end < 0 {
+				return i
+			}
+			i += 2 + end + 2
+			continue
+		}
+		if i+1 < len(text) && text[i] == '/' && text[i+1] == '/' {
+			end := strings.IndexByte(text[i+2:], '\n')
+			if end < 0 {
+				return len(text)
+			}
+			i += 2 + end + 1
+			continue
+		}
+		break
+	}
+	return i
+}
+
+func addInlineTypePrefix(specifierText string) string {
+	i := skipLeadingTrivia(specifierText)
+	if i+4 < len(specifierText) &&
+		specifierText[i:i+4] == "type" &&
+		unicode.IsSpace(rune(specifierText[i+4])) {
+		return specifierText
+	}
+	return specifierText[:i] + "type " + specifierText[i:]
+}
+
+func removeInlineTypePrefix(specifierText string) string {
+	i := skipLeadingTrivia(specifierText)
+	if i+4 > len(specifierText) || specifierText[i:i+4] != "type" {
+		return specifierText
+	}
+	j := i + 4
+	for j < len(specifierText) && unicode.IsSpace(rune(specifierText[j])) {
+		j++
+	}
+	if j == i+4 {
+		return specifierText
+	}
+	return specifierText[:i] + specifierText[j:]
+}
+
+func splitImportSpecifiersBody(body string) []string {
+	if body == "" {
+		return []string{""}
+	}
+	segments := []string{}
+	start := 0
+	inSingleQuote := false
+	inDoubleQuote := false
+	inBacktick := false
+	inLineComment := false
+	inBlockComment := false
+
+	for i := 0; i < len(body); i++ {
+		ch := body[i]
+		if inLineComment {
+			if ch == '\n' || ch == '\r' {
+				inLineComment = false
+			}
+			continue
+		}
+		if inBlockComment {
+			if ch == '*' && i+1 < len(body) && body[i+1] == '/' {
+				inBlockComment = false
+				i++
+			}
+			continue
+		}
+		if inSingleQuote {
+			if ch == '\\' && i+1 < len(body) {
+				i++
+				continue
+			}
+			if ch == '\'' {
+				inSingleQuote = false
+			}
+			continue
+		}
+		if inDoubleQuote {
+			if ch == '\\' && i+1 < len(body) {
+				i++
+				continue
+			}
+			if ch == '"' {
+				inDoubleQuote = false
+			}
+			continue
+		}
+		if inBacktick {
+			if ch == '\\' && i+1 < len(body) {
+				i++
+				continue
+			}
+			if ch == '`' {
+				inBacktick = false
+			}
+			continue
+		}
+		if ch == '/' && i+1 < len(body) {
+			next := body[i+1]
+			if next == '/' {
+				inLineComment = true
+				i++
+				continue
+			}
+			if next == '*' {
+				inBlockComment = true
+				i++
+				continue
+			}
+		}
+		switch ch {
+		case '\'':
+			inSingleQuote = true
+		case '"':
+			inDoubleQuote = true
+		case '`':
+			inBacktick = true
+		case ',':
+			segments = append(segments, body[start:i])
+			start = i + 1
+		}
+	}
+	segments = append(segments, body[start:])
+	return segments
+}
+
+func buildImportStatement(moduleSpecifier string, defaultText string, namespaceText string, namedTexts []string, topLevelType bool, hasSemicolon bool) string {
+	builder := strings.Builder{}
+	builder.WriteString("import")
+	if topLevelType {
+		builder.WriteString(" type")
+	}
+	builder.WriteString(" ")
+	parts := []string{}
+	if defaultText != "" {
+		parts = append(parts, defaultText)
+	}
+	if namespaceText != "" {
+		parts = append(parts, namespaceText)
+	}
+	if len(namedTexts) > 0 {
+		namedBody := strings.Join(namedTexts, ", ")
+		if topLevelType && len(namedTexts) == 1 {
+			parts = append(parts, "{ "+namedBody+"}")
+		} else {
+			parts = append(parts, "{ "+namedBody+" }")
+		}
+	}
+	if len(parts) == 0 {
+		parts = append(parts, "{}")
+	}
+	builder.WriteString(strings.Join(parts, ", "))
+	builder.WriteString(" from ")
+	builder.WriteString(moduleSpecifier)
+	if hasSemicolon {
+		builder.WriteString(";")
+	}
+	return builder.String()
+}
+
+func nodeLineIndent(sourceFile *ast.SourceFile, node *ast.Node) string {
+	if sourceFile == nil || node == nil {
+		return ""
+	}
+	text := sourceFile.Text()
+	r := utils.TrimNodeTextRange(sourceFile, node)
+	start := r.Pos()
+	if start < 0 || start > len(text) {
+		return ""
+	}
+	lineStart := start
+	for lineStart > 0 {
+		ch := text[lineStart-1]
+		if ch == '\n' || ch == '\r' {
+			break
+		}
+		lineStart--
+	}
+	indent := text[lineStart:start]
+	for _, ch := range indent {
+		if ch != ' ' && ch != '\t' {
+			return ""
+		}
+	}
+	return indent
+}
+
+func joinImportLines(lines []string, indent string) string {
+	if len(lines) == 0 {
+		return ""
+	}
+	result := lines[0]
+	for i := 1; i < len(lines); i++ {
+		result += "\n" + indent + lines[i]
+	}
+	return result
+}
+
+func buildImportStatementWithRawNamedBody(moduleSpecifier string, defaultText string, namespaceText string, namedBody string, topLevelType bool, hasSemicolon bool) string {
+	builder := strings.Builder{}
+	builder.WriteString("import")
+	if topLevelType {
+		builder.WriteString(" type")
+	}
+	builder.WriteString(" ")
+	parts := []string{}
+	if defaultText != "" {
+		parts = append(parts, defaultText)
+	}
+	if namespaceText != "" {
+		parts = append(parts, namespaceText)
+	}
+	if namedBody != "" {
+		parts = append(parts, "{"+namedBody+"}")
+	}
+	if len(parts) == 0 {
+		parts = append(parts, "{}")
+	}
+	builder.WriteString(strings.Join(parts, ", "))
+	builder.WriteString(" from ")
+	builder.WriteString(moduleSpecifier)
+	if hasSemicolon {
+		builder.WriteString(";")
+	}
+	return builder.String()
+}
+
+func extractNamedImportBodyForSubset(sourceFile *ast.SourceFile, importDeclNode *ast.Node, namedImportNodes []*ast.Node, includeSet map[*ast.Node]bool) (string, bool) {
+	if sourceFile == nil || importDeclNode == nil {
+		return "", false
+	}
+	openBrace := findFirstToken(importDeclNode, ast.KindOpenBraceToken, nil, sourceFile)
+	closeBrace := findFirstToken(importDeclNode, ast.KindCloseBraceToken, nil, sourceFile)
+	if openBrace == nil || closeBrace == nil {
+		return "", false
+	}
+	openRange := tokenRange(sourceFile, openBrace)
+	closeRange := tokenRange(sourceFile, closeBrace)
+	sourceText := sourceFile.Text()
+	if openRange.End() < 0 || closeRange.Pos() > len(sourceText) || openRange.End() > closeRange.Pos() {
+		return "", false
+	}
+	inside := sourceText[openRange.End():closeRange.Pos()]
+	segments := splitImportSpecifiersBody(inside)
+	if len(segments) < len(namedImportNodes) {
+		return "", false
+	}
+	selected := []string{}
+	for i, specifierNode := range namedImportNodes {
+		if !includeSet[specifierNode] {
+			continue
+		}
+		selected = append(selected, segments[i])
+	}
+	if len(selected) == 0 {
+		return "", true
+	}
+	body := strings.Join(selected, ",")
+	if len(segments) > len(namedImportNodes) && includeSet[namedImportNodes[len(namedImportNodes)-1]] {
+		body += "," + segments[len(namedImportNodes)]
+	}
+	return body, true
+}
+
+func interSpecifierCommentPrefix(sourceFile *ast.SourceFile, leftNode *ast.Node, rightNode *ast.Node) string {
+	if sourceFile == nil || leftNode == nil || rightNode == nil {
+		return ""
+	}
+	text := sourceFile.Text()
+	leftRange := utils.TrimNodeTextRange(sourceFile, leftNode)
+	rightRange := utils.TrimNodeTextRange(sourceFile, rightNode)
+	if leftRange.End() < 0 || rightRange.Pos() > len(text) || leftRange.End() >= rightRange.Pos() {
+		return ""
+	}
+	between := text[leftRange.End():rightRange.Pos()]
+	if comma := strings.IndexByte(between, ','); comma >= 0 {
+		between = between[comma+1:]
+	}
+	between = strings.TrimSpace(between)
+	if between == "" {
+		return ""
+	}
+	return between + " "
+}
+
+func splitDefaultImportSeparators(sourceFile *ast.SourceFile, defaultNode *ast.Node, nextNode *ast.Node) (string, string) {
+	if sourceFile == nil || defaultNode == nil || nextNode == nil {
+		return "", ""
+	}
+	text := sourceFile.Text()
+	defaultRange := utils.TrimNodeTextRange(sourceFile, defaultNode)
+	nextRange := utils.TrimNodeTextRange(sourceFile, nextNode)
+	if defaultRange.End() < 0 || nextRange.Pos() > len(text) || defaultRange.End() >= nextRange.Pos() {
+		return "", ""
+	}
+	between := text[defaultRange.End():nextRange.Pos()]
+	comma := strings.IndexByte(between, ',')
+	if comma < 0 {
+		return "", ""
+	}
+	left := strings.TrimSpace(between[:comma])
+	right := strings.TrimSpace(between[comma+1:])
+	defaultSuffix := ""
+	nextPrefix := ""
+	if left != "" {
+		defaultSuffix = " " + left
+	}
+	if right != "" {
+		nextPrefix = right + " "
+	}
+	return defaultSuffix, nextPrefix
 }
 
 func collectImportBindings(ctx rule.RuleContext) ([]*importedBinding, map[*ast.Node][]*importedBinding) {
@@ -167,7 +572,7 @@ func collectImportBindings(ctx rule.RuleContext) ([]*importedBinding, map[*ast.N
 		isTypeImportDecl := isTypeOnlyImportDeclaration(ctx.SourceFile, statement, importClause)
 
 		if defaultLocal := localBindingNodeFromImportClause(importClause); defaultLocal != nil {
-			addBinding(&bindings, ctx, statement, importSource, defaultLocal, false, isTypeImportDecl)
+			addBinding(&bindings, ctx, statement, importSource, defaultLocal, defaultLocal, importSpecifierKindDefault, false, isTypeImportDecl)
 		}
 
 		if importClause.NamedBindings == nil {
@@ -177,7 +582,7 @@ func collectImportBindings(ctx rule.RuleContext) ([]*importedBinding, map[*ast.N
 		case ast.KindNamespaceImport:
 			namespaceImport := importClause.NamedBindings.AsNamespaceImport()
 			if namespaceImport != nil && namespaceImport.Name() != nil {
-				addBinding(&bindings, ctx, statement, importSource, namespaceImport.Name(), false, isTypeImportDecl)
+				addBinding(&bindings, ctx, statement, importSource, namespaceImport.Name(), importClause.NamedBindings, importSpecifierKindNamespace, false, isTypeImportDecl)
 			}
 		case ast.KindNamedImports:
 			namedImports := importClause.NamedBindings.AsNamedImports()
@@ -192,7 +597,7 @@ func collectImportBindings(ctx rule.RuleContext) ([]*importedBinding, map[*ast.N
 				if importSpecifier == nil || importSpecifier.Name() == nil {
 					continue
 				}
-				addBinding(&bindings, ctx, statement, importSource, importSpecifier.Name(), importSpecifier.IsTypeOnly, isTypeImportDecl)
+				addBinding(&bindings, ctx, statement, importSource, importSpecifier.Name(), element, importSpecifierKindNamed, importSpecifier.IsTypeOnly, isTypeImportDecl)
 			}
 		}
 	}
@@ -540,10 +945,24 @@ func reportPreferNoTypeImports(ctx rule.RuleContext) {
 			continue
 		}
 		if isTypeOnlyImportDeclaration(ctx.SourceFile, statement, importClause) {
-			ctx.ReportNode(statement, rule.RuleMessage{
+			message := rule.RuleMessage{
 				Id:          "avoidImportType",
 				Description: "Use an `import` instead of an `import type`.",
-			})
+			}
+			specifierStart := -1
+			if importClause.Name() != nil {
+				specifierStart = utils.TrimNodeTextRange(ctx.SourceFile, importClause.Name()).Pos()
+			} else if importClause.NamedBindings != nil {
+				specifierStart = utils.TrimNodeTextRange(ctx.SourceFile, importClause.NamedBindings).Pos()
+			} else if importDecl.ModuleSpecifier != nil {
+				specifierStart = utils.TrimNodeTextRange(ctx.SourceFile, importDecl.ModuleSpecifier).Pos()
+			}
+			removeRange, ok := removeTypeKeywordRange(ctx.SourceFile, statement, specifierStart)
+			if !ok {
+				ctx.ReportNode(statement, message)
+			} else {
+				ctx.ReportNodeWithFixes(statement, message, rule.RuleFixRemoveRange(removeRange))
+			}
 		}
 		if importClause.NamedBindings == nil || importClause.NamedBindings.Kind != ast.KindNamedImports {
 			continue
@@ -560,16 +979,304 @@ func reportPreferNoTypeImports(ctx rule.RuleContext) {
 			if importSpecifier == nil || !importSpecifier.IsTypeOnly {
 				continue
 			}
-			ctx.ReportNode(element, rule.RuleMessage{
+			message := rule.RuleMessage{
 				Id:          "avoidImportType",
 				Description: "Use an `import` instead of an `import type`.",
-			})
+			}
+			removeRange, ok := removeTypeKeywordRange(ctx.SourceFile, element, -1)
+			if !ok {
+				ctx.ReportNode(element, message)
+			} else {
+				ctx.ReportNodeWithFixes(element, message, rule.RuleFixRemoveRange(removeRange))
+			}
 		}
 	}
 }
 
-func reportPreferTypeImports(ctx rule.RuleContext, perImport map[*ast.Node][]*importedBinding) {
+func isTypeOnlyNonInlineBinding(binding *importedBinding) bool {
+	if binding == nil || binding.isTypeImport || binding.isInlineType {
+		return false
+	}
+	return binding.usedAsType && !binding.usedAsValue
+}
+
+func buildPreferTypeImportFixes(ctx rule.RuleContext, importDeclNode *ast.Node, importBindings []*importedBinding, opts ConsistentTypeImportsOptions, existingTypeOnlyNamedImport *ast.Node) []rule.RuleFix {
+	if ctx.SourceFile == nil || importDeclNode == nil {
+		return nil
+	}
+	importDecl := importDeclNode.AsImportDeclaration()
+	if importDecl == nil || importDecl.ImportClause == nil || importDecl.ModuleSpecifier == nil {
+		return nil
+	}
+	importClause := importDecl.ImportClause.AsImportClause()
+	if importClause == nil {
+		return nil
+	}
+	moduleSpecifierText := nodeText(ctx.SourceFile, importDecl.ModuleSpecifier)
+	if moduleSpecifierText == "" {
+		return nil
+	}
+	hasSemicolon := importHasSemicolon(ctx.SourceFile, importDeclNode)
+	indent := nodeLineIndent(ctx.SourceFile, importDeclNode)
+
+	var defaultBinding *importedBinding
+	var namespaceBinding *importedBinding
+	namedBindingByNode := map[*ast.Node]*importedBinding{}
+	nonInlineCount := 0
+	typeOnlyCount := 0
+	for _, binding := range importBindings {
+		if binding == nil || binding.isTypeImport {
+			continue
+		}
+		if !binding.isInlineType {
+			nonInlineCount++
+			if isTypeOnlyNonInlineBinding(binding) {
+				typeOnlyCount++
+			}
+		}
+		switch binding.specifierKind {
+		case importSpecifierKindDefault:
+			defaultBinding = binding
+		case importSpecifierKindNamespace:
+			namespaceBinding = binding
+		case importSpecifierKindNamed:
+			namedBindingByNode[binding.specifierNode] = binding
+		}
+	}
+	if nonInlineCount == 0 || typeOnlyCount == 0 {
+		return nil
+	}
+	allNonInlineAreTypeOnly := nonInlineCount == typeOnlyCount
+
+	defaultText := ""
+	if importClause.Name() != nil {
+		defaultText = strings.TrimSpace(nodeText(ctx.SourceFile, importClause.Name()))
+	}
+	namespaceText := ""
+	namedImportNodes := []*ast.Node{}
+	if importClause.NamedBindings != nil {
+		switch importClause.NamedBindings.Kind {
+		case ast.KindNamespaceImport:
+			namespaceText = strings.TrimSpace(nodeText(ctx.SourceFile, importClause.NamedBindings))
+		case ast.KindNamedImports:
+			namedImports := importClause.NamedBindings.AsNamedImports()
+			if namedImports != nil && namedImports.Elements != nil {
+				namedImportNodes = namedImports.Elements.Nodes
+			}
+		}
+	}
+	if opts.FixStyle == "inline-type-imports" && defaultText == "" && namespaceText == "" && len(namedImportNodes) > 0 {
+		inlineFixes := []rule.RuleFix{}
+		for _, specifierNode := range namedImportNodes {
+			if specifierNode == nil {
+				continue
+			}
+			if !isTypeOnlyNonInlineBinding(namedBindingByNode[specifierNode]) {
+				continue
+			}
+			inlineFixes = append(inlineFixes, rule.RuleFixInsertBefore(ctx.SourceFile, specifierNode, "type "))
+		}
+		if len(inlineFixes) > 0 {
+			return inlineFixes
+		}
+	}
+
+	buildNamedTexts := func(includeTypeOnly bool, includeValue bool, inlineForType bool, removeInlineTypeKeyword bool) []string {
+		texts := []string{}
+		for _, specifierNode := range namedImportNodes {
+			if specifierNode == nil {
+				continue
+			}
+			specifierText := strings.TrimSpace(nodeText(ctx.SourceFile, specifierNode))
+			if specifierText == "" {
+				continue
+			}
+			binding := namedBindingByNode[specifierNode]
+			isTypeOnly := isTypeOnlyNonInlineBinding(binding)
+			isValue := !isTypeOnly
+			if isTypeOnly && !includeTypeOnly {
+				continue
+			}
+			if isValue && !includeValue {
+				continue
+			}
+			if isTypeOnly && inlineForType {
+				specifierText = addInlineTypePrefix(specifierText)
+			}
+			if removeInlineTypeKeyword {
+				specifierText = removeInlineTypePrefix(specifierText)
+			}
+			texts = append(texts, specifierText)
+		}
+		return texts
+	}
+
+	inlineTypeForAllNamed := opts.FixStyle == "inline-type-imports" && allNonInlineAreTypeOnly
+	typeNamedTexts := buildNamedTexts(true, false, inlineTypeForAllNamed, !inlineTypeForAllNamed)
+	valueNamedTexts := buildNamedTexts(false, true, opts.FixStyle == "inline-type-imports", false)
+	typeNamedSet := map[*ast.Node]bool{}
+	valueNamedSet := map[*ast.Node]bool{}
+	for _, specifierNode := range namedImportNodes {
+		if isTypeOnlyNonInlineBinding(namedBindingByNode[specifierNode]) {
+			typeNamedSet[specifierNode] = true
+		} else {
+			valueNamedSet[specifierNode] = true
+		}
+	}
+	typeNamedRawBody, hasTypeNamedRawBody := extractNamedImportBodyForSubset(ctx.SourceFile, importDeclNode, namedImportNodes, typeNamedSet)
+	valueNamedRawBody, hasValueNamedRawBody := extractNamedImportBodyForSubset(ctx.SourceFile, importDeclNode, namedImportNodes, valueNamedSet)
+	if hasTypeNamedRawBody {
+		trimmedTypeNamedRawBody := strings.TrimRight(typeNamedRawBody, " \t\r\n")
+		if strings.HasSuffix(trimmedTypeNamedRawBody, ",") {
+			typeNamedRawBody = strings.TrimSuffix(trimmedTypeNamedRawBody, ",")
+		}
+	}
+	prependFixes := []rule.RuleFix{}
+	if !allNonInlineAreTypeOnly &&
+		opts.FixStyle != "inline-type-imports" &&
+		len(typeNamedTexts) > 0 &&
+		existingTypeOnlyNamedImport != nil &&
+		existingTypeOnlyNamedImport != importDeclNode {
+		existingDecl := existingTypeOnlyNamedImport.AsImportDeclaration()
+		if existingDecl != nil && existingDecl.ImportClause != nil {
+			existingClause := existingDecl.ImportClause.AsImportClause()
+			if existingClause != nil &&
+				existingClause.Name() == nil &&
+				existingClause.NamedBindings != nil &&
+				existingClause.NamedBindings.Kind == ast.KindNamedImports {
+				closeBrace := findFirstToken(existingTypeOnlyNamedImport, ast.KindCloseBraceToken, nil, ctx.SourceFile)
+				if closeBrace != nil {
+					closeRange := tokenRange(ctx.SourceFile, closeBrace)
+					insertText := "," + typeNamedRawBody
+					if typeNamedRawBody == "" || !hasTypeNamedRawBody {
+						insertText = ", " + strings.Join(typeNamedTexts, ", ")
+					}
+					prependFixes = append(prependFixes, rule.RuleFixReplaceRange(core.NewTextRange(closeRange.Pos(), closeRange.Pos()), insertText))
+					typeNamedTexts = nil
+					typeNamedRawBody = ""
+					hasTypeNamedRawBody = false
+				}
+			}
+		}
+	}
+
+	typeLines := []string{}
+	valueDefaultText := defaultText
+	valueNamespaceText := namespaceText
+	defaultTypeText := defaultText
+	valueNamedPrefix := ""
+	moveDefault := defaultBinding != nil && isTypeOnlyNonInlineBinding(defaultBinding)
+	moveNamespace := namespaceBinding != nil && isTypeOnlyNonInlineBinding(namespaceBinding)
+	if moveDefault {
+		valueDefaultText = ""
+	}
+	if moveNamespace {
+		valueNamespaceText = ""
+	}
+	if moveDefault &&
+		!moveNamespace &&
+		importClause.Name() != nil &&
+		importClause.NamedBindings != nil &&
+		importClause.NamedBindings.Kind == ast.KindNamespaceImport {
+		if prefix := interSpecifierCommentPrefix(ctx.SourceFile, importClause.Name(), importClause.NamedBindings); prefix != "" {
+			valueNamespaceText = prefix + namespaceText
+		}
+	}
+	if moveDefault &&
+		importClause.Name() != nil &&
+		importClause.NamedBindings != nil &&
+		importClause.NamedBindings.Kind == ast.KindNamedImports {
+		defaultSuffix, namedPrefix := splitDefaultImportSeparators(ctx.SourceFile, importClause.Name(), importClause.NamedBindings)
+		defaultTypeText = defaultText + defaultSuffix
+		valueNamedPrefix = namedPrefix
+	}
+
+	if allNonInlineAreTypeOnly {
+		lines := []string{}
+		if len(typeNamedTexts) > 0 {
+			topLevelTypeForNamed := opts.FixStyle != "inline-type-imports"
+			if topLevelTypeForNamed && hasTypeNamedRawBody && typeNamedRawBody != "" {
+				lines = append(lines, buildImportStatementWithRawNamedBody(moduleSpecifierText, "", "", typeNamedRawBody, true, hasSemicolon))
+			} else if !topLevelTypeForNamed && moveDefault {
+				// When splitting a default type import from named type-only imports,
+				// upstream keeps compact braces: `import {type A, type B} ...`.
+				lines = append(lines, buildImportStatementWithRawNamedBody(moduleSpecifierText, "", "", strings.Join(typeNamedTexts, ", "), false, hasSemicolon))
+			} else {
+				lines = append(lines, buildImportStatement(moduleSpecifierText, "", "", typeNamedTexts, topLevelTypeForNamed, hasSemicolon))
+			}
+		}
+		if moveNamespace {
+			lines = append(lines, buildImportStatement(moduleSpecifierText, "", namespaceText, nil, true, hasSemicolon))
+		}
+		if moveDefault {
+			lines = append(lines, buildImportStatement(moduleSpecifierText, defaultTypeText, "", nil, true, hasSemicolon))
+		}
+		if len(lines) == 0 {
+			return nil
+		}
+		return []rule.RuleFix{rule.RuleFixReplace(ctx.SourceFile, importDeclNode, joinImportLines(lines, indent))}
+	}
+
+	// Mixed imports
+	if len(typeNamedTexts) > 0 {
+		if opts.FixStyle == "inline-type-imports" {
+			valueNamedTexts = buildNamedTexts(true, true, true, false)
+			typeNamedTexts = nil
+		} else {
+			if hasTypeNamedRawBody && typeNamedRawBody != "" {
+				typeLines = append(typeLines, buildImportStatementWithRawNamedBody(moduleSpecifierText, "", "", typeNamedRawBody, true, hasSemicolon))
+			} else {
+				typeLines = append(typeLines, buildImportStatement(moduleSpecifierText, "", "", typeNamedTexts, true, hasSemicolon))
+			}
+		}
+	}
+	if moveNamespace {
+		typeLines = append(typeLines, buildImportStatement(moduleSpecifierText, "", namespaceText, nil, true, hasSemicolon))
+	}
+	if moveDefault {
+		typeLines = append(typeLines, buildImportStatement(moduleSpecifierText, defaultTypeText, "", nil, true, hasSemicolon))
+	}
+
+	valueLine := ""
+	if valueDefaultText != "" || valueNamespaceText != "" || len(valueNamedTexts) > 0 {
+		trimmedRawValueNamedBody := strings.TrimRight(valueNamedRawBody, " \t\r\n")
+		useRawValueNamedBody := opts.FixStyle != "inline-type-imports" &&
+			hasValueNamedRawBody &&
+			valueNamedRawBody != "" &&
+			(strings.HasSuffix(trimmedRawValueNamedBody, ",") ||
+				strings.Contains(valueNamedRawBody, "/*") ||
+				strings.Contains(valueNamedRawBody, "//"))
+		if useRawValueNamedBody {
+			valueLine = buildImportStatementWithRawNamedBody(moduleSpecifierText, valueDefaultText, valueNamespaceText, valueNamedRawBody, false, hasSemicolon)
+		} else {
+			valueLine = buildImportStatement(moduleSpecifierText, valueDefaultText, valueNamespaceText, valueNamedTexts, false, hasSemicolon)
+		}
+		if valueNamedPrefix != "" && valueDefaultText == "" && valueNamespaceText == "" {
+			if useRawValueNamedBody {
+				valueLine = "import " + valueNamedPrefix + "{" + valueNamedRawBody + "} from " + moduleSpecifierText
+			} else {
+				valueLine = "import " + valueNamedPrefix + "{ " + strings.Join(valueNamedTexts, ", ") + " } from " + moduleSpecifierText
+			}
+			if hasSemicolon {
+				valueLine += ";"
+			}
+		}
+	}
+	lines := append([]string{}, typeLines...)
+	if valueLine != "" {
+		lines = append(lines, valueLine)
+	}
+	if len(lines) == 0 {
+		return nil
+	}
+	fixes := append([]rule.RuleFix{}, prependFixes...)
+	fixes = append(fixes, rule.RuleFixReplace(ctx.SourceFile, importDeclNode, joinImportLines(lines, indent)))
+	return fixes
+}
+
+func reportPreferTypeImports(ctx rule.RuleContext, perImport map[*ast.Node][]*importedBinding, opts ConsistentTypeImportsOptions) {
 	typeOnlyImportBySource := map[string]bool{}
+	typeOnlyNamedImportBySource := map[string]*ast.Node{}
 	if ctx.SourceFile != nil && ctx.SourceFile.Statements != nil {
 		for _, statement := range ctx.SourceFile.Statements.Nodes {
 			if statement == nil || statement.Kind != ast.KindImportDeclaration {
@@ -588,6 +1295,9 @@ func reportPreferTypeImports(ctx rule.RuleContext, perImport map[*ast.Node][]*im
 				continue
 			}
 			typeOnlyImportBySource[moduleLiteral.Text] = true
+			if importClause.Name() == nil && importClause.NamedBindings != nil && importClause.NamedBindings.Kind == ast.KindNamedImports {
+				typeOnlyNamedImportBySource[moduleLiteral.Text] = statement
+			}
 		}
 	}
 
@@ -649,11 +1359,29 @@ func reportPreferTypeImports(ctx rule.RuleContext, perImport map[*ast.Node][]*im
 			continue
 		}
 
-		_ = partialTypeOnlyNames
 		alignToLineStart := message.Id == "someImportsAreOnlyTypes" &&
 			importSource != "" &&
 			hasPriorBareImportOfSameSource(ctx.SourceFile, importDecl, importSource)
-		reportImportDeclaration(ctx, importDecl, message, alignToLineStart)
+		fixes := buildPreferTypeImportFixes(ctx, importDecl, importBindings, opts, typeOnlyNamedImportBySource[importSource])
+		if len(fixes) == 0 {
+			reportImportDeclaration(ctx, importDecl, message, alignToLineStart)
+			continue
+		}
+		if !alignToLineStart || ctx.SourceFile == nil {
+			ctx.ReportNodeWithFixes(importDecl, message, fixes...)
+			continue
+		}
+		r := utils.TrimNodeTextRange(ctx.SourceFile, importDecl)
+		start := r.Pos()
+		sourceText := ctx.SourceFile.Text()
+		for start > 0 {
+			ch := sourceText[start-1]
+			if ch == '\n' || ch == '\r' {
+				break
+			}
+			start--
+		}
+		ctx.ReportRangeWithFixes(core.NewTextRange(start, r.End()), message, fixes...)
 	}
 }
 
@@ -725,7 +1453,7 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 		bindings, perImport := collectImportBindings(ctx)
 		if len(bindings) > 0 {
 			markBindingUsages(ctx, bindings)
-			reportPreferTypeImports(ctx, perImport)
+			reportPreferTypeImports(ctx, perImport, opts)
 		}
 	}
 

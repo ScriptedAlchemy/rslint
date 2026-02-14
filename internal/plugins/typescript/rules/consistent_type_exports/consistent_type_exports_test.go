@@ -62,18 +62,21 @@ func TestConsistentTypeExportsRule(t *testing.T) {
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "typeOverValue"},
 			},
+			Output: []string{`type T = string; export type { T };`},
 		},
 		{
 			Code: `interface T {} export { T };`,
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "typeOverValue"},
 			},
+			Output: []string{`interface T {} export type { T };`},
 		},
 		{
 			Code: `type T = string; export { T as U };`,
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "typeOverValue"},
 			},
+			Output: []string{`type T = string; export type { T as U };`},
 		},
 
 		// Multiple type exports without type keyword
@@ -82,18 +85,21 @@ func TestConsistentTypeExportsRule(t *testing.T) {
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "typeOverValue"},
 			},
+			Output: []string{`type T1 = string; type T2 = number; export type { T1, T2 };`},
 		},
 		{
 			Code: `interface T1 {} interface T2 {} export { T1, T2 };`,
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "typeOverValue"},
 			},
+			Output: []string{`interface T1 {} interface T2 {} export type { T1, T2 };`},
 		},
 		{
 			Code: `type T1 = string; interface T2 {} export { T1, T2 };`,
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "typeOverValue"},
 			},
+			Output: []string{`type T1 = string; interface T2 {} export type { T1, T2 };`},
 		},
 
 		// Re-exports of type-only modules
@@ -102,12 +108,21 @@ func TestConsistentTypeExportsRule(t *testing.T) {
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "typeOverValue"},
 			},
+			Output: []string{`export type { Type1 } from './consistent-type-exports-types-only';`},
 		},
 		{
 			Code: `export { Type1, Type2 } from './consistent-type-exports-types-only';`,
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "typeOverValue"},
 			},
+			Output: []string{`export type { Type1, Type2 } from './consistent-type-exports-types-only';`},
+		},
+		{
+			Code: `export { Type1 } from './consistent-type-exports-types';`,
+			Errors: []rule_tester.InvalidTestCaseError{
+				{MessageId: "typeOverValue"},
+			},
+			Output: []string{`export type { Type1 } from './consistent-type-exports-types';`},
 		},
 
 		// Export * from type-only module
@@ -116,6 +131,7 @@ func TestConsistentTypeExportsRule(t *testing.T) {
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "typeOverValue"},
 			},
+			Output: []string{`export type * from './consistent-type-exports-types-only';`},
 		},
 
 		// Mixed exports: types and values together
@@ -124,24 +140,32 @@ func TestConsistentTypeExportsRule(t *testing.T) {
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "singleExportIsType"},
 			},
+			Output: []string{`type T = string; const value = 1; export type { T };
+export { value };`},
 		},
 		{
 			Code: `type T1 = string; type T2 = number; const value = 1; export { T1, T2, value };`,
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "multipleExportsAreTypes"},
 			},
+			Output: []string{`type T1 = string; type T2 = number; const value = 1; export type { T1, T2 };
+export { value };`},
 		},
 		{
 			Code: `const value = 1; type T = string; export { value, T };`,
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "singleExportIsType"},
 			},
+			Output: []string{`const value = 1; type T = string; export type { T };
+export { value };`},
 		},
 		{
 			Code: `const value1 = 1; const value2 = 2; type T1 = string; type T2 = number; export { value1, T1, value2, T2 };`,
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "multipleExportsAreTypes"},
 			},
+			Output: []string{`const value1 = 1; const value2 = 2; type T1 = string; type T2 = number; export type { T1, T2 };
+export { value1, value2 };`},
 		},
 
 		// Mixed re-exports
@@ -150,18 +174,24 @@ func TestConsistentTypeExportsRule(t *testing.T) {
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "singleExportIsType"},
 			},
+			Output: []string{`export type { Type1 } from './consistent-type-exports-types';
+export { value1 } from './consistent-type-exports-types';`},
 		},
 		{
 			Code: `export { Type1, Type2, value1 } from './consistent-type-exports-types';`,
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "multipleExportsAreTypes"},
 			},
+			Output: []string{`export type { Type1, Type2 } from './consistent-type-exports-types';
+export { value1 } from './consistent-type-exports-types';`},
 		},
 		{
 			Code: `export { Type1, value1, Type2, value2 } from './consistent-type-exports-types';`,
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "multipleExportsAreTypes"},
 			},
+			Output: []string{`export type { Type1, Type2 } from './consistent-type-exports-types';
+export { value1, value2 } from './consistent-type-exports-types';`},
 		},
 
 		// With aliases
@@ -170,12 +200,15 @@ func TestConsistentTypeExportsRule(t *testing.T) {
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "typeOverValue"},
 			},
+			Output: []string{`type T = string; export type { T as U };`},
 		},
 		{
 			Code: `type T1 = string; const value = 1; export { T1 as Type, value };`,
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "singleExportIsType"},
 			},
+			Output: []string{`type T1 = string; const value = 1; export type { T1 as Type };
+export { value };`},
 		},
 
 		// Generic types
@@ -184,6 +217,7 @@ func TestConsistentTypeExportsRule(t *testing.T) {
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "typeOverValue"},
 			},
+			Output: []string{`type Generic<T> = T; export type { Generic };`},
 		},
 
 		// Type re-exports with values from same module
@@ -192,6 +226,8 @@ func TestConsistentTypeExportsRule(t *testing.T) {
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "multipleExportsAreTypes"},
 			},
+			Output: []string{`export type { Type1, Type2 } from './consistent-type-exports-types';
+export { value1 } from './consistent-type-exports-types';`},
 		},
 	})
 }
@@ -223,6 +259,7 @@ func TestConsistentTypeExportsRuleWithInlineTypeSpecifier(t *testing.T) {
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "singleExportIsType"},
 			},
+			Output: []string{`type T = string; const value = 1; export { type T, value };`},
 		},
 		{
 			Code:    `type T1 = string; type T2 = number; const value = 1; export { T1, T2, value };`,
@@ -230,6 +267,7 @@ func TestConsistentTypeExportsRuleWithInlineTypeSpecifier(t *testing.T) {
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "multipleExportsAreTypes"},
 			},
+			Output: []string{`type T1 = string; type T2 = number; const value = 1; export { type T1, type T2, value };`},
 		},
 	})
 }

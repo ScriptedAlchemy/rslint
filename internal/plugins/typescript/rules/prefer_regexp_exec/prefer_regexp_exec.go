@@ -1,10 +1,11 @@
 package prefer_regexp_exec
 
 import (
-	"regexp"
 	"strings"
 
+	"github.com/dlclark/regexp2"
 	"github.com/microsoft/typescript-go/shim/ast"
+	"github.com/microsoft/typescript-go/shim/scanner"
 	"github.com/web-infra-dev/rslint/internal/rule"
 	"github.com/web-infra-dev/rslint/internal/utils"
 )
@@ -39,13 +40,40 @@ type staticArgInfo struct {
 }
 
 func regExpFlagInfo(args []*ast.Node) (known bool, global bool) {
-	if len(args) < 2 || args[1] == nil || args[1].Kind != ast.KindStringLiteral {
+	if len(args) > 0 && args[0] != nil {
+		patternArg := ast.SkipParentheses(args[0])
+		if patternArg.Kind != ast.KindStringLiteral {
+			return false, false
+		}
+		if _, err := regexp2.Compile(patternArg.AsStringLiteral().Text, regexp2.ECMAScript); err != nil {
+			return false, false
+		}
+	}
+
+	if len(args) < 2 || args[1] == nil || isUndefinedLiteral(args[1]) {
 		return true, false
 	}
-	return true, strings.Contains(args[1].AsStringLiteral().Text, "g")
+	flagsArg := ast.SkipParentheses(args[1])
+	if flagsArg.Kind != ast.KindStringLiteral {
+		return false, false
+	}
+	return true, strings.Contains(flagsArg.AsStringLiteral().Text, "g")
 }
 
-func resolveStaticArgumentInfo(ctx rule.RuleContext, node *ast.Node, seen map[string]bool) staticArgInfo {
+func isUndefinedLiteral(node *ast.Node) bool {
+	node = ast.SkipParentheses(node)
+	if node == nil {
+		return false
+	}
+	if node.Kind != ast.KindIdentifier {
+		return false
+	}
+	id := node.AsIdentifier()
+	return id != nil && id.Text == "undefined"
+}
+
+func resolveStaticArgumentInfo(ctx rule.RuleContext, node *ast.Node, seen map[*ast.Symbol]bool) staticArgInfo {
+	node = ast.SkipParentheses(node)
 	if node == nil {
 		return staticArgInfo{}
 	}
@@ -70,18 +98,24 @@ func resolveStaticArgumentInfo(ctx rule.RuleContext, node *ast.Node, seen map[st
 		if ctx.TypeChecker == nil {
 			return staticArgInfo{}
 		}
-		name := node.AsIdentifier().Text
-		if seen[name] {
+		sym := ctx.TypeChecker.GetSymbolAtLocation(node)
+		if sym == nil {
 			return staticArgInfo{}
 		}
-		seen[name] = true
-		sym := ctx.TypeChecker.GetSymbolAtLocation(node)
-		if sym == nil || sym.Declarations == nil {
+		if seen[sym] {
+			return staticArgInfo{}
+		}
+		seen[sym] = true
+		defer delete(seen, sym)
+		if sym.Declarations == nil {
 			return staticArgInfo{}
 		}
 		for _, decl := range sym.Declarations {
 			if decl == nil || decl.Kind != ast.KindVariableDeclaration {
 				continue
+			}
+			if !ast.IsVariableDeclarationList(decl.Parent) || decl.Parent.Flags&ast.NodeFlagsConst == 0 {
+				return staticArgInfo{}
 			}
 			varDecl := decl.AsVariableDeclaration()
 			if varDecl == nil || varDecl.Initializer == nil {
@@ -129,15 +163,24 @@ func isStringMatchCall(node *ast.Node) (*ast.CallExpression, bool) {
 		return nil, false
 	}
 
-	if call.Expression.Kind != ast.KindPropertyAccessExpression {
-		return nil, false
+	switch call.Expression.Kind {
+	case ast.KindPropertyAccessExpression:
+		access := call.Expression.AsPropertyAccessExpression()
+		if access == nil || access.Name() == nil || access.Name().Text() != "match" {
+			return nil, false
+		}
+		return call, true
+	case ast.KindElementAccessExpression:
+		access := call.Expression.AsElementAccessExpression()
+		if access == nil || access.ArgumentExpression == nil || access.ArgumentExpression.Kind != ast.KindStringLiteral {
+			return nil, false
+		}
+		if access.ArgumentExpression.AsStringLiteral().Text != "match" {
+			return nil, false
+		}
+		return call, true
 	}
-	access := call.Expression.AsPropertyAccessExpression()
-	if access == nil || access.Name() == nil || access.Name().Text() != "match" {
-		return nil, false
-	}
-
-	return call, true
+	return nil, false
 }
 
 func isStringLikeReceiver(ctx rule.RuleContext, receiver *ast.Node) bool {
@@ -163,6 +206,54 @@ func isRegExpOrStringArgument(ctx rule.RuleContext, argument *ast.Node) bool {
 	return typeName == "RegExp" || typeName == "string"
 }
 
+func buildRegexLiteralFromString(pattern string) (string, bool) {
+	// Validate using ECMAScript semantics (not Go regexp/RE2).
+	if _, err := regexp2.Compile(pattern, regexp2.ECMAScript); err != nil {
+		return "", false
+	}
+	pattern = strings.ReplaceAll(pattern, `\`, `\\`)
+	pattern = strings.ReplaceAll(pattern, "\n", `\n`)
+	pattern = strings.ReplaceAll(pattern, "\r", `\r`)
+	pattern = strings.ReplaceAll(pattern, "/", `\/`)
+	return "/" + pattern + "/", true
+}
+
+func buildPreferRegExpExecReplacement(ctx rule.RuleContext, receiver *ast.Node, arg *ast.Node) (string, bool) {
+	if ctx.SourceFile == nil || receiver == nil || arg == nil {
+		return "", false
+	}
+	receiverText := strings.TrimSpace(scanner.GetSourceTextOfNodeFromSourceFile(ctx.SourceFile, receiver, false))
+	argText := strings.TrimSpace(scanner.GetSourceTextOfNodeFromSourceFile(ctx.SourceFile, arg, false))
+	if receiverText == "" || argText == "" {
+		return "", false
+	}
+
+	if arg.Kind == ast.KindStringLiteral {
+		regexLiteral, ok := buildRegexLiteralFromString(arg.AsStringLiteral().Text)
+		if !ok {
+			return "", false
+		}
+		return regexLiteral + ".exec(" + receiverText + ")", true
+	}
+
+	if arg.Kind == ast.KindRegularExpressionLiteral {
+		return argText + ".exec(" + receiverText + ")", true
+	}
+
+	if ctx.TypeChecker == nil {
+		return "", false
+	}
+	argType := utils.GetConstrainedTypeAtLocation(ctx.TypeChecker, arg)
+	typeName := utils.GetTypeName(ctx.TypeChecker, argType)
+	if typeName == "RegExp" {
+		return argText + ".exec(" + receiverText + ")", true
+	}
+	if typeName == "string" {
+		return "RegExp(" + argText + ").exec(" + receiverText + ")", true
+	}
+	return "", false
+}
+
 var PreferRegExpExecRule = rule.CreateRule(rule.Rule{
 	Name: "prefer-regexp-exec",
 	Run: func(ctx rule.RuleContext, options any) rule.RuleListeners {
@@ -173,14 +264,26 @@ var PreferRegExpExecRule = rule.CreateRule(rule.Rule{
 					return
 				}
 
-				access := call.Expression.AsPropertyAccessExpression()
-				receiver := access.Expression
+				var receiver *ast.Node
+				var reportNode *ast.Node
+				if call.Expression.Kind == ast.KindPropertyAccessExpression {
+					access := call.Expression.AsPropertyAccessExpression()
+					receiver = access.Expression
+					reportNode = access.Name().AsNode()
+				} else if call.Expression.Kind == ast.KindElementAccessExpression {
+					access := call.Expression.AsElementAccessExpression()
+					receiver = access.Expression
+					reportNode = access.ArgumentExpression
+				}
+				if receiver == nil || reportNode == nil {
+					return
+				}
 				if !isStringLikeReceiver(ctx, receiver) {
 					return
 				}
 
 				arg := call.Arguments.Nodes[0]
-				staticInfo := resolveStaticArgumentInfo(ctx, arg, map[string]bool{})
+				staticInfo := resolveStaticArgumentInfo(ctx, arg, map[*ast.Symbol]bool{})
 				if staticInfo.known && staticInfo.global {
 					return
 				}
@@ -191,12 +294,21 @@ var PreferRegExpExecRule = rule.CreateRule(rule.Rule{
 					return
 				}
 				if arg.Kind == ast.KindStringLiteral {
-					if _, err := regexp.Compile(arg.AsStringLiteral().Text); err != nil {
+					if _, err := regexp2.Compile(arg.AsStringLiteral().Text, regexp2.ECMAScript); err != nil {
 						return
 					}
 				}
 
-				ctx.ReportNode(access.Name(), buildPreferRegExpExecMessage())
+				msg := buildPreferRegExpExecMessage()
+				if replacement, ok := buildPreferRegExpExecReplacement(ctx, receiver, arg); ok {
+					if ctx.SourceFile == nil {
+						ctx.ReportNode(reportNode, msg)
+						return
+					}
+					ctx.ReportNodeWithFixes(reportNode, msg, rule.RuleFixReplaceRange(utils.TrimNodeTextRange(ctx.SourceFile, node), replacement))
+					return
+				}
+				ctx.ReportNode(reportNode, msg)
 			},
 		}
 	},

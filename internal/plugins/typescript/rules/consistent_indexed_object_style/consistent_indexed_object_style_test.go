@@ -67,25 +67,29 @@ func TestConsistentIndexedObjectStyleRule(t *testing.T) {
 	}, []rule_tester.InvalidTestCase{
 		// Default mode (prefer record) - interface with only index signature
 		{
-			Code: "interface Foo { [key: string]: any; }",
+			Code:   "interface Foo { [key: string]: any; }",
+			Output: []string{"type Foo = Record<string, any>;"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferRecord"},
 			},
 		},
 		{
-			Code: "interface Foo { [key: string]: unknown; }",
+			Code:   "interface Foo { [key: string]: unknown; }",
+			Output: []string{"type Foo = Record<string, unknown>;"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferRecord"},
 			},
 		},
 		{
-			Code: "interface Foo { [key: number]: any; }",
+			Code:   "interface Foo { [key: number]: any; }",
+			Output: []string{"type Foo = Record<number, any>;"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferRecord"},
 			},
 		},
 		{
-			Code: "interface Foo { readonly [key: string]: any; }",
+			Code:   "interface Foo { readonly [key: string]: any; }",
+			Output: []string{"type Foo = Readonly<Record<string, any>>;"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferRecord"},
 			},
@@ -93,25 +97,29 @@ func TestConsistentIndexedObjectStyleRule(t *testing.T) {
 
 		// Type literals with only index signature
 		{
-			Code: "type Foo = { [key: string]: any };",
+			Code:   "type Foo = { [key: string]: any };",
+			Output: []string{"type Foo = Record<string, any>;"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferRecord"},
 			},
 		},
 		{
-			Code: "type Foo = { [key: string]: unknown };",
+			Code:   "type Foo = { [key: string]: unknown };",
+			Output: []string{"type Foo = Record<string, unknown>;"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferRecord"},
 			},
 		},
 		{
-			Code: "type Foo = { [key: number]: any };",
+			Code:   "type Foo = { [key: number]: any };",
+			Output: []string{"type Foo = Record<number, any>;"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferRecord"},
 			},
 		},
 		{
-			Code: "type Foo = { readonly [key: string]: any };",
+			Code:   "type Foo = { readonly [key: string]: any };",
+			Output: []string{"type Foo = Readonly<Record<string, any>>;"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferRecord"},
 			},
@@ -119,25 +127,29 @@ func TestConsistentIndexedObjectStyleRule(t *testing.T) {
 
 		// Mapped types that can be converted
 		{
-			Code: "type Foo = { [K in string]: any };",
+			Code:   "type Foo = { [K in string]: any };",
+			Output: []string{"type Foo = Record<string, any>;"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferRecord"},
 			},
 		},
 		{
-			Code: "type Foo = { [K in number]: any };",
+			Code:   "type Foo = { [K in number]: any };",
+			Output: []string{"type Foo = Record<number, any>;"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferRecord"},
 			},
 		},
 		{
-			Code: "type Foo = { readonly [K in string]: any };",
+			Code:   "type Foo = { readonly [K in string]: any };",
+			Output: []string{"type Foo = Readonly<Record<string, any>>;"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferRecord"},
 			},
 		},
 		{
-			Code: "type Foo = { [K in string]?: any };",
+			Code:   "type Foo = { [K in string]?: any };",
+			Output: []string{"type Foo = Partial<Record<string, any>>;"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferRecord"},
 			},
@@ -145,13 +157,15 @@ func TestConsistentIndexedObjectStyleRule(t *testing.T) {
 
 		// Generic interfaces with only index signature
 		{
-			Code: "interface Foo<T> { [key: string]: T; }",
+			Code:   "interface Foo<T> { [key: string]: T; }",
+			Output: []string{"type Foo<T> = Record<string, T>;"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferRecord"},
 			},
 		},
 		{
-			Code: "interface Foo<T, K> { [key: string]: T | K; }",
+			Code:   "interface Foo<T, K> { [key: string]: T | K; }",
+			Output: []string{"type Foo<T, K> = Record<string, T | K>;"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferRecord"},
 			},
@@ -167,6 +181,7 @@ func TestConsistentIndexedObjectStyleRule(t *testing.T) {
 		{
 			Code:    "type Foo = Record<string, any>;",
 			Options: "index-signature",
+			Output:  []string{"type Foo = { [key: string]: any };"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferIndexSignature"},
 			},
@@ -174,6 +189,7 @@ func TestConsistentIndexedObjectStyleRule(t *testing.T) {
 		{
 			Code:    "type Foo = Record<string, unknown>;",
 			Options: "index-signature",
+			Output:  []string{"type Foo = { [key: string]: unknown };"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferIndexSignature"},
 			},
@@ -181,6 +197,7 @@ func TestConsistentIndexedObjectStyleRule(t *testing.T) {
 		{
 			Code:    "type Foo = Record<number, any>;",
 			Options: "index-signature",
+			Output:  []string{"type Foo = { [key: number]: any };"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferIndexSignature"},
 			},
@@ -188,6 +205,7 @@ func TestConsistentIndexedObjectStyleRule(t *testing.T) {
 		{
 			Code:    "type Foo = Record<symbol, any>;",
 			Options: "index-signature",
+			Output:  []string{"type Foo = { [key: symbol]: any };"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferIndexSignature"},
 			},
@@ -202,6 +220,7 @@ func TestConsistentIndexedObjectStyleRule(t *testing.T) {
 		{
 			Code:    "type Foo<T> = Record<string, T>;",
 			Options: "index-signature",
+			Output:  []string{"type Foo<T> = { [key: string]: T };"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferIndexSignature"},
 			},
@@ -209,13 +228,15 @@ func TestConsistentIndexedObjectStyleRule(t *testing.T) {
 
 		// Nested in other types
 		{
-			Code: "type Foo = Array<{ [key: string]: any }>;",
+			Code:   "type Foo = Array<{ [key: string]: any }>;",
+			Output: []string{"type Foo = Array<Record<string, any>>;"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferRecord"},
 			},
 		},
 		{
-			Code: "type Foo = { prop: { [key: string]: any } };",
+			Code:   "type Foo = { prop: { [key: string]: any } };",
+			Output: []string{"type Foo = { prop: Record<string, any> };"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferRecord"},
 			},
@@ -223,19 +244,22 @@ func TestConsistentIndexedObjectStyleRule(t *testing.T) {
 
 		// In function signatures
 		{
-			Code: "function foo(arg: { [key: string]: any }) {}",
+			Code:   "function foo(arg: { [key: string]: any }) {}",
+			Output: []string{"function foo(arg: Record<string, any>) {}"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferRecord"},
 			},
 		},
 		{
-			Code: "const foo = (arg: { [key: string]: any }) => {};",
+			Code:   "const foo = (arg: { [key: string]: any }) => {};",
+			Output: []string{"const foo = (arg: Record<string, any>) => {};"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferRecord"},
 			},
 		},
 		{
-			Code: "function foo(): { [key: string]: any } { return {}; }",
+			Code:   "function foo(): { [key: string]: any } { return {}; }",
+			Output: []string{"function foo(): Record<string, any> { return {}; }"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferRecord"},
 			},
@@ -243,13 +267,15 @@ func TestConsistentIndexedObjectStyleRule(t *testing.T) {
 
 		// With comments
 		{
-			Code: "interface Foo { /* comment */ [key: string]: any; }",
+			Code:   "interface Foo { /* comment */ [key: string]: any; }",
+			Output: []string{"type Foo = Record<string, any>;"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferRecord"},
 			},
 		},
 		{
-			Code: "type Foo = { /* comment */ [key: string]: any };",
+			Code:   "type Foo = { /* comment */ [key: string]: any };",
+			Output: []string{"type Foo = Record<string, any>;"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferRecord"},
 			},
@@ -257,19 +283,22 @@ func TestConsistentIndexedObjectStyleRule(t *testing.T) {
 
 		// Complex value types
 		{
-			Code: "type Foo = { [key: string]: string | number };",
+			Code:   "type Foo = { [key: string]: string | number };",
+			Output: []string{"type Foo = Record<string, string | number>;"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferRecord"},
 			},
 		},
 		{
-			Code: "type Foo = { [key: string]: { nested: string } };",
+			Code:   "type Foo = { [key: string]: { nested: string } };",
+			Output: []string{"type Foo = Record<string, { nested: string }>;"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferRecord"},
 			},
 		},
 		{
-			Code: "interface Foo { [key: string]: Array<string> }",
+			Code:   "interface Foo { [key: string]: Array<string> }",
+			Output: []string{"type Foo = Record<string, Array<string>>;"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferRecord"},
 			},
@@ -277,25 +306,29 @@ func TestConsistentIndexedObjectStyleRule(t *testing.T) {
 
 		// Circular/array-reference cases (Foo[] forms are reportable per upstream)
 		{
-			Code: "interface Foo { [key: string]: Foo[]; }",
+			Code:   "interface Foo { [key: string]: Foo[]; }",
+			Output: []string{"type Foo = Record<string, Foo[]>;"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferRecord"},
 			},
 		},
 		{
-			Code: "interface Foo { [key: string]: Foo[] | string; }",
+			Code:   "interface Foo { [key: string]: Foo[] | string; }",
+			Output: []string{"type Foo = Record<string, Foo[] | string>;"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferRecord"},
 			},
 		},
 		{
-			Code: "interface Foo { [key: string]: () => Foo; }",
+			Code:   "interface Foo { [key: string]: () => Foo; }",
+			Output: []string{"type Foo = Record<string, () => Foo>;"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferRecord"},
 			},
 		},
 		{
-			Code: "interface Foo { [s: string]: [Foo]; }",
+			Code:   "interface Foo { [s: string]: [Foo]; }",
+			Output: []string{"type Foo = Record<string, [Foo]>;"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferRecord"},
 			},

@@ -1152,6 +1152,7 @@ exports[`method-signature-style > invalid 26`] = `
   ],
   "errorCount": 2,
   "fileCount": 1,
+  "output": null,
   "ruleCount": 1,
 }
 `;

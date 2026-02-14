@@ -3,10 +3,146 @@ package consistent_indexed_object_style
 import (
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/web-infra-dev/rslint/internal/rule"
+	"github.com/web-infra-dev/rslint/internal/utils"
 )
 
 type ConsistentIndexedObjectStyleOptions struct {
 	Style string `json:"style"`
+}
+
+func buildPreferRecordMessage() rule.RuleMessage {
+	return rule.RuleMessage{
+		Id:          "preferRecord",
+		Description: "A record is preferred over an index signature.",
+	}
+}
+
+func buildPreferIndexSignatureMessage() rule.RuleMessage {
+	return rule.RuleMessage{
+		Id:          "preferIndexSignature",
+		Description: "An index signature is preferred over a record.",
+	}
+}
+
+func nodeText(sourceFile *ast.SourceFile, node *ast.Node) string {
+	if sourceFile == nil || node == nil {
+		return ""
+	}
+	textRange := utils.TrimNodeTextRange(sourceFile, node)
+	return sourceFile.Text()[textRange.Pos():textRange.End()]
+}
+
+func hasInterfaceExtends(interfaceDecl *ast.InterfaceDeclaration) bool {
+	if interfaceDecl == nil || interfaceDecl.HeritageClauses == nil {
+		return false
+	}
+	for _, clauseNode := range interfaceDecl.HeritageClauses.Nodes {
+		clause := clauseNode.AsHeritageClause()
+		if clause == nil || clause.Token != ast.KindExtendsKeyword || clause.Types == nil {
+			continue
+		}
+		if len(clause.Types.Nodes) > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+func typeParametersText(sourceFile *ast.SourceFile, typeParameters *ast.NodeList) string {
+	if sourceFile == nil || typeParameters == nil || len(typeParameters.Nodes) == 0 {
+		return ""
+	}
+	text := "<"
+	for i, param := range typeParameters.Nodes {
+		if param == nil {
+			continue
+		}
+		if i > 0 {
+			text += ", "
+		}
+		text += nodeText(sourceFile, param)
+	}
+	text += ">"
+	return text
+}
+
+func indexSignatureRecordText(sourceFile *ast.SourceFile, member *ast.Node) (string, bool) {
+	if sourceFile == nil || member == nil || member.Kind != ast.KindIndexSignature {
+		return "", false
+	}
+	indexSig := member.AsIndexSignatureDeclaration()
+	if indexSig == nil || indexSig.Parameters == nil || len(indexSig.Parameters.Nodes) != 1 {
+		return "", false
+	}
+	parameter := indexSig.Parameters.Nodes[0]
+	if parameter == nil || parameter.Kind != ast.KindParameter {
+		return "", false
+	}
+	paramDecl := parameter.AsParameterDeclaration()
+	if paramDecl == nil || paramDecl.Name() == nil || paramDecl.Name().Kind != ast.KindIdentifier || paramDecl.Type == nil {
+		return "", false
+	}
+	if indexSig.Type == nil {
+		return "", false
+	}
+	keyText := nodeText(sourceFile, paramDecl.Type)
+	valueText := nodeText(sourceFile, indexSig.Type)
+	recordText := "Record<" + keyText + ", " + valueText + ">"
+	if ast.HasSyntacticModifier(member, ast.ModifierFlagsReadonly) {
+		recordText = "Readonly<" + recordText + ">"
+	}
+	return recordText, true
+}
+
+func unwrapParenthesizedType(node *ast.Node) *ast.Node {
+	for node != nil && node.Kind == ast.KindParenthesizedType {
+		parenthesized := node.AsParenthesizedTypeNode()
+		if parenthesized == nil {
+			return nil
+		}
+		node = parenthesized.Type
+	}
+	return node
+}
+
+func mappedTypeRecordText(sourceFile *ast.SourceFile, mappedType *ast.MappedTypeNode) (string, bool, bool) {
+	if sourceFile == nil || mappedType == nil || mappedType.TypeParameter == nil || mappedType.TypeParameter.Kind != ast.KindTypeParameter {
+		return "", false, false
+	}
+	typeParam := mappedType.TypeParameter.AsTypeParameter()
+	if typeParam == nil || typeParam.Constraint == nil {
+		return "", false, false
+	}
+	keyConstraint := unwrapParenthesizedType(typeParam.Constraint)
+	if keyConstraint == nil {
+		keyConstraint = typeParam.Constraint
+	}
+	keyText := nodeText(sourceFile, keyConstraint)
+	valueText := "any"
+	if mappedType.Type != nil {
+		valueText = nodeText(sourceFile, mappedType.Type)
+	}
+
+	recordText := "Record<" + keyText + ", " + valueText + ">"
+	canFix := true
+
+	if mappedType.QuestionToken != nil {
+		if mappedType.QuestionToken.Kind == ast.KindMinusToken {
+			recordText = "Required<" + recordText + ">"
+		} else {
+			recordText = "Partial<" + recordText + ">"
+		}
+	}
+
+	if mappedType.ReadonlyToken != nil {
+		if mappedType.ReadonlyToken.Kind == ast.KindMinusToken {
+			canFix = false
+		} else {
+			recordText = "Readonly<" + recordText + ">"
+		}
+	}
+
+	return recordText, canFix, true
 }
 
 // ConsistentIndexedObjectStyleRule enforces consistent usage of type imports
@@ -34,6 +170,9 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 		} else if style, ok := options.(string); ok {
 			opts.Style = style
 		}
+	}
+	if opts.Style != "record" && opts.Style != "index-signature" {
+		opts.Style = "record"
 	}
 
 	typeDeclarations := map[string]*ast.Node{}
@@ -108,11 +247,17 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 				return
 			}
 
-			// Report violation
-			ctx.ReportNode(node, rule.RuleMessage{
-				Id:          "preferRecord",
-				Description: "A record is preferred over an index signature.",
-			})
+			message := buildPreferRecordMessage()
+			recordText, canBuildRecord := indexSignatureRecordText(ctx.SourceFile, member)
+			safeFix := canBuildRecord &&
+				!hasInterfaceExtends(interfaceDecl) &&
+				!ast.HasSyntacticModifier(node, ast.ModifierFlagsDefault)
+			if safeFix && interfaceDecl.Name() != nil {
+				replacement := "type " + interfaceDecl.Name().Text() + typeParametersText(ctx.SourceFile, interfaceDecl.TypeParameters) + " = " + recordText + ";"
+				ctx.ReportNodeWithFixes(node, message, rule.RuleFixReplace(ctx.SourceFile, node, replacement))
+			} else {
+				ctx.ReportNode(node, message)
+			}
 		},
 
 		// Check type literals with index signatures
@@ -158,10 +303,13 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 				return
 			}
 
-			ctx.ReportNode(node, rule.RuleMessage{
-				Id:          "preferRecord",
-				Description: "A record is preferred over an index signature.",
-			})
+			message := buildPreferRecordMessage()
+			recordText, canFix := indexSignatureRecordText(ctx.SourceFile, member)
+			if canFix {
+				ctx.ReportNodeWithFixes(node, message, rule.RuleFixReplace(ctx.SourceFile, node, recordText))
+			} else {
+				ctx.ReportNode(node, message)
+			}
 		},
 
 		// Check mapped types
@@ -203,10 +351,13 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 				return
 			}
 
-			ctx.ReportNode(node, rule.RuleMessage{
-				Id:          "preferRecord",
-				Description: "A record is preferred over an index signature.",
-			})
+			message := buildPreferRecordMessage()
+			recordText, canFix, ok := mappedTypeRecordText(ctx.SourceFile, mappedType)
+			if ok && canFix {
+				ctx.ReportNodeWithFixes(node, message, rule.RuleFixReplace(ctx.SourceFile, node, recordText))
+			} else {
+				ctx.ReportNode(node, message)
+			}
 		},
 
 		// Check Record types when in index-signature mode
@@ -229,10 +380,19 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 				return
 			}
 
-			ctx.ReportNode(node, rule.RuleMessage{
-				Id:          "preferIndexSignature",
-				Description: "An index signature is preferred over a record.",
-			})
+			message := buildPreferIndexSignatureMessage()
+			keyType := typeRef.TypeArguments.Nodes[0]
+			valueType := typeRef.TypeArguments.Nodes[1]
+			if keyType == nil || valueType == nil {
+				return
+			}
+			switch keyType.Kind {
+			case ast.KindStringKeyword, ast.KindNumberKeyword, ast.KindSymbolKeyword:
+				replacement := "{ [key: " + nodeText(ctx.SourceFile, keyType) + "]: " + nodeText(ctx.SourceFile, valueType) + " }"
+				ctx.ReportNodeWithFixes(node, message, rule.RuleFixReplace(ctx.SourceFile, node, replacement))
+			default:
+				ctx.ReportNode(node, message)
+			}
 		},
 	}
 }

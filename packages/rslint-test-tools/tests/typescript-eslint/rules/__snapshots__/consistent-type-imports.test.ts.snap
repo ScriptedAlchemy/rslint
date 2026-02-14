@@ -1019,6 +1019,7 @@ exports[`experimentalDecorators: false + emitDecoratorMetadata: false > consiste
   ],
   "errorCount": 2,
   "fileCount": 1,
+  "output": null,
   "ruleCount": 1,
 }
 `;
@@ -1047,6 +1048,7 @@ exports[`experimentalDecorators: false + emitDecoratorMetadata: false > consiste
   ],
   "errorCount": 1,
   "fileCount": 1,
+  "output": null,
   "ruleCount": 1,
 }
 `;
@@ -3898,6 +3900,7 @@ exports[`experimentalDecorators: false + emitDecoratorMetadata: true > consisten
   ],
   "errorCount": 2,
   "fileCount": 1,
+  "output": null,
   "ruleCount": 1,
 }
 `;
@@ -3926,6 +3929,7 @@ exports[`experimentalDecorators: false + emitDecoratorMetadata: true > consisten
   ],
   "errorCount": 1,
   "fileCount": 1,
+  "output": null,
   "ruleCount": 1,
 }
 `;
@@ -6777,6 +6781,7 @@ exports[`experimentalDecorators: true + emitDecoratorMetadata: false > consisten
   ],
   "errorCount": 2,
   "fileCount": 1,
+  "output": null,
   "ruleCount": 1,
 }
 `;
@@ -6805,6 +6810,7 @@ exports[`experimentalDecorators: true + emitDecoratorMetadata: false > consisten
   ],
   "errorCount": 1,
   "fileCount": 1,
+  "output": null,
   "ruleCount": 1,
 }
 `;
