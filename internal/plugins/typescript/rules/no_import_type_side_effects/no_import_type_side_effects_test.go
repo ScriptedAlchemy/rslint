@@ -15,13 +15,29 @@ func TestNoImportTypeSideEffectsRule(t *testing.T) {
 		{Code: "import 'mod';"},
 	}, []rule_tester.InvalidTestCase{
 		{
-			Code: "import { type A } from 'mod';",
+			Code:   "import { type A } from 'mod';",
+			Output: []string{"import type { A } from 'mod';"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "useTopLevelQualifier", Line: 1, Column: 1},
 			},
 		},
 		{
-			Code: "import { type A, type B } from 'mod';",
+			Code:   "import { type A, type B } from 'mod';",
+			Output: []string{"import type { A, B } from 'mod';"},
+			Errors: []rule_tester.InvalidTestCaseError{
+				{MessageId: "useTopLevelQualifier", Line: 1, Column: 1},
+			},
+		},
+		{
+			Code:   "import { type A as AA } from 'mod';",
+			Output: []string{"import type { A as AA } from 'mod';"},
+			Errors: []rule_tester.InvalidTestCaseError{
+				{MessageId: "useTopLevelQualifier", Line: 1, Column: 1},
+			},
+		},
+		{
+			Code:   "import { type A as AA, type B as BB } from 'mod';",
+			Output: []string{"import type { A as AA, B as BB } from 'mod';"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "useTopLevelQualifier", Line: 1, Column: 1},
 			},

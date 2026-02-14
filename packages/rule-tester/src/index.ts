@@ -401,17 +401,19 @@ export class RuleTester {
             isJSX,
             item.filename,
           );
-          const diags = await lint({
-            config,
-            workingDirectory: cwd,
-            fileContents: {
-              [test_virtual_entry]: code,
-            },
-            ruleOptions: {
-              [ruleName]: options,
-            },
-            languageOptions: toRslintLanguageOptions(languageOptions),
-          });
+          const lintCase = async (caseCode: string) =>
+            lint({
+              config,
+              workingDirectory: cwd,
+              fileContents: {
+                [test_virtual_entry]: caseCode,
+              },
+              ruleOptions: {
+                [ruleName]: options,
+              },
+              languageOptions: toRslintLanguageOptions(languageOptions),
+            });
+          const diags = await lintCase(code);
 
           assert(
             diags.diagnostics?.length > 0,
@@ -419,24 +421,44 @@ export class RuleTester {
           );
           // eslint-disable-next-line
           checkDiagnosticEqual(diags.diagnostics, errors);
-          if (output) {
-            // check autofix
+          const outputs: string[] = [];
+          let currentCode = code;
+          let currentDiagnostics = diags.diagnostics ?? [];
+          for (let pass = 0; pass < 10; pass++) {
             const fixedCode = await applyFixes({
-              fileContent: code,
-              diagnostics: diags.diagnostics,
+              fileContent: currentCode,
+              diagnostics: currentDiagnostics,
             });
-            const actualOutputs = fixedCode.fixedContent ?? [];
-            if (Array.isArray(output)) {
-              expect(actualOutputs.length).toBeGreaterThanOrEqual(output.length);
-              output.forEach((expectedOutput, index) => {
-                expect(actualOutputs[index]).toBe(expectedOutput);
-              });
+            const fixedOutputs = fixedCode.fixedContent ?? [];
+            if (fixedOutputs.length === 0) {
+              break;
+            }
+            const nextCode = fixedOutputs[fixedOutputs.length - 1];
+            if (nextCode === currentCode) {
+              break;
+            }
+            currentCode = nextCode;
+            outputs.push(nextCode);
+            const nextDiagnostics = await lintCase(currentCode);
+            currentDiagnostics = nextDiagnostics.diagnostics ?? [];
+            if (currentDiagnostics.length === 0) {
+              break;
+            }
+          }
+
+          const hasOutput = Object.prototype.hasOwnProperty.call(item, 'output');
+          if (hasOutput) {
+            if (output == null) {
+              if (outputs.length) {
+                expect(outputs[0]).toBe(code);
+              }
+            } else if (Array.isArray(output)) {
+              expect(outputs.length).toBeGreaterThan(0);
+              expect(outputs).toEqual(output);
             } else {
-              const finalOutput =
-                actualOutputs.length > 0
-                  ? actualOutputs[actualOutputs.length - 1]
-                  : code;
-              expect(finalOutput).toBe(output);
+              expect(outputs.length).toBeGreaterThan(0);
+              expect(outputs[0]).toBe(output);
+              expect(outputs).toEqual([output]);
             }
 
             expect(
@@ -447,6 +469,10 @@ export class RuleTester {
               }),
             ).toMatchSnapshot();
           } else {
+            assert(
+              outputs.length === 0 || outputs[0] === code,
+              "The rule fixed the code. Please add 'output' property.",
+            );
             expect(filterSnapshot({ ...diags, code })).toMatchSnapshot();
           }
         }
