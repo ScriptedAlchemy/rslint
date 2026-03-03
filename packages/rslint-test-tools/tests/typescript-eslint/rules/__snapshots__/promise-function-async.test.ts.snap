@@ -1,0 +1,1278 @@
+// Rstest Snapshot v1
+
+exports[`promise-function-async > invalid 1`] = `
+{
+  "code": "
+function returnsAny(): any {
+  return 0;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 2,
+          "line": 4,
+        },
+        "start": {
+          "column": 1,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`promise-function-async > invalid 2`] = `
+{
+  "code": "
+function returnsUnknown(): unknown {
+  return 0;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 2,
+          "line": 4,
+        },
+        "start": {
+          "column": 1,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`promise-function-async > invalid 3`] = `
+{
+  "code": "
+const nonAsyncPromiseFunctionExpressionA = function (p: Promise<void>) {
+  return p;
+};
+      ",
+  "diagnostics": [
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 2,
+          "line": 4,
+        },
+        "start": {
+          "column": 44,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+const nonAsyncPromiseFunctionExpressionA = async function (p: Promise<void>) {
+  return p;
+};
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`promise-function-async > invalid 4`] = `
+{
+  "code": "
+const nonAsyncPromiseFunctionExpressionB = function () {
+  return new Promise<void>();
+};
+      ",
+  "diagnostics": [
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 2,
+          "line": 4,
+        },
+        "start": {
+          "column": 44,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+const nonAsyncPromiseFunctionExpressionB = async function () {
+  return new Promise<void>();
+};
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`promise-function-async > invalid 5`] = `
+{
+  "code": "
+function nonAsyncPromiseFunctionDeclarationA(p: Promise<void>) {
+  return p;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 2,
+          "line": 4,
+        },
+        "start": {
+          "column": 1,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+async function nonAsyncPromiseFunctionDeclarationA(p: Promise<void>) {
+  return p;
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`promise-function-async > invalid 6`] = `
+{
+  "code": "
+function nonAsyncPromiseFunctionDeclarationB() {
+  return new Promise<void>();
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 2,
+          "line": 4,
+        },
+        "start": {
+          "column": 1,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+async function nonAsyncPromiseFunctionDeclarationB() {
+  return new Promise<void>();
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`promise-function-async > invalid 7`] = `
+{
+  "code": "
+const nonAsyncPromiseArrowFunctionA = (p: Promise<void>) => p;
+      ",
+  "diagnostics": [
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 62,
+          "line": 2,
+        },
+        "start": {
+          "column": 39,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+const nonAsyncPromiseArrowFunctionA = async (p: Promise<void>) => p;
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`promise-function-async > invalid 8`] = `
+{
+  "code": "
+const nonAsyncPromiseArrowFunctionB = () => new Promise<void>();
+      ",
+  "diagnostics": [
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 64,
+          "line": 2,
+        },
+        "start": {
+          "column": 39,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+const nonAsyncPromiseArrowFunctionB = async () => new Promise<void>();
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`promise-function-async > invalid 9`] = `
+{
+  "code": "
+const functions = {
+  nonAsyncPromiseMethod() {
+    return Promise.resolve(1);
+  },
+};
+      ",
+  "diagnostics": [
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 5,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+const functions = {
+  async nonAsyncPromiseMethod() {
+    return Promise.resolve(1);
+  },
+};
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`promise-function-async > invalid 10`] = `
+{
+  "code": "
+class Test {
+  public nonAsyncPromiseMethodA(p: Promise<void>) {
+    return p;
+  }
+
+  public static nonAsyncPromiseMethodB() {
+    return new Promise<void>();
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 5,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 9,
+        },
+        "start": {
+          "column": 3,
+          "line": 7,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "output": "
+class Test {
+  public async nonAsyncPromiseMethodA(p: Promise<void>) {
+    return p;
+  }
+
+  public static async nonAsyncPromiseMethodB() {
+    return new Promise<void>();
+  }
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`promise-function-async > invalid 11`] = `
+{
+  "code": "
+const nonAsyncPromiseFunctionExpression = function (p: Promise<void>) {
+  return p;
+};
+
+function nonAsyncPromiseFunctionDeclaration(p: Promise<void>) {
+  return p;
+}
+
+const nonAsyncPromiseArrowFunction = (p: Promise<void>) => p;
+
+class Test {
+  public nonAsyncPromiseMethod(p: Promise<void>) {
+    return p;
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 2,
+          "line": 4,
+        },
+        "start": {
+          "column": 43,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 2,
+          "line": 8,
+        },
+        "start": {
+          "column": 1,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 15,
+        },
+        "start": {
+          "column": 3,
+          "line": 13,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+  ],
+  "errorCount": 3,
+  "fileCount": 1,
+  "output": "
+const nonAsyncPromiseFunctionExpression = async function (p: Promise<void>) {
+  return p;
+};
+
+async function nonAsyncPromiseFunctionDeclaration(p: Promise<void>) {
+  return p;
+}
+
+const nonAsyncPromiseArrowFunction = (p: Promise<void>) => p;
+
+class Test {
+  public async nonAsyncPromiseMethod(p: Promise<void>) {
+    return p;
+  }
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`promise-function-async > invalid 12`] = `
+{
+  "code": "
+const nonAsyncPromiseFunctionExpression = function (p: Promise<void>) {
+  return p;
+};
+
+function nonAsyncPromiseFunctionDeclaration(p: Promise<void>) {
+  return p;
+}
+
+const nonAsyncPromiseArrowFunction = (p: Promise<void>) => p;
+
+class Test {
+  public nonAsyncPromiseMethod(p: Promise<void>) {
+    return p;
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 2,
+          "line": 4,
+        },
+        "start": {
+          "column": 43,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 61,
+          "line": 10,
+        },
+        "start": {
+          "column": 38,
+          "line": 10,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 15,
+        },
+        "start": {
+          "column": 3,
+          "line": 13,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+  ],
+  "errorCount": 3,
+  "fileCount": 1,
+  "output": "
+const nonAsyncPromiseFunctionExpression = async function (p: Promise<void>) {
+  return p;
+};
+
+function nonAsyncPromiseFunctionDeclaration(p: Promise<void>) {
+  return p;
+}
+
+const nonAsyncPromiseArrowFunction = async (p: Promise<void>) => p;
+
+class Test {
+  public async nonAsyncPromiseMethod(p: Promise<void>) {
+    return p;
+  }
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`promise-function-async > invalid 13`] = `
+{
+  "code": "
+const nonAsyncPromiseFunctionExpression = function (p: Promise<void>) {
+  return p;
+};
+
+function nonAsyncPromiseFunctionDeclaration(p: Promise<void>) {
+  return p;
+}
+
+const nonAsyncPromiseArrowFunction = (p: Promise<void>) => p;
+
+class Test {
+  public nonAsyncPromiseMethod(p: Promise<void>) {
+    return p;
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 2,
+          "line": 8,
+        },
+        "start": {
+          "column": 1,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 61,
+          "line": 10,
+        },
+        "start": {
+          "column": 38,
+          "line": 10,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 15,
+        },
+        "start": {
+          "column": 3,
+          "line": 13,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+  ],
+  "errorCount": 3,
+  "fileCount": 1,
+  "output": "
+const nonAsyncPromiseFunctionExpression = function (p: Promise<void>) {
+  return p;
+};
+
+async function nonAsyncPromiseFunctionDeclaration(p: Promise<void>) {
+  return p;
+}
+
+const nonAsyncPromiseArrowFunction = async (p: Promise<void>) => p;
+
+class Test {
+  public async nonAsyncPromiseMethod(p: Promise<void>) {
+    return p;
+  }
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`promise-function-async > invalid 14`] = `
+{
+  "code": "
+const nonAsyncPromiseFunctionExpression = function (p: Promise<void>) {
+  return p;
+};
+
+function nonAsyncPromiseFunctionDeclaration(p: Promise<void>) {
+  return p;
+}
+
+const nonAsyncPromiseArrowFunction = (p: Promise<void>) => p;
+
+class Test {
+  public nonAsyncPromiseMethod(p: Promise<void>) {
+    return p;
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 2,
+          "line": 4,
+        },
+        "start": {
+          "column": 43,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 2,
+          "line": 8,
+        },
+        "start": {
+          "column": 1,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 61,
+          "line": 10,
+        },
+        "start": {
+          "column": 38,
+          "line": 10,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+  ],
+  "errorCount": 3,
+  "fileCount": 1,
+  "output": "
+const nonAsyncPromiseFunctionExpression = async function (p: Promise<void>) {
+  return p;
+};
+
+async function nonAsyncPromiseFunctionDeclaration(p: Promise<void>) {
+  return p;
+}
+
+const nonAsyncPromiseArrowFunction = async (p: Promise<void>) => p;
+
+class Test {
+  public nonAsyncPromiseMethod(p: Promise<void>) {
+    return p;
+  }
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`promise-function-async > invalid 15`] = `
+{
+  "code": "
+class PromiseType {}
+
+const returnAllowedType = () => new PromiseType();
+      ",
+  "diagnostics": [
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 50,
+          "line": 4,
+        },
+        "start": {
+          "column": 27,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+class PromiseType {}
+
+const returnAllowedType = async () => new PromiseType();
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`promise-function-async > invalid 16`] = `
+{
+  "code": "
+interface SPromise<T> extends Promise<T> {}
+function foo(): Promise<string> | SPromise<boolean> {
+  return Math.random() > 0.5
+    ? Promise.resolve('value')
+    : Promise.resolve(false);
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 2,
+          "line": 7,
+        },
+        "start": {
+          "column": 1,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+interface SPromise<T> extends Promise<T> {}
+async function foo(): Promise<string> | SPromise<boolean> {
+  return Math.random() > 0.5
+    ? Promise.resolve('value')
+    : Promise.resolve(false);
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`promise-function-async > invalid 17`] = `
+{
+  "code": "
+class Test {
+  @decorator
+  public test() {
+    return Promise.resolve(123);
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 6,
+        },
+        "start": {
+          "column": 3,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+class Test {
+  @decorator
+  public async test() {
+    return Promise.resolve(123);
+  }
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`promise-function-async > invalid 18`] = `
+{
+  "code": "
+class Test {
+  @decorator(async () => {})
+  static protected[(1)]() {
+    return Promise.resolve(1);
+  }
+  public'bar'() {
+    return Promise.resolve(2);
+  }
+  private['baz']() {
+    return Promise.resolve(3);
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 6,
+        },
+        "start": {
+          "column": 3,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 9,
+        },
+        "start": {
+          "column": 3,
+          "line": 7,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 12,
+        },
+        "start": {
+          "column": 3,
+          "line": 10,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+  ],
+  "errorCount": 3,
+  "fileCount": 1,
+  "output": "
+class Test {
+  @decorator(async () => {})
+  static protected async [(1)]() {
+    return Promise.resolve(1);
+  }
+  public async 'bar'() {
+    return Promise.resolve(2);
+  }
+  private async ['baz']() {
+    return Promise.resolve(3);
+  }
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`promise-function-async > invalid 19`] = `
+{
+  "code": "
+class Foo {
+  catch() {
+    return Promise.resolve(1);
+  }
+
+  public default() {
+    return Promise.resolve(2);
+  }
+
+  @decorator
+  private case<T>() {
+    return Promise.resolve(3);
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 5,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 9,
+        },
+        "start": {
+          "column": 3,
+          "line": 7,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 14,
+        },
+        "start": {
+          "column": 3,
+          "line": 12,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+  ],
+  "errorCount": 3,
+  "fileCount": 1,
+  "output": "
+class Foo {
+  async catch() {
+    return Promise.resolve(1);
+  }
+
+  public async default() {
+    return Promise.resolve(2);
+  }
+
+  @decorator
+  private async case<T>() {
+    return Promise.resolve(3);
+  }
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`promise-function-async > invalid 20`] = `
+{
+  "code": "
+const foo = {
+  catch() {
+    return Promise.resolve(1);
+  },
+};
+      ",
+  "diagnostics": [
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 5,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+const foo = {
+  async catch() {
+    return Promise.resolve(1);
+  },
+};
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`promise-function-async > invalid 21`] = `
+{
+  "code": "
+function promiseInUnionWithoutExplicitReturnType(p: boolean) {
+  return p ? Promise.resolve(5) : 5;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Functions that return promises and non-promises must be async.",
+      "messageId": "missingAsyncHybridReturn",
+      "range": {
+        "end": {
+          "column": 2,
+          "line": 4,
+        },
+        "start": {
+          "column": 1,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+async function promiseInUnionWithoutExplicitReturnType(p: boolean) {
+  return p ? Promise.resolve(5) : 5;
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`promise-function-async > invalid 22`] = `
+{
+  "code": "
+function test1(): 'one' | Promise<'one'>;
+function test1(a: number): Promise<number>;
+function test1(a?: number) {
+  if (a) {
+    return Promise.resolve(a);
+  }
+
+  return Math.random() > 0.5 ? 'one' : Promise.resolve('one');
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Functions that return promises and non-promises must be async.",
+      "messageId": "missingAsyncHybridReturn",
+      "range": {
+        "end": {
+          "column": 2,
+          "line": 10,
+        },
+        "start": {
+          "column": 1,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+function test1(): 'one' | Promise<'one'>;
+function test1(a: number): Promise<number>;
+async function test1(a?: number) {
+  if (a) {
+    return Promise.resolve(a);
+  }
+
+  return Math.random() > 0.5 ? 'one' : Promise.resolve('one');
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`promise-function-async > invalid 23`] = `
+{
+  "code": "
+class PromiseType {
+  s?: string;
+}
+
+function promiseInUnionWithoutExplicitReturnType(p: boolean) {
+  return p ? new PromiseType() : 5;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Functions that return promises and non-promises must be async.",
+      "messageId": "missingAsyncHybridReturn",
+      "range": {
+        "end": {
+          "column": 2,
+          "line": 8,
+        },
+        "start": {
+          "column": 1,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+class PromiseType {
+  s?: string;
+}
+
+async function promiseInUnionWithoutExplicitReturnType(p: boolean) {
+  return p ? new PromiseType() : 5;
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`promise-function-async > invalid 24`] = `
+{
+  "code": "
+function overloadingThatCanReturnPromise(): Promise<number>;
+function overloadingThatCanReturnPromise(a: boolean): Promise<string>;
+function overloadingThatCanReturnPromise(
+  a?: boolean,
+): Promise<number | string> {
+  return Promise.resolve(5);
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 2,
+          "line": 8,
+        },
+        "start": {
+          "column": 1,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+function overloadingThatCanReturnPromise(): Promise<number>;
+function overloadingThatCanReturnPromise(a: boolean): Promise<string>;
+async function overloadingThatCanReturnPromise(
+  a?: boolean,
+): Promise<number | string> {
+  return Promise.resolve(5);
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`promise-function-async > invalid 25`] = `
+{
+  "code": "
+function overloadingThatIncludeAny(): number;
+function overloadingThatIncludeAny(a: boolean): any;
+function overloadingThatIncludeAny(a?: boolean): any | number {
+  return Promise.resolve(5);
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 2,
+          "line": 6,
+        },
+        "start": {
+          "column": 1,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`promise-function-async > invalid 26`] = `
+{
+  "code": "
+function overloadingThatIncludeUnknown(): number;
+function overloadingThatIncludeUnknown(a: boolean): unknown;
+function overloadingThatIncludeUnknown(a?: boolean): unknown | number {
+  return Promise.resolve(5);
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Functions that return promises must be async.",
+      "messageId": "missingAsync",
+      "range": {
+        "end": {
+          "column": 2,
+          "line": 6,
+        },
+        "start": {
+          "column": 1,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/promise-function-async",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;

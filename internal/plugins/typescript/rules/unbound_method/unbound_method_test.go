@@ -1102,7 +1102,7 @@ const { floor } = Math.random() > 0.5 ? new Foo() : Math;
       `,
 				Errors: []rule_tester.InvalidTestCaseError{
 					{
-						MessageId: "unbound",
+						MessageId: "unboundWithoutThisAnnotation",
 						Line:      6,
 					},
 				},

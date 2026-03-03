@@ -97,7 +97,7 @@ var NoUnsafeMemberAccessRule = rule.CreateRule(rule.Rule{
 					loc := utils.TrimNodeTextRange(ctx.SourceFile, property)
 					propertyName = "." + ctx.SourceFile.Text()[loc.Pos():loc.End()]
 				} else if ast.IsElementAccessExpression(node) {
-					property = node.AsElementAccessExpression().ArgumentExpression
+					property = ast.SkipParentheses(node.AsElementAccessExpression().ArgumentExpression)
 					loc := utils.TrimNodeTextRange(ctx.SourceFile, property)
 					propertyName = "[" + ctx.SourceFile.Text()[loc.Pos():loc.End()] + "]"
 				}
@@ -149,12 +149,13 @@ var NoUnsafeMemberAccessRule = rule.CreateRule(rule.Rule{
 					return
 				}
 
-				t := ctx.TypeChecker.GetTypeAtLocation(arg)
+				reportArg := ast.SkipParentheses(arg)
+				t := ctx.TypeChecker.GetTypeAtLocation(reportArg)
 
 				if utils.IsTypeAnyType(t) {
-					loc := utils.TrimNodeTextRange(ctx.SourceFile, arg)
+					loc := utils.TrimNodeTextRange(ctx.SourceFile, reportArg)
 					propertyName := "[" + ctx.SourceFile.Text()[loc.Pos():loc.End()] + "]"
-					ctx.ReportNode(arg, buildUnsafeComputedMemberAccessMessage(propertyName, createDataType(t)))
+					ctx.ReportNode(reportArg, buildUnsafeComputedMemberAccessMessage(propertyName, createDataType(t)))
 				}
 			},
 		}

@@ -1,0 +1,2743 @@
+// Rstest Snapshot v1
+
+exports[`no-base-to-string > invalid 1`] = `
+{
+  "code": "
+declare const x: unknown;
+\`\${x})\`;
+      ",
+  "diagnostics": [
+    {
+      "message": "'x' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 5,
+          "line": 3,
+        },
+        "start": {
+          "column": 4,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 2`] = `
+{
+  "code": "
+declare const x: unknown;
+x.toString();
+      ",
+  "diagnostics": [
+    {
+      "message": "'
+x' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 2,
+          "line": 3,
+        },
+        "start": {
+          "column": 1,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 3`] = `
+{
+  "code": "
+declare const x: unknown;
+x.toLocaleString();
+      ",
+  "diagnostics": [
+    {
+      "message": "'
+x' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 2,
+          "line": 3,
+        },
+        "start": {
+          "column": 1,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 4`] = `
+{
+  "code": "
+declare const x: unknown;
+'' + x;
+      ",
+  "diagnostics": [
+    {
+      "message": "' x' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 7,
+          "line": 3,
+        },
+        "start": {
+          "column": 6,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 5`] = `
+{
+  "code": "
+declare const x: unknown;
+String(x);
+      ",
+  "diagnostics": [
+    {
+      "message": "'x' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 9,
+          "line": 3,
+        },
+        "start": {
+          "column": 8,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 6`] = `
+{
+  "code": "
+declare const x: unknown;
+'' += x;
+      ",
+  "diagnostics": [
+    {
+      "message": "' x' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 3,
+        },
+        "start": {
+          "column": 7,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 7`] = `
+{
+  "code": "
+function foo<T>(x: T) {
+  String(x);
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'x' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 11,
+          "line": 3,
+        },
+        "start": {
+          "column": 10,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 8`] = `
+{
+  "code": "\`\${{}})\`;",
+  "diagnostics": [
+    {
+      "message": "'{}' will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 6,
+          "line": 1,
+        },
+        "start": {
+          "column": 4,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 9`] = `
+{
+  "code": "({}).toString();",
+  "diagnostics": [
+    {
+      "message": "'({})' will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 5,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 10`] = `
+{
+  "code": "({}).toLocaleString();",
+  "diagnostics": [
+    {
+      "message": "'({})' will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 5,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 11`] = `
+{
+  "code": "'' + {};",
+  "diagnostics": [
+    {
+      "message": "' {}' will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 1,
+        },
+        "start": {
+          "column": 6,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 12`] = `
+{
+  "code": "String({});",
+  "diagnostics": [
+    {
+      "message": "'{}' will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 1,
+        },
+        "start": {
+          "column": 8,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 13`] = `
+{
+  "code": "'' += {};",
+  "diagnostics": [
+    {
+      "message": "' {}' will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 9,
+          "line": 1,
+        },
+        "start": {
+          "column": 7,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 14`] = `
+{
+  "code": "
+        let someObjectOrString = Math.random() ? { a: true } : 'text';
+        someObjectOrString.toString();
+      ",
+  "diagnostics": [
+    {
+      "message": "'
+        someObjectOrString' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 27,
+          "line": 3,
+        },
+        "start": {
+          "column": 9,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 15`] = `
+{
+  "code": "
+        let someObjectOrString = Math.random() ? { a: true } : 'text';
+        someObjectOrString.toLocaleString();
+      ",
+  "diagnostics": [
+    {
+      "message": "'
+        someObjectOrString' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 27,
+          "line": 3,
+        },
+        "start": {
+          "column": 9,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 16`] = `
+{
+  "code": "
+        let someObjectOrString = Math.random() ? { a: true } : 'text';
+        someObjectOrString + '';
+      ",
+  "diagnostics": [
+    {
+      "message": "'
+        someObjectOrString' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 27,
+          "line": 3,
+        },
+        "start": {
+          "column": 9,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 17`] = `
+{
+  "code": "
+        let someObjectOrObject = Math.random() ? { a: true, b: true } : { a: true };
+        someObjectOrObject.toString();
+      ",
+  "diagnostics": [
+    {
+      "message": "'
+        someObjectOrObject' will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 27,
+          "line": 3,
+        },
+        "start": {
+          "column": 9,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 18`] = `
+{
+  "code": "
+        let someObjectOrObject = Math.random() ? { a: true, b: true } : { a: true };
+        someObjectOrObject.toLocaleString();
+      ",
+  "diagnostics": [
+    {
+      "message": "'
+        someObjectOrObject' will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 27,
+          "line": 3,
+        },
+        "start": {
+          "column": 9,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 19`] = `
+{
+  "code": "
+        let someObjectOrObject = Math.random() ? { a: true, b: true } : { a: true };
+        someObjectOrObject + '';
+      ",
+  "diagnostics": [
+    {
+      "message": "'
+        someObjectOrObject' will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 27,
+          "line": 3,
+        },
+        "start": {
+          "column": 9,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 20`] = `
+{
+  "code": "
+        interface A {}
+        interface B {}
+        function test(intersection: A & B): string {
+          return \`\${intersection}\`;
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "'intersection' will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 33,
+          "line": 5,
+        },
+        "start": {
+          "column": 21,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 21`] = `
+{
+  "code": "
+class Foo {
+  foo: string;
+}
+declare const foo: string | Foo;
+\`\${foo}\`;
+      ",
+  "diagnostics": [
+    {
+      "message": "'foo' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 7,
+          "line": 6,
+        },
+        "start": {
+          "column": 4,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 22`] = `
+{
+  "code": "
+class Foo {
+  foo: string;
+}
+class Bar {
+  bar: string;
+}
+declare const foo: Bar | Foo;
+\`\${foo}\`;
+      ",
+  "diagnostics": [
+    {
+      "message": "'foo' will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 7,
+          "line": 9,
+        },
+        "start": {
+          "column": 4,
+          "line": 9,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 23`] = `
+{
+  "code": "
+class Foo {
+  foo: string;
+}
+class Bar {
+  bar: string;
+}
+declare const foo: Bar & Foo;
+\`\${foo}\`;
+      ",
+  "diagnostics": [
+    {
+      "message": "'foo' will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 7,
+          "line": 9,
+        },
+        "start": {
+          "column": 4,
+          "line": 9,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 24`] = `
+{
+  "code": "
+        [{}, {}].join('');
+      ",
+  "diagnostics": [
+    {
+      "message": "Using \`join()\` for 
+        [{}, {}] will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseArrayJoin",
+      "range": {
+        "end": {
+          "column": 17,
+          "line": 2,
+        },
+        "start": {
+          "column": 9,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 25`] = `
+{
+  "code": "
+        const array = [{}, {}];
+        array.join('');
+      ",
+  "diagnostics": [
+    {
+      "message": "Using \`join()\` for 
+        array will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseArrayJoin",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 3,
+        },
+        "start": {
+          "column": 9,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 26`] = `
+{
+  "code": "
+        class A {
+          a: string;
+        }
+        [new A(), 'str'].join('');
+      ",
+  "diagnostics": [
+    {
+      "message": "Using \`join()\` for 
+        [new A(), 'str'] may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseArrayJoin",
+      "range": {
+        "end": {
+          "column": 25,
+          "line": 5,
+        },
+        "start": {
+          "column": 9,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 27`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        declare const array: (string | Foo)[];
+        array.join('');
+      ",
+  "diagnostics": [
+    {
+      "message": "Using \`join()\` for 
+        array may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseArrayJoin",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 6,
+        },
+        "start": {
+          "column": 9,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 28`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        declare const array: (string & Foo) | (string | Foo)[];
+        array.join('');
+      ",
+  "diagnostics": [
+    {
+      "message": "Using \`join()\` for 
+        array may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseArrayJoin",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 6,
+        },
+        "start": {
+          "column": 9,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 29`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        class Bar {
+          bar: string;
+        }
+        declare const array: Foo[] & Bar[];
+        array.join('');
+      ",
+  "diagnostics": [
+    {
+      "message": "Using \`join()\` for 
+        array will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseArrayJoin",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 9,
+        },
+        "start": {
+          "column": 9,
+          "line": 9,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 30`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        declare const array: string[] | Foo[];
+        array.join('');
+      ",
+  "diagnostics": [
+    {
+      "message": "Using \`join()\` for 
+        array may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseArrayJoin",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 6,
+        },
+        "start": {
+          "column": 9,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 31`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        declare const tuple: [string, Foo];
+        tuple.join('');
+      ",
+  "diagnostics": [
+    {
+      "message": "Using \`join()\` for 
+        tuple will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseArrayJoin",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 6,
+        },
+        "start": {
+          "column": 9,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 32`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        declare const tuple: [Foo, Foo];
+        tuple.join('');
+      ",
+  "diagnostics": [
+    {
+      "message": "Using \`join()\` for 
+        tuple will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseArrayJoin",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 6,
+        },
+        "start": {
+          "column": 9,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 33`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        declare const tuple: [Foo | string, string];
+        tuple.join('');
+      ",
+  "diagnostics": [
+    {
+      "message": "Using \`join()\` for 
+        tuple may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseArrayJoin",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 6,
+        },
+        "start": {
+          "column": 9,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 34`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        declare const tuple: [string, string] | [Foo, Foo];
+        tuple.join('');
+      ",
+  "diagnostics": [
+    {
+      "message": "Using \`join()\` for 
+        tuple may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseArrayJoin",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 6,
+        },
+        "start": {
+          "column": 9,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 35`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        declare const tuple: [Foo, string] & [Foo, Foo];
+        tuple.join('');
+      ",
+  "diagnostics": [
+    {
+      "message": "Using \`join()\` for 
+        tuple will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseArrayJoin",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 6,
+        },
+        "start": {
+          "column": 9,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 36`] = `
+{
+  "code": "
+        const array = ['string', { foo: 'bar' }];
+        array.join('');
+      ",
+  "diagnostics": [
+    {
+      "message": "Using \`join()\` for 
+        array may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseArrayJoin",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 3,
+        },
+        "start": {
+          "column": 9,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 37`] = `
+{
+  "code": "
+        type Bar = Record<string, string>;
+        function foo<T extends string | Bar>(array: T[]) {
+          return array.join();
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "Using \`join()\` for  array may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseArrayJoin",
+      "range": {
+        "end": {
+          "column": 23,
+          "line": 4,
+        },
+        "start": {
+          "column": 18,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 38`] = `
+{
+  "code": "
+        String([{}, {}]);
+      ",
+  "diagnostics": [
+    {
+      "message": "'[{}, {}]' will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 24,
+          "line": 2,
+        },
+        "start": {
+          "column": 16,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 39`] = `
+{
+  "code": "
+        const array = [{}, {}];
+        String(array);
+      ",
+  "diagnostics": [
+    {
+      "message": "'array' will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 21,
+          "line": 3,
+        },
+        "start": {
+          "column": 16,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 40`] = `
+{
+  "code": "
+        class A {
+          a: string;
+        }
+        String([new A(), 'str']);
+      ",
+  "diagnostics": [
+    {
+      "message": "'[new A(), 'str']' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 32,
+          "line": 5,
+        },
+        "start": {
+          "column": 16,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 41`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        declare const array: (string | Foo)[];
+        String(array);
+      ",
+  "diagnostics": [
+    {
+      "message": "'array' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 21,
+          "line": 6,
+        },
+        "start": {
+          "column": 16,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 42`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        declare const array: (string & Foo) | (string | Foo)[];
+        String(array);
+      ",
+  "diagnostics": [
+    {
+      "message": "'array' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 21,
+          "line": 6,
+        },
+        "start": {
+          "column": 16,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 43`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        class Bar {
+          bar: string;
+        }
+        declare const array: Foo[] & Bar[];
+        String(array);
+      ",
+  "diagnostics": [
+    {
+      "message": "'array' will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 21,
+          "line": 9,
+        },
+        "start": {
+          "column": 16,
+          "line": 9,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 44`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        declare const array: string[] | Foo[];
+        String(array);
+      ",
+  "diagnostics": [
+    {
+      "message": "'array' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 21,
+          "line": 6,
+        },
+        "start": {
+          "column": 16,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 45`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        declare const tuple: [string, Foo];
+        String(tuple);
+      ",
+  "diagnostics": [
+    {
+      "message": "'tuple' will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 21,
+          "line": 6,
+        },
+        "start": {
+          "column": 16,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 46`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        declare const tuple: [Foo, Foo];
+        String(tuple);
+      ",
+  "diagnostics": [
+    {
+      "message": "'tuple' will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 21,
+          "line": 6,
+        },
+        "start": {
+          "column": 16,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 47`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        declare const tuple: [Foo | string, string];
+        String(tuple);
+      ",
+  "diagnostics": [
+    {
+      "message": "'tuple' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 21,
+          "line": 6,
+        },
+        "start": {
+          "column": 16,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 48`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        declare const tuple: [string, string] | [Foo, Foo];
+        String(tuple);
+      ",
+  "diagnostics": [
+    {
+      "message": "'tuple' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 21,
+          "line": 6,
+        },
+        "start": {
+          "column": 16,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 49`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        declare const tuple: [Foo, string] & [Foo, Foo];
+        String(tuple);
+      ",
+  "diagnostics": [
+    {
+      "message": "'tuple' will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 21,
+          "line": 6,
+        },
+        "start": {
+          "column": 16,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 50`] = `
+{
+  "code": "
+        const array = ['string', { foo: 'bar' }];
+        String(array);
+      ",
+  "diagnostics": [
+    {
+      "message": "'array' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 21,
+          "line": 3,
+        },
+        "start": {
+          "column": 16,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 51`] = `
+{
+  "code": "
+        type Bar = Record<string, string>;
+        function foo<T extends string | Bar>(array: T[]) {
+          return String(array);
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "'array' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 30,
+          "line": 4,
+        },
+        "start": {
+          "column": 25,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 52`] = `
+{
+  "code": "
+        [{}, {}].toString();
+      ",
+  "diagnostics": [
+    {
+      "message": "'
+        [{}, {}]' will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 17,
+          "line": 2,
+        },
+        "start": {
+          "column": 9,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 53`] = `
+{
+  "code": "
+        const array = [{}, {}];
+        array.toString();
+      ",
+  "diagnostics": [
+    {
+      "message": "'
+        array' will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 3,
+        },
+        "start": {
+          "column": 9,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 54`] = `
+{
+  "code": "
+        class A {
+          a: string;
+        }
+        [new A(), 'str'].toString();
+      ",
+  "diagnostics": [
+    {
+      "message": "'
+        [new A(), 'str']' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 25,
+          "line": 5,
+        },
+        "start": {
+          "column": 9,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 55`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        declare const array: (string | Foo)[];
+        array.toString();
+      ",
+  "diagnostics": [
+    {
+      "message": "'
+        array' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 6,
+        },
+        "start": {
+          "column": 9,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 56`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        declare const array: (string & Foo) | (string | Foo)[];
+        array.toString();
+      ",
+  "diagnostics": [
+    {
+      "message": "'
+        array' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 6,
+        },
+        "start": {
+          "column": 9,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 57`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        class Bar {
+          bar: string;
+        }
+        declare const array: Foo[] & Bar[];
+        array.toString();
+      ",
+  "diagnostics": [
+    {
+      "message": "'
+        array' will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 9,
+        },
+        "start": {
+          "column": 9,
+          "line": 9,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 58`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        declare const array: string[] | Foo[];
+        array.toString();
+      ",
+  "diagnostics": [
+    {
+      "message": "'
+        array' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 6,
+        },
+        "start": {
+          "column": 9,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 59`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        declare const tuple: [string, Foo];
+        tuple.toString();
+      ",
+  "diagnostics": [
+    {
+      "message": "'
+        tuple' will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 6,
+        },
+        "start": {
+          "column": 9,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 60`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        declare const tuple: [Foo, Foo];
+        tuple.toString();
+      ",
+  "diagnostics": [
+    {
+      "message": "'
+        tuple' will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 6,
+        },
+        "start": {
+          "column": 9,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 61`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        declare const tuple: [Foo | string, string];
+        tuple.toString();
+      ",
+  "diagnostics": [
+    {
+      "message": "'
+        tuple' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 6,
+        },
+        "start": {
+          "column": 9,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 62`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        declare const tuple: [string, string] | [Foo, Foo];
+        tuple.toString();
+      ",
+  "diagnostics": [
+    {
+      "message": "'
+        tuple' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 6,
+        },
+        "start": {
+          "column": 9,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 63`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        declare const tuple: [Foo, string] & [Foo, Foo];
+        tuple.toString();
+      ",
+  "diagnostics": [
+    {
+      "message": "'
+        tuple' will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 6,
+        },
+        "start": {
+          "column": 9,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 64`] = `
+{
+  "code": "
+        const array = ['string', { foo: 'bar' }];
+        array.toString();
+      ",
+  "diagnostics": [
+    {
+      "message": "'
+        array' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 3,
+        },
+        "start": {
+          "column": 9,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 65`] = `
+{
+  "code": "
+        type Bar = Record<string, string>;
+        function foo<T extends string | Bar>(array: T[]) {
+          return array.toString();
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "' array' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 23,
+          "line": 4,
+        },
+        "start": {
+          "column": 18,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 66`] = `
+{
+  "code": "
+        \`\${[{}, {}]}\`;
+      ",
+  "diagnostics": [
+    {
+      "message": "'[{}, {}]' will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 20,
+          "line": 2,
+        },
+        "start": {
+          "column": 12,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 67`] = `
+{
+  "code": "
+        const array = [{}, {}];
+        \`\${array}\`;
+      ",
+  "diagnostics": [
+    {
+      "message": "'array' will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 17,
+          "line": 3,
+        },
+        "start": {
+          "column": 12,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 68`] = `
+{
+  "code": "
+        class A {
+          a: string;
+        }
+        \`\${[new A(), 'str']}\`;
+      ",
+  "diagnostics": [
+    {
+      "message": "'[new A(), 'str']' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 28,
+          "line": 5,
+        },
+        "start": {
+          "column": 12,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 69`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        declare const array: (string | Foo)[];
+        \`\${array}\`;
+      ",
+  "diagnostics": [
+    {
+      "message": "'array' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 17,
+          "line": 6,
+        },
+        "start": {
+          "column": 12,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 70`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        declare const array: (string & Foo) | (string | Foo)[];
+        \`\${array}\`;
+      ",
+  "diagnostics": [
+    {
+      "message": "'array' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 17,
+          "line": 6,
+        },
+        "start": {
+          "column": 12,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 71`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        class Bar {
+          bar: string;
+        }
+        declare const array: Foo[] & Bar[];
+        \`\${array}\`;
+      ",
+  "diagnostics": [
+    {
+      "message": "'array' will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 17,
+          "line": 9,
+        },
+        "start": {
+          "column": 12,
+          "line": 9,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 72`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        declare const array: string[] | Foo[];
+        \`\${array}\`;
+      ",
+  "diagnostics": [
+    {
+      "message": "'array' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 17,
+          "line": 6,
+        },
+        "start": {
+          "column": 12,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 73`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        declare const tuple: [string, Foo];
+        \`\${tuple}\`;
+      ",
+  "diagnostics": [
+    {
+      "message": "'tuple' will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 17,
+          "line": 6,
+        },
+        "start": {
+          "column": 12,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 74`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        declare const tuple: [Foo, Foo];
+        \`\${tuple}\`;
+      ",
+  "diagnostics": [
+    {
+      "message": "'tuple' will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 17,
+          "line": 6,
+        },
+        "start": {
+          "column": 12,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 75`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        declare const tuple: [Foo | string, string];
+        \`\${tuple}\`;
+      ",
+  "diagnostics": [
+    {
+      "message": "'tuple' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 17,
+          "line": 6,
+        },
+        "start": {
+          "column": 12,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 76`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        declare const tuple: [string, string] | [Foo, Foo];
+        \`\${tuple}\`;
+      ",
+  "diagnostics": [
+    {
+      "message": "'tuple' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 17,
+          "line": 6,
+        },
+        "start": {
+          "column": 12,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 77`] = `
+{
+  "code": "
+        class Foo {
+          foo: string;
+        }
+        declare const tuple: [Foo, string] & [Foo, Foo];
+        \`\${tuple}\`;
+      ",
+  "diagnostics": [
+    {
+      "message": "'tuple' will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 17,
+          "line": 6,
+        },
+        "start": {
+          "column": 12,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 78`] = `
+{
+  "code": "
+        const array = ['string', { foo: 'bar' }];
+        \`\${array}\`;
+      ",
+  "diagnostics": [
+    {
+      "message": "'array' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 17,
+          "line": 3,
+        },
+        "start": {
+          "column": 12,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 79`] = `
+{
+  "code": "
+        type Bar = Record<string, string>;
+        function foo<T extends string | Bar>(array: T[]) {
+          return \`\${array}\`;
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "'array' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 26,
+          "line": 4,
+        },
+        "start": {
+          "column": 21,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 80`] = `
+{
+  "code": "
+        type Bar = Record<string, string>;
+        function foo<T extends string | Bar>(array: T[]) {
+          array[0].toString();
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "'
+          array[0]' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 19,
+          "line": 4,
+        },
+        "start": {
+          "column": 11,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 81`] = `
+{
+  "code": "
+        type Bar = Record<string, string>;
+        function foo<T extends string | Bar>(value: T) {
+          value.toString();
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "'
+          value' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 16,
+          "line": 4,
+        },
+        "start": {
+          "column": 11,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 82`] = `
+{
+  "code": "
+type Bar = Record<string, string>;
+declare const foo: Bar | string;
+foo.toString();
+      ",
+  "diagnostics": [
+    {
+      "message": "'
+foo' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 4,
+        },
+        "start": {
+          "column": 1,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 83`] = `
+{
+  "code": "
+        type Bar = Record<string, string>;
+        function foo<T extends string | Bar>(array: T[]) {
+          return array;
+        }
+        foo([{ foo: 'foo' }]).join();
+      ",
+  "diagnostics": [
+    {
+      "message": "Using \`join()\` for 
+        foo([{ foo: 'foo' }]) will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseArrayJoin",
+      "range": {
+        "end": {
+          "column": 30,
+          "line": 6,
+        },
+        "start": {
+          "column": 9,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 84`] = `
+{
+  "code": "
+        type Bar = Record<string, string>;
+        function foo<T extends string | Bar>(array: T[]) {
+          return array;
+        }
+        foo([{ foo: 'foo' }, 'bar']).join();
+      ",
+  "diagnostics": [
+    {
+      "message": "Using \`join()\` for 
+        foo([{ foo: 'foo' }, 'bar']) may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseArrayJoin",
+      "range": {
+        "end": {
+          "column": 37,
+          "line": 6,
+        },
+        "start": {
+          "column": 9,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 85`] = `
+{
+  "code": "
+type Value = { foo: string } | Value[];
+declare const v: Value;
+
+String(v);
+      ",
+  "diagnostics": [
+    {
+      "message": "'v' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 9,
+          "line": 5,
+        },
+        "start": {
+          "column": 8,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 86`] = `
+{
+  "code": "
+type Value = ({ foo: string } | Value)[];
+declare const v: Value;
+
+String(v);
+      ",
+  "diagnostics": [
+    {
+      "message": "'v' may use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 9,
+          "line": 5,
+        },
+        "start": {
+          "column": 8,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 87`] = `
+{
+  "code": "
+type Value = [{ foo: string }, Value];
+declare const v: Value;
+
+String(v);
+      ",
+  "diagnostics": [
+    {
+      "message": "'v' will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseToString",
+      "range": {
+        "end": {
+          "column": 9,
+          "line": 5,
+        },
+        "start": {
+          "column": 8,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-base-to-string > invalid 88`] = `
+{
+  "code": "
+declare const v: { foo: string }[][];
+v.join();
+      ",
+  "diagnostics": [
+    {
+      "message": "Using \`join()\` for 
+v will use Object's default stringification format ('[object Object]') when stringified.",
+      "messageId": "baseArrayJoin",
+      "range": {
+        "end": {
+          "column": 2,
+          "line": 3,
+        },
+        "start": {
+          "column": 1,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-base-to-string",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;

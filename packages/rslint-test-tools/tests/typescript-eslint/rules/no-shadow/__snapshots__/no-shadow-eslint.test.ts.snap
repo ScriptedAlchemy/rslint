@@ -1,0 +1,1504 @@
+// Rstest Snapshot v1
+
+exports[`no-shadow > invalid 1`] = `
+{
+  "code": "
+function a(x) {
+  var b = function c() {
+    var x = 'foo';
+  };
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'x' is already declared in the upper scope on line 2 column 12.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 4,
+        },
+        "start": {
+          "column": 9,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 2`] = `
+{
+  "code": "
+var a = x => {
+  var b = () => {
+    var x = 'foo';
+  };
+};
+      ",
+  "diagnostics": [
+    {
+      "message": "'x' is already declared in the upper scope on line 2 column 8.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 4,
+        },
+        "start": {
+          "column": 9,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 3`] = `
+{
+  "code": "
+function a(x) {
+  var b = function () {
+    var x = 'foo';
+  };
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'x' is already declared in the upper scope on line 2 column 12.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 4,
+        },
+        "start": {
+          "column": 9,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 4`] = `
+{
+  "code": "
+var x = 1;
+function a(x) {
+  return ++x;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'x' is already declared in the upper scope on line 2 column 4.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 13,
+          "line": 3,
+        },
+        "start": {
+          "column": 12,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 5`] = `
+{
+  "code": "
+var a = 3;
+function b() {
+  var a = 10;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 2 column 4.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 4,
+        },
+        "start": {
+          "column": 7,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 6`] = `
+{
+  "code": "
+var a = 3;
+function b() {
+  var a = 10;
+}
+setTimeout(function () {
+  b();
+}, 0);
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 2 column 4.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 4,
+        },
+        "start": {
+          "column": 7,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 7`] = `
+{
+  "code": "
+var a = 3;
+function b() {
+  var a = 10;
+  var b = 0;
+}
+setTimeout(function () {
+  b();
+}, 0);
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 2 column 4.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 4,
+        },
+        "start": {
+          "column": 7,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+    {
+      "message": "'b' is already declared in the upper scope on line 3 column 9.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 5,
+        },
+        "start": {
+          "column": 7,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 8`] = `
+{
+  "code": "
+var x = 1;
+{
+  let x = 2;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'x' is already declared in the upper scope on line 2 column 4.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 4,
+        },
+        "start": {
+          "column": 7,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 9`] = `
+{
+  "code": "
+let x = 1;
+{
+  const x = 2;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'x' is already declared in the upper scope on line 2 column 4.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 4,
+        },
+        "start": {
+          "column": 9,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 10`] = `
+{
+  "code": "
+{
+  let a;
+}
+function a() {}
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 5 column 9.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 3,
+        },
+        "start": {
+          "column": 7,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 11`] = `
+{
+  "code": "
+{
+  const a = 0;
+}
+function a() {}
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 5 column 9.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 3,
+        },
+        "start": {
+          "column": 9,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 12`] = `
+{
+  "code": "
+function foo() {
+  let a;
+}
+function a() {}
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 5 column 9.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 3,
+        },
+        "start": {
+          "column": 7,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 13`] = `
+{
+  "code": "
+function foo() {
+  var a;
+}
+function a() {}
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 5 column 9.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 3,
+        },
+        "start": {
+          "column": 7,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 14`] = `
+{
+  "code": "
+function foo(a) {}
+function a() {}
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 3 column 9.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 15,
+          "line": 2,
+        },
+        "start": {
+          "column": 14,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 15`] = `
+{
+  "code": "
+{
+  let a;
+}
+let a;
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 5 column 4.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 3,
+        },
+        "start": {
+          "column": 7,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 16`] = `
+{
+  "code": "
+{
+  let a;
+}
+var a;
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 5 column 4.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 3,
+        },
+        "start": {
+          "column": 7,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 17`] = `
+{
+  "code": "
+{
+  let a;
+}
+function a() {}
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 5 column 9.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 3,
+        },
+        "start": {
+          "column": 7,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 18`] = `
+{
+  "code": "
+{
+  const a = 0;
+}
+const a = 1;
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 5 column 6.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 3,
+        },
+        "start": {
+          "column": 9,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 19`] = `
+{
+  "code": "
+{
+  const a = 0;
+}
+var a;
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 5 column 4.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 3,
+        },
+        "start": {
+          "column": 9,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 20`] = `
+{
+  "code": "
+{
+  const a = 0;
+}
+function a() {}
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 5 column 9.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 3,
+        },
+        "start": {
+          "column": 9,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 21`] = `
+{
+  "code": "
+function foo() {
+  let a;
+}
+let a;
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 5 column 4.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 3,
+        },
+        "start": {
+          "column": 7,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 22`] = `
+{
+  "code": "
+function foo() {
+  let a;
+}
+var a;
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 5 column 4.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 3,
+        },
+        "start": {
+          "column": 7,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 23`] = `
+{
+  "code": "
+function foo() {
+  let a;
+}
+function a() {}
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 5 column 9.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 3,
+        },
+        "start": {
+          "column": 7,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 24`] = `
+{
+  "code": "
+function foo() {
+  var a;
+}
+let a;
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 5 column 4.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 3,
+        },
+        "start": {
+          "column": 7,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 25`] = `
+{
+  "code": "
+function foo() {
+  var a;
+}
+var a;
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 5 column 4.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 3,
+        },
+        "start": {
+          "column": 7,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 26`] = `
+{
+  "code": "
+function foo() {
+  var a;
+}
+function a() {}
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 5 column 9.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 3,
+        },
+        "start": {
+          "column": 7,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 27`] = `
+{
+  "code": "
+function foo(a) {}
+let a;
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 3 column 4.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 15,
+          "line": 2,
+        },
+        "start": {
+          "column": 14,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 28`] = `
+{
+  "code": "
+function foo(a) {}
+var a;
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 3 column 4.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 15,
+          "line": 2,
+        },
+        "start": {
+          "column": 14,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 29`] = `
+{
+  "code": "
+function foo(a) {}
+function a() {}
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 3 column 9.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 15,
+          "line": 2,
+        },
+        "start": {
+          "column": 14,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 30`] = `
+{
+  "code": "
+(function a() {
+  function a() {}
+})();
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 2 column 10.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 13,
+          "line": 3,
+        },
+        "start": {
+          "column": 12,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 31`] = `
+{
+  "code": "
+(function a() {
+  class a {}
+})();
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 2 column 10.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 3,
+        },
+        "start": {
+          "column": 9,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 32`] = `
+{
+  "code": "
+(function a() {
+  (function a() {});
+})();
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 2 column 10.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 3,
+        },
+        "start": {
+          "column": 13,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 33`] = `
+{
+  "code": "
+(function a() {
+  (class a {});
+})();
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 2 column 10.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 11,
+          "line": 3,
+        },
+        "start": {
+          "column": 10,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 34`] = `
+{
+  "code": "
+(function () {
+  var a = function (a) {};
+})();
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 3 column 6.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 22,
+          "line": 3,
+        },
+        "start": {
+          "column": 21,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 35`] = `
+{
+  "code": "
+(function () {
+  var a = function () {
+    function a() {}
+  };
+})();
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 3 column 6.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 15,
+          "line": 4,
+        },
+        "start": {
+          "column": 14,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 36`] = `
+{
+  "code": "
+(function () {
+  var a = function () {
+    class a {}
+  };
+})();
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 3 column 6.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 12,
+          "line": 4,
+        },
+        "start": {
+          "column": 11,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 37`] = `
+{
+  "code": "
+(function () {
+  var a = function () {
+    (function a() {});
+  };
+})();
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 3 column 6.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 16,
+          "line": 4,
+        },
+        "start": {
+          "column": 15,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 38`] = `
+{
+  "code": "
+(function () {
+  var a = function () {
+    (class a {});
+  };
+})();
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 3 column 6.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 13,
+          "line": 4,
+        },
+        "start": {
+          "column": 12,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 39`] = `
+{
+  "code": "
+(function () {
+  var a = class {
+    constructor() {
+      class a {}
+    }
+  };
+})();
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 3 column 6.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 5,
+        },
+        "start": {
+          "column": 13,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 40`] = `
+{
+  "code": "
+class A {
+  constructor() {
+    var A;
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'A' is already declared in the upper scope on line 2 column 6.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 4,
+        },
+        "start": {
+          "column": 9,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 41`] = `
+{
+  "code": "
+(function a() {
+  function a() {
+    function a() {}
+  }
+})();
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 2 column 10.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 13,
+          "line": 3,
+        },
+        "start": {
+          "column": 12,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+    {
+      "message": "'a' is already declared in the upper scope on line 3 column 11.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 15,
+          "line": 4,
+        },
+        "start": {
+          "column": 14,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 42`] = `
+{
+  "code": "
+function foo() {
+  var Object = 0;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'Object' is already a global variable.",
+      "messageId": "noShadowGlobal",
+      "range": {
+        "end": {
+          "column": 13,
+          "line": 3,
+        },
+        "start": {
+          "column": 7,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 43`] = `
+{
+  "code": "
+function foo() {
+  var top = 0;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'top' is already a global variable.",
+      "messageId": "noShadowGlobal",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 3,
+        },
+        "start": {
+          "column": 7,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 44`] = `
+{
+  "code": "var Object = 0;",
+  "diagnostics": [
+    {
+      "message": "'Object' is already a global variable.",
+      "messageId": "noShadowGlobal",
+      "range": {
+        "end": {
+          "column": 11,
+          "line": 1,
+        },
+        "start": {
+          "column": 5,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 45`] = `
+{
+  "code": "var top = 0;",
+  "diagnostics": [
+    {
+      "message": "'top' is already a global variable.",
+      "messageId": "noShadowGlobal",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 1,
+        },
+        "start": {
+          "column": 5,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 46`] = `
+{
+  "code": "var Object = 0;",
+  "diagnostics": [
+    {
+      "message": "'Object' is already a global variable.",
+      "messageId": "noShadowGlobal",
+      "range": {
+        "end": {
+          "column": 11,
+          "line": 1,
+        },
+        "start": {
+          "column": 5,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 47`] = `
+{
+  "code": "var top = 0;",
+  "diagnostics": [
+    {
+      "message": "'top' is already a global variable.",
+      "messageId": "noShadowGlobal",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 1,
+        },
+        "start": {
+          "column": 5,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 48`] = `
+{
+  "code": "
+function foo(cb) {
+  (function (cb) {
+    cb(42);
+  })(cb);
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'cb' is already declared in the upper scope on line 2 column 14.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 16,
+          "line": 3,
+        },
+        "start": {
+          "column": 14,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;

@@ -11,14 +11,21 @@ export interface Range {
   end: Position;
 }
 
+export interface Fix {
+  text: string;
+  startPos: number;
+  endPos: number;
+}
+
 export interface Diagnostic {
   ruleName: string;
   message: string;
   messageId: string;
-  filePath: string;
+  filePath?: string;
   range: Range;
   severity?: string;
-  suggestions: any[];
+  suggestions?: any[];
+  fixes?: Fix[];
 }
 
 export interface LintResponse {
@@ -42,11 +49,24 @@ export interface LintOptions {
 
 export interface LanguageOptions {
   parserOptions?: ParserOptions;
+  globals?: Record<string, unknown>;
 }
 
 export interface ParserOptions {
   projectService?: boolean;
   project?: string[] | string;
+  tsconfigRootDir?: string;
+  isolatedDeclarations?: boolean;
+  experimentalDecorators?: boolean;
+  emitDecoratorMetadata?: boolean;
+  sourceType?: 'module' | 'script';
+  ecmaVersion?: number;
+  jsxPragma?: string;
+  jsxFragmentName?: string;
+  ecmaFeatures?: {
+    globalReturn?: boolean;
+    jsx?: boolean;
+  };
 }
 
 export interface ApplyFixesRequest {

@@ -1,8 +1,10 @@
 package no_base_to_string
 
 import (
+	"encoding/json"
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/microsoft/typescript-go/shim/checker"
@@ -15,9 +17,9 @@ func certaintyToString(certainty usefulness) string {
 	case usefulnessAlways:
 		return "always"
 	case usefulnessNever:
-		return "always"
+		return "will"
 	case usefulnessSometimes:
-		return "always"
+		return "may"
 	default:
 		panic("unknown certainty")
 	}
@@ -37,7 +39,49 @@ func buildBaseToStringMessage(name string, certainty usefulness) rule.RuleMessag
 }
 
 type NoBaseToStringOptions struct {
-	IgnoredTypeNames []string
+	IgnoredTypeNames []string `json:"ignoredTypeNames"`
+	CheckUnknown     *bool    `json:"checkUnknown"`
+}
+
+func parseOptions(options any) NoBaseToStringOptions {
+	opts := NoBaseToStringOptions{
+		IgnoredTypeNames: []string{"Error", "RegExp", "URL", "URLSearchParams"},
+	}
+
+	applyJSON := func(raw any) {
+		if raw == nil {
+			return
+		}
+		rawJSON, err := json.Marshal(raw)
+		if err != nil {
+			return
+		}
+		_ = json.Unmarshal(rawJSON, &opts)
+	}
+
+	switch raw := options.(type) {
+	case NoBaseToStringOptions:
+		opts = raw
+	case *NoBaseToStringOptions:
+		if raw != nil {
+			opts = *raw
+		}
+	case map[string]interface{}:
+		applyJSON(raw)
+	case []interface{}:
+		if len(raw) > 0 {
+			applyJSON(raw[0])
+		}
+	}
+
+	if opts.IgnoredTypeNames == nil {
+		opts.IgnoredTypeNames = []string{"Error", "RegExp", "URL", "URLSearchParams"}
+	}
+	if opts.CheckUnknown == nil {
+		opts.CheckUnknown = utils.Ref(false)
+	}
+
+	return opts
 }
 
 type usefulness uint32
@@ -51,11 +95,104 @@ const (
 var NoBaseToStringRule = rule.CreateRule(rule.Rule{
 	Name: "no-base-to-string",
 	Run: func(ctx rule.RuleContext, options any) rule.RuleListeners {
-		opts, ok := options.(NoBaseToStringOptions)
-		if !ok {
-			opts = NoBaseToStringOptions{
-				IgnoredTypeNames: []string{"Error", "RegExp", "URL", "URLSearchParams"},
+		opts := parseOptions(options)
+		sourceShadowsString := false
+
+		containsStringIdentifier := func(node *ast.Node) bool {
+			var walk func(current *ast.Node) bool
+			walk = func(current *ast.Node) bool {
+				if current == nil {
+					return false
+				}
+				if ast.IsIdentifier(current) {
+					return current.AsIdentifier().Text == "String"
+				}
+				found := false
+				current.ForEachChild(func(child *ast.Node) bool {
+					if walk(child) {
+						found = true
+						return true
+					}
+					return false
+				})
+				return found
 			}
+			return walk(node)
+		}
+
+		for _, statement := range ctx.SourceFile.Statements.Nodes {
+			if statement == nil {
+				continue
+			}
+			switch statement.Kind {
+			case ast.KindFunctionDeclaration:
+				decl := statement.AsFunctionDeclaration()
+				if decl != nil && decl.Name() != nil && ast.IsIdentifier(decl.Name()) && decl.Name().AsIdentifier().Text == "String" {
+					sourceShadowsString = true
+				}
+			case ast.KindClassDeclaration:
+				decl := statement.AsClassDeclaration()
+				if decl != nil && decl.Name() != nil && ast.IsIdentifier(decl.Name()) && decl.Name().AsIdentifier().Text == "String" {
+					sourceShadowsString = true
+				}
+			case ast.KindVariableStatement:
+				declList := statement.AsVariableStatement().DeclarationList
+				if declList == nil {
+					continue
+				}
+				for _, declaration := range declList.AsVariableDeclarationList().Declarations.Nodes {
+					if declaration != nil && declaration.Name() != nil && containsStringIdentifier(declaration.Name()) {
+						sourceShadowsString = true
+						break
+					}
+				}
+			case ast.KindImportDeclaration:
+				importDecl := statement.AsImportDeclaration()
+				if importDecl == nil || importDecl.ImportClause == nil {
+					continue
+				}
+				importClause := importDecl.ImportClause.AsImportClause()
+				if importClause == nil {
+					continue
+				}
+				if importClause.Name() != nil && ast.IsIdentifier(importClause.Name()) && importClause.Name().AsIdentifier().Text == "String" {
+					sourceShadowsString = true
+				}
+				if importClause.NamedBindings == nil {
+					continue
+				}
+				switch importClause.NamedBindings.Kind {
+				case ast.KindNamespaceImport:
+					nsImport := importClause.NamedBindings.AsNamespaceImport()
+					if nsImport != nil && nsImport.Name() != nil && ast.IsIdentifier(nsImport.Name()) && nsImport.Name().AsIdentifier().Text == "String" {
+						sourceShadowsString = true
+					}
+				case ast.KindNamedImports:
+					namedImports := importClause.NamedBindings.AsNamedImports()
+					if namedImports == nil {
+						continue
+					}
+					for _, element := range namedImports.Elements.Nodes {
+						if element != nil && element.Name() != nil && ast.IsIdentifier(element.Name()) && element.Name().AsIdentifier().Text == "String" {
+							sourceShadowsString = true
+							break
+						}
+					}
+				}
+			}
+			if sourceShadowsString {
+				break
+			}
+		}
+		if !sourceShadowsString {
+			sourceText := ctx.SourceFile.Text()
+			sourceShadowsString = strings.Contains(sourceText, "function String(") ||
+				strings.Contains(sourceText, "function String <") ||
+				strings.Contains(sourceText, "class String") ||
+				strings.Contains(sourceText, "const String") ||
+				strings.Contains(sourceText, "let String") ||
+				strings.Contains(sourceText, "var String") ||
+				strings.Contains(sourceText, "import { String")
 		}
 
 		var collectToStringCertainty func(
@@ -202,6 +339,9 @@ var NoBaseToStringRule = rule.CreateRule(rule.Rule{
 					return collectToStringCertainty(constraint, visited)
 				}
 				// unconstrained generic means `unknown`
+				if *opts.CheckUnknown {
+					return usefulnessSometimes
+				}
 				return usefulnessAlways
 			}
 
@@ -239,6 +379,9 @@ var NoBaseToStringRule = rule.CreateRule(rule.Rule{
 				toString = checker.Checker_getPropertyOfType(ctx.TypeChecker, t, "toLocaleString")
 			}
 			if toString == nil {
+				if *opts.CheckUnknown && utils.IsTypeFlagSet(t, checker.TypeFlagsUnknown) {
+					return usefulnessSometimes
+				}
 				// e.g. any/unknown
 				return usefulnessAlways
 			}
@@ -265,11 +408,22 @@ var NoBaseToStringRule = rule.CreateRule(rule.Rule{
 		}
 
 		isBuiltInStringCall := func(node *ast.CallExpression) bool {
+			if sourceShadowsString {
+				return false
+			}
 			if ast.IsIdentifier(node.Expression) && node.Expression.AsIdentifier().Text == "String" && len(node.Arguments.Nodes) > 0 {
-				tt := ctx.TypeChecker.GetTypeAtLocation(node.Expression)
-				s := utils.IsBuiltinSymbolLike(ctx.Program, ctx.TypeChecker, tt, "String")
-				sc := utils.IsBuiltinSymbolLike(ctx.Program, ctx.TypeChecker, tt, "StringConstructor")
-				return s || sc
+				symbol := ctx.TypeChecker.GetSymbolAtLocation(node.Expression)
+				if symbol == nil || symbol.Name != "String" {
+					return false
+				}
+				hasNonDefaultLibraryDecl := utils.Some(symbol.Declarations, func(declaration *ast.Node) bool {
+					sourceFile := ast.GetSourceFileOfNode(declaration)
+					return sourceFile != nil && !utils.IsSourceFileDefaultLibrary(ctx.Program, sourceFile)
+				})
+				if hasNonDefaultLibraryDecl {
+					return false
+				}
+				return utils.IsSymbolFromDefaultLibrary(ctx.Program, symbol)
 				// TODO(port-scopemanager)
 				// const scope = context.sourceCode.getScope(node);
 				// // eslint-disable-next-line @typescript-eslint/internal/prefer-ast-types-enum

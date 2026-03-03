@@ -41,67 +41,78 @@ func TestConsistentTypeDefinitionsRule(t *testing.T) {
 	}, []rule_tester.InvalidTestCase{
 		// Default options (style: 'interface') - expect type to be interface
 		{
-			Code: `type T = { x: number; };`,
+			Code:   `type T = { x: number; };`,
+			Output: []string{`interface T { x: number; }`},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "interfaceOverType"},
 			},
 		},
 		{
-			Code: `type T={ x: number; };`,
+			Code:   `type T={ x: number; };`,
+			Output: []string{`interface T { x: number; }`},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "interfaceOverType"},
 			},
 		},
 		{
-			Code: `type T= { x: number; };`,
+			Code:   `type T= { x: number; };`,
+			Output: []string{`interface T { x: number; }`},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "interfaceOverType"},
 			},
 		},
 		{
-			Code: `type T = { x: number };`,
+			Code:   `type T = { x: number };`,
+			Output: []string{`interface T { x: number }`},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "interfaceOverType"},
 			},
 		},
 		{
-			Code: `type T = { x: number; y: string; };`,
+			Code:   `type T = { x: number; y: string; };`,
+			Output: []string{`interface T { x: number; y: string; }`},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "interfaceOverType"},
 			},
 		},
 		{
-			Code: `type T = { x: number; y: { z: string; }; };`,
+			Code:   `type T = { x: number; y: { z: string; }; };`,
+			Output: []string{`interface T { x: number; y: { z: string; }; }`},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "interfaceOverType"},
 			},
 		},
 		{
-			Code: `export type W<T> = { x: T; };`,
+			Code:   `export type W<T> = { x: T; };`,
+			Output: []string{`export interface W<T> { x: T; }`},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "interfaceOverType"},
 			},
 		},
 		{
-			Code: `type T<U> = { x: U; };`,
+			Code:   `type T<U> = { x: U; };`,
+			Output: []string{`interface T<U> { x: U; }`},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "interfaceOverType"},
 			},
 		},
 		{
-			Code: `type Foo = { a: string; };`,
+			Code:   `type Foo = { a: string; };`,
+			Output: []string{`interface Foo { a: string; }`},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "interfaceOverType"},
 			},
 		},
 		{
-			Code: `type Foo = ({ a: string; });`,
+			Code:   `type Foo = ({ a: string; });`,
+			Output: []string{`interface Foo { a: string; }`},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "interfaceOverType"},
 			},
 		},
 		{
-			Code: `type Foo = (  { a: string; });`,
+			Code:   `type Foo = (  { a: string; });`,
+			Output: []string{`interface Foo { a: string; }`},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "interfaceOverType"},
 			},
@@ -111,6 +122,7 @@ func TestConsistentTypeDefinitionsRule(t *testing.T) {
 		{
 			Code:    `interface T { x: number; }`,
 			Options: []interface{}{"type"},
+			Output:  []string{`type T = { x: number; }`},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "typeOverInterface"},
 			},
@@ -118,6 +130,7 @@ func TestConsistentTypeDefinitionsRule(t *testing.T) {
 		{
 			Code:    `interface T { x: number }`,
 			Options: []interface{}{"type"},
+			Output:  []string{`type T = { x: number }`},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "typeOverInterface"},
 			},
@@ -125,6 +138,7 @@ func TestConsistentTypeDefinitionsRule(t *testing.T) {
 		{
 			Code:    `interface T { x: number; y: string; }`,
 			Options: []interface{}{"type"},
+			Output:  []string{`type T = { x: number; y: string; }`},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "typeOverInterface"},
 			},
@@ -132,6 +146,7 @@ func TestConsistentTypeDefinitionsRule(t *testing.T) {
 		{
 			Code:    `interface A extends B, C { x: number; };`,
 			Options: []interface{}{"type"},
+			Output:  []string{`type A = { x: number; } & B & C;`},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "typeOverInterface"},
 			},
@@ -139,6 +154,7 @@ func TestConsistentTypeDefinitionsRule(t *testing.T) {
 		{
 			Code:    `interface A extends B<T1>, C<T2> { x: number; };`,
 			Options: []interface{}{"type"},
+			Output:  []string{`type A = { x: number; } & B<T1> & C<T2>;`},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "typeOverInterface"},
 			},
@@ -146,6 +162,7 @@ func TestConsistentTypeDefinitionsRule(t *testing.T) {
 		{
 			Code:    `export interface W<T> { x: T; };`,
 			Options: []interface{}{"type"},
+			Output:  []string{`export type W<T> = { x: T; };`},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "typeOverInterface"},
 			},
@@ -153,6 +170,7 @@ func TestConsistentTypeDefinitionsRule(t *testing.T) {
 		{
 			Code:    `interface T<U> { x: U; };`,
 			Options: []interface{}{"type"},
+			Output:  []string{`type T<U> = { x: U; };`},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "typeOverInterface"},
 			},
@@ -160,6 +178,7 @@ func TestConsistentTypeDefinitionsRule(t *testing.T) {
 		{
 			Code:    `interface Foo { a: string; }`,
 			Options: []interface{}{"type"},
+			Output:  []string{`type Foo = { a: string; }`},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "typeOverInterface"},
 			},
@@ -167,6 +186,7 @@ func TestConsistentTypeDefinitionsRule(t *testing.T) {
 		{
 			Code:    `namespace Foo { export interface Bar {} }`,
 			Options: []interface{}{"type"},
+			Output:  []string{`namespace Foo { export type Bar = {} }`},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "typeOverInterface"},
 			},

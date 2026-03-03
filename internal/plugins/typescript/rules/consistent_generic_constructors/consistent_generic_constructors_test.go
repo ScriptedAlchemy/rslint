@@ -93,6 +93,7 @@ func TestConsistentGenericConstructorsRule(t *testing.T) {
 		{
 			Code:    "const a: Foo<string> = new Foo();",
 			Options: "constructor",
+			Output:  []string{"const a = new Foo<string>();"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferConstructor"},
 			},
@@ -100,24 +101,28 @@ func TestConsistentGenericConstructorsRule(t *testing.T) {
 		{
 			Code:    "const a: Map<string, number> = new Map();",
 			Options: "constructor",
+			Output:  []string{"const a = new Map<string, number>();"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferConstructor"},
 			},
 		},
 		{
-			Code: "const a: Foo<string> = new Foo();",
+			Code:   "const a: Foo<string> = new Foo();",
+			Output: []string{"const a = new Foo<string>();"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferConstructor"},
 			},
 		},
 		{
-			Code: "const a: /* comment */ Foo /* another */ <string> = new Foo();",
+			Code:   "const a: /* comment */ Foo /* another */ <string> = new Foo();",
+			Output: []string{"const a = new Foo/* comment *//* another */<string>();"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferConstructor"},
 			},
 		},
 		{
-			Code: "const a: Foo<number> = new Foo;",
+			Code:   "const a: Foo<number> = new Foo;",
+			Output: []string{"const a = new Foo<number>();"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferConstructor"},
 			},
@@ -125,13 +130,15 @@ func TestConsistentGenericConstructorsRule(t *testing.T) {
 
 		// Class properties (prefer constructor)
 		{
-			Code: "class Foo { a: Foo<string> = new Foo(); }",
+			Code:   "class Foo { a: Foo<string> = new Foo(); }",
+			Output: []string{"class Foo { a = new Foo<string>(); }"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferConstructor"},
 			},
 		},
 		{
-			Code: "class Foo { [a]: Foo<string> = new Foo(); }",
+			Code:   "class Foo { [a]: Foo<string> = new Foo(); }",
+			Output: []string{"class Foo { [a] = new Foo<string>(); }"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferConstructor"},
 			},
@@ -139,7 +146,8 @@ func TestConsistentGenericConstructorsRule(t *testing.T) {
 
 		// Accessor properties (prefer constructor)
 		{
-			Code: "class Foo { accessor a: Foo<string> = new Foo(); }",
+			Code:   "class Foo { accessor a: Foo<string> = new Foo(); }",
+			Output: []string{"class Foo { accessor a = new Foo<string>(); }"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferConstructor"},
 			},
@@ -147,19 +155,22 @@ func TestConsistentGenericConstructorsRule(t *testing.T) {
 
 		// Function parameters (prefer constructor)
 		{
-			Code: "function foo(a: Foo<string> = new Foo()) {}",
+			Code:   "function foo(a: Foo<string> = new Foo()) {}",
+			Output: []string{"function foo(a = new Foo<string>()) {}"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferConstructor"},
 			},
 		},
 		{
-			Code: "function foo({ a }: Foo<string> = new Foo()) {}",
+			Code:   "function foo({ a }: Foo<string> = new Foo()) {}",
+			Output: []string{"function foo({ a } = new Foo<string>()) {}"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferConstructor"},
 			},
 		},
 		{
-			Code: "function foo([a]: Foo<string> = new Foo()) {}",
+			Code:   "function foo([a]: Foo<string> = new Foo()) {}",
+			Output: []string{"function foo([a] = new Foo<string>()) {}"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferConstructor"},
 			},
@@ -167,7 +178,8 @@ func TestConsistentGenericConstructorsRule(t *testing.T) {
 
 		// Constructor parameters (prefer constructor)
 		{
-			Code: "class A { constructor(a: Foo<string> = new Foo()) {} }",
+			Code:   "class A { constructor(a: Foo<string> = new Foo()) {} }",
+			Output: []string{"class A { constructor(a = new Foo<string>()) {} }"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferConstructor"},
 			},
@@ -175,7 +187,8 @@ func TestConsistentGenericConstructorsRule(t *testing.T) {
 
 		// Arrow functions (prefer constructor)
 		{
-			Code: "const a = function (a: Foo<string> = new Foo()) {};",
+			Code:   "const a = function (a: Foo<string> = new Foo()) {};",
+			Output: []string{"const a = function (a = new Foo<string>()) {};"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferConstructor"},
 			},
@@ -185,6 +198,7 @@ func TestConsistentGenericConstructorsRule(t *testing.T) {
 		{
 			Code:    "const a = new Foo<string>();",
 			Options: "type-annotation",
+			Output:  []string{"const a: Foo<string> = new Foo();"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferTypeAnnotation"},
 			},
@@ -192,6 +206,7 @@ func TestConsistentGenericConstructorsRule(t *testing.T) {
 		{
 			Code:    "const a = new Map<string, number>();",
 			Options: "type-annotation",
+			Output:  []string{"const a: Map<string, number> = new Map();"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferTypeAnnotation"},
 			},
@@ -199,6 +214,7 @@ func TestConsistentGenericConstructorsRule(t *testing.T) {
 		{
 			Code:    "const a = new Foo<string>();",
 			Options: "type-annotation",
+			Output:  []string{"const a: Foo<string> = new Foo();"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferTypeAnnotation"},
 			},
@@ -206,6 +222,7 @@ func TestConsistentGenericConstructorsRule(t *testing.T) {
 		{
 			Code:    "const a = new Foo  <  string  >();",
 			Options: "type-annotation",
+			Output:  []string{"const a: Foo<  string  > = new Foo  ();"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferTypeAnnotation"},
 			},
@@ -215,6 +232,7 @@ func TestConsistentGenericConstructorsRule(t *testing.T) {
 		{
 			Code:    "class Foo { a = new Foo<string>(); }",
 			Options: "type-annotation",
+			Output:  []string{"class Foo { a: Foo<string> = new Foo(); }"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferTypeAnnotation"},
 			},
@@ -222,6 +240,7 @@ func TestConsistentGenericConstructorsRule(t *testing.T) {
 		{
 			Code:    "class Foo { [a] = new Foo<string>(); }",
 			Options: "type-annotation",
+			Output:  []string{"class Foo { [a]: Foo<string> = new Foo(); }"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferTypeAnnotation"},
 			},
@@ -231,6 +250,7 @@ func TestConsistentGenericConstructorsRule(t *testing.T) {
 		{
 			Code:    "class Foo { accessor a = new Foo<string>(); }",
 			Options: "type-annotation",
+			Output:  []string{"class Foo { accessor a: Foo<string> = new Foo(); }"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferTypeAnnotation"},
 			},
@@ -240,6 +260,7 @@ func TestConsistentGenericConstructorsRule(t *testing.T) {
 		{
 			Code:    "function foo(a = new Foo<string>()) {}",
 			Options: "type-annotation",
+			Output:  []string{"function foo(a: Foo<string> = new Foo()) {}"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferTypeAnnotation"},
 			},
@@ -247,6 +268,7 @@ func TestConsistentGenericConstructorsRule(t *testing.T) {
 		{
 			Code:    "function foo({ a } = new Foo<string>()) {}",
 			Options: "type-annotation",
+			Output:  []string{"function foo({ a }: Foo<string> = new Foo()) {}"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferTypeAnnotation"},
 			},
@@ -254,6 +276,7 @@ func TestConsistentGenericConstructorsRule(t *testing.T) {
 		{
 			Code:    "function foo([a] = new Foo<string>()) {}",
 			Options: "type-annotation",
+			Output:  []string{"function foo([a]: Foo<string> = new Foo()) {}"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferTypeAnnotation"},
 			},
@@ -263,6 +286,7 @@ func TestConsistentGenericConstructorsRule(t *testing.T) {
 		{
 			Code:    "class A { constructor(a = new Foo<string>()) {} }",
 			Options: "type-annotation",
+			Output:  []string{"class A { constructor(a: Foo<string> = new Foo()) {} }"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferTypeAnnotation"},
 			},
@@ -272,6 +296,7 @@ func TestConsistentGenericConstructorsRule(t *testing.T) {
 		{
 			Code:    "const a = function (a = new Foo<string>()) {};",
 			Options: "type-annotation",
+			Output:  []string{"const a = function (a: Foo<string> = new Foo()) {};"},
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "preferTypeAnnotation"},
 			},

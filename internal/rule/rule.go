@@ -161,10 +161,28 @@ func (d RuleDiagnostic) Fixes() []RuleFix {
 	return *d.FixesPtr
 }
 
+type RuleEcmaFeatures struct {
+	GlobalReturn bool
+	JSX          bool
+}
+
+type RuleParserOptions struct {
+	SourceType             string
+	EcmaVersion            int
+	IsolatedDeclarations   bool
+	ExperimentalDecorators bool
+	EmitDecoratorMetadata  bool
+	JSXPragma              string
+	JSXFragmentName        string
+	EcmaFeatures           *RuleEcmaFeatures
+}
+
 type RuleContext struct {
 	SourceFile                 *ast.SourceFile
 	Program                    *compiler.Program
 	TypeChecker                *checker.Checker
+	ParserOptions              *RuleParserOptions
+	Globals                    map[string]bool
 	DisableManager             *DisableManager
 	ReportRange                func(textRange core.TextRange, msg RuleMessage)
 	ReportRangeWithFixes       func(textRange core.TextRange, msg RuleMessage, fixes ...RuleFix)

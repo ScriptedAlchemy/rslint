@@ -2,6 +2,7 @@ package no_unnecessary_type_arguments
 
 import (
 	"slices"
+	"strings"
 
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/microsoft/typescript-go/shim/checker"
@@ -24,6 +25,63 @@ func isTypeContextDeclaration(decl *ast.Node) bool {
 
 func isInTypeContext(node *ast.Node) bool {
 	return ast.IsTypeReferenceNode(node) || ast.IsInterfaceDeclaration(node.Parent) || ast.IsTypeReferenceNode(node.Parent) || (ast.IsHeritageClause(node.Parent) && node.Parent.AsHeritageClause().Token == ast.KindImplementsKeyword)
+}
+
+func normalizedNodeText(sourceFile *ast.SourceFile, node *ast.Node) string {
+	if node == nil {
+		return ""
+	}
+	currentSourceFile := sourceFile
+	if currentSourceFile == nil || ast.GetSourceFileOfNode(node) != currentSourceFile {
+		currentSourceFile = ast.GetSourceFileOfNode(node)
+	}
+	if currentSourceFile != nil {
+		trimmed := utils.TrimNodeTextRange(currentSourceFile, node)
+		text := currentSourceFile.Text()
+		if trimmed.Pos() >= 0 && trimmed.End() <= len(text) && trimmed.Pos() < trimmed.End() {
+			raw := text[trimmed.Pos():trimmed.End()]
+			return strings.Join(strings.Fields(raw), "")
+		}
+	}
+	return ""
+}
+
+func isNonAliasExternalTypeIdentifier(ctx rule.RuleContext, node *ast.Node) bool {
+	if ctx.TypeChecker == nil || ctx.SourceFile == nil || node == nil || node.Kind != ast.KindTypeReference {
+		return false
+	}
+	typeRef := node.AsTypeReferenceNode()
+	if typeRef == nil || typeRef.TypeName == nil || typeRef.TypeName.Kind != ast.KindIdentifier {
+		return false
+	}
+	symbol := ctx.TypeChecker.GetSymbolAtLocation(typeRef.TypeName)
+	if symbol == nil {
+		return false
+	}
+	if symbol.Flags&ast.SymbolFlagsAlias != 0 {
+		var found bool
+		symbol, found = ctx.TypeChecker.ResolveAlias(symbol)
+		if !found || symbol == nil {
+			return false
+		}
+	}
+	if len(symbol.Declarations) == 0 {
+		return false
+	}
+	hasTypeAliasDeclaration := false
+	allExternal := true
+	for _, decl := range symbol.Declarations {
+		if decl == nil {
+			continue
+		}
+		if decl.Kind == ast.KindTypeAliasDeclaration {
+			hasTypeAliasDeclaration = true
+		}
+		if ast.GetSourceFileOfNode(decl) == ctx.SourceFile {
+			allExternal = false
+		}
+	}
+	return allExternal && !hasTypeAliasDeclaration
 }
 
 var NoUnnecessaryTypeArgumentsRule = rule.CreateRule(rule.Rule{
@@ -115,17 +173,33 @@ var NoUnnecessaryTypeArgumentsRule = rule.CreateRule(rule.Rule{
 				return
 			}
 
-			paramType := ctx.TypeChecker.GetTypeAtLocation(defaultType)
-			if utils.IsIntrinsicErrorType(paramType) {
+			defaultTypeText := normalizedNodeText(ctx.SourceFile, defaultType)
+			argText := normalizedNodeText(ctx.SourceFile, arg)
+			if defaultTypeText == "" || argText == "" {
 				return
 			}
 
-			argType := ctx.TypeChecker.GetTypeAtLocation(arg)
-			if utils.IsIntrinsicErrorType(argType) {
+			isSameText := defaultTypeText == argText
+			if !isSameText &&
+				isNonAliasExternalTypeIdentifier(ctx, defaultType) &&
+				isNonAliasExternalTypeIdentifier(ctx, arg) {
 				return
 			}
-			if argType != paramType && (utils.IsTypeAnyType(argType) || utils.IsTypeAnyType(paramType) || (!checker.Checker_isTypeStrictSubtypeOf(ctx.TypeChecker, argType, paramType) || !checker.Checker_isTypeStrictSubtypeOf(ctx.TypeChecker, paramType, argType))) {
-				return
+
+			paramType := ctx.TypeChecker.GetTypeAtLocation(defaultType)
+			argType := ctx.TypeChecker.GetTypeAtLocation(arg)
+
+			paramTypeIsError := utils.IsIntrinsicErrorType(paramType)
+			argTypeIsError := utils.IsIntrinsicErrorType(argType)
+			if paramTypeIsError || argTypeIsError {
+				if !isSameText {
+					return
+				}
+			} else {
+				if argType != paramType &&
+					(utils.IsTypeAnyType(argType) || utils.IsTypeAnyType(paramType) || (!checker.Checker_isTypeStrictSubtypeOf(ctx.TypeChecker, argType, paramType) || !checker.Checker_isTypeStrictSubtypeOf(ctx.TypeChecker, paramType, argType))) {
+					return
+				}
 			}
 
 			var removeRange core.TextRange

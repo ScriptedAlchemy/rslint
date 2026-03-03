@@ -59,12 +59,13 @@ export class NodeRslintService implements RslintServiceInterface {
 
       // Write message length as 4 bytes in little endian
       const json = JSON.stringify(message);
-      const jsonBuffer = Buffer.from(json, 'utf8');
+      const jsonBytes = Buffer.from(json, 'utf8');
       const length = Buffer.alloc(4);
-      length.writeUInt32LE(jsonBuffer.length, 0);
+      // Message size must be the UTF-8 byte length, not JS string length.
+      length.writeUInt32LE(jsonBytes.length, 0);
 
       // Send message
-      this.process.stdin!.write(Buffer.concat([length, jsonBuffer]));
+      this.process.stdin!.write(Buffer.concat([length, jsonBytes]));
     });
   }
 

@@ -1,0 +1,242 @@
+// Rstest Snapshot v1
+
+exports[`no-useless-default-assignment > invalid 1`] = `
+{
+  "code": "
+function basic(a: number = 1) {
+  return a;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Default value is useless because the parameter is not optional.",
+      "messageId": "uselessDefaultAssignment",
+      "range": {
+        "end": {
+          "column": 29,
+          "line": 2,
+        },
+        "start": {
+          "column": 28,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-useless-default-assignment",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+function basic(a: number) {
+  return a;
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-useless-default-assignment > invalid 2`] = `
+{
+  "code": "
+function optional(a: number | undefined = undefined) {
+  return a;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Using \`= undefined\` to make a parameter optional adds unnecessary runtime logic. Use the \`?\` optional syntax instead.",
+      "messageId": "preferOptionalSyntax",
+      "range": {
+        "end": {
+          "column": 52,
+          "line": 2,
+        },
+        "start": {
+          "column": 43,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-useless-default-assignment",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+function optional(a?: number | undefined) {
+  return a;
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-useless-default-assignment > invalid 3`] = `
+{
+  "code": "
+const { a = undefined }: { a?: number } = {};
+      ",
+  "diagnostics": [
+    {
+      "message": "Default value is useless because it is undefined. Optional propertys are already undefined by default.",
+      "messageId": "uselessUndefined",
+      "range": {
+        "end": {
+          "column": 22,
+          "line": 2,
+        },
+        "start": {
+          "column": 13,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-useless-default-assignment",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+const { a }: { a?: number } = {};
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-useless-default-assignment > invalid 4`] = `
+{
+  "code": "
+function withObject({ foo = '' }: { foo: string }) {
+  return foo;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Default value is useless because the property is not optional.",
+      "messageId": "uselessDefaultAssignment",
+      "range": {
+        "end": {
+          "column": 31,
+          "line": 2,
+        },
+        "start": {
+          "column": 29,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-useless-default-assignment",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+function withObject({ foo }: { foo: string }) {
+  return foo;
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-useless-default-assignment > invalid 5`] = `
+{
+  "code": "
+[1, 2, 3].map((a = 42) => a + 1);
+      ",
+  "diagnostics": [
+    {
+      "message": "Default value is useless because the parameter is not optional.",
+      "messageId": "uselessDefaultAssignment",
+      "range": {
+        "end": {
+          "column": 22,
+          "line": 2,
+        },
+        "start": {
+          "column": 20,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-useless-default-assignment",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+[1, 2, 3].map((a) => a + 1);
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-useless-default-assignment > invalid 6`] = `
+{
+  "code": "
+interface B {
+  foo: (b: boolean | string) => void;
+}
+
+const h: B = {
+  foo: (b = false) => {},
+};
+      ",
+  "diagnostics": [
+    {
+      "message": "Default value is useless because the parameter is not optional.",
+      "messageId": "uselessDefaultAssignment",
+      "range": {
+        "end": {
+          "column": 18,
+          "line": 7,
+        },
+        "start": {
+          "column": 13,
+          "line": 7,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-useless-default-assignment",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+interface B {
+  foo: (b: boolean | string) => void;
+}
+
+const h: B = {
+  foo: (b) => {},
+};
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-useless-default-assignment > invalid 7`] = `
+{
+  "code": "
+const [a = undefined] = [];
+      ",
+  "diagnostics": [
+    {
+      "message": "Default value is useless because it is undefined. Optional propertys are already undefined by default.",
+      "messageId": "uselessUndefined",
+      "range": {
+        "end": {
+          "column": 21,
+          "line": 2,
+        },
+        "start": {
+          "column": 12,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-useless-default-assignment",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+const [a] = [];
+      ",
+  "ruleCount": 1,
+}
+`;

@@ -1,6 +1,7 @@
 package restrict_plus_operands
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -30,39 +31,73 @@ func buildMismatchedMessage(stringLike, left, right string) rule.RuleMessage {
 }
 
 type RestrictPlusOperandsOptions struct {
-	AllowAny                *bool
-	AllowBoolean            *bool
-	AllowNullish            *bool
-	AllowNumberAndString    *bool
-	AllowRegExp             *bool
-	SkipCompoundAssignments *bool
+	AllowAny                *bool `json:"allowAny"`
+	AllowBoolean            *bool `json:"allowBoolean"`
+	AllowNullish            *bool `json:"allowNullish"`
+	AllowNumberAndString    *bool `json:"allowNumberAndString"`
+	AllowRegExp             *bool `json:"allowRegExp"`
+	SkipCompoundAssignments *bool `json:"skipCompoundAssignments"`
+}
+
+func parseOptions(options any) RestrictPlusOperandsOptions {
+	opts := RestrictPlusOperandsOptions{}
+
+	applyJSON := func(raw any) {
+		if raw == nil {
+			return
+		}
+		rawJSON, err := json.Marshal(raw)
+		if err != nil {
+			return
+		}
+		_ = json.Unmarshal(rawJSON, &opts)
+	}
+
+	switch raw := options.(type) {
+	case RestrictPlusOperandsOptions:
+		opts = raw
+	case *RestrictPlusOperandsOptions:
+		if raw != nil {
+			opts = *raw
+		}
+	case map[string]interface{}:
+		applyJSON(raw)
+	case []interface{}:
+		if len(raw) > 0 {
+			applyJSON(raw[0])
+		}
+	default:
+		if raw != nil {
+			applyJSON(raw)
+		}
+	}
+
+	if opts.AllowAny == nil {
+		opts.AllowAny = utils.Ref(true)
+	}
+	if opts.AllowBoolean == nil {
+		opts.AllowBoolean = utils.Ref(true)
+	}
+	if opts.AllowNullish == nil {
+		opts.AllowNullish = utils.Ref(true)
+	}
+	if opts.AllowNumberAndString == nil {
+		opts.AllowNumberAndString = utils.Ref(true)
+	}
+	if opts.AllowRegExp == nil {
+		opts.AllowRegExp = utils.Ref(true)
+	}
+	if opts.SkipCompoundAssignments == nil {
+		opts.SkipCompoundAssignments = utils.Ref(false)
+	}
+
+	return opts
 }
 
 var RestrictPlusOperandsRule = rule.CreateRule(rule.Rule{
 	Name: "restrict-plus-operands",
 	Run: func(ctx rule.RuleContext, options any) rule.RuleListeners {
-		opts, ok := options.(RestrictPlusOperandsOptions)
-		if !ok {
-			opts = RestrictPlusOperandsOptions{}
-		}
-		if opts.AllowAny == nil {
-			opts.AllowAny = utils.Ref(true)
-		}
-		if opts.AllowBoolean == nil {
-			opts.AllowBoolean = utils.Ref(true)
-		}
-		if opts.AllowNullish == nil {
-			opts.AllowNullish = utils.Ref(true)
-		}
-		if opts.AllowNumberAndString == nil {
-			opts.AllowNumberAndString = utils.Ref(true)
-		}
-		if opts.AllowRegExp == nil {
-			opts.AllowRegExp = utils.Ref(true)
-		}
-		if opts.SkipCompoundAssignments == nil {
-			opts.SkipCompoundAssignments = utils.Ref(false)
-		}
+		opts := parseOptions(options)
 
 		stringLikes := make([]string, 0, 5)
 		if *opts.AllowAny {

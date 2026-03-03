@@ -1,0 +1,705 @@
+// Rstest Snapshot v1
+
+exports[`no-unnecessary-type-conversion > invalid 1`] = `
+{
+  "code": "String('asdf');",
+  "diagnostics": [
+    {
+      "message": "This type conversion is unnecessary.",
+      "messageId": "unnecessaryTypeConversion",
+      "range": {
+        "end": {
+          "column": 7,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unnecessary-type-conversion",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unnecessary-type-conversion > invalid 2`] = `
+{
+  "code": "'asdf'.toString();",
+  "diagnostics": [
+    {
+      "message": "This type conversion is unnecessary.",
+      "messageId": "unnecessaryTypeConversion",
+      "range": {
+        "end": {
+          "column": 18,
+          "line": 1,
+        },
+        "start": {
+          "column": 8,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unnecessary-type-conversion",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unnecessary-type-conversion > invalid 3`] = `
+{
+  "code": "'' + 'asdf';",
+  "diagnostics": [
+    {
+      "message": "This type conversion is unnecessary.",
+      "messageId": "unnecessaryTypeConversion",
+      "range": {
+        "end": {
+          "column": 6,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unnecessary-type-conversion",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unnecessary-type-conversion > invalid 4`] = `
+{
+  "code": "'asdf' + '';",
+  "diagnostics": [
+    {
+      "message": "This type conversion is unnecessary.",
+      "messageId": "unnecessaryTypeConversion",
+      "range": {
+        "end": {
+          "column": 12,
+          "line": 1,
+        },
+        "start": {
+          "column": 7,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unnecessary-type-conversion",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unnecessary-type-conversion > invalid 5`] = `
+{
+  "code": "
+let str = 'asdf';
+str += '';
+      ",
+  "diagnostics": [
+    {
+      "message": "This type conversion is unnecessary.",
+      "messageId": "unnecessaryTypeConversion",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 3,
+        },
+        "start": {
+          "column": 1,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unnecessary-type-conversion",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unnecessary-type-conversion > invalid 6`] = `
+{
+  "code": "
+let str = 'asdf';
+'asdf' + (str += '');
+      ",
+  "diagnostics": [
+    {
+      "message": "This type conversion is unnecessary.",
+      "messageId": "unnecessaryTypeConversion",
+      "range": {
+        "end": {
+          "column": 20,
+          "line": 3,
+        },
+        "start": {
+          "column": 11,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unnecessary-type-conversion",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unnecessary-type-conversion > invalid 7`] = `
+{
+  "code": "Number(123);",
+  "diagnostics": [
+    {
+      "message": "This type conversion is unnecessary.",
+      "messageId": "unnecessaryTypeConversion",
+      "range": {
+        "end": {
+          "column": 7,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unnecessary-type-conversion",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unnecessary-type-conversion > invalid 8`] = `
+{
+  "code": "+123;",
+  "diagnostics": [
+    {
+      "message": "This type conversion is unnecessary.",
+      "messageId": "unnecessaryTypeConversion",
+      "range": {
+        "end": {
+          "column": 2,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unnecessary-type-conversion",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unnecessary-type-conversion > invalid 9`] = `
+{
+  "code": "~~123;",
+  "diagnostics": [
+    {
+      "message": "This type conversion is unnecessary.",
+      "messageId": "unnecessaryTypeConversion",
+      "range": {
+        "end": {
+          "column": 3,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unnecessary-type-conversion",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unnecessary-type-conversion > invalid 10`] = `
+{
+  "code": "Boolean(true);",
+  "diagnostics": [
+    {
+      "message": "This type conversion is unnecessary.",
+      "messageId": "unnecessaryTypeConversion",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unnecessary-type-conversion",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unnecessary-type-conversion > invalid 11`] = `
+{
+  "code": "!!true;",
+  "diagnostics": [
+    {
+      "message": "This type conversion is unnecessary.",
+      "messageId": "unnecessaryTypeConversion",
+      "range": {
+        "end": {
+          "column": 3,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unnecessary-type-conversion",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unnecessary-type-conversion > invalid 12`] = `
+{
+  "code": "BigInt(3n);",
+  "diagnostics": [
+    {
+      "message": "This type conversion is unnecessary.",
+      "messageId": "unnecessaryTypeConversion",
+      "range": {
+        "end": {
+          "column": 7,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unnecessary-type-conversion",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unnecessary-type-conversion > invalid 13`] = `
+{
+  "code": "
+        function f<T extends string>(x: T) {
+          return String(x);
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "This type conversion is unnecessary.",
+      "messageId": "unnecessaryTypeConversion",
+      "range": {
+        "end": {
+          "column": 24,
+          "line": 3,
+        },
+        "start": {
+          "column": 18,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unnecessary-type-conversion",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unnecessary-type-conversion > invalid 14`] = `
+{
+  "code": "
+        function f<T extends number>(x: T) {
+          return Number(x);
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "This type conversion is unnecessary.",
+      "messageId": "unnecessaryTypeConversion",
+      "range": {
+        "end": {
+          "column": 24,
+          "line": 3,
+        },
+        "start": {
+          "column": 18,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unnecessary-type-conversion",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unnecessary-type-conversion > invalid 15`] = `
+{
+  "code": "
+        function f<T extends boolean>(x: T) {
+          return Boolean(x);
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "This type conversion is unnecessary.",
+      "messageId": "unnecessaryTypeConversion",
+      "range": {
+        "end": {
+          "column": 25,
+          "line": 3,
+        },
+        "start": {
+          "column": 18,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unnecessary-type-conversion",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unnecessary-type-conversion > invalid 16`] = `
+{
+  "code": "
+        function f<T extends bigint>(x: T) {
+          return BigInt(x);
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "This type conversion is unnecessary.",
+      "messageId": "unnecessaryTypeConversion",
+      "range": {
+        "end": {
+          "column": 24,
+          "line": 3,
+        },
+        "start": {
+          "column": 18,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unnecessary-type-conversion",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unnecessary-type-conversion > invalid 17`] = `
+{
+  "code": "String('a' + 'b').length;",
+  "diagnostics": [
+    {
+      "message": "This type conversion is unnecessary.",
+      "messageId": "unnecessaryTypeConversion",
+      "range": {
+        "end": {
+          "column": 7,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unnecessary-type-conversion",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unnecessary-type-conversion > invalid 18`] = `
+{
+  "code": "('a' + 'b').toString().length;",
+  "diagnostics": [
+    {
+      "message": "This type conversion is unnecessary.",
+      "messageId": "unnecessaryTypeConversion",
+      "range": {
+        "end": {
+          "column": 23,
+          "line": 1,
+        },
+        "start": {
+          "column": 13,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unnecessary-type-conversion",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unnecessary-type-conversion > invalid 19`] = `
+{
+  "code": "2 * +(2 + 2);",
+  "diagnostics": [
+    {
+      "message": "This type conversion is unnecessary.",
+      "messageId": "unnecessaryTypeConversion",
+      "range": {
+        "end": {
+          "column": 6,
+          "line": 1,
+        },
+        "start": {
+          "column": 5,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unnecessary-type-conversion",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unnecessary-type-conversion > invalid 20`] = `
+{
+  "code": "2 * Number(2 + 2);",
+  "diagnostics": [
+    {
+      "message": "This type conversion is unnecessary.",
+      "messageId": "unnecessaryTypeConversion",
+      "range": {
+        "end": {
+          "column": 11,
+          "line": 1,
+        },
+        "start": {
+          "column": 5,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unnecessary-type-conversion",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unnecessary-type-conversion > invalid 21`] = `
+{
+  "code": "2 * ~~(2 + 2);",
+  "diagnostics": [
+    {
+      "message": "This type conversion is unnecessary.",
+      "messageId": "unnecessaryTypeConversion",
+      "range": {
+        "end": {
+          "column": 7,
+          "line": 1,
+        },
+        "start": {
+          "column": 5,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unnecessary-type-conversion",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unnecessary-type-conversion > invalid 22`] = `
+{
+  "code": "false && !!(false || true);",
+  "diagnostics": [
+    {
+      "message": "This type conversion is unnecessary.",
+      "messageId": "unnecessaryTypeConversion",
+      "range": {
+        "end": {
+          "column": 12,
+          "line": 1,
+        },
+        "start": {
+          "column": 10,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unnecessary-type-conversion",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unnecessary-type-conversion > invalid 23`] = `
+{
+  "code": "false && Boolean(false || true);",
+  "diagnostics": [
+    {
+      "message": "This type conversion is unnecessary.",
+      "messageId": "unnecessaryTypeConversion",
+      "range": {
+        "end": {
+          "column": 17,
+          "line": 1,
+        },
+        "start": {
+          "column": 10,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unnecessary-type-conversion",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unnecessary-type-conversion > invalid 24`] = `
+{
+  "code": "2n * BigInt(2n + 2n);",
+  "diagnostics": [
+    {
+      "message": "This type conversion is unnecessary.",
+      "messageId": "unnecessaryTypeConversion",
+      "range": {
+        "end": {
+          "column": 12,
+          "line": 1,
+        },
+        "start": {
+          "column": 6,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unnecessary-type-conversion",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unnecessary-type-conversion > invalid 25`] = `
+{
+  "code": "
+        let str = 'asdf';
+        String(str).length;
+      ",
+  "diagnostics": [
+    {
+      "message": "This type conversion is unnecessary.",
+      "messageId": "unnecessaryTypeConversion",
+      "range": {
+        "end": {
+          "column": 15,
+          "line": 3,
+        },
+        "start": {
+          "column": 9,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unnecessary-type-conversion",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unnecessary-type-conversion > invalid 26`] = `
+{
+  "code": "
+        let str = 'asdf';
+        str.toString().length;
+      ",
+  "diagnostics": [
+    {
+      "message": "This type conversion is unnecessary.",
+      "messageId": "unnecessaryTypeConversion",
+      "range": {
+        "end": {
+          "column": 23,
+          "line": 3,
+        },
+        "start": {
+          "column": 13,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unnecessary-type-conversion",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;

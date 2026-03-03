@@ -438,6 +438,13 @@ func Checker_booleanType(v *checker.Checker) *checker.Type {
 func Checker_globalRegExpType(v *checker.Checker) *checker.Type {
   return ((*extra_Checker)(unsafe.Pointer(v))).globalRegExpType
 }
+func Checker_noUncheckedIndexedAccess(v *checker.Checker) bool {
+  c := (*extra_Checker)(unsafe.Pointer(v))
+  if c == nil || c.compilerOptions == nil {
+    return false
+  }
+  return c.compilerOptions.NoUncheckedIndexedAccess == core.TSTrue
+}
 //go:linkname CompareTypes github.com/microsoft/typescript-go/internal/checker.CompareTypes
 func CompareTypes(t1 *checker.Type, t2 *checker.Type) int
 type CompositeSignature = checker.CompositeSignature

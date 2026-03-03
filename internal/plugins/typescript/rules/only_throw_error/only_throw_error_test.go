@@ -179,6 +179,31 @@ throw new Map();
 				AllowThrowingUnknown: utils.Ref(false),
 			},
 		},
+		{
+			Code: `
+try {
+} catch (e) {
+  throw e;
+}
+      `,
+			Options: OnlyThrowErrorOptions{
+				AllowRethrowing:      utils.Ref(true),
+				AllowThrowingAny:     utils.Ref(false),
+				AllowThrowingUnknown: utils.Ref(false),
+			},
+		},
+		{
+			Code: `
+Promise.reject('foo').catch(e => {
+  throw e;
+});
+      `,
+			Options: OnlyThrowErrorOptions{
+				AllowRethrowing:      utils.Ref(true),
+				AllowThrowingAny:     utils.Ref(false),
+				AllowThrowingUnknown: utils.Ref(false),
+			},
+		},
 	}, []rule_tester.InvalidTestCase{
 		{
 			Code: "throw undefined;",
@@ -555,6 +580,41 @@ throw new UnknownError();
       `,
 			Options: OnlyThrowErrorOptions{
 				Allow:                []utils.TypeOrValueSpecifier{{From: utils.TypeOrValueSpecifierFromFile, Name: []string{"CustomError"}}},
+				AllowThrowingAny:     utils.Ref(false),
+				AllowThrowingUnknown: utils.Ref(false),
+			},
+			Errors: []rule_tester.InvalidTestCaseError{
+				{
+					MessageId: "object",
+				},
+			},
+		},
+		{
+			Code: `
+let x = 1;
+Promise.reject('foo').catch(e => {
+  throw x;
+});
+      `,
+			Options: OnlyThrowErrorOptions{
+				AllowRethrowing:      utils.Ref(true),
+				AllowThrowingAny:     utils.Ref(false),
+				AllowThrowingUnknown: utils.Ref(false),
+			},
+			Errors: []rule_tester.InvalidTestCaseError{
+				{
+					MessageId: "object",
+				},
+			},
+		},
+		{
+			Code: `
+Promise.reject('foo').catch((...e) => {
+  throw e;
+});
+      `,
+			Options: OnlyThrowErrorOptions{
+				AllowRethrowing:      utils.Ref(true),
 				AllowThrowingAny:     utils.Ref(false),
 				AllowThrowingUnknown: utils.Ref(false),
 			},

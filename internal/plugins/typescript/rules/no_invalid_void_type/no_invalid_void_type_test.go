@@ -32,19 +32,19 @@ func TestNoInvalidVoidTypeRule(t *testing.T) {
 			{
 				Code: `function takeVoid(thing: void) {}`,
 				Errors: []rule_tester.InvalidTestCaseError{
-					{MessageId: "invalidVoidNotReturn"},
+					{MessageId: "invalidVoidNotReturnOrGeneric"},
 				},
 			},
 			{
 				Code: `type UnionType2 = string | number | void;`,
 				Errors: []rule_tester.InvalidTestCaseError{
-					{MessageId: "invalidVoidNotReturn"},
+					{MessageId: "invalidVoidUnionConstituent"},
 				},
 			},
 			{
 				Code: `type IntersectionType = string & number & void;`,
 				Errors: []rule_tester.InvalidTestCaseError{
-					{MessageId: "invalidVoidNotReturn"},
+					{MessageId: "invalidVoidNotReturnOrGeneric"},
 				},
 			},
 			{
@@ -52,7 +52,7 @@ func TestNoInvalidVoidTypeRule(t *testing.T) {
   prop: void;
 }`,
 				Errors: []rule_tester.InvalidTestCaseError{
-					{MessageId: "invalidVoidNotReturn"},
+					{MessageId: "invalidVoidNotReturnOrGeneric"},
 				},
 			},
 			{
@@ -60,7 +60,7 @@ func TestNoInvalidVoidTypeRule(t *testing.T) {
   private readonly propName: void;
 }`,
 				Errors: []rule_tester.InvalidTestCaseError{
-					{MessageId: "invalidVoidNotReturn"},
+					{MessageId: "invalidVoidNotReturnOrGeneric"},
 				},
 			},
 			{

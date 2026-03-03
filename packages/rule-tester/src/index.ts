@@ -1,9 +1,11 @@
 // Forked and modified from https://github.com/typescript-eslint/typescript-eslint/blob/16c344ec7d274ea542157e0f19682dd1930ab838/packages/rule-tester/src/RuleTester.ts#L4
 
 import path from 'node:path';
+import fs from 'node:fs';
 import { test, describe, expect } from '@rstest/core';
 import { applyFixes, lint, LintResponse, type Diagnostic } from '@rslint/core';
 import assert from 'node:assert';
+import type { LanguageOptions as RslintLanguageOptions } from '@rslint/core';
 
 interface TsDiagnostic {
   line?: number;
@@ -86,6 +88,39 @@ interface RuleTesterOptions {
     };
   };
 }
+
+function resolveVirtualEntry(
+  virtualBaseDir: string,
+  useProjectFixtureFile: boolean,
+  isJSX: boolean | undefined,
+  filename?: string,
+): string {
+  if (filename) {
+    if (filename.endsWith('.d.ts')) {
+      return path.resolve(virtualBaseDir, 'virtual.d.ts');
+    }
+    if (filename.endsWith('.mts')) {
+      return path.resolve(virtualBaseDir, 'virtual.mts');
+    }
+    if (filename.endsWith('.cts')) {
+      return path.resolve(virtualBaseDir, 'virtual.cts');
+    }
+    return path.isAbsolute(filename)
+      ? filename
+      : path.resolve(virtualBaseDir, filename);
+  }
+  return path.resolve(
+    virtualBaseDir,
+    useProjectFixtureFile
+      ? isJSX
+        ? 'react.tsx'
+        : 'file.ts'
+      : isJSX
+        ? 'virtual.tsx'
+        : 'virtual.ts',
+  );
+}
+
 export type InvalidTestCase<T = any, U = any> = {
   code: string;
   filename?: string;
@@ -108,11 +143,116 @@ export type ValidTestCase<T = any> =
       name?: string;
     };
 
+function mergeLanguageOptions(
+  base?: RuleTesterOptions['languageOptions'],
+  override?: RuleTesterOptions['languageOptions'],
+): RuleTesterOptions['languageOptions'] | undefined {
+  if (!base && !override) {
+    return undefined;
+  }
+
+  const baseParser = base?.parserOptions;
+  const overrideParser = override?.parserOptions;
+
+  return {
+    ...(base ?? {}),
+    ...(override ?? {}),
+    parserOptions:
+      baseParser || overrideParser
+        ? {
+            ...(baseParser ?? {}),
+            ...(overrideParser ?? {}),
+            ecmaFeatures:
+              baseParser?.ecmaFeatures || overrideParser?.ecmaFeatures
+                ? {
+                    ...(baseParser?.ecmaFeatures ?? {}),
+                    ...(overrideParser?.ecmaFeatures ?? {}),
+                  }
+                : undefined,
+          }
+        : undefined,
+  };
+}
+
+function toRslintLanguageOptions(
+  languageOptions?: RuleTesterOptions['languageOptions'],
+): RslintLanguageOptions | undefined {
+  if (!languageOptions) {
+    return undefined;
+  }
+
+  const parserOptions = languageOptions.parserOptions
+    ? {
+        ...languageOptions.parserOptions,
+        // rslint parserOptions expects string here; null means "unset" in upstream tests.
+        jsxPragma:
+          languageOptions.parserOptions.jsxPragma === null
+            ? undefined
+            : languageOptions.parserOptions.jsxPragma,
+      }
+    : undefined;
+
+  return {
+    globals: languageOptions.globals,
+    parserOptions,
+  };
+}
+
 function getTypescriptEslintFixturesRootDir(): string {
   return path.resolve(
     '../../packages/rslint-test-tools/tests/typescript-eslint/fixtures',
   );
 }
+
+let cachedKnownRuleNames: Set<string> | null = null;
+
+function getKnownRuleNames(): Set<string> {
+  if (cachedKnownRuleNames) {
+    return cachedKnownRuleNames;
+  }
+
+  const candidates = [
+    path.resolve(process.cwd(), '../../internal/plugins/typescript/rules'),
+    path.resolve(process.cwd(), '../../../internal/plugins/typescript/rules'),
+    path.resolve(process.cwd(), 'internal/plugins/typescript/rules'),
+  ];
+
+  for (const candidate of candidates) {
+    if (!fs.existsSync(candidate)) {
+      continue;
+    }
+
+    const names = new Set(
+      fs
+        .readdirSync(candidate, { withFileTypes: true })
+        .filter(entry => entry.isDirectory())
+        .map(entry => entry.name.replaceAll('_', '-')),
+    );
+    cachedKnownRuleNames = names;
+    return names;
+  }
+
+  cachedKnownRuleNames = new Set();
+  return cachedKnownRuleNames;
+}
+
+function resolveCanonicalRuleName(runLabel: string): string {
+  const known = getKnownRuleNames();
+  if (known.size === 0 || known.has(runLabel)) {
+    return runLabel;
+  }
+
+  let candidate = runLabel;
+  while (candidate.includes('-')) {
+    candidate = candidate.slice(0, candidate.lastIndexOf('-'));
+    if (known.has(candidate)) {
+      return candidate;
+    }
+  }
+
+  return runLabel;
+}
+
 const rootDir: string = getTypescriptEslintFixturesRootDir();
 const defaultRuleTesterOptions: RuleTesterOptions = {
   languageOptions: {
@@ -142,8 +282,11 @@ export class RuleTester {
       invalid: InvalidTestCase[];
     },
   ) {
-    describe(ruleName, () => {
-      ruleName = '@typescript-eslint/' + ruleName;
+    const suiteName = ruleName;
+    const normalizedRuleName = ruleName.trim().split(/\s+/)[0] || ruleName;
+    const canonicalRuleName = resolveCanonicalRuleName(normalizedRuleName);
+    describe(suiteName, () => {
+      ruleName = '@typescript-eslint/' + canonicalRuleName;
       let cwd =
         this.options.languageOptions?.parserOptions?.tsconfigRootDir ||
         process.cwd();
@@ -173,17 +316,28 @@ export class RuleTester {
           }
           const code =
             typeof validCase === 'string' ? validCase : validCase.code;
-          const languageOptions =
+          const caseLanguageOptions =
             typeof validCase === 'string'
               ? undefined
               : validCase.languageOptions;
+          const languageOptions = mergeLanguageOptions(
+            this.options.languageOptions,
+            caseLanguageOptions,
+          );
           const isJSX = languageOptions?.parserOptions?.ecmaFeatures?.jsx;
+          const caseTsconfigRootDir =
+            languageOptions?.parserOptions?.tsconfigRootDir;
+          const virtualBaseDir = caseTsconfigRootDir || cwd;
+          const useProjectFixtureFile =
+            !!caseTsconfigRootDir && caseTsconfigRootDir !== cwd;
 
           const options =
             typeof validCase === 'string' ? [] : validCase.options || [];
-          let virtual_entry = path.resolve(
-            cwd,
-            isJSX ? 'virtual.tsx' : 'virtual.ts',
+          let virtual_entry = resolveVirtualEntry(
+            virtualBaseDir,
+            useProjectFixtureFile,
+            isJSX,
+            typeof validCase === 'string' ? undefined : validCase.filename,
           );
           // workaround for this hardcoded path https://github.com/typescript-eslint/typescript-eslint/blob/main/packages/eslint-plugin/tests/rules/no-floating-promises.test.ts#L712
           if (Array.isArray(options)) {
@@ -206,7 +360,7 @@ export class RuleTester {
             ruleOptions: {
               [ruleName]: options,
             },
-            languageOptions,
+            languageOptions: toRslintLanguageOptions(languageOptions),
           });
 
           assert(
@@ -231,23 +385,35 @@ export class RuleTester {
           if (hasOnly && !only) {
             continue;
           }
-          const languageOptions = item.languageOptions;
-          const isJSX = languageOptions?.parserOptions?.ecmaFeatures?.jsx;
-          const test_virtual_entry = path.resolve(
-            cwd,
-            isJSX ? 'virtual.tsx' : 'virtual.ts',
+          const languageOptions = mergeLanguageOptions(
+            this.options.languageOptions,
+            item.languageOptions,
           );
-          const diags = await lint({
-            config,
-            workingDirectory: cwd,
-            fileContents: {
-              [test_virtual_entry]: code,
-            },
-            ruleOptions: {
-              [ruleName]: options,
-            },
-            languageOptions,
-          });
+          const isJSX = languageOptions?.parserOptions?.ecmaFeatures?.jsx;
+          const caseTsconfigRootDir =
+            languageOptions?.parserOptions?.tsconfigRootDir;
+          const virtualBaseDir = caseTsconfigRootDir || cwd;
+          const useProjectFixtureFile =
+            !!caseTsconfigRootDir && caseTsconfigRootDir !== cwd;
+          const test_virtual_entry = resolveVirtualEntry(
+            virtualBaseDir,
+            useProjectFixtureFile,
+            isJSX,
+            item.filename,
+          );
+          const lintCase = async (caseCode: string) =>
+            lint({
+              config,
+              workingDirectory: cwd,
+              fileContents: {
+                [test_virtual_entry]: caseCode,
+              },
+              ruleOptions: {
+                [ruleName]: options,
+              },
+              languageOptions: toRslintLanguageOptions(languageOptions),
+            });
+          const diags = await lintCase(code);
 
           assert(
             diags.diagnostics?.length > 0,
@@ -255,17 +421,44 @@ export class RuleTester {
           );
           // eslint-disable-next-line
           checkDiagnosticEqual(diags.diagnostics, errors);
-          if (output) {
-            // check autofix
+          const outputs: string[] = [];
+          let currentCode = code;
+          let currentDiagnostics = diags.diagnostics ?? [];
+          for (let pass = 0; pass < 10; pass++) {
             const fixedCode = await applyFixes({
-              fileContent: code,
-              diagnostics: diags.diagnostics,
+              fileContent: currentCode,
+              diagnostics: currentDiagnostics,
             });
-            if (Array.isArray(output)) {
-              // skip for now, because the current implementation of autofix is different from typescript-eslint
-              // expect(fixedCode.fixedContent).toEqual(output);
+            const fixedOutputs = fixedCode.fixedContent ?? [];
+            if (fixedOutputs.length === 0) {
+              break;
+            }
+            const nextCode = fixedOutputs[fixedOutputs.length - 1];
+            if (nextCode === currentCode) {
+              break;
+            }
+            currentCode = nextCode;
+            outputs.push(nextCode);
+            const nextDiagnostics = await lintCase(currentCode);
+            currentDiagnostics = nextDiagnostics.diagnostics ?? [];
+            if (currentDiagnostics.length === 0) {
+              break;
+            }
+          }
+
+          const hasOutput = Object.prototype.hasOwnProperty.call(item, 'output');
+          if (hasOutput) {
+            if (output == null) {
+              if (outputs.length) {
+                expect(outputs[0]).toBe(code);
+              }
+            } else if (Array.isArray(output)) {
+              expect(outputs.length).toBeGreaterThan(0);
+              expect(outputs).toEqual(output);
             } else {
-              // expect(fixedCode.fixedContent[0]).toEqual(output);
+              expect(outputs.length).toBeGreaterThan(0);
+              expect(outputs[0]).toBe(output);
+              expect(outputs).toEqual([output]);
             }
 
             expect(
@@ -276,6 +469,10 @@ export class RuleTester {
               }),
             ).toMatchSnapshot();
           } else {
+            assert(
+              outputs.length === 0 || outputs[0] === code,
+              "The rule fixed the code. Please add 'output' property.",
+            );
             expect(filterSnapshot({ ...diags, code })).toMatchSnapshot();
           }
         }
@@ -288,9 +485,7 @@ function filterSnapshot(
   diags: LintResponse & { output?: string | string[] | null; code?: string },
 ): LintResponse {
   for (const diag of diags.diagnostics ?? []) {
-    // @ts-ignore
     delete diag.filePath;
-    // @ts-ignore
     delete diag.fixes;
   }
   return diags;

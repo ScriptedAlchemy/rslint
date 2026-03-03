@@ -5,7 +5,7 @@ exports[`prefer-namespace-keyword > invalid 1`] = `
   "code": "module foo {}",
   "diagnostics": [
     {
-      "message": "Use 'namespace' instead of 'module' to declare custom TypeScript modules.",
+      "message": "Use the namespace keyword instead of module.",
       "messageId": "useNamespace",
       "range": {
         "end": {
@@ -32,7 +32,7 @@ exports[`prefer-namespace-keyword > invalid 2`] = `
   "code": "declare module foo {}",
   "diagnostics": [
     {
-      "message": "Use 'namespace' instead of 'module' to declare custom TypeScript modules.",
+      "message": "Use the namespace keyword instead of module.",
       "messageId": "useNamespace",
       "range": {
         "end": {
@@ -63,7 +63,7 @@ declare module foo {
       ",
   "diagnostics": [
     {
-      "message": "Use 'namespace' instead of 'module' to declare custom TypeScript modules.",
+      "message": "Use the namespace keyword instead of module.",
       "messageId": "useNamespace",
       "range": {
         "end": {
@@ -78,7 +78,7 @@ declare module foo {
       "ruleName": "@typescript-eslint/prefer-namespace-keyword",
     },
     {
-      "message": "Use 'namespace' instead of 'module' to declare custom TypeScript modules.",
+      "message": "Use the namespace keyword instead of module.",
       "messageId": "useNamespace",
       "range": {
         "end": {

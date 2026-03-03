@@ -1,0 +1,31 @@
+// Rstest Snapshot v1
+
+exports[`no-unused-private-class-members > invalid 1`] = `
+{
+  "code": "
+class A {
+  #value = 1;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Private class member '##value' is declared but never used.",
+      "messageId": "unusedPrivateClassMember",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 3,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unused-private-class-members",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;

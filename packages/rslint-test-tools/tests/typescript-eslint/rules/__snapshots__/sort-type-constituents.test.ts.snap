@@ -1,0 +1,971 @@
+// Rstest Snapshot v1
+
+exports[`sort-type-constituents > invalid 1`] = `
+{
+  "code": "type T = B | A;",
+  "diagnostics": [
+    {
+      "message": "Union type T constituents must be sorted.",
+      "messageId": "notSortedNamed",
+      "range": {
+        "end": {
+          "column": 15,
+          "line": 1,
+        },
+        "start": {
+          "column": 10,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "type T = A | B;",
+  "ruleCount": 1,
+}
+`;
+
+exports[`sort-type-constituents > invalid 2`] = `
+{
+  "code": "type T = 'B' | 'A';",
+  "diagnostics": [
+    {
+      "message": "Union type T constituents must be sorted.",
+      "messageId": "notSortedNamed",
+      "range": {
+        "end": {
+          "column": 19,
+          "line": 1,
+        },
+        "start": {
+          "column": 10,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "type T = 'A' | 'B';",
+  "ruleCount": 1,
+}
+`;
+
+exports[`sort-type-constituents > invalid 3`] = `
+{
+  "code": "type T = 2 | 1;",
+  "diagnostics": [
+    {
+      "message": "Union type T constituents must be sorted.",
+      "messageId": "notSortedNamed",
+      "range": {
+        "end": {
+          "column": 15,
+          "line": 1,
+        },
+        "start": {
+          "column": 10,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "type T = 1 | 2;",
+  "ruleCount": 1,
+}
+`;
+
+exports[`sort-type-constituents > invalid 4`] = `
+{
+  "code": "type T = (B) | (A);",
+  "diagnostics": [
+    {
+      "message": "Union type T constituents must be sorted.",
+      "messageId": "notSortedNamed",
+      "range": {
+        "end": {
+          "column": 19,
+          "line": 1,
+        },
+        "start": {
+          "column": 10,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "type T = A | B;",
+  "ruleCount": 1,
+}
+`;
+
+exports[`sort-type-constituents > invalid 5`] = `
+{
+  "code": "type T = { b: string } | { a: string };",
+  "diagnostics": [
+    {
+      "message": "Union type T constituents must be sorted.",
+      "messageId": "notSortedNamed",
+      "range": {
+        "end": {
+          "column": 39,
+          "line": 1,
+        },
+        "start": {
+          "column": 10,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "type T = { a: string } | { b: string };",
+  "ruleCount": 1,
+}
+`;
+
+exports[`sort-type-constituents > invalid 6`] = `
+{
+  "code": "type T = [1, 2, 4] | [1, 2, 3];",
+  "diagnostics": [
+    {
+      "message": "Union type T constituents must be sorted.",
+      "messageId": "notSortedNamed",
+      "range": {
+        "end": {
+          "column": 31,
+          "line": 1,
+        },
+        "start": {
+          "column": 10,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "type T = [1, 2, 3] | [1, 2, 4];",
+  "ruleCount": 1,
+}
+`;
+
+exports[`sort-type-constituents > invalid 7`] = `
+{
+  "code": "type T = (() => void) | (() => string);",
+  "diagnostics": [
+    {
+      "message": "Union type T constituents must be sorted.",
+      "messageId": "notSortedNamed",
+      "range": {
+        "end": {
+          "column": 39,
+          "line": 1,
+        },
+        "start": {
+          "column": 10,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "type T = (() => string) | (() => void);",
+  "ruleCount": 1,
+}
+`;
+
+exports[`sort-type-constituents > invalid 8`] = `
+{
+  "code": "type T = () => void | string;",
+  "diagnostics": [
+    {
+      "message": "Union type constituents must be sorted.",
+      "messageId": "notSorted",
+      "range": {
+        "end": {
+          "column": 29,
+          "line": 1,
+        },
+        "start": {
+          "column": 16,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "type T = () => string | void;",
+  "ruleCount": 1,
+}
+`;
+
+exports[`sort-type-constituents > invalid 9`] = `
+{
+  "code": "type T = () => undefined | null;",
+  "diagnostics": [
+    {
+      "message": "Union type constituents must be sorted.",
+      "messageId": "notSorted",
+      "range": {
+        "end": {
+          "column": 32,
+          "line": 1,
+        },
+        "start": {
+          "column": 16,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "type T = () => null | undefined;",
+  "ruleCount": 1,
+}
+`;
+
+exports[`sort-type-constituents > invalid 10`] = `
+{
+  "code": "
+type T =
+  | [1, 2, 4]
+  | [1, 2, 3]
+  | { b: string }
+  | { a: string }
+  | (() => void)
+  | (() => string)
+  | "b"
+  | "a"
+  | 'b'
+  | 'a'
+  | readonly string[]
+  | readonly number[]
+  | string[]
+  | number[]
+  | D.E
+  | C.D
+  | B
+  | A
+  | undefined
+  | null
+  | string
+  | any;
+      ",
+  "diagnostics": [
+    {
+      "message": "Union type T constituents must be sorted.",
+      "messageId": "notSortedNamed",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 24,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+type T =
+  A | B | C.D | D.E | number[] | string[] | any | string | readonly number[] | readonly string[] | 'a' | 'b' | "a" | "b" | (() => string) | (() => void) | { a: string } | { b: string } | [1, 2, 3] | [1, 2, 4] | null | undefined;
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`sort-type-constituents > invalid 11`] = `
+{
+  "code": "type T = B | /* comment */ A;",
+  "diagnostics": [
+    {
+      "message": "Union type T constituents must be sorted.",
+      "messageId": "notSortedNamed",
+      "range": {
+        "end": {
+          "column": 29,
+          "line": 1,
+        },
+        "start": {
+          "column": 10,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`sort-type-constituents > invalid 12`] = `
+{
+  "code": "type T = (() => /* comment */ A) | B;",
+  "diagnostics": [
+    {
+      "message": "Union type T constituents must be sorted.",
+      "messageId": "notSortedNamed",
+      "range": {
+        "end": {
+          "column": 37,
+          "line": 1,
+        },
+        "start": {
+          "column": 10,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "type T = B | (() => /* comment */ A);",
+  "ruleCount": 1,
+}
+`;
+
+exports[`sort-type-constituents > invalid 13`] = `
+{
+  "code": "type Expected = (new (x: number) => boolean) | string;",
+  "diagnostics": [
+    {
+      "message": "Union type Expected constituents must be sorted.",
+      "messageId": "notSortedNamed",
+      "range": {
+        "end": {
+          "column": 54,
+          "line": 1,
+        },
+        "start": {
+          "column": 17,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "type Expected = string | (new (x: number) => boolean);",
+  "ruleCount": 1,
+}
+`;
+
+exports[`sort-type-constituents > invalid 14`] = `
+{
+  "code": "type T = (| A) | B;",
+  "diagnostics": [
+    {
+      "message": "Union type T constituents must be sorted.",
+      "messageId": "notSortedNamed",
+      "range": {
+        "end": {
+          "column": 19,
+          "line": 1,
+        },
+        "start": {
+          "column": 10,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "type T = B | (| A);",
+  "ruleCount": 1,
+}
+`;
+
+exports[`sort-type-constituents > invalid 15`] = `
+{
+  "code": "type T = (& A) | B;",
+  "diagnostics": [
+    {
+      "message": "Union type T constituents must be sorted.",
+      "messageId": "notSortedNamed",
+      "range": {
+        "end": {
+          "column": 19,
+          "line": 1,
+        },
+        "start": {
+          "column": 10,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "type T = B | (& A);",
+  "ruleCount": 1,
+}
+`;
+
+exports[`sort-type-constituents > invalid 16`] = `
+{
+  "code": "type T = B & A;",
+  "diagnostics": [
+    {
+      "message": "Intersection type T constituents must be sorted.",
+      "messageId": "notSortedNamed",
+      "range": {
+        "end": {
+          "column": 15,
+          "line": 1,
+        },
+        "start": {
+          "column": 10,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "type T = A & B;",
+  "ruleCount": 1,
+}
+`;
+
+exports[`sort-type-constituents > invalid 17`] = `
+{
+  "code": "type T = 'B' & 'A';",
+  "diagnostics": [
+    {
+      "message": "Intersection type T constituents must be sorted.",
+      "messageId": "notSortedNamed",
+      "range": {
+        "end": {
+          "column": 19,
+          "line": 1,
+        },
+        "start": {
+          "column": 10,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "type T = 'A' & 'B';",
+  "ruleCount": 1,
+}
+`;
+
+exports[`sort-type-constituents > invalid 18`] = `
+{
+  "code": "type T = 2 & 1;",
+  "diagnostics": [
+    {
+      "message": "Intersection type T constituents must be sorted.",
+      "messageId": "notSortedNamed",
+      "range": {
+        "end": {
+          "column": 15,
+          "line": 1,
+        },
+        "start": {
+          "column": 10,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "type T = 1 & 2;",
+  "ruleCount": 1,
+}
+`;
+
+exports[`sort-type-constituents > invalid 19`] = `
+{
+  "code": "type T = (B) & (A);",
+  "diagnostics": [
+    {
+      "message": "Intersection type T constituents must be sorted.",
+      "messageId": "notSortedNamed",
+      "range": {
+        "end": {
+          "column": 19,
+          "line": 1,
+        },
+        "start": {
+          "column": 10,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "type T = A & B;",
+  "ruleCount": 1,
+}
+`;
+
+exports[`sort-type-constituents > invalid 20`] = `
+{
+  "code": "type T = { b: string } & { a: string };",
+  "diagnostics": [
+    {
+      "message": "Intersection type T constituents must be sorted.",
+      "messageId": "notSortedNamed",
+      "range": {
+        "end": {
+          "column": 39,
+          "line": 1,
+        },
+        "start": {
+          "column": 10,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "type T = { a: string } & { b: string };",
+  "ruleCount": 1,
+}
+`;
+
+exports[`sort-type-constituents > invalid 21`] = `
+{
+  "code": "type T = [1, 2, 4] & [1, 2, 3];",
+  "diagnostics": [
+    {
+      "message": "Intersection type T constituents must be sorted.",
+      "messageId": "notSortedNamed",
+      "range": {
+        "end": {
+          "column": 31,
+          "line": 1,
+        },
+        "start": {
+          "column": 10,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "type T = [1, 2, 3] & [1, 2, 4];",
+  "ruleCount": 1,
+}
+`;
+
+exports[`sort-type-constituents > invalid 22`] = `
+{
+  "code": "type T = (() => void) & (() => string);",
+  "diagnostics": [
+    {
+      "message": "Intersection type T constituents must be sorted.",
+      "messageId": "notSortedNamed",
+      "range": {
+        "end": {
+          "column": 39,
+          "line": 1,
+        },
+        "start": {
+          "column": 10,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "type T = (() => string) & (() => void);",
+  "ruleCount": 1,
+}
+`;
+
+exports[`sort-type-constituents > invalid 23`] = `
+{
+  "code": "type T = () => void & string;",
+  "diagnostics": [
+    {
+      "message": "Intersection type constituents must be sorted.",
+      "messageId": "notSorted",
+      "range": {
+        "end": {
+          "column": 29,
+          "line": 1,
+        },
+        "start": {
+          "column": 16,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "type T = () => string & void;",
+  "ruleCount": 1,
+}
+`;
+
+exports[`sort-type-constituents > invalid 24`] = `
+{
+  "code": "type T = () => undefined & null;",
+  "diagnostics": [
+    {
+      "message": "Intersection type constituents must be sorted.",
+      "messageId": "notSorted",
+      "range": {
+        "end": {
+          "column": 32,
+          "line": 1,
+        },
+        "start": {
+          "column": 16,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "type T = () => null & undefined;",
+  "ruleCount": 1,
+}
+`;
+
+exports[`sort-type-constituents > invalid 25`] = `
+{
+  "code": "
+type T =
+  & [1, 2, 4]
+  & [1, 2, 3]
+  & { b: string }
+  & { a: string }
+  & (() => void)
+  & (() => string)
+  & "b"
+  & "a"
+  & 'b'
+  & 'a'
+  & readonly string[]
+  & readonly number[]
+  & string[]
+  & number[]
+  & D.E
+  & C.D
+  & B
+  & A
+  & undefined
+  & null
+  & string
+  & any;
+      ",
+  "diagnostics": [
+    {
+      "message": "Intersection type T constituents must be sorted.",
+      "messageId": "notSortedNamed",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 24,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+type T =
+  A & B & C.D & D.E & number[] & string[] & any & string & readonly number[] & readonly string[] & 'a' & 'b' & "a" & "b" & (() => string) & (() => void) & { a: string } & { b: string } & [1, 2, 3] & [1, 2, 4] & null & undefined;
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`sort-type-constituents > invalid 26`] = `
+{
+  "code": "type T = B & /* comment */ A;",
+  "diagnostics": [
+    {
+      "message": "Intersection type T constituents must be sorted.",
+      "messageId": "notSortedNamed",
+      "range": {
+        "end": {
+          "column": 29,
+          "line": 1,
+        },
+        "start": {
+          "column": 10,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`sort-type-constituents > invalid 27`] = `
+{
+  "code": "type T = (() => /* comment */ A) & B;",
+  "diagnostics": [
+    {
+      "message": "Intersection type T constituents must be sorted.",
+      "messageId": "notSortedNamed",
+      "range": {
+        "end": {
+          "column": 37,
+          "line": 1,
+        },
+        "start": {
+          "column": 10,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "type T = B & (() => /* comment */ A);",
+  "ruleCount": 1,
+}
+`;
+
+exports[`sort-type-constituents > invalid 28`] = `
+{
+  "code": "type Expected = (new (x: number) => boolean) & string;",
+  "diagnostics": [
+    {
+      "message": "Intersection type Expected constituents must be sorted.",
+      "messageId": "notSortedNamed",
+      "range": {
+        "end": {
+          "column": 54,
+          "line": 1,
+        },
+        "start": {
+          "column": 17,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "type Expected = string & (new (x: number) => boolean);",
+  "ruleCount": 1,
+}
+`;
+
+exports[`sort-type-constituents > invalid 29`] = `
+{
+  "code": "type T = (| A) & B;",
+  "diagnostics": [
+    {
+      "message": "Intersection type T constituents must be sorted.",
+      "messageId": "notSortedNamed",
+      "range": {
+        "end": {
+          "column": 19,
+          "line": 1,
+        },
+        "start": {
+          "column": 10,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "type T = B & (| A);",
+  "ruleCount": 1,
+}
+`;
+
+exports[`sort-type-constituents > invalid 30`] = `
+{
+  "code": "type T = (& A) & B;",
+  "diagnostics": [
+    {
+      "message": "Intersection type T constituents must be sorted.",
+      "messageId": "notSortedNamed",
+      "range": {
+        "end": {
+          "column": 19,
+          "line": 1,
+        },
+        "start": {
+          "column": 10,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "type T = B & (& A);",
+  "ruleCount": 1,
+}
+`;
+
+exports[`sort-type-constituents > invalid 31`] = `
+{
+  "code": "type T = (B | C) & A;",
+  "diagnostics": [
+    {
+      "message": "Intersection type T constituents must be sorted.",
+      "messageId": "notSortedNamed",
+      "range": {
+        "end": {
+          "column": 21,
+          "line": 1,
+        },
+        "start": {
+          "column": 10,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "type T = A & (B | C);",
+  "ruleCount": 1,
+}
+`;
+
+exports[`sort-type-constituents > invalid 32`] = `
+{
+  "code": "type A<T> = (T extends number ? 'hi' : 'there') | string;",
+  "diagnostics": [
+    {
+      "message": "Union type A constituents must be sorted.",
+      "messageId": "notSortedNamed",
+      "range": {
+        "end": {
+          "column": 57,
+          "line": 1,
+        },
+        "start": {
+          "column": 13,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "type A<T> = string | (T extends number ? 'hi' : 'there');",
+  "ruleCount": 1,
+}
+`;
+
+exports[`sort-type-constituents > invalid 33`] = `
+{
+  "code": "type T = 'DeletedAt' | 'DeleteForever';",
+  "diagnostics": [
+    {
+      "message": "Union type T constituents must be sorted.",
+      "messageId": "notSortedNamed",
+      "range": {
+        "end": {
+          "column": 39,
+          "line": 1,
+        },
+        "start": {
+          "column": 10,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "type T = 'DeleteForever' | 'DeletedAt';",
+  "ruleCount": 1,
+}
+`;
+
+exports[`sort-type-constituents > invalid 34`] = `
+{
+  "code": "type T = { a: string } | { A: string } | { B: string };",
+  "diagnostics": [
+    {
+      "message": "Union type T constituents must be sorted.",
+      "messageId": "notSortedNamed",
+      "range": {
+        "end": {
+          "column": 55,
+          "line": 1,
+        },
+        "start": {
+          "column": 10,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "type T = { A: string } | { B: string } | { a: string };",
+  "ruleCount": 1,
+}
+`;

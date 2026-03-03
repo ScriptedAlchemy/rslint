@@ -15,8 +15,8 @@ func TestConsistentTypeImportsRule(t *testing.T) {
 		{Code: `import Foo from 'foo'; class Bar extends Foo {}`},
 
 		// Named imports with mixed usage
-		{Code: `import { A, B } from 'foo'; const a: A = B();`},
-		{Code: `import { A, B } from 'foo'; const a = A; type T = B;`},
+		{Code: `import { type A, B } from 'foo'; const a: A = B();`},
+		{Code: `import { A, type B } from 'foo'; const a = A; type T = B;`},
 
 		// Empty imports
 		{Code: `import {} from 'foo';`},
@@ -86,6 +86,14 @@ func TestConsistentTypeImportsRule(t *testing.T) {
 				{MessageId: "noImportTypeAnnotations"},
 			},
 		},
+		{
+			Code: `import { A, B } from 'foo'; const foo: A = B();`,
+			Errors: []rule_tester.InvalidTestCaseError{
+				{MessageId: "someImportsAreOnlyTypes"},
+			},
+			Output: []string{`import type { A} from 'foo';
+import { B } from 'foo'; const foo: A = B();`},
+		},
 
 		// Options: prefer: 'no-type-imports'
 		{
@@ -94,6 +102,7 @@ func TestConsistentTypeImportsRule(t *testing.T) {
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "avoidImportType"},
 			},
+			Output: []string{`import Foo from 'foo'; type T = Foo;`},
 		},
 		{
 			Code:    `import type { A } from 'foo'; type T = A;`,
@@ -101,6 +110,7 @@ func TestConsistentTypeImportsRule(t *testing.T) {
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "avoidImportType"},
 			},
+			Output: []string{`import { A } from 'foo'; type T = A;`},
 		},
 		{
 			Code:    `import type * as Foo from 'foo'; type T = Foo.Bar;`,
@@ -108,6 +118,7 @@ func TestConsistentTypeImportsRule(t *testing.T) {
 			Errors: []rule_tester.InvalidTestCaseError{
 				{MessageId: "avoidImportType"},
 			},
+			Output: []string{`import * as Foo from 'foo'; type T = Foo.Bar;`},
 		},
 	})
 }

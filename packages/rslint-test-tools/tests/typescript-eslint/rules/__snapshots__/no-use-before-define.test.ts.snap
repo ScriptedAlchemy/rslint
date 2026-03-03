@@ -1,0 +1,1903 @@
+// Rstest Snapshot v1
+
+exports[`no-use-before-define > invalid 1`] = `
+{
+  "code": "
+a++;
+var a = 19;
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 2,
+          "line": 2,
+        },
+        "start": {
+          "column": 1,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 2`] = `
+{
+  "code": "
+a++;
+var a = 19;
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 2,
+          "line": 2,
+        },
+        "start": {
+          "column": 1,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 3`] = `
+{
+  "code": "
+a++;
+var a = 19;
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 2,
+          "line": 2,
+        },
+        "start": {
+          "column": 1,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 4`] = `
+{
+  "code": "
+a();
+var a = function () {};
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 2,
+          "line": 2,
+        },
+        "start": {
+          "column": 1,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 5`] = `
+{
+  "code": "
+alert(a[1]);
+var a = [1, 3];
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 2,
+        },
+        "start": {
+          "column": 7,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 6`] = `
+{
+  "code": "
+a();
+function a() {
+  alert(b);
+  var b = 10;
+  a();
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 2,
+          "line": 2,
+        },
+        "start": {
+          "column": 1,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+    {
+      "message": "'b' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 4,
+        },
+        "start": {
+          "column": 9,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 7`] = `
+{
+  "code": "
+a();
+var a = function () {};
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 2,
+          "line": 2,
+        },
+        "start": {
+          "column": 1,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 8`] = `
+{
+  "code": "
+(() => {
+  alert(a);
+  var a = 42;
+})();
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 3,
+        },
+        "start": {
+          "column": 9,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 9`] = `
+{
+  "code": "
+(() => a())();
+function a() {}
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 9,
+          "line": 2,
+        },
+        "start": {
+          "column": 8,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 10`] = `
+{
+  "code": "
+a();
+try {
+  throw new Error();
+} catch (foo) {
+  var a;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 2,
+          "line": 2,
+        },
+        "start": {
+          "column": 1,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 11`] = `
+{
+  "code": "
+var f = () => a;
+var a;
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 16,
+          "line": 2,
+        },
+        "start": {
+          "column": 15,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 12`] = `
+{
+  "code": "
+new A();
+class A {}
+      ",
+  "diagnostics": [
+    {
+      "message": "'A' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 6,
+          "line": 2,
+        },
+        "start": {
+          "column": 5,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 13`] = `
+{
+  "code": "
+function foo() {
+  new A();
+}
+class A {}
+      ",
+  "diagnostics": [
+    {
+      "message": "'A' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 3,
+        },
+        "start": {
+          "column": 7,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 14`] = `
+{
+  "code": "
+new A();
+var A = class {};
+      ",
+  "diagnostics": [
+    {
+      "message": "'A' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 6,
+          "line": 2,
+        },
+        "start": {
+          "column": 5,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 15`] = `
+{
+  "code": "
+function foo() {
+  new A();
+}
+var A = class {};
+      ",
+  "diagnostics": [
+    {
+      "message": "'A' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 3,
+        },
+        "start": {
+          "column": 7,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 16`] = `
+{
+  "code": "
+a++;
+{
+  var a;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 2,
+          "line": 2,
+        },
+        "start": {
+          "column": 1,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 17`] = `
+{
+  "code": "
+'use strict';
+{
+  a();
+  function a() {}
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 4,
+        },
+        "start": {
+          "column": 3,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 18`] = `
+{
+  "code": "
+{
+  a;
+  let a = 1;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 4,
+          "line": 3,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 19`] = `
+{
+  "code": "
+switch (foo) {
+  case 1:
+    a();
+  default:
+    let a;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 6,
+          "line": 4,
+        },
+        "start": {
+          "column": 5,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 20`] = `
+{
+  "code": "
+if (true) {
+  function foo() {
+    a;
+  }
+  let a;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 6,
+          "line": 4,
+        },
+        "start": {
+          "column": 5,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 21`] = `
+{
+  "code": "
+a();
+var a = function () {};
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 2,
+          "line": 2,
+        },
+        "start": {
+          "column": 1,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 22`] = `
+{
+  "code": "
+new A();
+var A = class {};
+      ",
+  "diagnostics": [
+    {
+      "message": "'A' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 6,
+          "line": 2,
+        },
+        "start": {
+          "column": 5,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 23`] = `
+{
+  "code": "
+function foo() {
+  new A();
+}
+var A = class {};
+      ",
+  "diagnostics": [
+    {
+      "message": "'A' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 3,
+        },
+        "start": {
+          "column": 7,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 24`] = `
+{
+  "code": "var a = a;",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 1,
+        },
+        "start": {
+          "column": 9,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 25`] = `
+{
+  "code": "let a = a + b;",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 1,
+        },
+        "start": {
+          "column": 9,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 26`] = `
+{
+  "code": "const a = foo(a);",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 16,
+          "line": 1,
+        },
+        "start": {
+          "column": 15,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 27`] = `
+{
+  "code": "function foo(a = a) {}",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 19,
+          "line": 1,
+        },
+        "start": {
+          "column": 18,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 28`] = `
+{
+  "code": "var { a = a } = [];",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 12,
+          "line": 1,
+        },
+        "start": {
+          "column": 11,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 29`] = `
+{
+  "code": "var [a = a] = [];",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 11,
+          "line": 1,
+        },
+        "start": {
+          "column": 10,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 30`] = `
+{
+  "code": "var { b = a, a } = {};",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 12,
+          "line": 1,
+        },
+        "start": {
+          "column": 11,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 31`] = `
+{
+  "code": "var [b = a, a] = {};",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 11,
+          "line": 1,
+        },
+        "start": {
+          "column": 10,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 32`] = `
+{
+  "code": "var { a = 0 } = a;",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 18,
+          "line": 1,
+        },
+        "start": {
+          "column": 17,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 33`] = `
+{
+  "code": "var [a = 0] = a;",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 16,
+          "line": 1,
+        },
+        "start": {
+          "column": 15,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 34`] = `
+{
+  "code": "
+for (var a in a) {
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 16,
+          "line": 2,
+        },
+        "start": {
+          "column": 15,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 35`] = `
+{
+  "code": "
+for (var a of a) {
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 16,
+          "line": 2,
+        },
+        "start": {
+          "column": 15,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 36`] = `
+{
+  "code": "
+interface Bar {
+  type: typeof Foo;
+}
+
+const Foo = 2;
+      ",
+  "diagnostics": [
+    {
+      "message": "'Foo' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 19,
+          "line": 3,
+        },
+        "start": {
+          "column": 16,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 37`] = `
+{
+  "code": "
+interface Bar {
+  type: typeof Foo.FOO;
+}
+
+class Foo {
+  public static readonly FOO = '';
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'Foo' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 19,
+          "line": 3,
+        },
+        "start": {
+          "column": 16,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 38`] = `
+{
+  "code": "
+interface Bar {
+  type: typeof Foo.Bar.Baz;
+}
+
+const Foo = {
+  Bar: {
+    Baz: 1,
+  },
+};
+      ",
+  "diagnostics": [
+    {
+      "message": "'Foo' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 19,
+          "line": 3,
+        },
+        "start": {
+          "column": 16,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 39`] = `
+{
+  "code": "
+const foo = {
+  bar: 'bar',
+} satisfies {
+  bar: typeof baz;
+};
+
+const baz = '';
+      ",
+  "diagnostics": [
+    {
+      "message": "'baz' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 18,
+          "line": 5,
+        },
+        "start": {
+          "column": 15,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 40`] = `
+{
+  "code": "
+function foo() {
+  bar;
+  var bar = 1;
+}
+var bar;
+      ",
+  "diagnostics": [
+    {
+      "message": "'bar' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 6,
+          "line": 3,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 41`] = `
+{
+  "code": "
+class Test {
+  foo(args: Foo): Foo {
+    return Foo.FOO;
+  }
+}
+
+enum Foo {
+  FOO,
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'Foo' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 15,
+          "line": 4,
+        },
+        "start": {
+          "column": 12,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 42`] = `
+{
+  "code": "
+function foo(): Foo {
+  return Foo.FOO;
+}
+
+enum Foo {
+  FOO,
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'Foo' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 13,
+          "line": 3,
+        },
+        "start": {
+          "column": 10,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 43`] = `
+{
+  "code": "
+const foo = Foo.Foo;
+
+enum Foo {
+  FOO,
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'Foo' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 16,
+          "line": 2,
+        },
+        "start": {
+          "column": 13,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 44`] = `
+{
+  "code": "
+export { a };
+const a = 1;
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 11,
+          "line": 2,
+        },
+        "start": {
+          "column": 10,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 45`] = `
+{
+  "code": "
+export { a };
+const a = 1;
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 11,
+          "line": 2,
+        },
+        "start": {
+          "column": 10,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 46`] = `
+{
+  "code": "
+export { a };
+const a = 1;
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 11,
+          "line": 2,
+        },
+        "start": {
+          "column": 10,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 47`] = `
+{
+  "code": "
+export { a };
+const a = 1;
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 11,
+          "line": 2,
+        },
+        "start": {
+          "column": 10,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 48`] = `
+{
+  "code": "
+export { a as b };
+const a = 1;
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 11,
+          "line": 2,
+        },
+        "start": {
+          "column": 10,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 49`] = `
+{
+  "code": "
+export { a, b };
+let a, b;
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 11,
+          "line": 2,
+        },
+        "start": {
+          "column": 10,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+    {
+      "message": "'b' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 2,
+        },
+        "start": {
+          "column": 13,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 50`] = `
+{
+  "code": "
+export { a };
+var a;
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 11,
+          "line": 2,
+        },
+        "start": {
+          "column": 10,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 51`] = `
+{
+  "code": "
+export { f };
+function f() {}
+      ",
+  "diagnostics": [
+    {
+      "message": "'f' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 11,
+          "line": 2,
+        },
+        "start": {
+          "column": 10,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 52`] = `
+{
+  "code": "
+export { C };
+class C {}
+      ",
+  "diagnostics": [
+    {
+      "message": "'C' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 11,
+          "line": 2,
+        },
+        "start": {
+          "column": 10,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 53`] = `
+{
+  "code": "
+export const foo = a;
+const a = 1;
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 21,
+          "line": 2,
+        },
+        "start": {
+          "column": 20,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 54`] = `
+{
+  "code": "
+export function foo() {
+  return a;
+}
+const a = 1;
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 11,
+          "line": 3,
+        },
+        "start": {
+          "column": 10,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 55`] = `
+{
+  "code": "
+export class C {
+  foo() {
+    return a;
+  }
+}
+const a = 1;
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 13,
+          "line": 4,
+        },
+        "start": {
+          "column": 12,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 56`] = `
+{
+  "code": "
+export { Foo };
+
+enum Foo {
+  BAR,
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'Foo' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 13,
+          "line": 2,
+        },
+        "start": {
+          "column": 10,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 57`] = `
+{
+  "code": "
+export { Foo };
+
+namespace Foo {
+  export let bar = () => console.log('bar');
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'Foo' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 13,
+          "line": 2,
+        },
+        "start": {
+          "column": 10,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 58`] = `
+{
+  "code": "
+export { Foo, baz };
+
+enum Foo {
+  BAR,
+}
+
+let baz: Enum;
+enum Enum {}
+      ",
+  "diagnostics": [
+    {
+      "message": "'Foo' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 13,
+          "line": 2,
+        },
+        "start": {
+          "column": 10,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+    {
+      "message": "'baz' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 18,
+          "line": 2,
+        },
+        "start": {
+          "column": 15,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 59`] = `
+{
+  "code": "
+f();
+function f() {}
+      ",
+  "diagnostics": [
+    {
+      "message": "'f' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 2,
+          "line": 2,
+        },
+        "start": {
+          "column": 1,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 60`] = `
+{
+  "code": "
+alert(a);
+var a = 10;
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 2,
+        },
+        "start": {
+          "column": 7,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 61`] = `
+{
+  "code": "
+f()?.();
+function f() {
+  return function t() {};
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "'f' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 2,
+          "line": 2,
+        },
+        "start": {
+          "column": 1,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 62`] = `
+{
+  "code": "
+alert(a?.b);
+var a = { b: 5 };
+      ",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 2,
+        },
+        "start": {
+          "column": 7,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;

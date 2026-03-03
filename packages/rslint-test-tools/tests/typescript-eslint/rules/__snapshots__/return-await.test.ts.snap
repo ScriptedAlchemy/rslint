@@ -1,0 +1,1803 @@
+// Rstest Snapshot v1
+
+exports[`return-await > invalid 1`] = `
+{
+  "code": "
+        async function test() {
+          return await 1;
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited value that is not a promise is not allowed.",
+      "messageId": "nonPromiseAwait",
+      "range": {
+        "end": {
+          "column": 25,
+          "line": 3,
+        },
+        "start": {
+          "column": 18,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+        async function test() {
+          return 1;
+        }
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 2`] = `
+{
+  "code": "
+        async function test() {
+          const foo = 1;
+          return await { foo };
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited value that is not a promise is not allowed.",
+      "messageId": "nonPromiseAwait",
+      "range": {
+        "end": {
+          "column": 31,
+          "line": 4,
+        },
+        "start": {
+          "column": 18,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+        async function test() {
+          const foo = 1;
+          return { foo };
+        }
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 3`] = `
+{
+  "code": "
+        async function test() {
+          const foo = 1;
+          return await foo;
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited value that is not a promise is not allowed.",
+      "messageId": "nonPromiseAwait",
+      "range": {
+        "end": {
+          "column": 27,
+          "line": 4,
+        },
+        "start": {
+          "column": 18,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+        async function test() {
+          const foo = 1;
+          return foo;
+        }
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 4`] = `
+{
+  "code": "const test = async () => await 1;",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited value that is not a promise is not allowed.",
+      "messageId": "nonPromiseAwait",
+      "range": {
+        "end": {
+          "column": 33,
+          "line": 1,
+        },
+        "start": {
+          "column": 26,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "const test = async () => 1;",
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 5`] = `
+{
+  "code": "const test = async () => await /* comment */ 1;",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited value that is not a promise is not allowed.",
+      "messageId": "nonPromiseAwait",
+      "range": {
+        "end": {
+          "column": 47,
+          "line": 1,
+        },
+        "start": {
+          "column": 26,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "const test = async () => /* comment */ 1;",
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 6`] = `
+{
+  "code": "const test = async () => await Promise.resolve(1);",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited promise is not allowed in this context.",
+      "messageId": "disallowedPromiseAwait",
+      "range": {
+        "end": {
+          "column": 50,
+          "line": 1,
+        },
+        "start": {
+          "column": 26,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "const test = async () => Promise.resolve(1);",
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 7`] = `
+{
+  "code": "
+        async function test() {
+          try {
+            return Promise.resolve(1);
+          } catch (e) {
+            return Promise.resolve(2);
+          } finally {
+            console.log('cleanup');
+          }
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited promise is required in this context.",
+      "messageId": "requiredPromiseAwait",
+      "range": {
+        "end": {
+          "column": 38,
+          "line": 4,
+        },
+        "start": {
+          "column": 20,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+    {
+      "message": "Returning an awaited promise is required in this context.",
+      "messageId": "requiredPromiseAwait",
+      "range": {
+        "end": {
+          "column": 38,
+          "line": 6,
+        },
+        "start": {
+          "column": 20,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 8`] = `
+{
+  "code": "
+        async function test() {
+          try {
+            return Promise.resolve(1);
+          } catch (e) {
+            return Promise.resolve(2);
+          } finally {
+            console.log('cleanup');
+          }
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited promise is required in this context.",
+      "messageId": "requiredPromiseAwait",
+      "range": {
+        "end": {
+          "column": 38,
+          "line": 4,
+        },
+        "start": {
+          "column": 20,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+    {
+      "message": "Returning an awaited promise is required in this context.",
+      "messageId": "requiredPromiseAwait",
+      "range": {
+        "end": {
+          "column": 38,
+          "line": 6,
+        },
+        "start": {
+          "column": 20,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 9`] = `
+{
+  "code": "
+        async function test() {
+          try {
+            return Promise.resolve(1);
+          } catch (e) {
+            return Promise.resolve(2);
+          } finally {
+            console.log('cleanup');
+          }
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited promise is required in this context.",
+      "messageId": "requiredPromiseAwait",
+      "range": {
+        "end": {
+          "column": 38,
+          "line": 4,
+        },
+        "start": {
+          "column": 20,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+    {
+      "message": "Returning an awaited promise is required in this context.",
+      "messageId": "requiredPromiseAwait",
+      "range": {
+        "end": {
+          "column": 38,
+          "line": 6,
+        },
+        "start": {
+          "column": 20,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 10`] = `
+{
+  "code": "
+        async function test() {
+          return await Promise.resolve(1);
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited promise is not allowed in this context.",
+      "messageId": "disallowedPromiseAwait",
+      "range": {
+        "end": {
+          "column": 42,
+          "line": 3,
+        },
+        "start": {
+          "column": 18,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+        async function test() {
+          return Promise.resolve(1);
+        }
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 11`] = `
+{
+  "code": "
+        async function test() {
+          return await 1;
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited value that is not a promise is not allowed.",
+      "messageId": "nonPromiseAwait",
+      "range": {
+        "end": {
+          "column": 25,
+          "line": 3,
+        },
+        "start": {
+          "column": 18,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+        async function test() {
+          return 1;
+        }
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 12`] = `
+{
+  "code": "const test = async () => await 1;",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited value that is not a promise is not allowed.",
+      "messageId": "nonPromiseAwait",
+      "range": {
+        "end": {
+          "column": 33,
+          "line": 1,
+        },
+        "start": {
+          "column": 26,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "const test = async () => 1;",
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 13`] = `
+{
+  "code": "const test = async () => await Promise.resolve(1);",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited promise is not allowed in this context.",
+      "messageId": "disallowedPromiseAwait",
+      "range": {
+        "end": {
+          "column": 50,
+          "line": 1,
+        },
+        "start": {
+          "column": 26,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "const test = async () => Promise.resolve(1);",
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 14`] = `
+{
+  "code": "
+        async function test() {
+          return await Promise.resolve(1);
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited promise is not allowed in this context.",
+      "messageId": "disallowedPromiseAwait",
+      "range": {
+        "end": {
+          "column": 42,
+          "line": 3,
+        },
+        "start": {
+          "column": 18,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+        async function test() {
+          return Promise.resolve(1);
+        }
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 15`] = `
+{
+  "code": "
+        async function test() {
+          return await 1;
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited value that is not a promise is not allowed.",
+      "messageId": "nonPromiseAwait",
+      "range": {
+        "end": {
+          "column": 25,
+          "line": 3,
+        },
+        "start": {
+          "column": 18,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+        async function test() {
+          return 1;
+        }
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 16`] = `
+{
+  "code": "
+        async function test() {
+          try {
+            return await Promise.resolve(1);
+          } catch (e) {
+            return await Promise.resolve(2);
+          } finally {
+            console.log('cleanup');
+          }
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited promise is not allowed in this context.",
+      "messageId": "disallowedPromiseAwait",
+      "range": {
+        "end": {
+          "column": 44,
+          "line": 4,
+        },
+        "start": {
+          "column": 20,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+    {
+      "message": "Returning an awaited promise is not allowed in this context.",
+      "messageId": "disallowedPromiseAwait",
+      "range": {
+        "end": {
+          "column": 44,
+          "line": 6,
+        },
+        "start": {
+          "column": 20,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 17`] = `
+{
+  "code": "
+        async function test() {
+          return await Promise.resolve(1);
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited promise is not allowed in this context.",
+      "messageId": "disallowedPromiseAwait",
+      "range": {
+        "end": {
+          "column": 42,
+          "line": 3,
+        },
+        "start": {
+          "column": 18,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+        async function test() {
+          return Promise.resolve(1);
+        }
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 18`] = `
+{
+  "code": "
+        async function test() {
+          return await 1;
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited value that is not a promise is not allowed.",
+      "messageId": "nonPromiseAwait",
+      "range": {
+        "end": {
+          "column": 25,
+          "line": 3,
+        },
+        "start": {
+          "column": 18,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+        async function test() {
+          return 1;
+        }
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 19`] = `
+{
+  "code": "
+        async function test() {
+          return Promise.resolve(1);
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited promise is required in this context.",
+      "messageId": "requiredPromiseAwait",
+      "range": {
+        "end": {
+          "column": 36,
+          "line": 3,
+        },
+        "start": {
+          "column": 18,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+        async function test() {
+          return await Promise.resolve(1);
+        }
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 20`] = `
+{
+  "code": "const test = async () => Promise.resolve(1);",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited promise is required in this context.",
+      "messageId": "requiredPromiseAwait",
+      "range": {
+        "end": {
+          "column": 44,
+          "line": 1,
+        },
+        "start": {
+          "column": 26,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "const test = async () => await Promise.resolve(1);",
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 21`] = `
+{
+  "code": "
+async function foo() {}
+async function bar() {}
+async function baz() {}
+async function qux() {}
+async function buzz() {
+  return (await foo()) ? bar() : baz();
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited promise is required in this context.",
+      "messageId": "requiredPromiseAwait",
+      "range": {
+        "end": {
+          "column": 31,
+          "line": 7,
+        },
+        "start": {
+          "column": 26,
+          "line": 7,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+    {
+      "message": "Returning an awaited promise is required in this context.",
+      "messageId": "requiredPromiseAwait",
+      "range": {
+        "end": {
+          "column": 39,
+          "line": 7,
+        },
+        "start": {
+          "column": 34,
+          "line": 7,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "output": "
+async function foo() {}
+async function bar() {}
+async function baz() {}
+async function qux() {}
+async function buzz() {
+  return (await foo()) ? await bar() : await baz();
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 22`] = `
+{
+  "code": "
+async function foo() {}
+async function bar() {}
+async function baz() {}
+async function qux() {}
+async function buzz() {
+  return (await foo())
+    ? (
+      bar ? bar() : baz()
+    ) : baz ? baz() : bar();
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited promise is required in this context.",
+      "messageId": "requiredPromiseAwait",
+      "range": {
+        "end": {
+          "column": 18,
+          "line": 9,
+        },
+        "start": {
+          "column": 13,
+          "line": 9,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+    {
+      "message": "Returning an awaited promise is required in this context.",
+      "messageId": "requiredPromiseAwait",
+      "range": {
+        "end": {
+          "column": 26,
+          "line": 9,
+        },
+        "start": {
+          "column": 21,
+          "line": 9,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+    {
+      "message": "Returning an awaited promise is required in this context.",
+      "messageId": "requiredPromiseAwait",
+      "range": {
+        "end": {
+          "column": 20,
+          "line": 10,
+        },
+        "start": {
+          "column": 15,
+          "line": 10,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+    {
+      "message": "Returning an awaited promise is required in this context.",
+      "messageId": "requiredPromiseAwait",
+      "range": {
+        "end": {
+          "column": 28,
+          "line": 10,
+        },
+        "start": {
+          "column": 23,
+          "line": 10,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 4,
+  "fileCount": 1,
+  "output": "
+async function foo() {}
+async function bar() {}
+async function baz() {}
+async function qux() {}
+async function buzz() {
+  return (await foo())
+    ? (
+      bar ? await bar() : await baz()
+    ) : baz ? await baz() : await bar();
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 23`] = `
+{
+  "code": "
+async function foo() {}
+async function bar() {}
+async function buzz() {
+  return (await foo()) ? await 1 : bar();
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited value that is not a promise is not allowed.",
+      "messageId": "nonPromiseAwait",
+      "range": {
+        "end": {
+          "column": 33,
+          "line": 5,
+        },
+        "start": {
+          "column": 26,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+    {
+      "message": "Returning an awaited promise is required in this context.",
+      "messageId": "requiredPromiseAwait",
+      "range": {
+        "end": {
+          "column": 41,
+          "line": 5,
+        },
+        "start": {
+          "column": 36,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "output": "
+async function foo() {}
+async function bar() {}
+async function buzz() {
+  return (await foo()) ? 1 : await bar();
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 24`] = `
+{
+  "code": "
+async function foo() {}
+async function bar() {}
+async function baz() {}
+const buzz = async () => ((await foo()) ? bar() : baz());
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited promise is required in this context.",
+      "messageId": "requiredPromiseAwait",
+      "range": {
+        "end": {
+          "column": 48,
+          "line": 5,
+        },
+        "start": {
+          "column": 43,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+    {
+      "message": "Returning an awaited promise is required in this context.",
+      "messageId": "requiredPromiseAwait",
+      "range": {
+        "end": {
+          "column": 56,
+          "line": 5,
+        },
+        "start": {
+          "column": 51,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "output": "
+async function foo() {}
+async function bar() {}
+async function baz() {}
+const buzz = async () => ((await foo()) ? await bar() : await baz());
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 25`] = `
+{
+  "code": "
+async function foo() {}
+async function bar() {}
+const buzz = async () => ((await foo()) ? await 1 : bar());
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited value that is not a promise is not allowed.",
+      "messageId": "nonPromiseAwait",
+      "range": {
+        "end": {
+          "column": 50,
+          "line": 4,
+        },
+        "start": {
+          "column": 43,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+    {
+      "message": "Returning an awaited promise is required in this context.",
+      "messageId": "requiredPromiseAwait",
+      "range": {
+        "end": {
+          "column": 58,
+          "line": 4,
+        },
+        "start": {
+          "column": 53,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "output": "
+async function foo() {}
+async function bar() {}
+const buzz = async () => ((await foo()) ? 1 : await bar());
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 26`] = `
+{
+  "code": "
+async function test<T>(): Promise<T> {
+  const res = await fetch('...');
+  try {
+    return res.json() as Promise<T>;
+  } catch (err) {
+    throw Error('Request Failed.');
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited promise is required in this context.",
+      "messageId": "requiredPromiseAwait",
+      "range": {
+        "end": {
+          "column": 36,
+          "line": 5,
+        },
+        "start": {
+          "column": 12,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 27`] = `
+{
+  "code": "
+        async function test() {
+          try {
+            const callback1 = function () {};
+            const callback2 = async function () {};
+            function callback3() {}
+            async function callback4() {}
+            const callback5 = () => {};
+            const callback6 = async () => {};
+            return Promise.resolve('try');
+          } finally {
+            return Promise.resolve('finally');
+          }
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited promise is required in this context.",
+      "messageId": "requiredPromiseAwait",
+      "range": {
+        "end": {
+          "column": 42,
+          "line": 10,
+        },
+        "start": {
+          "column": 20,
+          "line": 10,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 28`] = `
+{
+  "code": "
+        async function bar() {}
+        async function foo() {
+          try {
+            return undefined || bar();
+          } catch {}
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited promise is required in this context.",
+      "messageId": "requiredPromiseAwait",
+      "range": {
+        "end": {
+          "column": 38,
+          "line": 5,
+        },
+        "start": {
+          "column": 20,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 29`] = `
+{
+  "code": "
+        async function bar() {}
+        async function foo() {
+          try {
+            return bar() || undefined || bar();
+          } catch {}
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited promise is required in this context.",
+      "messageId": "requiredPromiseAwait",
+      "range": {
+        "end": {
+          "column": 47,
+          "line": 5,
+        },
+        "start": {
+          "column": 20,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 30`] = `
+{
+  "code": "
+async function bar() {}
+async function func1() {
+  try {
+    return null ?? bar();
+  } catch {}
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited promise is required in this context.",
+      "messageId": "requiredPromiseAwait",
+      "range": {
+        "end": {
+          "column": 25,
+          "line": 5,
+        },
+        "start": {
+          "column": 12,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 31`] = `
+{
+  "code": "
+async function bar() {}
+async function func2() {
+  try {
+    return 1 && bar();
+  } catch {}
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited promise is required in this context.",
+      "messageId": "requiredPromiseAwait",
+      "range": {
+        "end": {
+          "column": 22,
+          "line": 5,
+        },
+        "start": {
+          "column": 12,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 32`] = `
+{
+  "code": "
+const foo = {
+  bar: async function () {},
+};
+async function func3() {
+  try {
+    return foo.bar();
+  } catch {}
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited promise is required in this context.",
+      "messageId": "requiredPromiseAwait",
+      "range": {
+        "end": {
+          "column": 21,
+          "line": 7,
+        },
+        "start": {
+          "column": 12,
+          "line": 7,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 33`] = `
+{
+  "code": "
+        class X {
+          async bar() {
+            return;
+          }
+          async func2() {
+            try {
+              return this.bar();
+            } catch {}
+          }
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited promise is required in this context.",
+      "messageId": "requiredPromiseAwait",
+      "range": {
+        "end": {
+          "column": 32,
+          "line": 8,
+        },
+        "start": {
+          "column": 22,
+          "line": 8,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 34`] = `
+{
+  "code": "
+        async function test() {
+          const res = await Promise.resolve('{}');
+          try {
+            async function nested() {
+              return Promise.resolve('ok');
+            }
+            return await nested();
+          } catch (error) {
+            return await Promise.resolve('error');
+          }
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited promise is not allowed in this context.",
+      "messageId": "disallowedPromiseAwait",
+      "range": {
+        "end": {
+          "column": 50,
+          "line": 10,
+        },
+        "start": {
+          "column": 20,
+          "line": 10,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+        async function test() {
+          const res = await Promise.resolve('{}');
+          try {
+            async function nested() {
+              return Promise.resolve('ok');
+            }
+            return await nested();
+          } catch (error) {
+            return Promise.resolve('error');
+          }
+        }
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 35`] = `
+{
+  "code": "
+async function f() {
+  try {
+    try {
+    } finally {
+      // affects error handling of outer catch
+      return Promise.reject();
+    }
+  } catch {}
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited promise is required in this context.",
+      "messageId": "requiredPromiseAwait",
+      "range": {
+        "end": {
+          "column": 30,
+          "line": 7,
+        },
+        "start": {
+          "column": 14,
+          "line": 7,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 36`] = `
+{
+  "code": "
+async function f() {
+  try {
+    try {
+    } catch {
+      // affects error handling of outer catch
+      return Promise.reject();
+    }
+  } catch {}
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited promise is required in this context.",
+      "messageId": "requiredPromiseAwait",
+      "range": {
+        "end": {
+          "column": 30,
+          "line": 7,
+        },
+        "start": {
+          "column": 14,
+          "line": 7,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 37`] = `
+{
+  "code": "
+async function f() {
+  try {
+  } catch {
+    try {
+    } finally {
+      try {
+      } catch {
+        return Promise.reject();
+      }
+    }
+  } finally {
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited promise is required in this context.",
+      "messageId": "requiredPromiseAwait",
+      "range": {
+        "end": {
+          "column": 32,
+          "line": 9,
+        },
+        "start": {
+          "column": 16,
+          "line": 9,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 38`] = `
+{
+  "code": "
+declare const bleh: any;
+async function f() {
+  if (cond) {
+    using something = bleh;
+    if (anotherCondition) {
+      return Promise.resolve(2);
+    }
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited promise is required in this context.",
+      "messageId": "requiredPromiseAwait",
+      "range": {
+        "end": {
+          "column": 32,
+          "line": 7,
+        },
+        "start": {
+          "column": 14,
+          "line": 7,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 39`] = `
+{
+  "code": "
+declare const bleh: any;
+async function f() {
+  if (cond) {
+    await using something = bleh;
+    if (anotherCondition) {
+      return Promise.resolve(2);
+    }
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited promise is required in this context.",
+      "messageId": "requiredPromiseAwait",
+      "range": {
+        "end": {
+          "column": 32,
+          "line": 7,
+        },
+        "start": {
+          "column": 14,
+          "line": 7,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 40`] = `
+{
+  "code": "
+declare const bleh: any;
+async function f() {
+  if (cond) {
+    using something = bleh;
+  } else if (anotherCondition) {
+    return Promise.resolve(2);
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited promise is required in this context.",
+      "messageId": "requiredPromiseAwait",
+      "range": {
+        "end": {
+          "column": 30,
+          "line": 7,
+        },
+        "start": {
+          "column": 12,
+          "line": 7,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+declare const bleh: any;
+async function f() {
+  if (cond) {
+    using something = bleh;
+  } else if (anotherCondition) {
+    return await Promise.resolve(2);
+  }
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 41`] = `
+{
+  "code": "
+declare function asyncFn(): Promise<unknown>;
+async function outerFunction() {
+  using _ = {
+    [Symbol.dispose]: () => {
+      console.log('dispose');
+    },
+  };
+
+  async function innerFunction() {
+    return await asyncFn();
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited promise is not allowed in this context.",
+      "messageId": "disallowedPromiseAwait",
+      "range": {
+        "end": {
+          "column": 27,
+          "line": 11,
+        },
+        "start": {
+          "column": 12,
+          "line": 11,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+declare function asyncFn(): Promise<unknown>;
+async function outerFunction() {
+  using _ = {
+    [Symbol.dispose]: () => {
+      console.log('dispose');
+    },
+  };
+
+  async function innerFunction() {
+    return asyncFn();
+  }
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 42`] = `
+{
+  "code": "
+declare function asyncFn(): Promise<unknown>;
+async function outerFunction() {
+  using _ = {
+    [Symbol.dispose]: () => {
+      console.log('dispose');
+    },
+  };
+
+  const innerFunction = async () => await asyncFn();
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited promise is not allowed in this context.",
+      "messageId": "disallowedPromiseAwait",
+      "range": {
+        "end": {
+          "column": 52,
+          "line": 10,
+        },
+        "start": {
+          "column": 37,
+          "line": 10,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+declare function asyncFn(): Promise<unknown>;
+async function outerFunction() {
+  using _ = {
+    [Symbol.dispose]: () => {
+      console.log('dispose');
+    },
+  };
+
+  const innerFunction = async () => asyncFn();
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 43`] = `
+{
+  "code": "
+async function wrapper<T extends number>(value: T) {
+  return await value;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited value that is not a promise is not allowed.",
+      "messageId": "nonPromiseAwait",
+      "range": {
+        "end": {
+          "column": 21,
+          "line": 3,
+        },
+        "start": {
+          "column": 10,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+async function wrapper<T extends number>(value: T) {
+  return value;
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 44`] = `
+{
+  "code": "
+class C<T> {
+  async wrapper<T extends string>(value: T) {
+    return await value;
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited value that is not a promise is not allowed.",
+      "messageId": "nonPromiseAwait",
+      "range": {
+        "end": {
+          "column": 23,
+          "line": 4,
+        },
+        "start": {
+          "column": 12,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+class C<T> {
+  async wrapper<T extends string>(value: T) {
+    return value;
+  }
+}
+      ",
+  "ruleCount": 1,
+}
+`;
+
+exports[`return-await > invalid 45`] = `
+{
+  "code": "
+class C<R extends number> {
+  async wrapper<T extends R>(value: T) {
+    return await value;
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Returning an awaited value that is not a promise is not allowed.",
+      "messageId": "nonPromiseAwait",
+      "range": {
+        "end": {
+          "column": 23,
+          "line": 4,
+        },
+        "start": {
+          "column": 12,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/return-await",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "output": "
+class C<R extends number> {
+  async wrapper<T extends R>(value: T) {
+    return value;
+  }
+}
+      ",
+  "ruleCount": 1,
+}
+`;

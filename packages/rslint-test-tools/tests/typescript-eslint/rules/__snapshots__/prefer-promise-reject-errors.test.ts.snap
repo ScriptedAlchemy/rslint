@@ -1,0 +1,2310 @@
+// Rstest Snapshot v1
+
+exports[`prefer-promise-reject-errors > invalid 1`] = `
+{
+  "code": "Promise.reject(5);",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 18,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 2`] = `
+{
+  "code": "Promise.reject('foo');",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 22,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 3`] = `
+{
+  "code": "Promise.reject(\`foo\`);",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 22,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 4`] = `
+{
+  "code": "Promise.reject('foo', somethingElse);",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 37,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 5`] = `
+{
+  "code": "Promise.reject(false);",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 22,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 6`] = `
+{
+  "code": "Promise.reject(void \`foo\`);",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 27,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 7`] = `
+{
+  "code": "Promise.reject();",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 17,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 8`] = `
+{
+  "code": "Promise.reject(undefined);",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 26,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 9`] = `
+{
+  "code": "Promise.reject(undefined);",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 26,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 10`] = `
+{
+  "code": "Promise.reject(null);",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 21,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 11`] = `
+{
+  "code": "Promise.reject({ foo: 1 });",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 27,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 12`] = `
+{
+  "code": "Promise.reject([1, 2, 3]);",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 26,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 13`] = `
+{
+  "code": "
+declare const foo: Error | undefined;
+Promise.reject(foo);
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 20,
+          "line": 3,
+        },
+        "start": {
+          "column": 1,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 14`] = `
+{
+  "code": "
+declare const foo: () => Promise<string>;
+Promise.reject(await foo());
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 28,
+          "line": 3,
+        },
+        "start": {
+          "column": 1,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 15`] = `
+{
+  "code": "
+declare const foo: boolean;
+Promise.reject(foo && new Error());
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 35,
+          "line": 3,
+        },
+        "start": {
+          "column": 1,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 16`] = `
+{
+  "code": "
+const foo = Promise;
+foo.reject();
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 13,
+          "line": 3,
+        },
+        "start": {
+          "column": 1,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 17`] = `
+{
+  "code": "Promise.reject?.(5);",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 20,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 18`] = `
+{
+  "code": "Promise?.reject(5);",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 19,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 19`] = `
+{
+  "code": "Promise?.reject?.(5);",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 21,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 20`] = `
+{
+  "code": "(Promise?.reject)(5);",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 21,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 21`] = `
+{
+  "code": "(Promise?.reject)?.(5);",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 23,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 22`] = `
+{
+  "code": "Promise['reject'](5);",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 21,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 23`] = `
+{
+  "code": "Promise.reject((foo += new Error()));",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 37,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 24`] = `
+{
+  "code": "Promise.reject((foo -= new Error()));",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 37,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 25`] = `
+{
+  "code": "Promise.reject((foo **= new Error()));",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 38,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 26`] = `
+{
+  "code": "Promise.reject((foo <<= new Error()));",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 38,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 27`] = `
+{
+  "code": "Promise.reject((foo |= new Error()));",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 37,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 28`] = `
+{
+  "code": "Promise.reject((foo &= new Error()));",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 37,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 29`] = `
+{
+  "code": "
+declare const foo: never;
+Promise.reject(foo);
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 20,
+          "line": 3,
+        },
+        "start": {
+          "column": 1,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 30`] = `
+{
+  "code": "
+declare const foo: unknown;
+Promise.reject(foo);
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 20,
+          "line": 3,
+        },
+        "start": {
+          "column": 1,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 31`] = `
+{
+  "code": "
+type FakeReadonly<T> = { 'fake readonly': T };
+declare const foo: FakeReadonly<Error>;
+Promise.reject(foo);
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 20,
+          "line": 4,
+        },
+        "start": {
+          "column": 1,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 32`] = `
+{
+  "code": "
+declare const foo: Readonly<'error'>;
+Promise.reject(foo);
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 20,
+          "line": 3,
+        },
+        "start": {
+          "column": 1,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 33`] = `
+{
+  "code": "
+declare const foo: Readonly<Error | 'error'>;
+Promise.reject(foo);
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 20,
+          "line": 3,
+        },
+        "start": {
+          "column": 1,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 34`] = `
+{
+  "code": "
+declare const foo: Readonly<Error> | 'error';
+Promise.reject(foo);
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 20,
+          "line": 3,
+        },
+        "start": {
+          "column": 1,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 35`] = `
+{
+  "code": "
+declare const foo: Readonly<Error> | Readonly<TypeError> | Readonly<'error'>;
+Promise.reject(foo);
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 20,
+          "line": 3,
+        },
+        "start": {
+          "column": 1,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 36`] = `
+{
+  "code": "
+declare const foo: Readonly<Readonly<'error'>>;
+Promise.reject(foo);
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 20,
+          "line": 3,
+        },
+        "start": {
+          "column": 1,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 37`] = `
+{
+  "code": "
+declare const foo: Readonly<Readonly<Readonly<Error> | 'error'>>;
+Promise.reject(foo);
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 20,
+          "line": 3,
+        },
+        "start": {
+          "column": 1,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 38`] = `
+{
+  "code": "
+declare const foo: Readonly<Readonly<Readonly<Error> & TypeError>> | 'error';
+Promise.reject(foo);
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 20,
+          "line": 3,
+        },
+        "start": {
+          "column": 1,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 39`] = `
+{
+  "code": "
+declare const foo: Readonly<Readonly<Error>> | Readonly<TypeError> | 'error';
+Promise.reject(foo);
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 20,
+          "line": 3,
+        },
+        "start": {
+          "column": 1,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 40`] = `
+{
+  "code": "
+type Wrapper<T> = { foo: Readonly<T>[] };
+declare const foo: Wrapper<Error | 'error'>['foo'][5];
+Promise.reject(foo);
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 20,
+          "line": 4,
+        },
+        "start": {
+          "column": 1,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 41`] = `
+{
+  "code": "
+declare const foo: Error[];
+Promise.reject(foo);
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 20,
+          "line": 3,
+        },
+        "start": {
+          "column": 1,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 42`] = `
+{
+  "code": "
+declare const foo: ReadonlyArray<Error>;
+Promise.reject(foo);
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 20,
+          "line": 3,
+        },
+        "start": {
+          "column": 1,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 43`] = `
+{
+  "code": "
+declare const foo: [Error];
+Promise.reject(foo);
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 20,
+          "line": 3,
+        },
+        "start": {
+          "column": 1,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 44`] = `
+{
+  "code": "
+new Promise(function (resolve, reject) {
+  reject();
+});
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 11,
+          "line": 3,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 45`] = `
+{
+  "code": "
+new Promise(function (resolve, reject) {
+  reject(5);
+});
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 12,
+          "line": 3,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 46`] = `
+{
+  "code": "
+new Promise((resolve, reject) => {
+  reject();
+});
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 11,
+          "line": 3,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 47`] = `
+{
+  "code": "new Promise((resolve, reject) => reject(5));",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 43,
+          "line": 1,
+        },
+        "start": {
+          "column": 34,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 48`] = `
+{
+  "code": "
+new Promise((resolve, reject) => {
+  fs.readFile('foo.txt', (err, file) => {
+    if (err) reject('File not found');
+    else resolve(file);
+  });
+});
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 38,
+          "line": 4,
+        },
+        "start": {
+          "column": 14,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 49`] = `
+{
+  "code": "new Promise((yes, no) => no(5));",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 31,
+          "line": 1,
+        },
+        "start": {
+          "column": 26,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 50`] = `
+{
+  "code": "new Promise(({ foo, bar, baz }, reject) => reject(5));",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 53,
+          "line": 1,
+        },
+        "start": {
+          "column": 44,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 51`] = `
+{
+  "code": "
+new Promise(function (reject, reject) {
+  reject(5);
+});
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 12,
+          "line": 3,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 52`] = `
+{
+  "code": "
+new Promise(function (foo, arguments) {
+  arguments(5);
+});
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 15,
+          "line": 3,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 53`] = `
+{
+  "code": "new Promise((foo, arguments) => arguments(5));",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 45,
+          "line": 1,
+        },
+        "start": {
+          "column": 33,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 54`] = `
+{
+  "code": "
+new Promise(function ({}, reject) {
+  reject(5);
+});
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 12,
+          "line": 3,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 55`] = `
+{
+  "code": "new Promise(({}, reject) => reject(5));",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 38,
+          "line": 1,
+        },
+        "start": {
+          "column": 29,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 56`] = `
+{
+  "code": "new Promise((resolve, reject, somethingElse = reject(5)) => {});",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 56,
+          "line": 1,
+        },
+        "start": {
+          "column": 47,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 57`] = `
+{
+  "code": "
+declare const foo: {
+  bar: PromiseConstructor;
+};
+new foo.bar((resolve, reject) => reject(5));
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 43,
+          "line": 5,
+        },
+        "start": {
+          "column": 34,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 58`] = `
+{
+  "code": "
+declare const foo: {
+  bar: PromiseConstructor;
+};
+new (foo?.bar)((resolve, reject) => reject(5));
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 46,
+          "line": 5,
+        },
+        "start": {
+          "column": 37,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 59`] = `
+{
+  "code": "
+const foo = Promise;
+new foo((resolve, reject) => reject(5));
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 39,
+          "line": 3,
+        },
+        "start": {
+          "column": 30,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 60`] = `
+{
+  "code": "
+declare const foo: never;
+new Promise((resolve, reject) => reject(foo));
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 45,
+          "line": 3,
+        },
+        "start": {
+          "column": 34,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 61`] = `
+{
+  "code": "
+declare const foo: unknown;
+new Promise((resolve, reject) => reject(foo));
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 45,
+          "line": 3,
+        },
+        "start": {
+          "column": 34,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 62`] = `
+{
+  "code": "
+type FakeReadonly<T> = { 'fake readonly': T };
+declare const foo: FakeReadonly<Error>;
+new Promise((resolve, reject) => reject(foo));
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 45,
+          "line": 4,
+        },
+        "start": {
+          "column": 34,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 63`] = `
+{
+  "code": "
+declare const foo: Readonly<'error'>;
+new Promise((resolve, reject) => reject(foo));
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 45,
+          "line": 3,
+        },
+        "start": {
+          "column": 34,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 64`] = `
+{
+  "code": "
+declare const foo: Readonly<Error | 'error'>;
+new Promise((resolve, reject) => reject(foo));
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 45,
+          "line": 3,
+        },
+        "start": {
+          "column": 34,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 65`] = `
+{
+  "code": "
+declare const foo: Readonly<Error> | 'error';
+new Promise((resolve, reject) => reject(foo));
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 45,
+          "line": 3,
+        },
+        "start": {
+          "column": 34,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 66`] = `
+{
+  "code": "
+declare const foo: Readonly<Error> | Readonly<TypeError> | Readonly<'error'>;
+new Promise((resolve, reject) => reject(foo));
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 45,
+          "line": 3,
+        },
+        "start": {
+          "column": 34,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 67`] = `
+{
+  "code": "
+declare const foo: Readonly<Readonly<'error'>>;
+new Promise((resolve, reject) => reject(foo));
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 45,
+          "line": 3,
+        },
+        "start": {
+          "column": 34,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 68`] = `
+{
+  "code": "
+declare const foo: Readonly<Readonly<Readonly<Error> | 'error'>>;
+new Promise((resolve, reject) => reject(foo));
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 45,
+          "line": 3,
+        },
+        "start": {
+          "column": 34,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 69`] = `
+{
+  "code": "
+declare const foo: Readonly<Readonly<Readonly<Error> & TypeError>> | 'error';
+new Promise((resolve, reject) => reject(foo));
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 45,
+          "line": 3,
+        },
+        "start": {
+          "column": 34,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 70`] = `
+{
+  "code": "
+declare const foo: Readonly<Readonly<Error>> | Readonly<TypeError> | 'error';
+new Promise((resolve, reject) => reject(foo));
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 45,
+          "line": 3,
+        },
+        "start": {
+          "column": 34,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 71`] = `
+{
+  "code": "
+type Wrapper<T> = { foo: Readonly<T>[] };
+declare const foo: Wrapper<Error | 'error'>['foo'][5];
+new Promise((resolve, reject) => reject(foo));
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 45,
+          "line": 4,
+        },
+        "start": {
+          "column": 34,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 72`] = `
+{
+  "code": "
+declare const foo: Error[];
+new Promise((resolve, reject) => reject(foo));
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 45,
+          "line": 3,
+        },
+        "start": {
+          "column": 34,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 73`] = `
+{
+  "code": "
+declare const foo: ReadonlyArray<Error>;
+new Promise((resolve, reject) => reject(foo));
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 45,
+          "line": 3,
+        },
+        "start": {
+          "column": 34,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 74`] = `
+{
+  "code": "
+declare const foo: [Error];
+new Promise((resolve, reject) => reject(foo));
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 45,
+          "line": 3,
+        },
+        "start": {
+          "column": 34,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 75`] = `
+{
+  "code": "
+class Foo extends Promise<number> {}
+Foo.reject(5);
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 3,
+        },
+        "start": {
+          "column": 1,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 76`] = `
+{
+  "code": "
+declare const foo: PromiseConstructor & string;
+foo.reject(5);
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 3,
+        },
+        "start": {
+          "column": 1,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 77`] = `
+{
+  "code": "
+class Foo extends Promise<number> {}
+class Bar extends Foo {}
+Bar.reject(5);
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 4,
+        },
+        "start": {
+          "column": 1,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 78`] = `
+{
+  "code": "
+declare const foo: PromiseConstructor;
+function fun<T extends number>(t: T): void {
+  foo.reject(t);
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 16,
+          "line": 4,
+        },
+        "start": {
+          "column": 3,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 79`] = `
+{
+  "code": "
+        declare const someAnyValue: any;
+        Promise.reject(someAnyValue);
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 37,
+          "line": 3,
+        },
+        "start": {
+          "column": 9,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 80`] = `
+{
+  "code": "
+        declare const someUnknownValue: unknown;
+        Promise.reject(someUnknownValue);
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 41,
+          "line": 3,
+        },
+        "start": {
+          "column": 9,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 81`] = `
+{
+  "code": "
+        declare const someUnknownValue: unknown;
+        Promise.reject(someUnknownValue);
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 41,
+          "line": 3,
+        },
+        "start": {
+          "column": 9,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-promise-reject-errors > invalid 82`] = `
+{
+  "code": "
+        declare const someAnyValue: any;
+        Promise.reject(someAnyValue);
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected the Promise rejection reason to be an Error.",
+      "messageId": "rejectAnError",
+      "range": {
+        "end": {
+          "column": 37,
+          "line": 3,
+        },
+        "start": {
+          "column": 9,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-promise-reject-errors",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;

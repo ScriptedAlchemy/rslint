@@ -2,6 +2,7 @@ package prefer_namespace_keyword
 
 import (
 	"github.com/microsoft/typescript-go/shim/ast"
+	"github.com/microsoft/typescript-go/shim/core"
 	"github.com/microsoft/typescript-go/shim/scanner"
 	"github.com/web-infra-dev/rslint/internal/rule"
 )
@@ -9,8 +10,28 @@ import (
 func buildUseNamespaceMessage() rule.RuleMessage {
 	return rule.RuleMessage{
 		Id:          "useNamespace",
-		Description: "Use 'namespace' instead of 'module' to declare custom TypeScript modules.",
+		Description: "Use the namespace keyword instead of module.",
 	}
+}
+
+func findModuleKeywordRange(sourceFile *ast.SourceFile, moduleDecl *ast.ModuleDeclaration) (core.TextRange, bool) {
+	if moduleDecl == nil {
+		return core.TextRange{}, false
+	}
+
+	scan := scanner.GetScannerForSourceFile(sourceFile, moduleDecl.Pos())
+	for {
+		token := scan.Token()
+		if token == ast.KindModuleKeyword {
+			return scan.TokenRange(), true
+		}
+		if scan.TokenEnd() >= moduleDecl.End() {
+			break
+		}
+		scan.Scan()
+	}
+
+	return core.TextRange{}, false
 }
 
 var PreferNamespaceKeywordRule = rule.CreateRule(rule.Rule{
@@ -19,40 +40,25 @@ var PreferNamespaceKeywordRule = rule.CreateRule(rule.Rule{
 		return rule.RuleListeners{
 			ast.KindModuleDeclaration: func(node *ast.Node) {
 				moduleDecl := node.AsModuleDeclaration()
-				if moduleDecl == nil {
+				if moduleDecl == nil || moduleDecl.Keyword != ast.KindModuleKeyword {
 					return
 				}
 
-				// Skip if the module name is a string literal (external module declaration)
 				name := moduleDecl.Name()
-				if name == nil {
+				if !ast.IsIdentifier(name) {
 					return
 				}
-				if name.Kind == ast.KindStringLiteral {
-					return
-				}
-
-				// Check if the keyword before the module name is "module"
-				if moduleDecl.Keyword != ast.KindModuleKeyword {
+				if name.AsIdentifier().Text == "global" {
 					return
 				}
 
-				// Find the "module" token to replace it with "namespace"
-				s := scanner.GetScannerForSourceFile(ctx.SourceFile, node.Pos())
-				for s.TokenStart() < name.Pos() {
-					if s.Token() == ast.KindModuleKeyword && s.TokenText() == "module" {
-						moduleTokenStart := s.TokenStart()
-						moduleTokenEnd := s.TokenEnd()
-						ctx.ReportNodeWithFixes(node, buildUseNamespaceMessage(),
-							rule.RuleFixReplaceRange(
-								node.Loc.WithPos(moduleTokenStart).WithEnd(moduleTokenEnd),
-								"namespace",
-							),
-						)
-						return
-					}
-					s.Scan()
+				keywordRange, ok := findModuleKeywordRange(ctx.SourceFile, moduleDecl)
+				if !ok {
+					return
 				}
+
+				fix := rule.RuleFixReplaceRange(keywordRange, "namespace")
+				ctx.ReportNodeWithFixes(node, buildUseNamespaceMessage(), fix)
 			},
 		}
 	},

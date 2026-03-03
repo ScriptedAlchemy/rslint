@@ -1,0 +1,1082 @@
+// Rstest Snapshot v1
+
+exports[`typedef > invalid 1`] = `
+{
+  "code": "const [a] = [1];",
+  "diagnostics": [
+    {
+      "message": "Expected a type annotation.",
+      "messageId": "expectedTypedef",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 1,
+        },
+        "start": {
+          "column": 7,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`typedef > invalid 2`] = `
+{
+  "code": "const [a, b] = [1, 2];",
+  "diagnostics": [
+    {
+      "message": "Expected a type annotation.",
+      "messageId": "expectedTypedef",
+      "range": {
+        "end": {
+          "column": 13,
+          "line": 1,
+        },
+        "start": {
+          "column": 7,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`typedef > invalid 3`] = `
+{
+  "code": "const { a } = { a: 1 };",
+  "diagnostics": [
+    {
+      "message": "Expected a type annotation.",
+      "messageId": "expectedTypedef",
+      "range": {
+        "end": {
+          "column": 12,
+          "line": 1,
+        },
+        "start": {
+          "column": 7,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`typedef > invalid 4`] = `
+{
+  "code": "const { a, b } = { a: 1, b: 2 };",
+  "diagnostics": [
+    {
+      "message": "Expected a type annotation.",
+      "messageId": "expectedTypedef",
+      "range": {
+        "end": {
+          "column": 15,
+          "line": 1,
+        },
+        "start": {
+          "column": 7,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`typedef > invalid 5`] = `
+{
+  "code": "
+        const {
+          id,
+          details: {
+            name: {
+              first,
+              middle,
+              last,
+              forTest: { moreNested },
+            },
+          },
+        } = getUser();
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected a type annotation.",
+      "messageId": "expectedTypedef",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 12,
+        },
+        "start": {
+          "column": 15,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+    {
+      "message": "Expected a type annotation.",
+      "messageId": "expectedTypedef",
+      "range": {
+        "end": {
+          "column": 12,
+          "line": 11,
+        },
+        "start": {
+          "column": 20,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+    {
+      "message": "Expected a type annotation.",
+      "messageId": "expectedTypedef",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 10,
+        },
+        "start": {
+          "column": 19,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+    {
+      "message": "Expected a type annotation.",
+      "messageId": "expectedTypedef",
+      "range": {
+        "end": {
+          "column": 38,
+          "line": 9,
+        },
+        "start": {
+          "column": 24,
+          "line": 9,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 4,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`typedef > invalid 6`] = `
+{
+  "code": "const receivesNumber = (a): void => {};",
+  "diagnostics": [
+    {
+      "message": "Expected a to have a type annotation.",
+      "messageId": "expectedTypedefNamed",
+      "range": {
+        "end": {
+          "column": 26,
+          "line": 1,
+        },
+        "start": {
+          "column": 25,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`typedef > invalid 7`] = `
+{
+  "code": "const receivesStrings = (a, b): void => {};",
+  "diagnostics": [
+    {
+      "message": "Expected a to have a type annotation.",
+      "messageId": "expectedTypedefNamed",
+      "range": {
+        "end": {
+          "column": 27,
+          "line": 1,
+        },
+        "start": {
+          "column": 26,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+    {
+      "message": "Expected b to have a type annotation.",
+      "messageId": "expectedTypedefNamed",
+      "range": {
+        "end": {
+          "column": 30,
+          "line": 1,
+        },
+        "start": {
+          "column": 29,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`typedef > invalid 8`] = `
+{
+  "code": "
+        class Test {
+          state = 1;
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected state to have a type annotation.",
+      "messageId": "expectedTypedefNamed",
+      "range": {
+        "end": {
+          "column": 21,
+          "line": 3,
+        },
+        "start": {
+          "column": 11,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`typedef > invalid 9`] = `
+{
+  "code": "
+        class Test {
+          ['state'] = 1;
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected a type annotation.",
+      "messageId": "expectedTypedef",
+      "range": {
+        "end": {
+          "column": 25,
+          "line": 3,
+        },
+        "start": {
+          "column": 11,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`typedef > invalid 10`] = `
+{
+  "code": "function receivesNumber(a): void {}",
+  "diagnostics": [
+    {
+      "message": "Expected a to have a type annotation.",
+      "messageId": "expectedTypedefNamed",
+      "range": {
+        "end": {
+          "column": 26,
+          "line": 1,
+        },
+        "start": {
+          "column": 25,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`typedef > invalid 11`] = `
+{
+  "code": "function receivesStrings(a, b): void {}",
+  "diagnostics": [
+    {
+      "message": "Expected a to have a type annotation.",
+      "messageId": "expectedTypedefNamed",
+      "range": {
+        "end": {
+          "column": 27,
+          "line": 1,
+        },
+        "start": {
+          "column": 26,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+    {
+      "message": "Expected b to have a type annotation.",
+      "messageId": "expectedTypedefNamed",
+      "range": {
+        "end": {
+          "column": 30,
+          "line": 1,
+        },
+        "start": {
+          "column": 29,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`typedef > invalid 12`] = `
+{
+  "code": "function receivesNumber([a]): void {}",
+  "diagnostics": [
+    {
+      "message": "Expected a type annotation.",
+      "messageId": "expectedTypedef",
+      "range": {
+        "end": {
+          "column": 28,
+          "line": 1,
+        },
+        "start": {
+          "column": 25,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`typedef > invalid 13`] = `
+{
+  "code": "function receivesNumbers([a, b]): void {}",
+  "diagnostics": [
+    {
+      "message": "Expected a type annotation.",
+      "messageId": "expectedTypedef",
+      "range": {
+        "end": {
+          "column": 32,
+          "line": 1,
+        },
+        "start": {
+          "column": 26,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`typedef > invalid 14`] = `
+{
+  "code": "function receivesString({ a }): void {}",
+  "diagnostics": [
+    {
+      "message": "Expected a type annotation.",
+      "messageId": "expectedTypedef",
+      "range": {
+        "end": {
+          "column": 30,
+          "line": 1,
+        },
+        "start": {
+          "column": 25,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`typedef > invalid 15`] = `
+{
+  "code": "function receivesStrings({ a, b }): void {}",
+  "diagnostics": [
+    {
+      "message": "Expected a type annotation.",
+      "messageId": "expectedTypedef",
+      "range": {
+        "end": {
+          "column": 34,
+          "line": 1,
+        },
+        "start": {
+          "column": 26,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`typedef > invalid 16`] = `
+{
+  "code": "
+        class Test {
+          constructor(param) {}
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected param to have a type annotation.",
+      "messageId": "expectedTypedefNamed",
+      "range": {
+        "end": {
+          "column": 28,
+          "line": 3,
+        },
+        "start": {
+          "column": 23,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`typedef > invalid 17`] = `
+{
+  "code": "
+        class Test {
+          constructor(param = 'something') {}
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected a type annotation.",
+      "messageId": "expectedTypedef",
+      "range": {
+        "end": {
+          "column": 42,
+          "line": 3,
+        },
+        "start": {
+          "column": 23,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`typedef > invalid 18`] = `
+{
+  "code": "
+        class Test {
+          constructor(private param = 'something') {}
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected a type annotation.",
+      "messageId": "expectedTypedef",
+      "range": {
+        "end": {
+          "column": 50,
+          "line": 3,
+        },
+        "start": {
+          "column": 23,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`typedef > invalid 19`] = `
+{
+  "code": "
+        class Test {
+          public method(x): number {
+            return x;
+          }
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected x to have a type annotation.",
+      "messageId": "expectedTypedefNamed",
+      "range": {
+        "end": {
+          "column": 26,
+          "line": 3,
+        },
+        "start": {
+          "column": 25,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`typedef > invalid 20`] = `
+{
+  "code": "
+        class Test {
+          public method(x = 123): number {
+            return x;
+          }
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected a type annotation.",
+      "messageId": "expectedTypedef",
+      "range": {
+        "end": {
+          "column": 32,
+          "line": 3,
+        },
+        "start": {
+          "column": 25,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`typedef > invalid 21`] = `
+{
+  "code": "
+        class Test {
+          public constructor(public x) {}
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected a type annotation.",
+      "messageId": "expectedTypedef",
+      "range": {
+        "end": {
+          "column": 38,
+          "line": 3,
+        },
+        "start": {
+          "column": 30,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`typedef > invalid 22`] = `
+{
+  "code": "
+        type Test = {
+          member;
+        };
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected member to have a type annotation.",
+      "messageId": "expectedTypedefNamed",
+      "range": {
+        "end": {
+          "column": 18,
+          "line": 3,
+        },
+        "start": {
+          "column": 11,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`typedef > invalid 23`] = `
+{
+  "code": "
+        type Test = {
+          [i: string];
+        };
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected a type annotation.",
+      "messageId": "expectedTypedef",
+      "range": {
+        "end": {
+          "column": 23,
+          "line": 3,
+        },
+        "start": {
+          "column": 11,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`typedef > invalid 24`] = `
+{
+  "code": "
+        interface Test {
+          member;
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected member to have a type annotation.",
+      "messageId": "expectedTypedefNamed",
+      "range": {
+        "end": {
+          "column": 18,
+          "line": 3,
+        },
+        "start": {
+          "column": 11,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`typedef > invalid 25`] = `
+{
+  "code": "
+        interface Test {
+          [i: string];
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected a type annotation.",
+      "messageId": "expectedTypedef",
+      "range": {
+        "end": {
+          "column": 23,
+          "line": 3,
+        },
+        "start": {
+          "column": 11,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`typedef > invalid 26`] = `
+{
+  "code": "const a = 1;",
+  "diagnostics": [
+    {
+      "message": "Expected a to have a type annotation.",
+      "messageId": "expectedTypedefNamed",
+      "range": {
+        "end": {
+          "column": 12,
+          "line": 1,
+        },
+        "start": {
+          "column": 7,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`typedef > invalid 27`] = `
+{
+  "code": "
+        const a = 1,
+          b: number = 2,
+          c = 3;
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected a to have a type annotation.",
+      "messageId": "expectedTypedefNamed",
+      "range": {
+        "end": {
+          "column": 20,
+          "line": 2,
+        },
+        "start": {
+          "column": 15,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+    {
+      "message": "Expected c to have a type annotation.",
+      "messageId": "expectedTypedefNamed",
+      "range": {
+        "end": {
+          "column": 16,
+          "line": 4,
+        },
+        "start": {
+          "column": 11,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`typedef > invalid 28`] = `
+{
+  "code": "let a;",
+  "diagnostics": [
+    {
+      "message": "Expected a to have a type annotation.",
+      "messageId": "expectedTypedefNamed",
+      "range": {
+        "end": {
+          "column": 6,
+          "line": 1,
+        },
+        "start": {
+          "column": 5,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`typedef > invalid 29`] = `
+{
+  "code": "let a = 1;",
+  "diagnostics": [
+    {
+      "message": "Expected a to have a type annotation.",
+      "messageId": "expectedTypedefNamed",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 1,
+        },
+        "start": {
+          "column": 5,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`typedef > invalid 30`] = `
+{
+  "code": "
+        let a = 1,
+          b: number,
+          c = 2;
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected a to have a type annotation.",
+      "messageId": "expectedTypedefNamed",
+      "range": {
+        "end": {
+          "column": 18,
+          "line": 2,
+        },
+        "start": {
+          "column": 13,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+    {
+      "message": "Expected c to have a type annotation.",
+      "messageId": "expectedTypedefNamed",
+      "range": {
+        "end": {
+          "column": 16,
+          "line": 4,
+        },
+        "start": {
+          "column": 11,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`typedef > invalid 31`] = `
+{
+  "code": "const foo = 'foo';",
+  "diagnostics": [
+    {
+      "message": "Expected foo to have a type annotation.",
+      "messageId": "expectedTypedefNamed",
+      "range": {
+        "end": {
+          "column": 18,
+          "line": 1,
+        },
+        "start": {
+          "column": 7,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`typedef > invalid 32`] = `
+{
+  "code": "const foo = function (): void {};",
+  "diagnostics": [
+    {
+      "message": "Expected foo to have a type annotation.",
+      "messageId": "expectedTypedefNamed",
+      "range": {
+        "end": {
+          "column": 33,
+          "line": 1,
+        },
+        "start": {
+          "column": 7,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`typedef > invalid 33`] = `
+{
+  "code": "const foo = (): void => {};",
+  "diagnostics": [
+    {
+      "message": "Expected foo to have a type annotation.",
+      "messageId": "expectedTypedefNamed",
+      "range": {
+        "end": {
+          "column": 27,
+          "line": 1,
+        },
+        "start": {
+          "column": 7,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`typedef > invalid 34`] = `
+{
+  "code": "
+class Foo {
+  a = (): void => {};
+  b = function (): void {};
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Expected a to have a type annotation.",
+      "messageId": "expectedTypedefNamed",
+      "range": {
+        "end": {
+          "column": 22,
+          "line": 3,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+    {
+      "message": "Expected b to have a type annotation.",
+      "messageId": "expectedTypedefNamed",
+      "range": {
+        "end": {
+          "column": 28,
+          "line": 4,
+        },
+        "start": {
+          "column": 3,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;

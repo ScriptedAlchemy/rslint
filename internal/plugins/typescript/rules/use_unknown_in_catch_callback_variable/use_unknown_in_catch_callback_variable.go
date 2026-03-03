@@ -56,6 +56,64 @@ func buildWrongTypeAnnotationSuggestionMessage() rule.RuleMessage {
 	}
 }
 
+func resolveConstantStringValue(ctx rule.RuleContext, node *ast.Node, depth int, seen map[*ast.Symbol]bool) (string, bool) {
+	if node == nil || depth > 8 {
+		return "", false
+	}
+	node = ast.SkipParentheses(node)
+	switch node.Kind {
+	case ast.KindStringLiteral:
+		lit := node.AsStringLiteral()
+		if lit != nil {
+			return lit.Text, true
+		}
+	case ast.KindNoSubstitutionTemplateLiteral:
+		lit := node.AsNoSubstitutionTemplateLiteral()
+		if lit != nil {
+			return lit.Text, true
+		}
+	case ast.KindAsExpression:
+		asExpr := node.AsAsExpression()
+		if asExpr != nil {
+			return resolveConstantStringValue(ctx, asExpr.Expression, depth+1, seen)
+		}
+	case ast.KindTypeAssertionExpression:
+		typeAssertion := node.AsTypeAssertion()
+		if typeAssertion != nil {
+			return resolveConstantStringValue(ctx, typeAssertion.Expression, depth+1, seen)
+		}
+	case ast.KindIdentifier:
+		symbol := ctx.TypeChecker.GetSymbolAtLocation(node)
+		if symbol == nil {
+			return "", false
+		}
+		if seen[symbol] {
+			return "", false
+		}
+		seen[symbol] = true
+
+		if decl := symbol.ValueDeclaration; decl != nil && decl.Kind == ast.KindVariableDeclaration {
+			return resolveConstantStringValue(ctx, decl.Initializer(), depth+1, seen)
+		}
+		if symbol.Declarations != nil {
+			for _, decl := range symbol.Declarations {
+				if decl != nil && decl.Kind == ast.KindVariableDeclaration {
+					if value, ok := resolveConstantStringValue(ctx, decl.Initializer(), depth+1, seen); ok {
+						return value, true
+					}
+				}
+			}
+		}
+	}
+
+	if constantValue := ctx.TypeChecker.GetConstantValue(node); constantValue != nil {
+		if value, ok := constantValue.(string); ok {
+			return value, true
+		}
+	}
+	return "", false
+}
+
 var UseUnknownInCatchCallbackVariableRule = rule.CreateRule(rule.Rule{
 	Name: "use-unknown-in-catch-callback-variable",
 	Run: func(ctx rule.RuleContext, options any) rule.RuleListeners {
@@ -122,6 +180,15 @@ var UseUnknownInCatchCallbackVariableRule = rule.CreateRule(rule.Rule{
 				}
 
 				propertyName, found := checker.Checker_getAccessedPropertyName(ctx.TypeChecker, callee)
+				if !found && callee.Kind == ast.KindElementAccessExpression {
+					elementAccess := callee.AsElementAccessExpression()
+					if elementAccess != nil && elementAccess.ArgumentExpression != nil {
+						if resolved, ok := resolveConstantStringValue(ctx, elementAccess.ArgumentExpression, 0, map[*ast.Symbol]bool{}); ok {
+							propertyName = resolved
+							found = true
+						}
+					}
+				}
 				if !found {
 					return
 				}

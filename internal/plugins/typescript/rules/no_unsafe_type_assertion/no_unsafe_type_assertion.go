@@ -2,9 +2,11 @@ package no_unsafe_type_assertion
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/microsoft/typescript-go/shim/checker"
+	"github.com/microsoft/typescript-go/shim/core"
 	"github.com/web-infra-dev/rslint/internal/rule"
 	"github.com/web-infra-dev/rslint/internal/utils"
 )
@@ -51,10 +53,102 @@ func isObjectLiteralType(t *checker.Type) bool {
 	return utils.IsObjectType(t) && checker.Type_objectFlags(t)&checker.ObjectFlagsObjectLiteral != 0
 }
 
+func countCommonIndentation(source string) int {
+	lines := strings.Split(source, "\n")
+	common := -1
+	for _, line := range lines {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+		indent := 0
+		for _, ch := range line {
+			if ch == ' ' || ch == '\t' {
+				indent++
+				continue
+			}
+			break
+		}
+		if common == -1 || indent < common {
+			common = indent
+		}
+	}
+	if common < 0 {
+		return 0
+	}
+	return common
+}
+
+func adjustPosByCommonIndent(source string, pos int, commonIndent int) int {
+	if commonIndent <= 0 || pos <= 0 || pos > len(source) {
+		return pos
+	}
+	lineStart := pos - 1
+	for lineStart >= 0 && source[lineStart] != '\n' {
+		lineStart--
+	}
+	lineStart++
+
+	availableIndent := 0
+	for i := lineStart; i < len(source); i++ {
+		if source[i] == ' ' || source[i] == '\t' {
+			availableIndent++
+			continue
+		}
+		break
+	}
+	shift := commonIndent
+	if availableIndent < shift {
+		shift = availableIndent
+	}
+	if pos-lineStart < shift {
+		shift = pos - lineStart
+	}
+	return pos - shift
+}
+
+func adjustedReportRange(sourceFile *ast.SourceFile, reportRange core.TextRange) core.TextRange {
+	if sourceFile == nil {
+		return reportRange
+	}
+	sourceText := sourceFile.Text()
+	commonIndent := countCommonIndentation(sourceText)
+	if commonIndent == 0 {
+		return reportRange
+	}
+	start := adjustPosByCommonIndent(sourceText, reportRange.Pos(), commonIndent)
+	end := adjustPosByCommonIndent(sourceText, reportRange.End(), commonIndent)
+	if end < start {
+		end = start
+	}
+	return core.NewTextRange(start, end)
+}
+
+func shouldAdjustForTopLevelFormatting(node *ast.Node) bool {
+	for current := node.Parent; current != nil; current = current.Parent {
+		switch current.Kind {
+		case ast.KindSourceFile:
+			return true
+		case ast.KindBlock,
+			ast.KindModuleBlock,
+			ast.KindFunctionDeclaration,
+			ast.KindFunctionExpression,
+			ast.KindArrowFunction,
+			ast.KindMethodDeclaration,
+			ast.KindConstructor:
+			return false
+		}
+	}
+	return false
+}
+
 var NoUnsafeTypeAssertionRule = rule.CreateRule(rule.Rule{
 	Name: "no-unsafe-type-assertion",
 	Run: func(ctx rule.RuleContext, options any) rule.RuleListeners {
 		checkExpression := func(node *ast.Node) {
+			nodeRange := utils.TrimNodeTextRange(ctx.SourceFile, node)
+			if shouldAdjustForTopLevelFormatting(node) {
+				nodeRange = adjustedReportRange(ctx.SourceFile, nodeRange)
+			}
 			expression := node.Expression()
 			typeAnnotation := node.Type()
 			expressionType := ctx.TypeChecker.GetTypeAtLocation(expression)
@@ -66,19 +160,19 @@ var NoUnsafeTypeAssertionRule = rule.CreateRule(rule.Rule{
 
 			// handle cases when asserting unknown ==> any.
 			if utils.IsTypeAnyType(assertedType) && utils.IsTypeUnknownType(expressionType) {
-				ctx.ReportNode(node, buildUnsafeToAnyTypeAssertionMessage("`any`"))
+				ctx.ReportRange(nodeRange, buildUnsafeToAnyTypeAssertionMessage("`any`"))
 				return
 			}
 
 			_, sender, isUnsafeExpressionAny := utils.IsUnsafeAssignment(expressionType, assertedType, ctx.TypeChecker, expression)
 			if isUnsafeExpressionAny {
-				ctx.ReportNode(node, buildUnsafeOfAnyTypeAssertionMessage(getAnyTypeName(sender)))
+				ctx.ReportRange(nodeRange, buildUnsafeOfAnyTypeAssertionMessage(getAnyTypeName(sender)))
 				return
 			}
 
 			_, sender, isUnsafeAssertedAny := utils.IsUnsafeAssignment(assertedType, expressionType, ctx.TypeChecker, typeAnnotation)
 			if isUnsafeAssertedAny {
-				ctx.ReportNode(node, buildUnsafeToAnyTypeAssertionMessage(getAnyTypeName(sender)))
+				ctx.ReportRange(nodeRange, buildUnsafeToAnyTypeAssertionMessage(getAnyTypeName(sender)))
 				return
 			}
 
@@ -98,19 +192,19 @@ var NoUnsafeTypeAssertionRule = rule.CreateRule(rule.Rule{
 				assertedTypeConstraint := checker.Checker_getBaseConstraintOfType(ctx.TypeChecker, assertedType)
 				if assertedTypeConstraint == nil {
 					// asserting to an unconstrained type parameter is unsafe
-					ctx.ReportNode(node, buildUnsafeToUnconstrainedTypeAssertionMessage(ctx.TypeChecker.TypeToString(assertedType)))
+					ctx.ReportRange(nodeRange, buildUnsafeToUnconstrainedTypeAssertionMessage(ctx.TypeChecker.TypeToString(assertedType)))
 					return
 				}
 
 				// special case message if the original type is assignable to the
 				// constraint of the target type parameter
 				if checker.Checker_isTypeAssignableTo(ctx.TypeChecker, expressionWidenedType, assertedTypeConstraint) {
-					ctx.ReportNode(node, buildUnsafeTypeAssertionAssignableToConstraintMessage(ctx.TypeChecker.TypeToString(assertedType)))
+					ctx.ReportRange(nodeRange, buildUnsafeTypeAssertionAssignableToConstraintMessage(ctx.TypeChecker.TypeToString(assertedType)))
 					return
 				}
 			}
 
-			ctx.ReportNode(node, buildUnsafeTypeAssertionMessage(ctx.TypeChecker.TypeToString(assertedType)))
+			ctx.ReportRange(nodeRange, buildUnsafeTypeAssertionMessage(ctx.TypeChecker.TypeToString(assertedType)))
 		}
 
 		return rule.RuleListeners{

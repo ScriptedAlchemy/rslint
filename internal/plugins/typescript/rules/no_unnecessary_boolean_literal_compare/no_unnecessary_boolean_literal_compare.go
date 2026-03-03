@@ -51,6 +51,55 @@ type NoUnnecessaryBooleanLiteralCompareOptions struct {
 	AllowRuleToRunWithoutStrictNullChecksIKnowWhatIAmDoing *bool
 }
 
+func parseOptions(options any) NoUnnecessaryBooleanLiteralCompareOptions {
+	opts := NoUnnecessaryBooleanLiteralCompareOptions{}
+
+	applyMap := func(raw map[string]interface{}) {
+		if raw == nil {
+			return
+		}
+
+		if v, ok := raw["allowComparingNullableBooleansToFalse"].(bool); ok {
+			opts.AllowComparingNullableBooleansToFalse = utils.Ref(v)
+		}
+		if v, ok := raw["allowComparingNullableBooleansToTrue"].(bool); ok {
+			opts.AllowComparingNullableBooleansToTrue = utils.Ref(v)
+		}
+		if v, ok := raw["allowRuleToRunWithoutStrictNullChecksIKnowWhatIAmDoing"].(bool); ok {
+			opts.AllowRuleToRunWithoutStrictNullChecksIKnowWhatIAmDoing = utils.Ref(v)
+		}
+	}
+
+	switch raw := options.(type) {
+	case NoUnnecessaryBooleanLiteralCompareOptions:
+		opts = raw
+	case *NoUnnecessaryBooleanLiteralCompareOptions:
+		if raw != nil {
+			opts = *raw
+		}
+	case map[string]interface{}:
+		applyMap(raw)
+	case []interface{}:
+		if len(raw) > 0 {
+			if firstMap, ok := raw[0].(map[string]interface{}); ok {
+				applyMap(firstMap)
+			}
+		}
+	}
+
+	if opts.AllowComparingNullableBooleansToFalse == nil {
+		opts.AllowComparingNullableBooleansToFalse = utils.Ref(true)
+	}
+	if opts.AllowComparingNullableBooleansToTrue == nil {
+		opts.AllowComparingNullableBooleansToTrue = utils.Ref(true)
+	}
+	if opts.AllowRuleToRunWithoutStrictNullChecksIKnowWhatIAmDoing == nil {
+		opts.AllowRuleToRunWithoutStrictNullChecksIKnowWhatIAmDoing = utils.Ref(false)
+	}
+
+	return opts
+}
+
 type booleanComparison struct {
 	expression                  *ast.Expression
 	literalBooleanInComparison  bool
@@ -65,19 +114,7 @@ func isBooleanType(t *checker.Type) bool {
 var NoUnnecessaryBooleanLiteralCompareRule = rule.CreateRule(rule.Rule{
 	Name: "no-unnecessary-boolean-literal-compare",
 	Run: func(ctx rule.RuleContext, options any) rule.RuleListeners {
-		opts, ok := options.(NoUnnecessaryBooleanLiteralCompareOptions)
-		if !ok {
-			opts = NoUnnecessaryBooleanLiteralCompareOptions{}
-		}
-		if opts.AllowComparingNullableBooleansToFalse == nil {
-			opts.AllowComparingNullableBooleansToFalse = utils.Ref(true)
-		}
-		if opts.AllowComparingNullableBooleansToTrue == nil {
-			opts.AllowComparingNullableBooleansToTrue = utils.Ref(true)
-		}
-		if opts.AllowRuleToRunWithoutStrictNullChecksIKnowWhatIAmDoing == nil {
-			opts.AllowRuleToRunWithoutStrictNullChecksIKnowWhatIAmDoing = utils.Ref(false)
-		}
+		opts := parseOptions(options)
 
 		compilerOptions := ctx.Program.Options()
 		isStrictNullChecks := utils.IsStrictCompilerOptionEnabled(

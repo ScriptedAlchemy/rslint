@@ -3,7 +3,10 @@ package config
 import (
 	"errors"
 	"fmt"
+	fs "io/fs"
 	"os"
+	"sort"
+	"strings"
 
 	"github.com/microsoft/typescript-go/shim/tspath"
 	"github.com/microsoft/typescript-go/shim/vfs"
@@ -44,6 +47,9 @@ func (loader *ConfigLoader) LoadRslintConfig(configPath string) (RslintConfig, s
 
 	// Update current directory to the config file's directory
 	configDirectory := tspath.GetDirectoryPath(configFileName)
+	for i := range config {
+		config[i].ConfigDirectory = configDirectory
+	}
 	return config, configDirectory, nil
 }
 
@@ -63,21 +69,51 @@ func (loader *ConfigLoader) LoadDefaultRslintConfig() (RslintConfig, string, err
 
 // LoadTsConfigsFromRslintConfig extracts and validates TypeScript configuration paths from rslint config
 func (loader *ConfigLoader) LoadTsConfigsFromRslintConfig(rslintConfig RslintConfig, configDirectory string) ([]string, error) {
+	return loader.loadTsConfigsFromRslintConfig(rslintConfig, configDirectory, nil)
+}
+
+func (loader *ConfigLoader) LoadTsConfigsFromRslintConfigForFiles(rslintConfig RslintConfig, configDirectory string, targetFiles []string) ([]string, error) {
+	return loader.loadTsConfigsFromRslintConfig(rslintConfig, configDirectory, targetFiles)
+}
+
+func (loader *ConfigLoader) loadTsConfigsFromRslintConfig(rslintConfig RslintConfig, configDirectory string, targetFiles []string) ([]string, error) {
 	tsConfigs := []string{}
+	seenConfigs := map[string]bool{}
 
 	for _, entry := range rslintConfig {
+		if len(targetFiles) > 0 {
+			isApplicable := false
+			for _, filePath := range targetFiles {
+				if configEntryMatchesFile(entry, filePath) {
+					isApplicable = true
+					break
+				}
+			}
+			if !isApplicable {
+				continue
+			}
+		}
+
 		if entry.LanguageOptions == nil || entry.LanguageOptions.ParserOptions == nil {
 			continue
 		}
 
 		for _, config := range entry.LanguageOptions.ParserOptions.Project {
-			tsconfigPath := tspath.ResolvePath(configDirectory, config)
-
-			if !loader.fs.FileExists(tsconfigPath) {
-				return nil, fmt.Errorf("tsconfig file %q doesn't exist", tsconfigPath)
+			baseDir := configDirectory
+			if entry.LanguageOptions.ParserOptions.TsconfigRootDir != "" {
+				baseDir = tspath.ResolvePath(configDirectory, entry.LanguageOptions.ParserOptions.TsconfigRootDir)
 			}
-
-			tsConfigs = append(tsConfigs, tsconfigPath)
+			resolvedPaths, err := loader.resolveProjectPaths(baseDir, config)
+			if err != nil {
+				return nil, err
+			}
+			for _, tsconfigPath := range resolvedPaths {
+				if seenConfigs[tsconfigPath] {
+					continue
+				}
+				seenConfigs[tsconfigPath] = true
+				tsConfigs = append(tsConfigs, tsconfigPath)
+			}
 		}
 	}
 
@@ -86,6 +122,47 @@ func (loader *ConfigLoader) LoadTsConfigsFromRslintConfig(rslintConfig RslintCon
 	}
 
 	return tsConfigs, nil
+}
+
+func hasGlobPattern(pattern string) bool {
+	return strings.ContainsAny(pattern, "*?[{")
+}
+
+func (loader *ConfigLoader) resolveProjectPaths(baseDir string, projectPath string) ([]string, error) {
+	if !hasGlobPattern(projectPath) {
+		tsconfigPath := tspath.ResolvePath(baseDir, projectPath)
+		if !loader.fs.FileExists(tsconfigPath) {
+			return nil, fmt.Errorf("tsconfig file %q doesn't exist", tsconfigPath)
+		}
+		return []string{tsconfigPath}, nil
+	}
+
+	matches := []string{}
+	walkErr := loader.fs.WalkDir(baseDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d == nil || d.IsDir() {
+			return nil
+		}
+		normalizedPath := tspath.NormalizePath(path)
+		relativePath := tspath.NormalizePath(tspath.ConvertToRelativePath(normalizedPath, tspath.ComparePathsOptions{
+			UseCaseSensitiveFileNames: loader.fs.UseCaseSensitiveFileNames(),
+			CurrentDirectory:          baseDir,
+		}))
+		if patternMatchesFile(projectPath, normalizedPath, relativePath) {
+			matches = append(matches, normalizedPath)
+		}
+		return nil
+	})
+	if walkErr != nil {
+		return nil, walkErr
+	}
+	sort.Strings(matches)
+	if len(matches) == 0 {
+		return nil, fmt.Errorf("tsconfig file %q doesn't exist", tspath.ResolvePath(baseDir, projectPath))
+	}
+	return matches, nil
 }
 
 // LoadConfiguration is a convenience method that loads both rslint and tsconfig configurations

@@ -19,10 +19,9 @@ var ConsistentReturnRule = rule.CreateRule(rule.Rule{
 
 // functionInfo tracks information about a function's return statements
 type functionInfo struct {
-	node                  *ast.Node
-	hasReturnWithValue    bool
-	hasReturnWithoutValue bool
-	isVoidOrPromiseVoid   bool
+	node                   *ast.Node
+	ignoreBareReturns      bool
+	expectedReturnHasValue *bool
 }
 
 func run(ctx rule.RuleContext, options any) rule.RuleListeners {
@@ -45,18 +44,26 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 		}
 	}
 
-	// Stack to track nested functions
-	functionStack := make([]*functionInfo, 0)
-
-	// Helper to get current function
-	getCurrentFunction := func() *functionInfo {
-		if len(functionStack) > 0 {
-			return functionStack[len(functionStack)-1]
+	// Helper to check if type is Promise<void>
+	isVoidLikeAwaitedType := func(t *checker.Type) bool {
+		if t == nil {
+			return false
 		}
-		return nil
+		if utils.IsTypeFlagSet(t, checker.TypeFlagsVoid) {
+			return true
+		}
+		if !utils.IsTypeFlagSet(t, checker.TypeFlagsUnion) {
+			return false
+		}
+		unionParts := utils.UnionTypeParts(t)
+		for _, part := range unionParts {
+			if part != nil && utils.IsTypeFlagSet(part, checker.TypeFlagsVoid) {
+				return true
+			}
+		}
+		return false
 	}
 
-	// Helper to check if type is Promise<void>
 	var isPromiseVoid func(typeChecker *checker.Checker, node *ast.Node, typeToCheck *checker.Type) bool
 	isPromiseVoid = func(typeChecker *checker.Checker, node *ast.Node, typeToCheck *checker.Type) bool {
 		if typeToCheck == nil {
@@ -73,7 +80,7 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 			typeArgs := checker.Checker_getTypeArguments(typeChecker, typeToCheck)
 			if len(typeArgs) > 0 {
 				awaitedType := typeArgs[0]
-				if utils.IsIntrinsicVoidType(awaitedType) {
+				if isVoidLikeAwaitedType(awaitedType) {
 					return true
 				}
 				// Recursively check for nested Promise<void>
@@ -85,7 +92,7 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 	}
 
 	// Helper to check if a function returns void, undefined, or Promise<void>
-	isReturnVoidOrPromiseVoid := func(node *ast.Node) bool {
+	isReturnVoidOrThenableVoid := func(node *ast.Node) bool {
 		if ctx.TypeChecker == nil {
 			return false
 		}
@@ -108,47 +115,23 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 				continue
 			}
 
-			// Check if return type is void
-			if utils.IsIntrinsicVoidType(returnType) {
+			isAsync := ast.HasSyntacticModifier(node, ast.ModifierFlagsAsync)
+			if isAsync {
+				if isPromiseVoid(ctx.TypeChecker, node, returnType) {
+					return true
+				}
+				continue
+			}
+
+			if utils.IsTypeFlagSet(returnType, checker.TypeFlagsVoid) {
 				return true
 			}
 
-			// Check if return type is undefined (for explicit : undefined type annotation)
-			if utils.IsTypeFlagSet(returnType, checker.TypeFlagsUndefined) && !utils.IsTypeFlagSet(returnType, checker.TypeFlagsUnion) {
-				// Only return type that is purely undefined (not a union)
-				return true
-			}
-
-			// Check if return type is void | undefined
 			if utils.IsTypeFlagSet(returnType, checker.TypeFlagsUnion) {
-				// Check if it's a union that contains both void and undefined
-				unionParts := utils.UnionTypeParts(returnType)
-				if unionParts != nil {
-					hasVoid := false
-					hasUndefined := false
-					for _, t := range unionParts {
-						if t == nil {
-							continue
-						}
-						if utils.IsIntrinsicVoidType(t) {
-							hasVoid = true
-						}
-						if utils.IsTypeFlagSet(t, checker.TypeFlagsUndefined) {
-							hasUndefined = true
-						}
-					}
-					if hasVoid && hasUndefined {
+				for _, unionPart := range utils.UnionTypeParts(returnType) {
+					if unionPart != nil && utils.IsTypeFlagSet(unionPart, checker.TypeFlagsVoid) {
 						return true
 					}
-				}
-			}
-
-			// Check if it's an async function returning Promise<void>
-			if node.Kind == ast.KindArrowFunction || node.Kind == ast.KindFunctionDeclaration || node.Kind == ast.KindFunctionExpression || node.Kind == ast.KindMethodDeclaration {
-				isAsync := ast.HasSyntacticModifier(node, ast.ModifierFlagsAsync)
-
-				if isAsync && isPromiseVoid(ctx.TypeChecker, node, returnType) {
-					return true
 				}
 			}
 		}
@@ -167,119 +150,36 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 			return false
 		}
 
-		return utils.IsTypeFlagSet(typeAtLocation, checker.TypeFlagsUndefined)
+		return utils.IsTypeFlagSet(typeAtLocation, checker.TypeFlagsUndefined) &&
+			!utils.IsTypeFlagSet(typeAtLocation, checker.TypeFlagsUnion)
 	}
 
-	// Helper to get function name for better error messages
-	getFunctionName := func(node *ast.Node) string {
-		switch node.Kind {
-		case ast.KindFunctionDeclaration:
-			fn := node.AsFunctionDeclaration()
-			if fn != nil && fn.Name() != nil && fn.Name().Kind == ast.KindIdentifier {
-				ident := fn.Name().AsIdentifier()
-				if ident != nil {
-					return "function '" + ident.Text + "'"
-				}
-			}
-			return "function"
-		case ast.KindConstructor:
-			return "constructor"
-		case ast.KindMethodDeclaration:
-			method := node.AsMethodDeclaration()
-			if method != nil && method.Name() != nil {
-				name, _ := utils.GetNameFromMember(ctx.SourceFile, method.Name())
-				return "method '" + name + "'"
-			}
-			return "method"
-		case ast.KindGetAccessor:
-			accessor := node.AsGetAccessorDeclaration()
-			if accessor != nil && accessor.Name() != nil {
-				name, _ := utils.GetNameFromMember(ctx.SourceFile, accessor.Name())
-				return "getter '" + name + "'"
-			}
-			return "getter"
-		case ast.KindFunctionExpression:
-			parent := node.Parent
-			if parent != nil {
-				switch parent.Kind {
-				case ast.KindMethodDeclaration:
-					method := parent.AsMethodDeclaration()
-					if method != nil && method.Name() != nil {
-						name, _ := utils.GetNameFromMember(ctx.SourceFile, method.Name())
-						return "method '" + name + "'"
-					}
-				case ast.KindPropertyDeclaration:
-					prop := parent.AsPropertyDeclaration()
-					if prop != nil && prop.Name() != nil {
-						name, _ := utils.GetNameFromMember(ctx.SourceFile, prop.Name())
-						if name != "" {
-							return "function '" + name + "'"
-						}
-					}
-				case ast.KindPropertyAssignment:
-					prop := parent.AsPropertyAssignment()
-					if prop != nil && prop.Name() != nil {
-						name, _ := utils.GetNameFromMember(ctx.SourceFile, prop.Name())
-						if name != "" {
-							return "function '" + name + "'"
-						}
-					}
-				case ast.KindVariableDeclaration:
-					decl := parent.AsVariableDeclaration()
-					if decl != nil && decl.Name() != nil && decl.Name().Kind == ast.KindIdentifier {
-						ident := decl.Name().AsIdentifier()
-						if ident != nil {
-							return "function '" + ident.Text + "'"
-						}
-					}
-				}
-			}
-			return "function"
-		case ast.KindArrowFunction:
-			parent := node.Parent
-			if parent != nil && parent.Kind == ast.KindVariableDeclaration {
-				decl := parent.AsVariableDeclaration()
-				if decl != nil && decl.Name() != nil && decl.Name().Kind == ast.KindIdentifier {
-					ident := decl.Name().AsIdentifier()
-					if ident != nil {
-						return "arrow function '" + ident.Text + "'"
-					}
-				}
-			}
-			return "arrow function"
-		default:
-			return "function"
+	// Stack to track nested functions
+	functionStack := make([]*functionInfo, 0)
+
+	// Helper to get current function
+	getCurrentFunction := func() *functionInfo {
+		if len(functionStack) > 0 {
+			return functionStack[len(functionStack)-1]
 		}
+		return nil
 	}
 
 	enterFunction := func(node *ast.Node) {
 		info := &functionInfo{
-			node:                  node,
-			hasReturnWithValue:    false,
-			hasReturnWithoutValue: false,
-			isVoidOrPromiseVoid:   isReturnVoidOrPromiseVoid(node),
+			node:                   node,
+			ignoreBareReturns:      isReturnVoidOrThenableVoid(node),
+			expectedReturnHasValue: nil,
 		}
 		functionStack = append(functionStack, info)
 	}
 
-	exitFunction := func(node *ast.Node) {
+	exitFunction := func(_ *ast.Node) {
 		if len(functionStack) == 0 {
 			return
 		}
 
-		info := functionStack[len(functionStack)-1]
 		functionStack = functionStack[:len(functionStack)-1]
-
-		// Check for inconsistent returns
-		if info.hasReturnWithValue && info.hasReturnWithoutValue {
-			// Report error on the function
-			funcName := getFunctionName(node)
-
-			ctx.ReportNode(node, rule.RuleMessage{
-				Id:          "missingReturnValue",
-				Description: funcName + " has inconsistent return statements. Either all return statements should return a value, or none should.",
-			})
-		}
 	}
 
 	return rule.RuleListeners{
@@ -306,26 +206,39 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 
 			returnExpr := node.Expression()
 
-			// If no return value and function returns void/Promise<void>, it's ok
-			if returnExpr == nil && funcInfo.isVoidOrPromiseVoid {
+			// If no return value and function is configured to ignore bare returns, it's ok.
+			if returnExpr == nil && funcInfo.ignoreBareReturns {
 				return
 			}
 
-			// Check if we're treating undefined as unspecified
-			if opts.TreatUndefinedAsUnspecified && returnExpr != nil {
-				if isUndefinedType(returnExpr) {
-					// Treat this as a return without value
-					funcInfo.hasReturnWithoutValue = true
-					return
-				}
+			hasValue := returnExpr != nil
+			if hasValue && opts.TreatUndefinedAsUnspecified && isUndefinedType(returnExpr) {
+				hasValue = false
 			}
 
-			// Track whether this return has a value
-			if returnExpr != nil {
-				funcInfo.hasReturnWithValue = true
-			} else {
-				funcInfo.hasReturnWithoutValue = true
+			if funcInfo.expectedReturnHasValue == nil {
+				expected := hasValue
+				funcInfo.expectedReturnHasValue = &expected
+				return
 			}
+
+			expected := *funcInfo.expectedReturnHasValue
+			if expected == hasValue {
+				return
+			}
+
+			if expected {
+				ctx.ReportNode(node, rule.RuleMessage{
+					Id:          "missingReturnValue",
+					Description: "Function has inconsistent return statements. Either all return statements should return a value, or none should.",
+				})
+				return
+			}
+
+			ctx.ReportNode(node, rule.RuleMessage{
+				Id:          "unexpectedReturnValue",
+				Description: "Function has inconsistent return statements. Either all return statements should return a value, or none should.",
+			})
 		},
 	}
 }

@@ -2,6 +2,7 @@ package no_unnecessary_type_assertion
 
 import (
 	"encoding/json"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -33,24 +34,51 @@ type NoUnnecessaryTypeAssertionOptions struct {
 	CheckLiteralConstAssertions bool `json:"checkLiteralConstAssertions"`
 }
 
+func parseOptions(options any) NoUnnecessaryTypeAssertionOptions {
+	opts := NoUnnecessaryTypeAssertionOptions{
+		TypesToIgnore: []string{},
+	}
+
+	applyJSON := func(raw any) {
+		if raw == nil {
+			return
+		}
+		payload, err := json.Marshal(raw)
+		if err != nil {
+			return
+		}
+		_ = json.Unmarshal(payload, &opts)
+	}
+
+	switch raw := options.(type) {
+	case NoUnnecessaryTypeAssertionOptions:
+		opts = raw
+	case *NoUnnecessaryTypeAssertionOptions:
+		if raw != nil {
+			opts = *raw
+		}
+	case map[string]interface{}:
+		applyJSON(raw)
+	case []interface{}:
+		if len(raw) > 0 {
+			applyJSON(raw[0])
+		}
+	default:
+		if raw != nil {
+			applyJSON(raw)
+		}
+	}
+
+	if opts.TypesToIgnore == nil {
+		opts.TypesToIgnore = []string{}
+	}
+	return opts
+}
+
 var NoUnnecessaryTypeAssertionRule = rule.CreateRule(rule.Rule{
 	Name: "no-unnecessary-type-assertion",
 	Run: func(ctx rule.RuleContext, options any) rule.RuleListeners {
-		opts := NoUnnecessaryTypeAssertionOptions{}
-		if options != nil {
-			// Try direct type assertion first (for Go tests)
-			if directOpts, ok := options.(NoUnnecessaryTypeAssertionOptions); ok {
-				opts = directOpts
-			} else {
-				// For IPC mode, options come as map[string]interface{}, convert via JSON
-				if jsonBytes, err := json.Marshal(options); err == nil {
-					_ = json.Unmarshal(jsonBytes, &opts)
-				}
-			}
-		}
-		if opts.TypesToIgnore == nil {
-			opts.TypesToIgnore = []string{}
-		}
+		opts := parseOptions(options)
 
 		compilerOptions := ctx.Program.Options()
 		isStrictNullChecks := utils.IsStrictCompilerOptionEnabled(
@@ -202,6 +230,125 @@ var NoUnnecessaryTypeAssertionRule = rule.CreateRule(rule.Rule{
 			return castHasUndefined && uncastPartsCount == castPartsCount
 		}
 
+		nullWordPattern := regexp.MustCompile(`\bnull\b`)
+		typeNodeContainsNull := func(typeNode *ast.Node) bool {
+			if typeNode == nil {
+				return false
+			}
+			sourceText := ctx.SourceFile.Text()
+			if typeNode.Pos() < 0 || typeNode.End() > len(sourceText) || typeNode.Pos() >= typeNode.End() {
+				return false
+			}
+			return nullWordPattern.MatchString(sourceText[typeNode.Pos():typeNode.End()])
+		}
+		expressionDeclarationContainsNull := func(expression *ast.Node) bool {
+			if expression == nil {
+				return false
+			}
+
+			checkSymbolDeclarations := func(symbol *ast.Symbol) bool {
+				if symbol == nil {
+					return false
+				}
+				for _, declaration := range symbol.Declarations {
+					if declaration == nil {
+						continue
+					}
+					if typeNodeContainsNull(declaration.Type()) {
+						return true
+					}
+				}
+				return false
+			}
+
+			expression = ast.SkipParentheses(expression)
+			if expression == nil {
+				return false
+			}
+
+			if ast.IsPropertyAccessExpression(expression) {
+				propertyAccess := expression.AsPropertyAccessExpression()
+				if propertyAccess != nil && propertyAccess.Name() != nil {
+					if checkSymbolDeclarations(ctx.TypeChecker.GetSymbolAtLocation(propertyAccess.Name())) {
+						return true
+					}
+					if propertyAccess.Expression != nil {
+						objectType := ctx.TypeChecker.GetTypeAtLocation(propertyAccess.Expression)
+						if objectType != nil {
+							propertySymbol := checker.Checker_getPropertyOfType(ctx.TypeChecker, objectType, propertyAccess.Name().Text())
+							if propertySymbol != nil {
+								propertyType := ctx.TypeChecker.GetTypeOfSymbolAtLocation(propertySymbol, propertyAccess.Expression)
+								for _, part := range utils.UnionTypeParts(propertyType) {
+									if checker.Type_flags(part)&checker.TypeFlagsNull != 0 {
+										return true
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+
+			return checkSymbolDeclarations(ctx.TypeChecker.GetSymbolAtLocation(expression))
+		}
+		jsxPropertyMayIncludeNullFromParameterAnnotation := func(expression *ast.Node) bool {
+			if expression == nil || !ast.IsPropertyAccessExpression(expression) {
+				return false
+			}
+			propertyAccess := expression.AsPropertyAccessExpression()
+			if propertyAccess == nil || propertyAccess.Expression == nil || propertyAccess.Name() == nil {
+				return false
+			}
+			objectIdentifier := propertyAccess.Expression.AsIdentifier()
+			if objectIdentifier == nil {
+				return false
+			}
+			attribute := nodeAncestor(expression, ast.KindJsxAttribute)
+			if attribute == nil || attribute.Parent == nil || attribute.Parent.Kind != ast.KindJsxAttributes {
+				return false
+			}
+
+			propName := propertyAccess.Name().Text()
+			sourceText := ctx.SourceFile.Text()
+			for current := expression.Parent; current != nil; current = current.Parent {
+				switch current.Kind {
+				case ast.KindFunctionDeclaration, ast.KindFunctionExpression, ast.KindArrowFunction, ast.KindMethodDeclaration:
+					var params []*ast.Node
+					switch current.Kind {
+					case ast.KindFunctionDeclaration:
+						params = current.AsFunctionDeclaration().Parameters.Nodes
+					case ast.KindFunctionExpression:
+						params = current.AsFunctionExpression().Parameters.Nodes
+					case ast.KindArrowFunction:
+						params = current.AsArrowFunction().Parameters.Nodes
+					case ast.KindMethodDeclaration:
+						params = current.AsMethodDeclaration().Parameters.Nodes
+					}
+					for _, paramNode := range params {
+						if paramNode == nil || !ast.IsParameter(paramNode) {
+							continue
+						}
+						param := paramNode.AsParameterDeclaration()
+						if param == nil || param.Name() == nil || param.Type == nil {
+							continue
+						}
+						if !ast.IsIdentifier(param.Name()) || param.Name().AsIdentifier().Text != objectIdentifier.Text {
+							continue
+						}
+						if param.Type.Pos() < 0 || param.Type.End() > len(sourceText) || param.Type.Pos() >= param.Type.End() {
+							continue
+						}
+						paramTypeText := sourceText[param.Type.Pos():param.Type.End()]
+						pattern := regexp.MustCompile(`\b` + regexp.QuoteMeta(propName) + `\b\s*\??\s*:\s*[^;\n}]*\bnull\b`)
+						if pattern.MatchString(paramTypeText) {
+							return true
+						}
+					}
+				}
+			}
+			return false
+		}
+
 		checkTypeAssertion := func(node *ast.Node) {
 			typeNode := node.Type()
 			if slices.Contains(opts.TypesToIgnore, strings.TrimSpace(ctx.SourceFile.Text()[typeNode.Pos():typeNode.End()])) {
@@ -321,6 +468,10 @@ var NoUnnecessaryTypeAssertionRule = rule.CreateRule(rule.Rule{
 						typeIncludesNull := tFlags&checker.TypeFlagsNull != 0
 						typeIncludesVoid := tFlags&checker.TypeFlagsVoid != 0
 
+						if !typeIncludesNull && expressionDeclarationContainsNull(expression) {
+							typeIncludesNull = true
+						}
+
 						contextualTypeIncludesUndefined := contextualFlags&checker.TypeFlagsUndefined != 0
 						contextualTypeIncludesNull := contextualFlags&checker.TypeFlagsNull != 0
 						contextualTypeIncludesVoid := contextualFlags&checker.TypeFlagsVoid != 0
@@ -332,6 +483,9 @@ var NoUnnecessaryTypeAssertionRule = rule.CreateRule(rule.Rule{
 						isValidVoid := !typeIncludesVoid || contextualTypeIncludesVoid
 
 						if isValidUndefined && isValidNull && isValidVoid {
+							if jsxPropertyMayIncludeNullFromParameterAnnotation(expression) {
+								return
+							}
 							ctx.ReportNodeWithFixes(node, buildContextuallyUnnecessaryMessage(), buildRemoveExclamationFix())
 						}
 					}
@@ -340,3 +494,12 @@ var NoUnnecessaryTypeAssertionRule = rule.CreateRule(rule.Rule{
 		}
 	},
 })
+
+func nodeAncestor(node *ast.Node, kind ast.Kind) *ast.Node {
+	for current := node; current != nil; current = current.Parent {
+		if current.Kind == kind {
+			return current
+		}
+	}
+	return nil
+}

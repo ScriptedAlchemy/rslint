@@ -1,0 +1,1268 @@
+// Rstest Snapshot v1
+
+exports[`no-invalid-void-type allowAsThisParameter: true > invalid 1`] = `
+{
+  "code": "type alias = void;",
+  "diagnostics": [
+    {
+      "message": "void is only valid as a return type or generic type argument or the type of a \`this\` parameter.",
+      "messageId": "invalidVoidNotReturnOrThisParamOrGeneric",
+      "range": {
+        "end": {
+          "column": 18,
+          "line": 1,
+        },
+        "start": {
+          "column": 14,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowAsThisParameter: true > invalid 2`] = `
+{
+  "code": "type alias = void;",
+  "diagnostics": [
+    {
+      "message": "void is only valid as return type or type of \`this\` parameter.",
+      "messageId": "invalidVoidNotReturnOrThisParam",
+      "range": {
+        "end": {
+          "column": 18,
+          "line": 1,
+        },
+        "start": {
+          "column": 14,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowAsThisParameter: true > invalid 3`] = `
+{
+  "code": "type alias = Array<void>;",
+  "diagnostics": [
+    {
+      "message": "void is only valid as return type or type of \`this\` parameter.",
+      "messageId": "invalidVoidNotReturnOrThisParam",
+      "range": {
+        "end": {
+          "column": 24,
+          "line": 1,
+        },
+        "start": {
+          "column": 20,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: false > invalid 1`] = `
+{
+  "code": "type GenericVoid = Generic<void>;",
+  "diagnostics": [
+    {
+      "message": "void is only valid as a return type.",
+      "messageId": "invalidVoidNotReturn",
+      "range": {
+        "end": {
+          "column": 32,
+          "line": 1,
+        },
+        "start": {
+          "column": 28,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: false > invalid 2`] = `
+{
+  "code": "function takeVoid(thing: void) {}",
+  "diagnostics": [
+    {
+      "message": "void is only valid as a return type.",
+      "messageId": "invalidVoidNotReturn",
+      "range": {
+        "end": {
+          "column": 30,
+          "line": 1,
+        },
+        "start": {
+          "column": 26,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: false > invalid 3`] = `
+{
+  "code": "let voidPromise: Promise<void> = new Promise<void>(() => {});",
+  "diagnostics": [
+    {
+      "message": "void is only valid as a return type.",
+      "messageId": "invalidVoidNotReturn",
+      "range": {
+        "end": {
+          "column": 30,
+          "line": 1,
+        },
+        "start": {
+          "column": 26,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+    {
+      "message": "void is only valid as a return type.",
+      "messageId": "invalidVoidNotReturn",
+      "range": {
+        "end": {
+          "column": 50,
+          "line": 1,
+        },
+        "start": {
+          "column": 46,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: false > invalid 4`] = `
+{
+  "code": "let voidMap: Map<string, void> = new Map<string, void>();",
+  "diagnostics": [
+    {
+      "message": "void is only valid as a return type.",
+      "messageId": "invalidVoidNotReturn",
+      "range": {
+        "end": {
+          "column": 30,
+          "line": 1,
+        },
+        "start": {
+          "column": 26,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+    {
+      "message": "void is only valid as a return type.",
+      "messageId": "invalidVoidNotReturn",
+      "range": {
+        "end": {
+          "column": 54,
+          "line": 1,
+        },
+        "start": {
+          "column": 50,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: false > invalid 5`] = `
+{
+  "code": "type invalidVoidUnion = void | number;",
+  "diagnostics": [
+    {
+      "message": "void is only valid as a return type.",
+      "messageId": "invalidVoidNotReturn",
+      "range": {
+        "end": {
+          "column": 29,
+          "line": 1,
+        },
+        "start": {
+          "column": 25,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: true > invalid 1`] = `
+{
+  "code": "function takeVoid(thing: void) {}",
+  "diagnostics": [
+    {
+      "message": "void is only valid as a return type or generic type argument.",
+      "messageId": "invalidVoidNotReturnOrGeneric",
+      "range": {
+        "end": {
+          "column": 30,
+          "line": 1,
+        },
+        "start": {
+          "column": 26,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: true > invalid 2`] = `
+{
+  "code": "const arrowGeneric = <T extends void>(arg: T) => {};",
+  "diagnostics": [
+    {
+      "message": "void is only valid as a return type or generic type argument.",
+      "messageId": "invalidVoidNotReturnOrGeneric",
+      "range": {
+        "end": {
+          "column": 37,
+          "line": 1,
+        },
+        "start": {
+          "column": 33,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: true > invalid 3`] = `
+{
+  "code": "const arrowGeneric2 = <T extends void = void>(arg: T) => {};",
+  "diagnostics": [
+    {
+      "message": "void is only valid as a return type or generic type argument.",
+      "messageId": "invalidVoidNotReturnOrGeneric",
+      "range": {
+        "end": {
+          "column": 38,
+          "line": 1,
+        },
+        "start": {
+          "column": 34,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: true > invalid 4`] = `
+{
+  "code": "function functionGeneric<T extends void>(arg: T) {}",
+  "diagnostics": [
+    {
+      "message": "void is only valid as a return type or generic type argument.",
+      "messageId": "invalidVoidNotReturnOrGeneric",
+      "range": {
+        "end": {
+          "column": 40,
+          "line": 1,
+        },
+        "start": {
+          "column": 36,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: true > invalid 5`] = `
+{
+  "code": "function functionGeneric2<T extends void = void>(arg: T) {}",
+  "diagnostics": [
+    {
+      "message": "void is only valid as a return type or generic type argument.",
+      "messageId": "invalidVoidNotReturnOrGeneric",
+      "range": {
+        "end": {
+          "column": 41,
+          "line": 1,
+        },
+        "start": {
+          "column": 37,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: true > invalid 6`] = `
+{
+  "code": "declare function functionDeclaration<T extends void>(arg: T): void;",
+  "diagnostics": [
+    {
+      "message": "void is only valid as a return type or generic type argument.",
+      "messageId": "invalidVoidNotReturnOrGeneric",
+      "range": {
+        "end": {
+          "column": 52,
+          "line": 1,
+        },
+        "start": {
+          "column": 48,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: true > invalid 7`] = `
+{
+  "code": "declare function functionDeclaration2<T extends void = void>(arg: T): void;",
+  "diagnostics": [
+    {
+      "message": "void is only valid as a return type or generic type argument.",
+      "messageId": "invalidVoidNotReturnOrGeneric",
+      "range": {
+        "end": {
+          "column": 53,
+          "line": 1,
+        },
+        "start": {
+          "column": 49,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: true > invalid 8`] = `
+{
+  "code": "functionGeneric<void>(undefined);",
+  "diagnostics": [
+    {
+      "message": "void is only valid as a return type or generic type argument.",
+      "messageId": "invalidVoidNotReturnOrGeneric",
+      "range": {
+        "end": {
+          "column": 21,
+          "line": 1,
+        },
+        "start": {
+          "column": 17,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: true > invalid 9`] = `
+{
+  "code": "declare function voidArray(args: void[]): void[];",
+  "diagnostics": [
+    {
+      "message": "void is only valid as a return type or generic type argument.",
+      "messageId": "invalidVoidNotReturnOrGeneric",
+      "range": {
+        "end": {
+          "column": 38,
+          "line": 1,
+        },
+        "start": {
+          "column": 34,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+    {
+      "message": "void is only valid as a return type or generic type argument.",
+      "messageId": "invalidVoidNotReturnOrGeneric",
+      "range": {
+        "end": {
+          "column": 47,
+          "line": 1,
+        },
+        "start": {
+          "column": 43,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: true > invalid 10`] = `
+{
+  "code": "let value = undefined as void;",
+  "diagnostics": [
+    {
+      "message": "void is only valid as a return type or generic type argument.",
+      "messageId": "invalidVoidNotReturnOrGeneric",
+      "range": {
+        "end": {
+          "column": 30,
+          "line": 1,
+        },
+        "start": {
+          "column": 26,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: true > invalid 11`] = `
+{
+  "code": "let value = <void>undefined;",
+  "diagnostics": [
+    {
+      "message": "void is only valid as a return type or generic type argument.",
+      "messageId": "invalidVoidNotReturnOrGeneric",
+      "range": {
+        "end": {
+          "column": 18,
+          "line": 1,
+        },
+        "start": {
+          "column": 14,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: true > invalid 12`] = `
+{
+  "code": "function takesThings(...things: void[]): void {}",
+  "diagnostics": [
+    {
+      "message": "void is only valid as a return type or generic type argument.",
+      "messageId": "invalidVoidNotReturnOrGeneric",
+      "range": {
+        "end": {
+          "column": 37,
+          "line": 1,
+        },
+        "start": {
+          "column": 33,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: true > invalid 13`] = `
+{
+  "code": "type KeyofVoid = keyof void;",
+  "diagnostics": [
+    {
+      "message": "void is only valid as a return type or generic type argument.",
+      "messageId": "invalidVoidNotReturnOrGeneric",
+      "range": {
+        "end": {
+          "column": 28,
+          "line": 1,
+        },
+        "start": {
+          "column": 24,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: true > invalid 14`] = `
+{
+  "code": "
+        interface Interface {
+          lambda: () => void;
+          voidProp: void;
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "void is only valid as a return type or generic type argument.",
+      "messageId": "invalidVoidNotReturnOrGeneric",
+      "range": {
+        "end": {
+          "column": 25,
+          "line": 4,
+        },
+        "start": {
+          "column": 21,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: true > invalid 15`] = `
+{
+  "code": "
+        class ClassName {
+          private readonly propName: void;
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "void is only valid as a return type or generic type argument.",
+      "messageId": "invalidVoidNotReturnOrGeneric",
+      "range": {
+        "end": {
+          "column": 42,
+          "line": 3,
+        },
+        "start": {
+          "column": 38,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: true > invalid 16`] = `
+{
+  "code": "
+        class ClassName {
+          accessor propName: void;
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "void is only valid as a return type or generic type argument.",
+      "messageId": "invalidVoidNotReturnOrGeneric",
+      "range": {
+        "end": {
+          "column": 34,
+          "line": 3,
+        },
+        "start": {
+          "column": 30,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: true > invalid 17`] = `
+{
+  "code": "let letVoid: void;",
+  "diagnostics": [
+    {
+      "message": "void is only valid as a return type or generic type argument.",
+      "messageId": "invalidVoidNotReturnOrGeneric",
+      "range": {
+        "end": {
+          "column": 18,
+          "line": 1,
+        },
+        "start": {
+          "column": 14,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: true > invalid 18`] = `
+{
+  "code": "
+        type VoidType = void;
+        class OtherClassName {
+          private propName: VoidType;
+        }
+      ",
+  "diagnostics": [
+    {
+      "message": "void is only valid as a return type or generic type argument.",
+      "messageId": "invalidVoidNotReturnOrGeneric",
+      "range": {
+        "end": {
+          "column": 29,
+          "line": 2,
+        },
+        "start": {
+          "column": 25,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: true > invalid 19`] = `
+{
+  "code": "type UnionType2 = string | number | void;",
+  "diagnostics": [
+    {
+      "message": "void is not valid as a constituent in a union type",
+      "messageId": "invalidVoidUnionConstituent",
+      "range": {
+        "end": {
+          "column": 41,
+          "line": 1,
+        },
+        "start": {
+          "column": 37,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: true > invalid 20`] = `
+{
+  "code": "type UnionType3 = string | ((number & any) | (string | void));",
+  "diagnostics": [
+    {
+      "message": "void is not valid as a constituent in a union type",
+      "messageId": "invalidVoidUnionConstituent",
+      "range": {
+        "end": {
+          "column": 60,
+          "line": 1,
+        },
+        "start": {
+          "column": 56,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: true > invalid 21`] = `
+{
+  "code": "declare function test(): number | void;",
+  "diagnostics": [
+    {
+      "message": "void is not valid as a constituent in a union type",
+      "messageId": "invalidVoidUnionConstituent",
+      "range": {
+        "end": {
+          "column": 39,
+          "line": 1,
+        },
+        "start": {
+          "column": 35,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: true > invalid 22`] = `
+{
+  "code": "declare function test<T extends number | void>(): T;",
+  "diagnostics": [
+    {
+      "message": "void is not valid as a constituent in a union type",
+      "messageId": "invalidVoidUnionConstituent",
+      "range": {
+        "end": {
+          "column": 46,
+          "line": 1,
+        },
+        "start": {
+          "column": 42,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: true > invalid 23`] = `
+{
+  "code": "type IntersectionType = string & number & void;",
+  "diagnostics": [
+    {
+      "message": "void is only valid as a return type or generic type argument.",
+      "messageId": "invalidVoidNotReturnOrGeneric",
+      "range": {
+        "end": {
+          "column": 47,
+          "line": 1,
+        },
+        "start": {
+          "column": 43,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: true > invalid 24`] = `
+{
+  "code": "
+        type MappedType<T> = {
+          [K in keyof T]: void;
+        };
+      ",
+  "diagnostics": [
+    {
+      "message": "void is only valid as a return type or generic type argument.",
+      "messageId": "invalidVoidNotReturnOrGeneric",
+      "range": {
+        "end": {
+          "column": 31,
+          "line": 3,
+        },
+        "start": {
+          "column": 27,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: true > invalid 25`] = `
+{
+  "code": "
+        type ConditionalType<T> = {
+          [K in keyof T]: T[K] extends string ? void : string;
+        };
+      ",
+  "diagnostics": [
+    {
+      "message": "void is only valid as a return type or generic type argument.",
+      "messageId": "invalidVoidNotReturnOrGeneric",
+      "range": {
+        "end": {
+          "column": 53,
+          "line": 3,
+        },
+        "start": {
+          "column": 49,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: true > invalid 26`] = `
+{
+  "code": "type ManyVoid = readonly void[];",
+  "diagnostics": [
+    {
+      "message": "void is only valid as a return type or generic type argument.",
+      "messageId": "invalidVoidNotReturnOrGeneric",
+      "range": {
+        "end": {
+          "column": 30,
+          "line": 1,
+        },
+        "start": {
+          "column": 26,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: true > invalid 27`] = `
+{
+  "code": "function foo(arr: readonly void[]) {}",
+  "diagnostics": [
+    {
+      "message": "void is only valid as a return type or generic type argument.",
+      "messageId": "invalidVoidNotReturnOrGeneric",
+      "range": {
+        "end": {
+          "column": 32,
+          "line": 1,
+        },
+        "start": {
+          "column": 28,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: true > invalid 28`] = `
+{
+  "code": "type invalidVoidUnion = void | Map<string, number>;",
+  "diagnostics": [
+    {
+      "message": "void is not valid as a constituent in a union type",
+      "messageId": "invalidVoidUnionConstituent",
+      "range": {
+        "end": {
+          "column": 29,
+          "line": 1,
+        },
+        "start": {
+          "column": 25,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: true > invalid 29`] = `
+{
+  "code": "type invalidVoidUnion = void | Map;",
+  "diagnostics": [
+    {
+      "message": "void is not valid as a constituent in a union type",
+      "messageId": "invalidVoidUnionConstituent",
+      "range": {
+        "end": {
+          "column": 29,
+          "line": 1,
+        },
+        "start": {
+          "column": 25,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: true > invalid 30`] = `
+{
+  "code": "
+class SomeClass {
+  f(x?: string): string | void {
+    if (x !== undefined) {
+      return x;
+    }
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "void is not valid as a constituent in a union type",
+      "messageId": "invalidVoidUnionConstituent",
+      "range": {
+        "end": {
+          "column": 31,
+          "line": 3,
+        },
+        "start": {
+          "column": 27,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: true > invalid 31`] = `
+{
+  "code": "export default function (x?: string): string | void {}",
+  "diagnostics": [
+    {
+      "message": "void is not valid as a constituent in a union type",
+      "messageId": "invalidVoidUnionConstituent",
+      "range": {
+        "end": {
+          "column": 52,
+          "line": 1,
+        },
+        "start": {
+          "column": 48,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: true > invalid 32`] = `
+{
+  "code": "export function f(x?: string): string | void {}",
+  "diagnostics": [
+    {
+      "message": "void is not valid as a constituent in a union type",
+      "messageId": "invalidVoidUnionConstituent",
+      "range": {
+        "end": {
+          "column": 45,
+          "line": 1,
+        },
+        "start": {
+          "column": 41,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: true > invalid 33`] = `
+{
+  "code": "
+function f(): void;
+function f(x: string): string | void;
+function f(x?: string): string | void {
+  if (x !== undefined) {
+    return x;
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "void is not valid as a constituent in a union type",
+      "messageId": "invalidVoidUnionConstituent",
+      "range": {
+        "end": {
+          "column": 37,
+          "line": 3,
+        },
+        "start": {
+          "column": 33,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: true > invalid 34`] = `
+{
+  "code": "
+class SomeClass {
+  f(): void;
+  f(x: string): string | void;
+  f(x?: string): string | void {
+    if (x !== undefined) {
+      return x;
+    }
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "void is not valid as a constituent in a union type",
+      "messageId": "invalidVoidUnionConstituent",
+      "range": {
+        "end": {
+          "column": 30,
+          "line": 4,
+        },
+        "start": {
+          "column": 26,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: whitelist > invalid 1`] = `
+{
+  "code": "type BannedVoid = Banned<void>;",
+  "diagnostics": [
+    {
+      "message": "Banned may not have void as a type argument.",
+      "messageId": "invalidVoidForGeneric",
+      "range": {
+        "end": {
+          "column": 30,
+          "line": 1,
+        },
+        "start": {
+          "column": 26,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: whitelist > invalid 2`] = `
+{
+  "code": "type BannedVoid = Ex.Mx.Tx<void>;",
+  "diagnostics": [
+    {
+      "message": "Ex.Mx.Tx may not have void as a type argument.",
+      "messageId": "invalidVoidForGeneric",
+      "range": {
+        "end": {
+          "column": 32,
+          "line": 1,
+        },
+        "start": {
+          "column": 28,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-void-type allowInGenericTypeArguments: whitelist > invalid 3`] = `
+{
+  "code": "function takeVoid(thing: void) {}",
+  "diagnostics": [
+    {
+      "message": "void is only valid as a return type or generic type argument.",
+      "messageId": "invalidVoidNotReturnOrGeneric",
+      "range": {
+        "end": {
+          "column": 30,
+          "line": 1,
+        },
+        "start": {
+          "column": 26,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-void-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;

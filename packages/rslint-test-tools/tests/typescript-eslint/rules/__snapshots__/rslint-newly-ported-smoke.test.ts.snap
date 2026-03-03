@@ -1,0 +1,692 @@
+// Rstest Snapshot v1
+
+exports[`explicit-module-boundary-types > invalid 1`] = `
+{
+  "code": "export function foo(a: string) { return a; }",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 20,
+          "line": 1,
+        },
+        "start": {
+          "column": 8,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`naming-convention > invalid 1`] = `
+{
+  "code": "class userName {};",
+  "diagnostics": [
+    {
+      "message": "Class name \`userName\` must match one of the following formats: PascalCase",
+      "messageId": "doesNotMatchFormat",
+      "range": {
+        "end": {
+          "column": 15,
+          "line": 1,
+        },
+        "start": {
+          "column": 7,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/naming-convention",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-deprecated > invalid 1`] = `
+{
+  "code": "/** @deprecated */ const oldValue = 1; oldValue;",
+  "diagnostics": [
+    {
+      "message": "\`oldValue\` is deprecated.",
+      "messageId": "deprecated",
+      "range": {
+        "end": {
+          "column": 48,
+          "line": 1,
+        },
+        "start": {
+          "column": 40,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-deprecated",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-invalid-this > invalid 1`] = `
+{
+  "code": "function foo() { return this; }",
+  "diagnostics": [
+    {
+      "message": "Unexpected 'this'.",
+      "messageId": "unexpectedThis",
+      "range": {
+        "end": {
+          "column": 29,
+          "line": 1,
+        },
+        "start": {
+          "column": 25,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-invalid-this",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-loop-func > invalid 1`] = `
+{
+  "code": "for (var i = 0; i < 1; i++) { const fn = () => i; }",
+  "diagnostics": [
+    {
+      "message": "Function declared in a loop contains unsafe references to variable(s). 'i'",
+      "messageId": "unsafeRefs",
+      "range": {
+        "end": {
+          "column": 49,
+          "line": 1,
+        },
+        "start": {
+          "column": 42,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-loop-func",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-magic-numbers > invalid 1`] = `
+{
+  "code": "type Value = 42;",
+  "diagnostics": [
+    {
+      "message": "No magic number: 42.",
+      "messageId": "noMagic",
+      "range": {
+        "end": {
+          "column": 16,
+          "line": 1,
+        },
+        "start": {
+          "column": 14,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-magic-numbers",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-redeclare > invalid 1`] = `
+{
+  "code": "const a = 1; const a = 2;",
+  "diagnostics": [
+    {
+      "message": "'a' is already defined.",
+      "messageId": "redeclared",
+      "range": {
+        "end": {
+          "column": 21,
+          "line": 1,
+        },
+        "start": {
+          "column": 20,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-redeclare",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-restricted-imports > invalid 1`] = `
+{
+  "code": "import foo from "foo";",
+  "diagnostics": [
+    {
+      "message": "'foo' import is restricted from being used.",
+      "messageId": "path",
+      "range": {
+        "end": {
+          "column": 22,
+          "line": 1,
+        },
+        "start": {
+          "column": 17,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-restricted-imports",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-restricted-types > invalid 1`] = `
+{
+  "code": "type Foo = number; type A = Foo;",
+  "diagnostics": [
+    {
+      "message": "Don't use \`Foo\` as a type.",
+      "messageId": "bannedTypeMessage",
+      "range": {
+        "end": {
+          "column": 32,
+          "line": 1,
+        },
+        "start": {
+          "column": 29,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-restricted-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-shadow > invalid 1`] = `
+{
+  "code": "const a = 1; function f() { const a = 2; }",
+  "diagnostics": [
+    {
+      "message": "'a' is already declared in the upper scope on line 1 column 6.",
+      "messageId": "noShadow",
+      "range": {
+        "end": {
+          "column": 36,
+          "line": 1,
+        },
+        "start": {
+          "column": 35,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-shadow",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-type-alias > invalid 1`] = `
+{
+  "code": "type Foo = string;",
+  "diagnostics": [
+    {
+      "message": "Type aliases are not allowed.",
+      "messageId": "noTypeAlias",
+      "range": {
+        "end": {
+          "column": 18,
+          "line": 1,
+        },
+        "start": {
+          "column": 12,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-type-alias",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unnecessary-parameter-property-assignment > invalid 1`] = `
+{
+  "code": "class A { constructor(public name: string) { this.name = name; } }",
+  "diagnostics": [
+    {
+      "message": "Parameter property 'name' is assigned to itself in the constructor.",
+      "messageId": "unnecessaryAssign",
+      "range": {
+        "end": {
+          "column": 62,
+          "line": 1,
+        },
+        "start": {
+          "column": 46,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unnecessary-parameter-property-assignment",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unnecessary-qualifier > invalid 1`] = `
+{
+  "code": "namespace A { export type B = number; const x: A.B = 3; }",
+  "diagnostics": [
+    {
+      "message": "Qualifier is unnecessary since it can be removed.",
+      "messageId": "unnecessaryQualifier",
+      "range": {
+        "end": {
+          "column": 51,
+          "line": 1,
+        },
+        "start": {
+          "column": 48,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unnecessary-qualifier",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unnecessary-type-conversion > invalid 1`] = `
+{
+  "code": "const a = (value as string) as string;",
+  "diagnostics": [
+    {
+      "message": "This type conversion is unnecessary.",
+      "messageId": "unnecessaryTypeConversion",
+      "range": {
+        "end": {
+          "column": 38,
+          "line": 1,
+        },
+        "start": {
+          "column": 11,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unnecessary-type-conversion",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unnecessary-type-parameters > invalid 1`] = `
+{
+  "code": "function foo<T>(value: string): string { return value; }",
+  "diagnostics": [
+    {
+      "message": "Type parameter 'T' is never used in the function signature.",
+      "messageId": "sole",
+      "range": {
+        "end": {
+          "column": 15,
+          "line": 1,
+        },
+        "start": {
+          "column": 14,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unnecessary-type-parameters",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unsafe-declaration-merging > invalid 1`] = `
+{
+  "code": "interface Foo {} class Foo {}",
+  "diagnostics": [
+    {
+      "message": "Unsafe declaration merging between class and interface 'Foo'.",
+      "messageId": "unsafeMerging",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 1,
+        },
+        "start": {
+          "column": 11,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unsafe-declaration-merging",
+    },
+    {
+      "message": "Unsafe declaration merging between class and interface 'Foo'.",
+      "messageId": "unsafeMerging",
+      "range": {
+        "end": {
+          "column": 27,
+          "line": 1,
+        },
+        "start": {
+          "column": 24,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unsafe-declaration-merging",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unsafe-function-type > invalid 1`] = `
+{
+  "code": "type Fn = Function;",
+  "diagnostics": [
+    {
+      "message": "The \`Function\` type accepts any function-like value. Prefer explicitly defining any function parameters and return type.",
+      "messageId": "bannedFunctionType",
+      "range": {
+        "end": {
+          "column": 19,
+          "line": 1,
+        },
+        "start": {
+          "column": 11,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unsafe-function-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-unused-private-class-members > invalid 1`] = `
+{
+  "code": "class A { #value = 1; }",
+  "diagnostics": [
+    {
+      "message": "Private class member '##value' is declared but never used.",
+      "messageId": "unusedPrivateClassMember",
+      "range": {
+        "end": {
+          "column": 22,
+          "line": 1,
+        },
+        "start": {
+          "column": 11,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-unused-private-class-members",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`no-use-before-define > invalid 1`] = `
+{
+  "code": "console.log(a); const a = 1;",
+  "diagnostics": [
+    {
+      "message": "'a' was used before it was defined.",
+      "messageId": "noUseBeforeDefine",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 1,
+        },
+        "start": {
+          "column": 13,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/no-use-before-define",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`parameter-properties > invalid 1`] = `
+{
+  "code": "class A { constructor(public name: string) {} }",
+  "diagnostics": [
+    {
+      "message": "Property name should be declared as a class property.",
+      "messageId": "preferClassProperty",
+      "range": {
+        "end": {
+          "column": 42,
+          "line": 1,
+        },
+        "start": {
+          "column": 23,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/parameter-properties",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-destructuring > invalid 1`] = `
+{
+  "code": "const foo = obj.foo;",
+  "diagnostics": [
+    {
+      "message": "Use object destructuring.",
+      "messageId": "preferDestructuring",
+      "range": {
+        "end": {
+          "column": 20,
+          "line": 1,
+        },
+        "start": {
+          "column": 7,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-destructuring",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-function-type > invalid 1`] = `
+{
+  "code": "interface Fn { (value: string): number }",
+  "diagnostics": [
+    {
+      "message": "Interface only has a call signature, you should use a function type instead.",
+      "messageId": "functionTypeOverCallableType",
+      "range": {
+        "end": {
+          "column": 39,
+          "line": 1,
+        },
+        "start": {
+          "column": 16,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-function-type",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`prefer-optional-chain > invalid 1`] = `
+{
+  "code": "value && value.name",
+  "diagnostics": [
+    {
+      "message": "Prefer using an optional chain expression instead, as it's more concise and easier to read.",
+      "messageId": "preferOptionalChain",
+      "range": {
+        "end": {
+          "column": 20,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/prefer-optional-chain",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`sort-type-constituents > invalid 1`] = `
+{
+  "code": "type A = string | number;",
+  "diagnostics": [
+    {
+      "message": "Union type A constituents must be sorted.",
+      "messageId": "notSortedNamed",
+      "range": {
+        "end": {
+          "column": 25,
+          "line": 1,
+        },
+        "start": {
+          "column": 10,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/sort-type-constituents",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`strict-boolean-expressions > invalid 1`] = `
+{
+  "code": "const value: string = "x"; if (value) {}",
+  "diagnostics": [
+    {
+      "message": "Unexpected string value in conditional.",
+      "messageId": "conditionErrorString",
+      "range": {
+        "end": {
+          "column": 37,
+          "line": 1,
+        },
+        "start": {
+          "column": 32,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/strict-boolean-expressions",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`typedef > invalid 1`] = `
+{
+  "code": "const foo = "bar";",
+  "diagnostics": [
+    {
+      "message": "Expected foo to have a type annotation.",
+      "messageId": "expectedTypedefNamed",
+      "range": {
+        "end": {
+          "column": 18,
+          "line": 1,
+        },
+        "start": {
+          "column": 7,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/typedef",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;

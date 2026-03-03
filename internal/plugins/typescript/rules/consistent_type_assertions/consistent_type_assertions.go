@@ -1,8 +1,11 @@
 package consistent_type_assertions
 
 import (
+	"strings"
+
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/web-infra-dev/rslint/internal/rule"
+	"github.com/web-infra-dev/rslint/internal/utils"
 )
 
 type AssertionStyle string
@@ -56,9 +59,11 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 		if node == nil {
 			return false
 		}
+		if ast.IsConstAssertion(node) {
+			return true
+		}
 
 		var typeNode *ast.Node
-
 		switch node.Kind {
 		case ast.KindAsExpression:
 			asExpr := node.AsAsExpression()
@@ -72,19 +77,19 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 			}
 		}
 
-		if typeNode != nil && typeNode.Kind == ast.KindTypeReference {
-			typeRef := typeNode.AsTypeReference()
-			if typeRef != nil && typeRef.TypeName != nil {
-				typeName := typeRef.TypeName
-				if typeName.Kind == ast.KindIdentifier {
-					ident := typeName.AsIdentifier()
-					if ident != nil && ident.Text == "const" {
-						return true
-					}
-				}
+		if typeNode != nil && ast.IsTypeReferenceNode(typeNode) {
+			typeRef := typeNode.AsTypeReferenceNode()
+			if typeRef != nil && typeRef.TypeName != nil && ast.IsIdentifier(typeRef.TypeName) {
+				return typeRef.TypeName.Text() == "const"
 			}
 		}
-
+		if typeNode != nil {
+			typeRange := utils.TrimNodeTextRange(ctx.SourceFile, typeNode)
+			text := ctx.SourceFile.Text()
+			if typeRange.End() <= len(text) {
+				return strings.TrimSpace(text[typeRange.Pos():typeRange.End()]) == "const"
+			}
+		}
 		return false
 	}
 
@@ -152,6 +157,8 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 			return true
 		case ast.KindParameter:
 			return true
+		case ast.KindJsxExpression, ast.KindJsxAttribute, ast.KindJsxSpreadAttribute:
+			return true
 		case ast.KindPropertyAssignment:
 			// Check if it's a default value in a parameter
 			propAssignment := parent.AsPropertyAssignment()
@@ -195,21 +202,20 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 	}
 
 	checkAsExpression := func(node *ast.Node) {
-		// Always allow const assertions
-		if isConstAssertion(node) {
-			return
-		}
-
 		asExpr := node.AsAsExpression()
 		if asExpr == nil {
 			return
 		}
 
+		isConst := isConstAssertion(node)
 		expression := asExpr.Expression
 		typeNode := asExpr.Type
 
 		// Check assertion style
 		if opts.AssertionStyle == AssertionStyleNever {
+			if isConst {
+				return
+			}
 			ctx.ReportNode(node, rule.RuleMessage{
 				Id:          "never",
 				Description: "Do not use any type assertions.",
@@ -219,9 +225,13 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 
 		if opts.AssertionStyle == AssertionStyleAngleBracket {
 			ctx.ReportNode(node, rule.RuleMessage{
-				Id:          "as",
+				Id:          "angle-bracket",
 				Description: "Use angle-bracket type assertions instead of 'as' assertions.",
 			})
+			return
+		}
+
+		if isConst {
 			return
 		}
 
@@ -230,13 +240,13 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 			if opts.ObjectLiteralTypeAssertions == LiteralAssertionNever {
 				if canUseTypeAnnotation(node) {
 					ctx.ReportNode(node, rule.RuleMessage{
-						Id:          "object-literal-with-type-annotation",
-						Description: "Use a type annotation instead of a type assertion for object literals.",
+						Id:          "unexpectedObjectTypeAssertion",
+						Description: "Always prefer const x: T = { ... }.",
 					})
 				} else {
 					ctx.ReportNode(node, rule.RuleMessage{
-						Id:          "never-object-literal",
-						Description: "Use a type annotation or satisfies instead of a type assertion for object literals.",
+						Id:          "unexpectedObjectTypeAssertion",
+						Description: "Always prefer const x: T = { ... }.",
 					})
 				}
 				return
@@ -246,13 +256,13 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 				if !isAsParameter(node) {
 					if canUseTypeAnnotation(node) {
 						ctx.ReportNode(node, rule.RuleMessage{
-							Id:          "object-literal-with-type-annotation",
-							Description: "Use a type annotation instead of a type assertion for object literals.",
+							Id:          "unexpectedObjectTypeAssertion",
+							Description: "Always prefer const x: T = { ... }.",
 						})
 					} else {
 						ctx.ReportNode(node, rule.RuleMessage{
-							Id:          "never-object-literal",
-							Description: "Use a type annotation or satisfies instead of a type assertion for object literals.",
+							Id:          "unexpectedObjectTypeAssertion",
+							Description: "Always prefer const x: T = { ... }.",
 						})
 					}
 					return
@@ -265,13 +275,13 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 			if opts.ArrayLiteralTypeAssertions == LiteralAssertionNever {
 				if canUseTypeAnnotation(node) {
 					ctx.ReportNode(node, rule.RuleMessage{
-						Id:          "array-literal-with-type-annotation",
-						Description: "Use a type annotation instead of a type assertion for array literals.",
+						Id:          "unexpectedArrayTypeAssertion",
+						Description: "Always prefer const x: T[] = [ ... ].",
 					})
 				} else {
 					ctx.ReportNode(node, rule.RuleMessage{
-						Id:          "never-array-literal",
-						Description: "Use a type annotation or satisfies instead of a type assertion for array literals.",
+						Id:          "unexpectedArrayTypeAssertion",
+						Description: "Always prefer const x: T[] = [ ... ].",
 					})
 				}
 				return
@@ -281,13 +291,13 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 				if !isAsParameter(node) {
 					if canUseTypeAnnotation(node) {
 						ctx.ReportNode(node, rule.RuleMessage{
-							Id:          "array-literal-with-type-annotation",
-							Description: "Use a type annotation instead of a type assertion for array literals.",
+							Id:          "unexpectedArrayTypeAssertion",
+							Description: "Always prefer const x: T[] = [ ... ].",
 						})
 					} else {
 						ctx.ReportNode(node, rule.RuleMessage{
-							Id:          "never-array-literal",
-							Description: "Use a type annotation or satisfies instead of a type assertion for array literals.",
+							Id:          "unexpectedArrayTypeAssertion",
+							Description: "Always prefer const x: T[] = [ ... ].",
 						})
 					}
 					return
@@ -297,21 +307,20 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 	}
 
 	checkTypeAssertion := func(node *ast.Node) {
-		// Always allow const assertions
-		if isConstAssertion(node) {
-			return
-		}
-
 		typeAssertion := node.AsTypeAssertion()
 		if typeAssertion == nil {
 			return
 		}
 
+		isConst := isConstAssertion(node)
 		expression := typeAssertion.Expression
 		typeNode := typeAssertion.Type
 
 		// Check assertion style 'never' first
 		if opts.AssertionStyle == AssertionStyleNever {
+			if isConst {
+				return
+			}
 			ctx.ReportNode(node, rule.RuleMessage{
 				Id:          "never",
 				Description: "Do not use any type assertions.",
@@ -319,18 +328,31 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 			return
 		}
 
-		// Check object literal assertions BEFORE checking assertion style
+		// Const assertions should honor configured style, but don't participate in
+		// literal-specific assertion checks.
+		if isConst {
+			if opts.AssertionStyle == AssertionStyleAs {
+				ctx.ReportNode(node, rule.RuleMessage{
+					Id:          "as",
+					Description: "Use 'as' assertions instead of angle-bracket type assertions.",
+				})
+			}
+			return
+		}
+
+		// Check object literal assertions before style so option-specific diagnostics
+		// are preserved for non-const assertions.
 		if isObjectLiteral(expression) && !isAnyOrUnknown(typeNode) {
 			if opts.ObjectLiteralTypeAssertions == LiteralAssertionNever {
 				if canUseTypeAnnotation(node) {
 					ctx.ReportNode(node, rule.RuleMessage{
-						Id:          "object-literal-with-type-annotation",
-						Description: "Use a type annotation instead of a type assertion for object literals.",
+						Id:          "unexpectedObjectTypeAssertion",
+						Description: "Always prefer const x: T = { ... }.",
 					})
 				} else {
 					ctx.ReportNode(node, rule.RuleMessage{
-						Id:          "never-object-literal",
-						Description: "Use a type annotation or satisfies instead of a type assertion for object literals.",
+						Id:          "unexpectedObjectTypeAssertion",
+						Description: "Always prefer const x: T = { ... }.",
 					})
 				}
 				return
@@ -340,13 +362,13 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 				if !isAsParameter(node) {
 					if canUseTypeAnnotation(node) {
 						ctx.ReportNode(node, rule.RuleMessage{
-							Id:          "object-literal-with-type-annotation",
-							Description: "Use a type annotation instead of a type assertion for object literals.",
+							Id:          "unexpectedObjectTypeAssertion",
+							Description: "Always prefer const x: T = { ... }.",
 						})
 					} else {
 						ctx.ReportNode(node, rule.RuleMessage{
-							Id:          "never-object-literal",
-							Description: "Use a type annotation or satisfies instead of a type assertion for object literals.",
+							Id:          "unexpectedObjectTypeAssertion",
+							Description: "Always prefer const x: T = { ... }.",
 						})
 					}
 					return
@@ -359,13 +381,13 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 			if opts.ArrayLiteralTypeAssertions == LiteralAssertionNever {
 				if canUseTypeAnnotation(node) {
 					ctx.ReportNode(node, rule.RuleMessage{
-						Id:          "array-literal-with-type-annotation",
-						Description: "Use a type annotation instead of a type assertion for array literals.",
+						Id:          "unexpectedArrayTypeAssertion",
+						Description: "Always prefer const x: T[] = [ ... ].",
 					})
 				} else {
 					ctx.ReportNode(node, rule.RuleMessage{
-						Id:          "never-array-literal",
-						Description: "Use a type annotation or satisfies instead of a type assertion for array literals.",
+						Id:          "unexpectedArrayTypeAssertion",
+						Description: "Always prefer const x: T[] = [ ... ].",
 					})
 				}
 				return
@@ -375,13 +397,13 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 				if !isAsParameter(node) {
 					if canUseTypeAnnotation(node) {
 						ctx.ReportNode(node, rule.RuleMessage{
-							Id:          "array-literal-with-type-annotation",
-							Description: "Use a type annotation instead of a type assertion for array literals.",
+							Id:          "unexpectedArrayTypeAssertion",
+							Description: "Always prefer const x: T[] = [ ... ].",
 						})
 					} else {
 						ctx.ReportNode(node, rule.RuleMessage{
-							Id:          "never-array-literal",
-							Description: "Use a type annotation or satisfies instead of a type assertion for array literals.",
+							Id:          "unexpectedArrayTypeAssertion",
+							Description: "Always prefer const x: T[] = [ ... ].",
 						})
 					}
 					return
@@ -389,14 +411,14 @@ func run(ctx rule.RuleContext, options any) rule.RuleListeners {
 			}
 		}
 
-		// Check assertion style (after literal checks)
 		if opts.AssertionStyle == AssertionStyleAs {
 			ctx.ReportNode(node, rule.RuleMessage{
-				Id:          "angle-bracket",
+				Id:          "as",
 				Description: "Use 'as' assertions instead of angle-bracket type assertions.",
 			})
 			return
 		}
+
 	}
 
 	return rule.RuleListeners{

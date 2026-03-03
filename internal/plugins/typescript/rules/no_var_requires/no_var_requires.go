@@ -2,6 +2,7 @@ package no_var_requires
 
 import (
 	"regexp"
+	"strings"
 
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/web-infra-dev/rslint/internal/rule"
@@ -16,7 +17,21 @@ var NoVarRequiresRule = rule.CreateRule(rule.Rule{
 	Run: func(ctx rule.RuleContext, options any) rule.RuleListeners {
 		opts := &Options{}
 		if options != nil {
-			if optMap, ok := options.(map[string]interface{}); ok {
+			if optArray, ok := options.([]interface{}); ok && len(optArray) > 0 {
+				if optMap, ok := optArray[0].(map[string]interface{}); ok {
+					if allowList, exists := optMap["allow"]; exists {
+						if allowSlice, ok := allowList.([]interface{}); ok {
+							for _, item := range allowSlice {
+								if str, ok := item.(string); ok {
+									opts.Allow = append(opts.Allow, str)
+								}
+							}
+						} else if allowStrSlice, ok := allowList.([]string); ok {
+							opts.Allow = allowStrSlice
+						}
+					}
+				}
+			} else if optMap, ok := options.(map[string]interface{}); ok {
 				if allowList, exists := optMap["allow"]; exists {
 					if allowSlice, ok := allowList.([]interface{}); ok {
 						for _, item := range allowSlice {
@@ -28,6 +43,8 @@ var NoVarRequiresRule = rule.CreateRule(rule.Rule{
 						opts.Allow = allowStrSlice
 					}
 				}
+			} else if o, ok := options.(Options); ok {
+				opts = &o
 			} else if o, ok := options.(*Options); ok {
 				opts = o
 			}
@@ -36,7 +53,13 @@ var NoVarRequiresRule = rule.CreateRule(rule.Rule{
 		// Compile allow patterns into regexes
 		var allowPatterns []*regexp.Regexp
 		for _, pattern := range opts.Allow {
-			if re, err := regexp.Compile(pattern); err == nil {
+			p := pattern
+			// Upstream test config often passes regex-literals-as-strings, like
+			// `/package\.json$/`; strip delimiters for Go regexp parsing.
+			if strings.HasPrefix(p, "/") && strings.HasSuffix(p, "/") && len(p) > 2 {
+				p = p[1 : len(p)-1]
+			}
+			if re, err := regexp.Compile(p); err == nil {
 				allowPatterns = append(allowPatterns, re)
 			}
 		}
@@ -57,8 +80,27 @@ var NoVarRequiresRule = rule.CreateRule(rule.Rule{
 			if node.Kind == ast.KindStringLiteral {
 				return true
 			}
-			if node.Kind == ast.KindTemplateExpression || node.Kind == ast.KindNoSubstitutionTemplateLiteral {
+			if node.Kind == ast.KindNoSubstitutionTemplateLiteral {
 				return true
+			}
+			return false
+		}
+
+		isRequireIdentifierShadowed := func(node *ast.Node) bool {
+			if node == nil || ctx.TypeChecker == nil {
+				return false
+			}
+			symbol := ctx.TypeChecker.GetSymbolAtLocation(node)
+			if symbol == nil {
+				return false
+			}
+			for _, decl := range symbol.Declarations {
+				if decl == nil {
+					continue
+				}
+				if ast.GetSourceFileOfNode(decl) == ctx.SourceFile {
+					return true
+				}
 			}
 			return false
 		}
@@ -95,9 +137,7 @@ var NoVarRequiresRule = rule.CreateRule(rule.Rule{
 				}
 
 				// Check if require is a local variable (not the global require)
-				symbol := identifier.Symbol()
-				if symbol != nil && len(symbol.Declarations) > 0 {
-					// This is a local require variable, not the global one
+				if isRequireIdentifierShadowed(callee) {
 					return
 				}
 
@@ -107,7 +147,8 @@ var NoVarRequiresRule = rule.CreateRule(rule.Rule{
 					// Get string value from argument
 					arg := args.Nodes[0]
 					var argValue string
-					if arg.Kind == ast.KindStringLiteral {
+					switch arg.Kind {
+					case ast.KindStringLiteral:
 						stringLiteral := arg.AsStringLiteral()
 						if stringLiteral != nil {
 							// Remove quotes from the text
@@ -118,6 +159,11 @@ var NoVarRequiresRule = rule.CreateRule(rule.Rule{
 							} else {
 								argValue = text
 							}
+						}
+					case ast.KindNoSubstitutionTemplateLiteral:
+						templateLiteral := arg.AsNoSubstitutionTemplateLiteral()
+						if templateLiteral != nil {
+							argValue = templateLiteral.Text
 						}
 					}
 					if argValue != "" && isImportPathAllowed(argValue) {

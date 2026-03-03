@@ -1,0 +1,2473 @@
+// Rstest Snapshot v1
+
+exports[`explicit-module-boundary-types > invalid 1`] = `
+{
+  "code": "
+export function test(a: number, b: number) {
+  return;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 21,
+          "line": 2,
+        },
+        "start": {
+          "column": 8,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 2`] = `
+{
+  "code": "
+export function test() {
+  return;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 21,
+          "line": 2,
+        },
+        "start": {
+          "column": 8,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 3`] = `
+{
+  "code": "
+export var fn = function () {
+  return 1;
+};
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 26,
+          "line": 2,
+        },
+        "start": {
+          "column": 17,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 4`] = `
+{
+  "code": "
+export var arrowFn = () => 'test';
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 27,
+          "line": 2,
+        },
+        "start": {
+          "column": 25,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 5`] = `
+{
+  "code": "
+export class Test {
+  constructor() {}
+  get prop() {
+    return 1;
+  }
+  set prop(value) {}
+  method() {
+    return;
+  }
+  arrow = arg => 'arrow';
+  private method() {
+    return;
+  }
+  abstract abs(arg);
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 11,
+          "line": 4,
+        },
+        "start": {
+          "column": 3,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+    {
+      "message": "Argument 'value' should be typed.",
+      "messageId": "missingArgType",
+      "range": {
+        "end": {
+          "column": 17,
+          "line": 7,
+        },
+        "start": {
+          "column": 12,
+          "line": 7,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 9,
+          "line": 8,
+        },
+        "start": {
+          "column": 3,
+          "line": 8,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 11,
+          "line": 11,
+        },
+        "start": {
+          "column": 3,
+          "line": 11,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+    {
+      "message": "Argument 'arg' should be typed.",
+      "messageId": "missingArgType",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 11,
+        },
+        "start": {
+          "column": 11,
+          "line": 11,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 21,
+          "line": 15,
+        },
+        "start": {
+          "column": 15,
+          "line": 15,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+    {
+      "message": "Argument 'arg' should be typed.",
+      "messageId": "missingArgType",
+      "range": {
+        "end": {
+          "column": 19,
+          "line": 15,
+        },
+        "start": {
+          "column": 16,
+          "line": 15,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 7,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 6`] = `
+{
+  "code": "
+export class Foo {
+  public a = () => {};
+  public b = function () {};
+  public c = function test() {};
+
+  static d = () => {};
+  static e = function () {};
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 3,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 23,
+          "line": 4,
+        },
+        "start": {
+          "column": 3,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 27,
+          "line": 5,
+        },
+        "start": {
+          "column": 3,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 14,
+          "line": 7,
+        },
+        "start": {
+          "column": 3,
+          "line": 7,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 23,
+          "line": 8,
+        },
+        "start": {
+          "column": 3,
+          "line": 8,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 5,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 7`] = `
+{
+  "code": "export default () => (true ? () => {} : (): void => {});",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 21,
+          "line": 1,
+        },
+        "start": {
+          "column": 19,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 8`] = `
+{
+  "code": "export var arrowFn = () => 'test';",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 27,
+          "line": 1,
+        },
+        "start": {
+          "column": 25,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 9`] = `
+{
+  "code": "
+export var funcExpr = function () {
+  return 'test';
+};
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 32,
+          "line": 2,
+        },
+        "start": {
+          "column": 23,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 10`] = `
+{
+  "code": "
+interface Foo {}
+export const x: Foo = {
+  foo: () => {},
+};
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 4,
+        },
+        "start": {
+          "column": 3,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 11`] = `
+{
+  "code": "export default () => () => {};",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 27,
+          "line": 1,
+        },
+        "start": {
+          "column": 25,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 12`] = `
+{
+  "code": "export default () => function () {};",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 31,
+          "line": 1,
+        },
+        "start": {
+          "column": 22,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 13`] = `
+{
+  "code": "
+export default () => {
+  return () => {};
+};
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 15,
+          "line": 3,
+        },
+        "start": {
+          "column": 13,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 14`] = `
+{
+  "code": "
+export default () => {
+  return function () {};
+};
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 19,
+          "line": 3,
+        },
+        "start": {
+          "column": 10,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 15`] = `
+{
+  "code": "
+export function fn() {
+  return () => {};
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 15,
+          "line": 3,
+        },
+        "start": {
+          "column": 13,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 16`] = `
+{
+  "code": "
+export function fn() {
+  return function () {};
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 19,
+          "line": 3,
+        },
+        "start": {
+          "column": 10,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 17`] = `
+{
+  "code": "
+export function FunctionDeclaration() {
+  return function FunctionExpression_Within_FunctionDeclaration() {
+    return function FunctionExpression_Within_FunctionExpression() {
+      return () => {
+        // ArrowFunctionExpression_Within_FunctionExpression
+        return () =>
+          // ArrowFunctionExpression_Within_ArrowFunctionExpression
+          () =>
+            1; // ArrowFunctionExpression_Within_ArrowFunctionExpression_WithNoBody
+      };
+    };
+  };
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 16,
+          "line": 9,
+        },
+        "start": {
+          "column": 14,
+          "line": 9,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 18`] = `
+{
+  "code": "
+export default () => () => {
+  return () => {
+    return;
+  };
+};
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 15,
+          "line": 3,
+        },
+        "start": {
+          "column": 13,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 19`] = `
+{
+  "code": "
+export const func1 = (value: number) => ({ type: 'X', value }) as any;
+export const func2 = (value: number) => ({ type: 'X', value }) as Action;
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 40,
+          "line": 2,
+        },
+        "start": {
+          "column": 38,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 40,
+          "line": 3,
+        },
+        "start": {
+          "column": 38,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 20`] = `
+{
+  "code": "
+export const func = (value: number) => ({ type: 'X', value }) as const;
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 39,
+          "line": 2,
+        },
+        "start": {
+          "column": 37,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 21`] = `
+{
+  "code": "
+interface R {
+  type: string;
+  value: number;
+}
+
+export const func = (value: number) =>
+  ({ type: 'X', value }) as const satisfies R;
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 39,
+          "line": 7,
+        },
+        "start": {
+          "column": 37,
+          "line": 7,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 22`] = `
+{
+  "code": "
+export class Test {
+  constructor() {}
+  get prop() {
+    return 1;
+  }
+  set prop() {}
+  method() {
+    return;
+  }
+  arrow = (): string => 'arrow';
+  foo = () => 'bar';
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 9,
+          "line": 8,
+        },
+        "start": {
+          "column": 3,
+          "line": 8,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 9,
+          "line": 12,
+        },
+        "start": {
+          "column": 3,
+          "line": 12,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 23`] = `
+{
+  "code": "
+export class Test {
+  constructor(
+    public foo,
+    private ...bar,
+  ) {}
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Argument 'foo' should be typed.",
+      "messageId": "missingArgType",
+      "range": {
+        "end": {
+          "column": 15,
+          "line": 4,
+        },
+        "start": {
+          "column": 12,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+    {
+      "message": "Argument 'bar' should be typed.",
+      "messageId": "missingArgType",
+      "range": {
+        "end": {
+          "column": 19,
+          "line": 5,
+        },
+        "start": {
+          "column": 5,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 24`] = `
+{
+  "code": "
+export const func1 = (value: number) => value;
+export const func2 = (value: number) => value;
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 40,
+          "line": 2,
+        },
+        "start": {
+          "column": 38,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 25`] = `
+{
+  "code": "
+export function fn(test): string {
+  return '123';
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Argument 'test' should be typed.",
+      "messageId": "missingArgType",
+      "range": {
+        "end": {
+          "column": 24,
+          "line": 2,
+        },
+        "start": {
+          "column": 20,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 26`] = `
+{
+  "code": "
+export const fn = (one: number, two): string => '123';
+      ",
+  "diagnostics": [
+    {
+      "message": "Argument 'two' should be typed.",
+      "messageId": "missingArgType",
+      "range": {
+        "end": {
+          "column": 36,
+          "line": 2,
+        },
+        "start": {
+          "column": 33,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 27`] = `
+{
+  "code": "
+export function foo(outer) {
+  return function (inner) {};
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Argument 'outer' should be typed.",
+      "messageId": "missingArgType",
+      "range": {
+        "end": {
+          "column": 26,
+          "line": 2,
+        },
+        "start": {
+          "column": 21,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 19,
+          "line": 3,
+        },
+        "start": {
+          "column": 10,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+    {
+      "message": "Argument 'inner' should be typed.",
+      "messageId": "missingArgType",
+      "range": {
+        "end": {
+          "column": 25,
+          "line": 3,
+        },
+        "start": {
+          "column": 20,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 3,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 28`] = `
+{
+  "code": "export const baz = arg => arg as const;",
+  "diagnostics": [
+    {
+      "message": "Argument 'arg' should be typed.",
+      "messageId": "missingArgType",
+      "range": {
+        "end": {
+          "column": 23,
+          "line": 1,
+        },
+        "start": {
+          "column": 20,
+          "line": 1,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 29`] = `
+{
+  "code": "
+const foo = arg => arg;
+export default foo;
+      ",
+  "diagnostics": [
+    {
+      "message": "Argument 'arg' should be typed.",
+      "messageId": "missingArgType",
+      "range": {
+        "end": {
+          "column": 16,
+          "line": 2,
+        },
+        "start": {
+          "column": 13,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 19,
+          "line": 2,
+        },
+        "start": {
+          "column": 17,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 30`] = `
+{
+  "code": "
+const foo = arg => arg;
+export = foo;
+      ",
+  "diagnostics": [
+    {
+      "message": "Argument 'arg' should be typed.",
+      "messageId": "missingArgType",
+      "range": {
+        "end": {
+          "column": 16,
+          "line": 2,
+        },
+        "start": {
+          "column": 13,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 19,
+          "line": 2,
+        },
+        "start": {
+          "column": 17,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 31`] = `
+{
+  "code": "
+let foo = (arg: number): number => arg;
+foo = arg => arg;
+export default foo;
+      ",
+  "diagnostics": [
+    {
+      "message": "Argument 'arg' should be typed.",
+      "messageId": "missingArgType",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 3,
+        },
+        "start": {
+          "column": 7,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 13,
+          "line": 3,
+        },
+        "start": {
+          "column": 11,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 32`] = `
+{
+  "code": "
+const foo = arg => arg;
+export default [foo];
+      ",
+  "diagnostics": [
+    {
+      "message": "Argument 'arg' should be typed.",
+      "messageId": "missingArgType",
+      "range": {
+        "end": {
+          "column": 16,
+          "line": 2,
+        },
+        "start": {
+          "column": 13,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 19,
+          "line": 2,
+        },
+        "start": {
+          "column": 17,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 33`] = `
+{
+  "code": "
+const foo = arg => arg;
+export default { foo };
+      ",
+  "diagnostics": [
+    {
+      "message": "Argument 'arg' should be typed.",
+      "messageId": "missingArgType",
+      "range": {
+        "end": {
+          "column": 16,
+          "line": 2,
+        },
+        "start": {
+          "column": 13,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 19,
+          "line": 2,
+        },
+        "start": {
+          "column": 17,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 34`] = `
+{
+  "code": "
+function foo(arg) {
+  return arg;
+}
+export default foo;
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 13,
+          "line": 2,
+        },
+        "start": {
+          "column": 1,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+    {
+      "message": "Argument 'arg' should be typed.",
+      "messageId": "missingArgType",
+      "range": {
+        "end": {
+          "column": 17,
+          "line": 2,
+        },
+        "start": {
+          "column": 14,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 35`] = `
+{
+  "code": "
+function foo(arg) {
+  return arg;
+}
+export default [foo];
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 13,
+          "line": 2,
+        },
+        "start": {
+          "column": 1,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+    {
+      "message": "Argument 'arg' should be typed.",
+      "messageId": "missingArgType",
+      "range": {
+        "end": {
+          "column": 17,
+          "line": 2,
+        },
+        "start": {
+          "column": 14,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 36`] = `
+{
+  "code": "
+function foo(arg) {
+  return arg;
+}
+export default { foo };
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 13,
+          "line": 2,
+        },
+        "start": {
+          "column": 1,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+    {
+      "message": "Argument 'arg' should be typed.",
+      "messageId": "missingArgType",
+      "range": {
+        "end": {
+          "column": 17,
+          "line": 2,
+        },
+        "start": {
+          "column": 14,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 37`] = `
+{
+  "code": "
+const bar = function foo(arg) {
+  return arg;
+};
+export default { bar };
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 22,
+          "line": 2,
+        },
+        "start": {
+          "column": 13,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+    {
+      "message": "Argument 'arg' should be typed.",
+      "messageId": "missingArgType",
+      "range": {
+        "end": {
+          "column": 29,
+          "line": 2,
+        },
+        "start": {
+          "column": 26,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 38`] = `
+{
+  "code": "
+class Foo {
+  bool(arg) {
+    return arg;
+  }
+}
+export default Foo;
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 7,
+          "line": 3,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+    {
+      "message": "Argument 'arg' should be typed.",
+      "messageId": "missingArgType",
+      "range": {
+        "end": {
+          "column": 11,
+          "line": 3,
+        },
+        "start": {
+          "column": 8,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 39`] = `
+{
+  "code": "
+class Foo {
+  bool = arg => {
+    return arg;
+  };
+}
+export default Foo;
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 10,
+          "line": 3,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+    {
+      "message": "Argument 'arg' should be typed.",
+      "messageId": "missingArgType",
+      "range": {
+        "end": {
+          "column": 13,
+          "line": 3,
+        },
+        "start": {
+          "column": 10,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 40`] = `
+{
+  "code": "
+class Foo {
+  bool = function (arg) {
+    return arg;
+  };
+}
+export default Foo;
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 22,
+          "line": 3,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+    {
+      "message": "Argument 'arg' should be typed.",
+      "messageId": "missingArgType",
+      "range": {
+        "end": {
+          "column": 23,
+          "line": 3,
+        },
+        "start": {
+          "column": 20,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 41`] = `
+{
+  "code": "
+class Foo {
+  accessor bool = arg => {
+    return arg;
+  };
+}
+export default Foo;
+      ",
+  "diagnostics": [
+    {
+      "message": "Argument 'arg' should be typed.",
+      "messageId": "missingArgType",
+      "range": {
+        "end": {
+          "column": 5,
+          "line": 5,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 19,
+          "line": 3,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 42`] = `
+{
+  "code": "
+class Foo {
+  accessor bool = function (arg) {
+    return arg;
+  };
+}
+export default Foo;
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 31,
+          "line": 3,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+    {
+      "message": "Argument 'arg' should be typed.",
+      "messageId": "missingArgType",
+      "range": {
+        "end": {
+          "column": 32,
+          "line": 3,
+        },
+        "start": {
+          "column": 29,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 43`] = `
+{
+  "code": "
+class Foo {
+  bool = function (arg) {
+    return arg;
+  };
+}
+export default [Foo];
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 22,
+          "line": 3,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+    {
+      "message": "Argument 'arg' should be typed.",
+      "messageId": "missingArgType",
+      "range": {
+        "end": {
+          "column": 23,
+          "line": 3,
+        },
+        "start": {
+          "column": 20,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 44`] = `
+{
+  "code": "
+let test = arg => argl;
+test = (): void => {
+  return;
+};
+export default test;
+      ",
+  "diagnostics": [
+    {
+      "message": "Argument 'arg' should be typed.",
+      "messageId": "missingArgType",
+      "range": {
+        "end": {
+          "column": 15,
+          "line": 2,
+        },
+        "start": {
+          "column": 12,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 18,
+          "line": 2,
+        },
+        "start": {
+          "column": 16,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 45`] = `
+{
+  "code": "
+let test = arg => argl;
+test = (): void => {
+  return;
+};
+export { test };
+      ",
+  "diagnostics": [
+    {
+      "message": "Argument 'arg' should be typed.",
+      "messageId": "missingArgType",
+      "range": {
+        "end": {
+          "column": 15,
+          "line": 2,
+        },
+        "start": {
+          "column": 12,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 18,
+          "line": 2,
+        },
+        "start": {
+          "column": 16,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 46`] = `
+{
+  "code": "
+export const foo =
+  () =>
+  (a: string): ((n: number) => string) => {
+    return function (n) {
+      return String(n);
+    };
+  };
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 3,
+        },
+        "start": {
+          "column": 6,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 47`] = `
+{
+  "code": "
+export var arrowFn = () => () => {};
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 33,
+          "line": 2,
+        },
+        "start": {
+          "column": 31,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 48`] = `
+{
+  "code": "
+export function fn() {
+  return function () {};
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 19,
+          "line": 3,
+        },
+        "start": {
+          "column": 10,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 49`] = `
+{
+  "code": "
+export function foo(outer) {
+  return function (inner): void {};
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Argument 'outer' should be typed.",
+      "messageId": "missingArgType",
+      "range": {
+        "end": {
+          "column": 26,
+          "line": 2,
+        },
+        "start": {
+          "column": 21,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+    {
+      "message": "Argument 'inner' should be typed.",
+      "messageId": "missingArgType",
+      "range": {
+        "end": {
+          "column": 25,
+          "line": 3,
+        },
+        "start": {
+          "column": 20,
+          "line": 3,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 50`] = `
+{
+  "code": "
+export function foo(outer: boolean) {
+  if (outer) {
+    return 'string';
+  }
+  return function (inner): void {};
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 20,
+          "line": 2,
+        },
+        "start": {
+          "column": 8,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 51`] = `
+{
+  "code": "
+export function foo({ foo }): void {}
+      ",
+  "diagnostics": [
+    {
+      "message": "All arguments should be typed.",
+      "messageId": "missingArgTypeUnnamed",
+      "range": {
+        "end": {
+          "column": 28,
+          "line": 2,
+        },
+        "start": {
+          "column": 21,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 52`] = `
+{
+  "code": "
+export function foo([bar]): void {}
+      ",
+  "diagnostics": [
+    {
+      "message": "All arguments should be typed.",
+      "messageId": "missingArgTypeUnnamed",
+      "range": {
+        "end": {
+          "column": 26,
+          "line": 2,
+        },
+        "start": {
+          "column": 21,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 53`] = `
+{
+  "code": "
+export function foo(...bar): void {}
+      ",
+  "diagnostics": [
+    {
+      "message": "Argument 'bar' should be typed.",
+      "messageId": "missingArgType",
+      "range": {
+        "end": {
+          "column": 27,
+          "line": 2,
+        },
+        "start": {
+          "column": 21,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 54`] = `
+{
+  "code": "
+export function foo(...[a]): void {}
+      ",
+  "diagnostics": [
+    {
+      "message": "All arguments should be typed.",
+      "messageId": "missingArgTypeUnnamed",
+      "range": {
+        "end": {
+          "column": 27,
+          "line": 2,
+        },
+        "start": {
+          "column": 21,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 55`] = `
+{
+  "code": "
+export function foo(foo: any): void {}
+      ",
+  "diagnostics": [
+    {
+      "message": "Argument 'foo' should be typed with a non-any type.",
+      "messageId": "anyTypedArg",
+      "range": {
+        "end": {
+          "column": 24,
+          "line": 2,
+        },
+        "start": {
+          "column": 21,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 56`] = `
+{
+  "code": "
+export function foo({ foo }: any): void {}
+      ",
+  "diagnostics": [
+    {
+      "message": "All arguments should be typed with a non-any type.",
+      "messageId": "anyTypedArgUnnamed",
+      "range": {
+        "end": {
+          "column": 28,
+          "line": 2,
+        },
+        "start": {
+          "column": 21,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 57`] = `
+{
+  "code": "
+export function foo([bar]: any): void {}
+      ",
+  "diagnostics": [
+    {
+      "message": "All arguments should be typed with a non-any type.",
+      "messageId": "anyTypedArgUnnamed",
+      "range": {
+        "end": {
+          "column": 26,
+          "line": 2,
+        },
+        "start": {
+          "column": 21,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 58`] = `
+{
+  "code": "
+export function foo(...bar: any): void {}
+      ",
+  "diagnostics": [
+    {
+      "message": "Argument 'bar' should be typed with a non-any type.",
+      "messageId": "anyTypedArg",
+      "range": {
+        "end": {
+          "column": 32,
+          "line": 2,
+        },
+        "start": {
+          "column": 21,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 59`] = `
+{
+  "code": "
+export function foo(...[a]: any): void {}
+      ",
+  "diagnostics": [
+    {
+      "message": "All arguments should be typed with a non-any type.",
+      "messageId": "anyTypedArgUnnamed",
+      "range": {
+        "end": {
+          "column": 32,
+          "line": 2,
+        },
+        "start": {
+          "column": 21,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 60`] = `
+{
+  "code": "
+export function func1() {
+  return 0;
+}
+export const foo = {
+  func2() {
+    return 0;
+  },
+};
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 22,
+          "line": 2,
+        },
+        "start": {
+          "column": 8,
+          "line": 2,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 8,
+          "line": 6,
+        },
+        "start": {
+          "column": 3,
+          "line": 6,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 2,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 61`] = `
+{
+  "code": "
+export function test(a: string): string;
+export function test(a: number): number;
+export function test(a: unknown) {
+  return a;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 21,
+          "line": 4,
+        },
+        "start": {
+          "column": 8,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 62`] = `
+{
+  "code": "
+export default function test(a: string): string;
+export default function test(a: number): number;
+export default function test(a: unknown) {
+  return a;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 29,
+          "line": 4,
+        },
+        "start": {
+          "column": 16,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 63`] = `
+{
+  "code": "
+export default function (a: string): string;
+export default function (a: number): number;
+export default function (a: unknown) {
+  return a;
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 25,
+          "line": 4,
+        },
+        "start": {
+          "column": 16,
+          "line": 4,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;
+
+exports[`explicit-module-boundary-types > invalid 64`] = `
+{
+  "code": "
+export class Test {
+  test(a: string): string;
+  test(a: number): number;
+  test(a: unknown) {
+    return a;
+  }
+}
+      ",
+  "diagnostics": [
+    {
+      "message": "Missing return type on function.",
+      "messageId": "missingReturnType",
+      "range": {
+        "end": {
+          "column": 7,
+          "line": 5,
+        },
+        "start": {
+          "column": 3,
+          "line": 5,
+        },
+      },
+      "ruleName": "@typescript-eslint/explicit-module-boundary-types",
+    },
+  ],
+  "errorCount": 1,
+  "fileCount": 1,
+  "ruleCount": 1,
+}
+`;

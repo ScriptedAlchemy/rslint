@@ -1,6 +1,7 @@
 package triple_slash_reference
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -15,7 +16,14 @@ type TripleSlashReferenceOptions struct {
 	Types string `json:"types"` // "always" | "never" | "prefer-import"
 }
 
-var tripleSlashRegex = regexp.MustCompile(`^///\s*<reference\s+(path|types|lib)\s*=`)
+var tripleSlashRegex = regexp.MustCompile(`^///\s*<reference\s*(types|path|lib)\s*=\s*["']([^"']+)["']`)
+
+type referenceDirective struct {
+	kind   string
+	module string
+	start  int
+	end    int
+}
 
 // TripleSlashReferenceRule implements the triple-slash-reference rule
 // Disallow certain triple slash directives
@@ -25,107 +33,179 @@ var TripleSlashReferenceRule = rule.CreateRule(rule.Rule{
 })
 
 func run(ctx rule.RuleContext, options any) rule.RuleListeners {
-	opts := TripleSlashReferenceOptions{
-		Lib:   "always",
-		Path:  "always",
-		Types: "prefer-import",
-	}
-
-	// Parse options
-	if options != nil {
-		var optsMap map[string]interface{}
-		var ok bool
-
-		// Handle array format: [{ option: value }]
-		if optArray, isArray := options.([]interface{}); isArray && len(optArray) > 0 {
-			optsMap, ok = optArray[0].(map[string]interface{})
-		} else {
-			// Handle direct object format: { option: value }
-			optsMap, ok = options.(map[string]interface{})
-		}
-
-		if ok {
-			if lib, ok := optsMap["lib"].(string); ok {
-				opts.Lib = lib
-			}
-			if path, ok := optsMap["path"].(string); ok {
-				opts.Path = path
-			}
-			if types, ok := optsMap["types"].(string); ok {
-				opts.Types = types
-			}
-		}
-	}
-
-	// Get the full text of the source file
+	opts := parseOptions(options)
 	text := ctx.SourceFile.Text()
+	directives := collectLeadingDirectives(text)
+	if len(directives) == 0 {
+		return rule.RuleListeners{}
+	}
 
-	// Split into lines to check for triple-slash references
-	lines := strings.Split(text, "\n")
+	importSources := collectImportSources(ctx.SourceFile)
 
-	// Check if file has imports
-	hasImport := hasImportStatements(ctx.SourceFile)
-
-	for lineNum, line := range lines {
-		trimmed := strings.TrimSpace(line)
-
-		// Check if this is a triple-slash reference
-		if !tripleSlashRegex.MatchString(trimmed) {
-			continue
-		}
-
-		// Determine the type of reference
-		var refType string
-		if strings.Contains(trimmed, `path=`) {
-			refType = "path"
-		} else if strings.Contains(trimmed, `types=`) {
-			refType = "types"
-		} else if strings.Contains(trimmed, `lib=`) {
-			refType = "lib"
-		}
-
-		// Check if this reference should be reported
+	for _, directive := range directives {
 		shouldReport := false
-		switch refType {
+		switch directive.kind {
+		case "types":
+			shouldReport = opts.Types == "never" || (opts.Types == "prefer-import" && importSources[directive.module])
 		case "path":
 			shouldReport = opts.Path == "never"
-		case "types":
-			shouldReport = opts.Types == "never" || (opts.Types == "prefer-import" && hasImport)
 		case "lib":
 			shouldReport = opts.Lib == "never"
 		}
-
-		if shouldReport {
-			// Calculate position (approximate - this is simplified)
-			pos := 0
-			for i := range lineNum {
-				pos += len(lines[i]) + 1 // +1 for newline
-			}
-
-			ctx.ReportRange(
-				core.NewTextRange(pos, pos+len(line)),
-				rule.RuleMessage{
-					Id:          "tripleSlashReference",
-					Description: "Do not use a triple slash reference for " + refType + ", use `import` style instead.",
-				},
-			)
+		if !shouldReport {
+			continue
 		}
+		ctx.ReportRange(
+			core.NewTextRange(directive.start, directive.end),
+			rule.RuleMessage{
+				Id:          "tripleSlashReference",
+				Description: fmt.Sprintf("Do not use a triple slash reference for %s, use `import` style instead.", directive.module),
+			},
+		)
 	}
 
 	return rule.RuleListeners{}
 }
 
-// hasImportStatements checks if the source file contains any import statements
-func hasImportStatements(sourceFile *ast.SourceFile) bool {
-	if sourceFile.Statements == nil {
-		return false
+func parseOptions(options any) TripleSlashReferenceOptions {
+	opts := TripleSlashReferenceOptions{
+		Lib:   "always",
+		Path:  "never",
+		Types: "prefer-import",
+	}
+	applyMap := func(raw map[string]interface{}) {
+		if raw == nil {
+			return
+		}
+		if lib, ok := raw["lib"].(string); ok {
+			opts.Lib = lib
+		}
+		if path, ok := raw["path"].(string); ok {
+			opts.Path = path
+		}
+		if types, ok := raw["types"].(string); ok {
+			opts.Types = types
+		}
+	}
+
+	switch raw := options.(type) {
+	case TripleSlashReferenceOptions:
+		opts = raw
+	case *TripleSlashReferenceOptions:
+		if raw != nil {
+			opts = *raw
+		}
+	case map[string]interface{}:
+		applyMap(raw)
+	case []interface{}:
+		if len(raw) > 0 {
+			if firstMap, ok := raw[0].(map[string]interface{}); ok {
+				applyMap(firstMap)
+			}
+		}
+	}
+	return opts
+}
+
+func collectImportSources(sourceFile *ast.SourceFile) map[string]bool {
+	imports := map[string]bool{}
+	if sourceFile == nil || sourceFile.Statements == nil {
+		return imports
+	}
+
+	extractText := func(node *ast.Node) (string, bool) {
+		if node == nil {
+			return "", false
+		}
+		switch node.Kind {
+		case ast.KindStringLiteral:
+			lit := node.AsStringLiteral()
+			if lit != nil {
+				return lit.Text, true
+			}
+		case ast.KindNoSubstitutionTemplateLiteral:
+			lit := node.AsNoSubstitutionTemplateLiteral()
+			if lit != nil {
+				return lit.Text, true
+			}
+		}
+		return "", false
 	}
 
 	for _, stmt := range sourceFile.Statements.Nodes {
 		switch stmt.Kind {
-		case ast.KindImportDeclaration, ast.KindImportEqualsDeclaration:
-			return true
+		case ast.KindImportDeclaration:
+			decl := stmt.AsImportDeclaration()
+			if decl != nil && decl.ModuleSpecifier != nil {
+				if value, ok := extractText(decl.ModuleSpecifier); ok {
+					imports[value] = true
+				}
+			}
+		case ast.KindImportEqualsDeclaration:
+			decl := stmt.AsImportEqualsDeclaration()
+			if decl != nil && decl.ModuleReference != nil && decl.ModuleReference.Kind == ast.KindExternalModuleReference {
+				ref := decl.ModuleReference.AsExternalModuleReference()
+				if ref != nil && ref.Expression != nil {
+					if value, ok := extractText(ref.Expression); ok {
+						imports[value] = true
+					}
+				}
+			}
 		}
 	}
-	return false
+
+	return imports
+}
+
+func collectLeadingDirectives(text string) []referenceDirective {
+	inBlockComment := false
+	lineStart := 0
+	directives := make([]referenceDirective, 0)
+
+	for lineStart <= len(text) {
+		lineEnd := len(text)
+		if idx := strings.IndexByte(text[lineStart:], '\n'); idx >= 0 {
+			lineEnd = lineStart + idx
+		}
+
+		line := text[lineStart:lineEnd]
+		trimmedLeft := strings.TrimLeft(line, " \t")
+		trimmed := strings.TrimSpace(line)
+
+		if inBlockComment {
+			if strings.Contains(trimmedLeft, "*/") {
+				inBlockComment = false
+			}
+		} else if trimmed == "" || (lineStart == 0 && strings.HasPrefix(trimmedLeft, "#!")) {
+			// Keep scanning leading blank lines and shebang.
+		} else if strings.HasPrefix(trimmedLeft, "/*") {
+			if !strings.Contains(trimmedLeft[2:], "*/") {
+				inBlockComment = true
+			}
+		} else if strings.HasPrefix(trimmedLeft, "//") {
+			if strings.HasPrefix(trimmedLeft, "///") {
+				match := tripleSlashRegex.FindStringSubmatch(trimmedLeft)
+				if len(match) == 3 {
+					columnOffset := strings.Index(line, "///")
+					start := lineStart + columnOffset
+					directives = append(directives, referenceDirective{
+						kind:   match[1],
+						module: match[2],
+						start:  start,
+						end:    lineStart + len(line),
+					})
+				}
+			}
+		} else {
+			// Stop once non-comment code starts.
+			break
+		}
+
+		if lineEnd == len(text) {
+			break
+		}
+		lineStart = lineEnd + 1
+	}
+
+	return directives
 }

@@ -25,6 +25,39 @@ import (
 	"github.com/web-infra-dev/rslint/internal/utils"
 )
 
+func getUTF16LineAndCharacterOfPosition(sourceFile *ast.SourceFile, pos int) (line int, character int) {
+	lineStarts := scanner.GetECMALineStarts(sourceFile)
+	line = scanner.ComputeLineOfPosition(lineStarts, pos)
+	if line < 0 || line >= len(lineStarts) {
+		return line, 0
+	}
+
+	lineStart := int(lineStarts[line])
+	if lineStart < 0 {
+		lineStart = 0
+	}
+
+	sourceText := sourceFile.Text()
+	if pos < lineStart {
+		pos = lineStart
+	}
+	if pos > len(sourceText) {
+		pos = len(sourceText)
+	}
+	if lineStart > len(sourceText) {
+		return line, 0
+	}
+
+	for _, r := range sourceText[lineStart:pos] {
+		if r <= 0xFFFF {
+			character++
+		} else {
+			character += 2
+		}
+	}
+	return line, character
+}
+
 // IPCHandler implements the ipc.Handler interface
 type IPCHandler struct{}
 
@@ -35,6 +68,212 @@ type programCache struct {
 	compilerOptions string // JSON serialized for comparison
 	program         *compiler.Program
 	sourceFile      *ast.SourceFile
+}
+
+func buildRuleParserOptions(languageOptions *api.LanguageOptions) *rule.RuleParserOptions {
+	return rslintconfig.BuildRuleParserOptions(apiLanguageOptionsToConfig(languageOptions))
+}
+
+func buildRuleGlobals(languageOptions *api.LanguageOptions) map[string]bool {
+	return rslintconfig.BuildRuleGlobals(apiLanguageOptionsToConfig(languageOptions))
+}
+
+func apiEcmaFeaturesToConfig(features *api.EcmaFeatures) *rslintconfig.EcmaFeatures {
+	if features == nil {
+		return nil
+	}
+	return &rslintconfig.EcmaFeatures{
+		GlobalReturn:    features.GlobalReturn,
+		JSX:             features.JSX,
+		GlobalReturnSet: features.GlobalReturnSet,
+		JSXSet:          features.JSXSet,
+	}
+}
+
+func apiParserOptionsToConfig(options *api.ParserOptions) *rslintconfig.ParserOptions {
+	if options == nil {
+		return nil
+	}
+	var projectPaths rslintconfig.ProjectPaths
+	if options.Project != nil {
+		projectPaths = append(rslintconfig.ProjectPaths{}, options.Project...)
+	}
+	return &rslintconfig.ParserOptions{
+		ProjectService:            options.ProjectService,
+		Project:                   projectPaths,
+		TsconfigRootDir:           options.TsconfigRootDir,
+		SourceType:                options.SourceType,
+		EcmaVersion:               options.EcmaVersion,
+		IsolatedDeclarations:      options.IsolatedDeclarations,
+		ExperimentalDecorators:    options.ExperimentalDecorators,
+		EmitDecoratorMetadata:     options.EmitDecoratorMetadata,
+		JSXPragma:                 options.JSXPragma,
+		JSXFragmentName:           options.JSXFragmentName,
+		EcmaFeatures:              apiEcmaFeaturesToConfig(options.EcmaFeatures),
+		ProjectServiceSet:         options.ProjectServiceSet,
+		IsolatedDeclarationsSet:   options.IsolatedDeclarationsSet,
+		ExperimentalDecoratorsSet: options.ExperimentalDecoratorsSet,
+		EmitDecoratorMetadataSet:  options.EmitDecoratorMetadataSet,
+	}
+}
+
+func apiLanguageOptionsToConfig(languageOptions *api.LanguageOptions) *rslintconfig.LanguageOptions {
+	if languageOptions == nil {
+		return nil
+	}
+
+	result := &rslintconfig.LanguageOptions{
+		ParserOptions: apiParserOptionsToConfig(languageOptions.ParserOptions),
+	}
+	if len(languageOptions.Globals) > 0 {
+		result.Globals = make(map[string]interface{}, len(languageOptions.Globals))
+		for key, value := range languageOptions.Globals {
+			result.Globals[key] = value
+		}
+	}
+	if result.ParserOptions == nil && len(result.Globals) == 0 {
+		return nil
+	}
+	return result
+}
+
+func configLanguageOptionsToAPI(languageOptions *rslintconfig.LanguageOptions) *api.LanguageOptions {
+	if languageOptions == nil {
+		return nil
+	}
+
+	result := &api.LanguageOptions{}
+
+	if len(languageOptions.Globals) > 0 {
+		result.Globals = make(map[string]interface{}, len(languageOptions.Globals))
+		for key, value := range languageOptions.Globals {
+			result.Globals[key] = value
+		}
+	}
+
+	if languageOptions.ParserOptions != nil {
+		parserOptions := languageOptions.ParserOptions
+		result.ParserOptions = &api.ParserOptions{
+			ProjectService:            parserOptions.ProjectService,
+			Project:                   api.ProjectPaths(parserOptions.Project),
+			TsconfigRootDir:           parserOptions.TsconfigRootDir,
+			SourceType:                parserOptions.SourceType,
+			EcmaVersion:               parserOptions.EcmaVersion,
+			IsolatedDeclarations:      parserOptions.IsolatedDeclarations,
+			ExperimentalDecorators:    parserOptions.ExperimentalDecorators,
+			EmitDecoratorMetadata:     parserOptions.EmitDecoratorMetadata,
+			JSXPragma:                 parserOptions.JSXPragma,
+			JSXFragmentName:           parserOptions.JSXFragmentName,
+			ProjectServiceSet:         parserOptions.ProjectServiceSet,
+			IsolatedDeclarationsSet:   parserOptions.IsolatedDeclarationsSet,
+			ExperimentalDecoratorsSet: parserOptions.ExperimentalDecoratorsSet,
+			EmitDecoratorMetadataSet:  parserOptions.EmitDecoratorMetadataSet,
+		}
+		if parserOptions.EcmaFeatures != nil {
+			result.ParserOptions.EcmaFeatures = &api.EcmaFeatures{
+				GlobalReturn:    parserOptions.EcmaFeatures.GlobalReturn,
+				JSX:             parserOptions.EcmaFeatures.JSX,
+				GlobalReturnSet: parserOptions.EcmaFeatures.GlobalReturnSet,
+				JSXSet:          parserOptions.EcmaFeatures.JSXSet,
+			}
+		}
+	}
+
+	if result.ParserOptions == nil && len(result.Globals) == 0 {
+		return nil
+	}
+
+	return result
+}
+
+func withFallbackConfigDirectory(configEntries rslintconfig.RslintConfig, configDirectory string) rslintconfig.RslintConfig {
+	if configDirectory == "" {
+		return configEntries
+	}
+
+	needsCopy := false
+	for _, entry := range configEntries {
+		if entry.ConfigDirectory == "" {
+			needsCopy = true
+			break
+		}
+	}
+	if !needsCopy {
+		return configEntries
+	}
+
+	cloned := append(rslintconfig.RslintConfig(nil), configEntries...)
+	for i := range cloned {
+		if cloned[i].ConfigDirectory == "" {
+			cloned[i].ConfigDirectory = configDirectory
+		}
+	}
+	return cloned
+}
+
+func resolveRuleLanguageOptions(requestOptions *api.LanguageOptions, configEntries rslintconfig.RslintConfig) *api.LanguageOptions {
+	var resolved *rslintconfig.LanguageOptions
+	for _, entry := range configEntries {
+		resolved = rslintconfig.MergeLanguageOptions(resolved, entry.LanguageOptions)
+	}
+	resolved = rslintconfig.MergeLanguageOptions(resolved, apiLanguageOptionsToConfig(requestOptions))
+	return configLanguageOptionsToAPI(resolved)
+}
+
+func resolveRuleLanguageOptionsForFile(requestOptions *api.LanguageOptions, configEntries rslintconfig.RslintConfig, filePath string, configDirectory string) *api.LanguageOptions {
+	entries := withFallbackConfigDirectory(configEntries, configDirectory)
+	resolved := rslintconfig.ResolveLanguageOptionsForFile(entries, filePath)
+	resolved = rslintconfig.MergeLanguageOptions(resolved, apiLanguageOptionsToConfig(requestOptions))
+	return configLanguageOptionsToAPI(resolved)
+}
+
+func entryMatchesAnyTargetFile(entry rslintconfig.ConfigEntry, targetFiles []string, configDirectory string) bool {
+	if len(targetFiles) == 0 {
+		return true
+	}
+	if entry.ConfigDirectory == "" {
+		entry.ConfigDirectory = configDirectory
+	}
+	for _, targetFile := range targetFiles {
+		if rslintconfig.ConfigEntryMatchesFile(entry, targetFile) {
+			return true
+		}
+	}
+	return false
+}
+
+func collectTsConfigsForRequest(configEntries rslintconfig.RslintConfig, requestOptions *api.LanguageOptions, configDirectory string, fs interface{ FileExists(path string) bool }, targetFiles []string) ([]string, bool) {
+	hasExplicitProjectOverride := requestOptions != nil && requestOptions.ParserOptions != nil && requestOptions.ParserOptions.Project != nil
+	requestConfigOptions := apiLanguageOptionsToConfig(requestOptions)
+	collected := []string{}
+	seen := map[string]bool{}
+
+	for _, entry := range configEntries {
+		if !entryMatchesAnyTargetFile(entry, targetFiles, configDirectory) {
+			continue
+		}
+		effectiveLanguageOptions := rslintconfig.MergeLanguageOptions(entry.LanguageOptions, requestConfigOptions)
+		if effectiveLanguageOptions == nil || effectiveLanguageOptions.ParserOptions == nil {
+			continue
+		}
+		baseDir := entry.ConfigDirectory
+		if baseDir == "" {
+			baseDir = configDirectory
+		}
+		if effectiveLanguageOptions.ParserOptions.TsconfigRootDir != "" {
+			baseDir = tspath.ResolvePath(baseDir, effectiveLanguageOptions.ParserOptions.TsconfigRootDir)
+		}
+		for _, projectPath := range effectiveLanguageOptions.ParserOptions.Project {
+			tsconfigPath := tspath.ResolvePath(baseDir, projectPath)
+			if !fs.FileExists(tsconfigPath) || seen[tsconfigPath] {
+				continue
+			}
+			seen[tsconfigPath] = true
+			collected = append(collected, tsconfigPath)
+		}
+	}
+
+	return collected, hasExplicitProjectOverride
 }
 
 // Global program cache for AST info requests
@@ -79,33 +318,32 @@ func (h *IPCHandler) HandleLint(req api.LintRequest) (*api.LintResponse, error) 
 	rslintconfig.RegisterAllRules()
 
 	// Load rslint configuration and determine which tsconfig files to use
-	rslintConfig, tsConfigs, configDirectory := rslintconfig.LoadConfigurationWithFallback(req.Config, currentDirectory, fs)
+	loader := rslintconfig.NewConfigLoader(fs, currentDirectory)
+	var (
+		rslintConfig    rslintconfig.RslintConfig
+		configDirectory string
+	)
+	if req.Config != "" {
+		rslintConfig, configDirectory, err = loader.LoadRslintConfig(req.Config)
+	} else {
+		rslintConfig, configDirectory, err = loader.LoadDefaultRslintConfig()
+	}
+	if err != nil {
+		return nil, fmt.Errorf("error loading config: %w", err)
+	}
 
-	// Merge languageOptions from request with config file if provided
-	if req.LanguageOptions != nil && len(rslintConfig) > 0 {
-		// Convert API LanguageOptions to config LanguageOptions
-		configLanguageOptions := &rslintconfig.LanguageOptions{}
-		if req.LanguageOptions.ParserOptions != nil {
-			configLanguageOptions.ParserOptions = &rslintconfig.ParserOptions{
-				ProjectService: req.LanguageOptions.ParserOptions.ProjectService,
-				Project:        rslintconfig.ProjectPaths(req.LanguageOptions.ParserOptions.Project),
-			}
+	var tsConfigs []string
+	overrideTsconfigs, hasExplicitProjectOverride := collectTsConfigsForRequest(rslintConfig, req.LanguageOptions, configDirectory, fs, allowedFiles)
+	if hasExplicitProjectOverride {
+		tsConfigs = overrideTsconfigs
+	} else {
+		if len(allowedFiles) > 0 {
+			tsConfigs, err = loader.LoadTsConfigsFromRslintConfigForFiles(rslintConfig, configDirectory, allowedFiles)
+		} else {
+			tsConfigs, err = loader.LoadTsConfigsFromRslintConfig(rslintConfig, configDirectory)
 		}
-
-		// Override languageOptions for the first config entry
-		rslintConfig[0].LanguageOptions = configLanguageOptions
-
-		// Re-extract tsconfig files with updated languageOptions
-		overrideTsconfigs := []string{}
-		for _, entry := range rslintConfig {
-			if entry.LanguageOptions != nil && entry.LanguageOptions.ParserOptions != nil {
-				for _, config := range entry.LanguageOptions.ParserOptions.Project {
-					tsconfigPath := tspath.ResolvePath(configDirectory, config)
-					if fs.FileExists(tsconfigPath) {
-						overrideTsconfigs = append(overrideTsconfigs, tsconfigPath)
-					}
-				}
-			}
+		if err != nil {
+			return nil, fmt.Errorf("error resolving tsconfig files: %w", err)
 		}
 		if len(overrideTsconfigs) > 0 {
 			tsConfigs = overrideTsconfigs
@@ -163,8 +401,8 @@ func (h *IPCHandler) HandleLint(req api.LintRequest) (*api.LintResponse, error) 
 		diagnosticStart := d.Range.Pos()
 		diagnosticEnd := d.Range.End()
 
-		startLine, startColumn := scanner.GetECMALineAndCharacterOfPosition(d.SourceFile, diagnosticStart)
-		endLine, endColumn := scanner.GetECMALineAndCharacterOfPosition(d.SourceFile, diagnosticEnd)
+		startLine, startColumn := getUTF16LineAndCharacterOfPosition(d.SourceFile, diagnosticStart)
+		endLine, endColumn := getUTF16LineAndCharacterOfPosition(d.SourceFile, diagnosticEnd)
 
 		diagnostic := api.Diagnostic{
 			RuleName:  d.RuleName,
@@ -217,11 +455,16 @@ func (h *IPCHandler) HandleLint(req api.LintRequest) (*api.LintResponse, error) 
 			filePath := tspath.ConvertToRelativePath(sourceFile.FileName(), comparePathOptions)
 			sourceFiles[filePath] = sourceFile
 			sourceFilesLock.Unlock()
+			effectiveLanguageOptions := resolveRuleLanguageOptionsForFile(req.LanguageOptions, rslintConfig, sourceFile.FileName(), configDirectory)
+			ruleParserOptions := buildRuleParserOptions(effectiveLanguageOptions)
+			ruleGlobals := buildRuleGlobals(effectiveLanguageOptions)
 			return utils.Map(rulesWithOptions, func(r RuleWithOption) linter.ConfiguredRule {
 
 				return linter.ConfiguredRule{
 					Name: r.rule.Name,
 					Run: func(ctx rule.RuleContext) rule.RuleListeners {
+						ctx.ParserOptions = ruleParserOptions
+						ctx.Globals = ruleGlobals
 						return r.rule.Run(ctx, r.option)
 					},
 				}
@@ -309,32 +552,17 @@ func (h *IPCHandler) HandleApplyFixes(req api.ApplyFixesRequest) (*api.ApplyFixe
 		ruleDiagnostics = append(ruleDiagnostics, ruleDiag)
 	}
 
-	// Use linter.ApplyRuleFixes to apply the fixes
-	code := req.FileContent
+	diagnosticsWithFixesCount := len(ruleDiagnostics)
+	fixedContent, unapplied, wasFixed := linter.ApplyRuleFixes(req.FileContent, ruleDiagnostics)
+
 	outputs := []string{}
-	wasFixed := false
-
-	// Apply fixes iteratively to handle overlapping fixes
-	for {
-		fixedContent, unapplied, fixed := linter.ApplyRuleFixes(code, ruleDiagnostics)
-		if !fixed {
-			break
-		}
-
+	if wasFixed {
 		outputs = append(outputs, fixedContent)
-		code = fixedContent
-		wasFixed = true
-
-		// Update diagnostics to only include unapplied ones for next iteration
-		ruleDiagnostics = unapplied
-		if len(ruleDiagnostics) == 0 {
-			break
-		}
 	}
 
-	// Count applied and unapplied fixes
-	appliedCount := len(req.Diagnostics) - len(ruleDiagnostics)
-	unappliedCount := len(ruleDiagnostics)
+	// Count applied and unapplied diagnostics with fixes.
+	appliedCount := diagnosticsWithFixesCount - len(unapplied)
+	unappliedCount := len(unapplied)
 
 	return &api.ApplyFixesResponse{
 		FixedContent:   outputs,
